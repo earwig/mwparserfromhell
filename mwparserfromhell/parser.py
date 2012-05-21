@@ -20,19 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-`mwtemplateparserfromhell
-<https://github.com/earwig/mwtemplateparserfromhell>`_ (the MediaWiki Template
-Parser from Hell) is a Python package that provides an easy-to-use and
-outrageously powerful template parser for `MediaWiki <http://mediawiki.org>`_
-wikicode.
-"""
+from mwparserfromhell.parameter import Parameter
+from mwparserfromhell.template import Template
 
-__author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012 by Ben Kurtovic"
-__license__ = "MIT License"
-__version__ = "0.1.dev"
-__email__ = "ben.kurtovic@verizon.net"
+__all__ = ["Parser"]
 
-from mwtemplateparserfromhell import parameter, parser, template
-from mwtemplateparserfromhell.parser import Parser
+class Parser(object):
+    def _tokenize(self, text):
+        return text
+    
+    def parse(self, text):
+        tokens = self._tokenize(text)
+        params = [Parameter("1", "bar"), Parameter("2", "baz")]
+        templates = [Template(name="foo", params=params)]
+        return templates

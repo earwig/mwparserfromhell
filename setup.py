@@ -23,23 +23,23 @@
 
 from setuptools import setup, find_packages
 
-from mwtemplateparserfromhell import __version__
+from mwparserfromhell import __version__
 
 with open("README.rst") as fp:
     long_docs = fp.read()
 
 setup(
-    name = "mwtemplateparserfromhell",
+    name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@verizon.net",
-    url = "https://github.com/earwig/mwtemplateparserfromhell",
-    description = "MWTemplateParserFromHell is a parser for MediaWiki templates.",
+    url = "https://github.com/earwig/mwparserfromhell",
+    description = "MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description = long_docs,
-    download_url = "https://github.com/earwig/mwtemplateparserfromhell/tarball/v{0}".format(__version__),
-    keywords = "earwig mwtemplateparserfromhell wikipedia wiki mediawiki template parsing",
+    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{0}".format(__version__),
+    keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license = "MIT License",
     classifiers = [
         "Development Status :: 3 - Alpha",

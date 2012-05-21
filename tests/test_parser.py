@@ -22,9 +22,9 @@
 
 import unittest
 
-from mwtemplateparserfromhell.parameter import Parameter
-from mwtemplateparserfromhell.parser import Parser
-from mwtemplateparserfromhell.template import Template
+from mwparserfromhell.parameter import Parameter
+from mwparserfromhell.parser import Parser
+from mwparserfromhell.template import Template
 
 TESTS = [
     ("", []),
@@ -37,7 +37,6 @@ TESTS = [
     ("multiple {{-}} templates {{+}}!", [Template("-"), Template("+")]),
     ("{{{no templates here}}}", []),
     ("{ {{templates here}}}", [Template("templates here")]),
-    ("{{{{I exist}} }}", [Template("I exist")]),
     ("{{{{I do not exist}}}}", []),
     ("{{foo|bar|baz|eggs=spam}}",
      [Template("foo", [Parameter("1", "bar"), Parameter("2", "baz"),
@@ -46,6 +45,12 @@ TESTS = [
      [Template("abc def", [Parameter("1", "ghi"), Parameter("jk", "lmno"),
                            Parameter("2", "pqr"), Parameter("st", "uv"),
                            Parameter("3", "wx"), Parameter("4", "yz")])]),
+    ("{{this has a|{{template}}|inside of it}}",
+     [Template("this has a", [Parameter("1", "{{template}}",
+                                        [Template("template")]),
+                              Parameter("2", "inside of it")])]),
+    ("{{{{I exist}} }}", [Template("I exist", [] )]),
+    ("{{}}")
 ]
 
 class TestParser(unittest.TestCase):

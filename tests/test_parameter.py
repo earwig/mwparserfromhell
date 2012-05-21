@@ -22,8 +22,8 @@
 
 import unittest
 
-from mwtemplateparserfromhell.parameter import Parameter
-from mwtemplateparserfromhell.template import Template
+from mwparserfromhell.parameter import Parameter
+from mwparserfromhell.template import Template
 
 class TestParameter(unittest.TestCase):
     def setUp(self):
@@ -93,7 +93,27 @@ class TestParameter(unittest.TestCase):
             self.assertEquals(bool(param), bool(param.value))
             self.assertEquals(len(param), len(param.value))
             self.assertEquals(list(param), list(param.value))
+            self.assertEquals(param[2], param.value[2])
+            self.assertEquals(list(reversed(param)),
+                              list(reversed(param.value)))
             self.assertIs("bar" in param, "bar" in param.value)
+            self.assertEquals(param + "test", param.value + "test")
+            self.assertEquals("test" + param, "test" + param.value)
+            # add param
+            # add template left
+            # add template right
+            
+            self.assertEquals(param * 3, Parameter(param.name, param.value * 3,
+                                                   param.templates * 3))
+            self.assertEquals(3 * param, Parameter(param.name, 3 * param.value,
+                                                   3 * param.templates))
+            
+            # add param inplace
+            # add template implace
+            # add str inplace
+            # multiply int inplace
+            self.assertIsInstance(param, Parameter)
+            self.assertIsInstance(param.value, str)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

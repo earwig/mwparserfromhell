@@ -23,8 +23,8 @@
 from itertools import permutations
 import unittest
 
-from mwtemplateparserfromhell.parameter import Parameter
-from mwtemplateparserfromhell.template import Template
+from mwparserfromhell.parameter import Parameter
+from mwparserfromhell.template import Template
 
 class TestTemplate(unittest.TestCase):
     def setUp(self):
@@ -57,14 +57,22 @@ class TestTemplate(unittest.TestCase):
                          Template(name=self.name, params=self.params)):
             self.assertEqual(template.params, self.params)
 
-    def test_get(self):
+    def test_getitem(self):
         template = Template(name=self.name, params=self.params)
-        self.assertIs(template.get(0), self.bar)
-        self.assertIs(template.get(1), self.baz)
-        self.assertIs(template.get(2), self.eggs)
-        self.assertIs(template.get("1"), self.bar)
-        self.assertIs(template.get("2"), self.baz)
-        self.assertIs(template.get("eggs"), self.eggs)
+        self.assertIs(template[0], self.bar)
+        self.assertIs(template[1], self.baz)
+        self.assertIs(template[2], self.eggs)
+        self.assertIs(template["1"], self.bar)
+        self.assertIs(template["2"], self.baz)
+        self.assertIs(template["eggs"], self.eggs)
+
+    def test_render(self):
+        tests = [
+            (Template(self.name), "{{foo}}"),
+            (Template(self.name, self.params), "{{foo|bar|baz|eggs=spam}}")
+        ]
+        for template, rendered in tests:
+            self.assertEqual(template.render(), rendered)
 
     def test_repr(self):
         correct1=  'Template(name=foo, params={})'
