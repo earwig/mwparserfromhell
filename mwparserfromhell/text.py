@@ -23,39 +23,15 @@
 from mwparserfromhell.node import Node
 from mwparserfromhell.string_mixin import StringMixin
 
-__all__ = ["Template"]
+__all__ = ["Text"]
 
-class Template(Node, StringMixin):
-    def __init__(self, name, params=None):
-        self._name = name
-        if params:
-            self._params = params
-        else:
-            self._params = []
+class Text(Node, StringMixin):
+    def __init__(self, value):
+        self._value = value
 
     def __unicode__(self):
-        if self.params:
-            params = u"|".join([unicode(param) for param in self.params])
-            return "{{" + unicode(self.name) + "|" + params + "}}"
-        else:
-            return "{{" + unicode(self.name) + "}}"
+        return unicode(self.value)
 
     @property
-    def name(self):
-        return self._name
-
-    @property
-    def params(self):
-        return self._params
-
-    def has_param(self):
-        pass
-
-    def get_param(self):
-        pass
-
-    def add_param(self):
-        pass
-
-    def remove_param(self):
-        pass
+    def value(self):
+        return self._value

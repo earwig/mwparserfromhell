@@ -20,42 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.node import Node
-from mwparserfromhell.string_mixin import StringMixin
+__all__ = ["Node"]
 
-__all__ = ["Template"]
-
-class Template(Node, StringMixin):
-    def __init__(self, name, params=None):
-        self._name = name
-        if params:
-            self._params = params
-        else:
-            self._params = []
-
-    def __unicode__(self):
-        if self.params:
-            params = u"|".join([unicode(param) for param in self.params])
-            return "{{" + unicode(self.name) + "|" + params + "}}"
-        else:
-            return "{{" + unicode(self.name) + "}}"
-
-    @property
-    def name(self):
-        return self._name
-
-    @property
-    def params(self):
-        return self._params
-
-    def has_param(self):
-        pass
-
-    def get_param(self):
-        pass
-
-    def add_param(self):
-        pass
-
-    def remove_param(self):
-        pass
+class Node(object):
+    pass

@@ -22,15 +22,28 @@
 
 from mwparserfromhell.parameter import Parameter
 from mwparserfromhell.template import Template
+from mwparserfromhell.text import Text
+from mwparserfromhell.wikicode import Wikicode
 
 __all__ = ["Parser"]
 
 class Parser(object):
     def _tokenize(self, text):
         return text
-    
+
     def parse(self, text):
-        tokens = self._tokenize(text)
-        params = [Parameter("1", "bar"), Parameter("2", "baz")]
-        templates = [Template(name="foo", params=params)]
-        return templates
+        text = u"This is a {{test}} message with a {{template|with|foo={{params}}}}."
+
+        node1 = Text(u"This is a ")
+        node2 = Template(Wikicode([Text(u"test")]))
+        node3 = Text(u" message with a ")
+        node4_param1_name = Wikicode([Text(u"1")])
+        node4_param1_value = Wikicode([Text(u"with")])
+        node4_param1 = Parameter(node4_param1_name, node4_param1_value, showkey=False)
+        node4_param2_name = Wikicode([Text(u"foo")])
+        node4_param2_value = Wikicode([Template(Wikicode([Text(u"params")]))])
+        node4_param2 = Parameter(node4_param2_name, node4_param2_value, showkey=True)
+        node4 = Template(Wikicode([Text(u"template")]), [node4_param1, node4_param2])
+        node5 = Text(u".")
+        parsed = Wikicode([node1, node2, node3, node4, node5])
+        return parsed

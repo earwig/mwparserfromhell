@@ -32,5 +32,11 @@ __license__ = "MIT License"
 __version__ = "0.1.dev"
 __email__ = "ben.kurtovic@verizon.net"
 
-from mwparserfromhell import parameter, parser, template
+from mwparserfromhell.node import Node
+from mwparserfromhell.parameter import Parameter
 from mwparserfromhell.parser import Parser
+from mwparserfromhell.template import Template
+from mwparserfromhell.text import Text
+from mwparserfromhell.wikicode import Wikicode
+
+parse = Parser().parse
