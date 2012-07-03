@@ -20,11 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixin
+from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Parameter"]
 
-class Parameter(StringMixin):
+class Parameter(StringMixIn):
     def __init__(self, name, value=None, showkey=True):
         self._name = name
         self._value = value

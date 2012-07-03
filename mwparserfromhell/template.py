@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 from mwparserfromhell.node import Node
-from mwparserfromhell.string_mixin import StringMixin
+from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Template"]
 
-class Template(Node, StringMixin):
+class Template(Node, StringMixIn):
     def __init__(self, name, params=None):
         self._name = name
         if params:

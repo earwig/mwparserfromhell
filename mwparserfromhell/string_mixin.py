@@ -20,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__all__ = ["StringMixin"]
+__all__ = ["StringMixIn"]
 
-class StringMixin(object):
+class StringMixIn(object):
     def __str__(self):
         return str(unicode(self))
 

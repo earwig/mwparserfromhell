@@ -21,11 +21,11 @@
 # SOFTWARE.
 
 from mwparserfromhell.node import Node
-from mwparserfromhell.string_mixin import StringMixin
+from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Text"]
 
-class Text(Node, StringMixin):
+class Text(Node, StringMixIn):
     def __init__(self, value):
         self._value = value
 

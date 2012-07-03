@@ -35,6 +35,7 @@ __email__ = "ben.kurtovic@verizon.net"
 from mwparserfromhell.node import Node
 from mwparserfromhell.parameter import Parameter
 from mwparserfromhell.parser import Parser
+from mwparserfromhell.string_mixin import StringMixIn
 from mwparserfromhell.template import Template
 from mwparserfromhell.text import Text
 from mwparserfromhell.wikicode import Wikicode
