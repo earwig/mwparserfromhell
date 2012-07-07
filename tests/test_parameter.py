@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 by Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -102,12 +102,12 @@ class TestParameter(unittest.TestCase):
             # add param
             # add template left
             # add template right
-            
+
             self.assertEquals(param * 3, Parameter(param.name, param.value * 3,
                                                    param.templates * 3))
             self.assertEquals(3 * param, Parameter(param.name, 3 * param.value,
                                                    3 * param.templates))
-            
+
             # add param inplace
             # add template implace
             # add str inplace
