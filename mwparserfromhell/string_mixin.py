@@ -30,34 +30,47 @@ class StringMixIn(object):  # UnicodeMixIn?
         return repr(unicode(self))
 
     def __lt__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) < unicode(other)
         return unicode(self) < other
 
     def __le__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) <= unicode(other)
         return unicode(self) <= other
 
     def __eq__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) == unicode(other)
         return unicode(self) == other
 
     def __ne__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) != unicode(other)
         return unicode(self) != other
 
     def __gt__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) > unicode(other)
         return unicode(self) > other
 
     def __ge__(self, other):
-        if isinstance(other, unicodeingMixin):
+        if isinstance(other, StringMixin):
             return unicode(self) >= unicode(other)
         return unicode(self) >= other
 
+    def __nonzero__(self):
+        return bool(unicode(self))
+
+    def __len__(self):
+        return len(unicode(self))
+
+    def __iter__(self):
+        for char in unicode(self):
+            yield char
+
     def __getitem__(self, index):
         return unicode(self)[index]
+
+    def __contains__(self, item):
+        return item in unicode(self)
