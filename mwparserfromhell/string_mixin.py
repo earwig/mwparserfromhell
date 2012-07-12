@@ -22,12 +22,15 @@
 
 __all__ = ["StringMixIn"]
 
-class StringMixIn(object):  # UnicodeMixIn?
+class StringMixIn(object):
     def __str__(self):
         return unicode(self).encode("utf8")
 
     def __repr__(self):
         return repr(unicode(self))
+
+    def __unicode__(self):
+        raise NotImplementedError()
 
     def __lt__(self, other):
         if isinstance(other, StringMixin):
@@ -73,4 +76,6 @@ class StringMixIn(object):  # UnicodeMixIn?
         return unicode(self)[index]
 
     def __contains__(self, item):
+        if isinstance(item, StringMixIn):
+            return unicode(item) in unicode(self)
         return item in unicode(self)
