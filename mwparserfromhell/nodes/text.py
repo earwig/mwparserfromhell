@@ -20,7 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-__all__ = ["Node"]
+from mwparserfromhell.nodes import Node
 
-class Node(object):
-    pass
+__all__ = ["Text"]
+
+class Text(Node):
+    def __init__(self, value):
+        self._value = value
+
+    def __unicode__(self):
+        return unicode(self.value)
+
+    @property
+    def value(self):
+        return self._value

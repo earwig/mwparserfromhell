@@ -26,15 +26,19 @@ Usage
 Normal usage is rather straightforward (where ``text`` is page text)::
 
     >>> import mwparserfromhell
-    >>> parser = mwparserfromhell.Parser()
-    >>> templates = parser.parse(text)
+    >>> wikicode = mwparserfromhell.parse(text)
 
-``templates`` is a list of ``mwparserfromhell.Template`` objects, which contain
-a ``name`` attribute, a ``params`` attribute, and a ``render()`` method. Slices
-are supported to get parameters. For example::
+``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
+ordinary unicode object. It also contains a list of nodes representing the
+components of the wikicode, including ordinary text nodes, templates, and
+links. For example::
 
-    >>> templates = parser.parse("{{foo|bar|baz|eggs=spam}}")
-    >>> print templates
+    >>> wikicode = mwparserfromhell.parse(u"{{foo|bar|baz|eggs=spam}}")
+    >>> print wikicode
+    u"{{foo|bar|baz|eggs=spam}}"
+    >>>
+
+
     [Template(name="foo", params={"1": "bar", "2": "baz", "eggs": "spam"})]
     >>> template = templates[0]
     >>> print template.name

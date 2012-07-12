@@ -24,10 +24,8 @@ import htmlentitydefs
 import re
 
 import mwparserfromhell
-from mwparserfromhell.node import Node
+from mwparserfromhell.nodes import Node, Template, Text
 from mwparserfromhell.string_mixin import StringMixIn
-from mwparserfromhell.template import Template
-from mwparserfromhell.text import Text
 
 __all__ = ["Wikicode"]
 
@@ -187,6 +185,6 @@ class Wikicode(StringMixIn):
         # Magic with htmlentitydefs if normalize
         return normalized(u" ".join(self.ifilter_text()))
 
-    def show_tree(self):
+    def get_tree(self):
         marker = object()  # Random object we can find with certainty in a list
-        print "\n".join(self._show_tree(self, [], marker))
+        return "\n".join(self._show_tree(self, [], marker))

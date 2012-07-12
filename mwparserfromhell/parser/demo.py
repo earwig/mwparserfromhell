@@ -20,18 +20,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-`mwparserfromhell <https://github.com/earwig/mwparserfromhell>`_ (the MediaWiki
-Parser from Hell) is a Python package that provides an easy-to-use and
-outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
-"""
+from mwparserfromhell.nodes import Template, Text
+from mwparserfromhell.nodes.extras import Parameter
+from mwparserfromhell.wikicode import Wikicode
 
-__author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012 Ben Kurtovic"
-__license__ = "MIT License"
-__version__ = "0.1.dev"
-__email__ = "ben.kurtovic@verizon.net"
+__all__ = ["DemoParser"]
 
-from mwparserfromhell import nodes, parser, string_mixin, wikicode
+class DemoParser(object):
+    def _tokenize(self, text):
+        return text
 
-parse = lambda text: parser.Parser().parse(text)
+    def parse(self, text):
+        text = u"This is a {{test}} message with a {{template|with|foo={{params}}}}."
+
+        node1 = Text(u"This is a ")
+        node2 = Template(Wikicode([Text(u"test")]))
+        node3 = Text(u" message with a ")
+        node4_param1_name = Wikicode([Text(u"1")])
+        node4_param1_value = Wikicode([Text(u"with")])
+        node4_param1 = Parameter(node4_param1_name, node4_param1_value, showkey=False)
+        node4_param2_name = Wikicode([Text(u"foo")])
+        node4_param2_value = Wikicode([Template(Wikicode([Text(u"params")]))])
+        node4_param2 = Parameter(node4_param2_name, node4_param2_value, showkey=True)
+        node4 = Template(Wikicode([Text(u"template")]), [node4_param1, node4_param2])
+        node5 = Text(u".")
+        parsed = Wikicode([node1, node2, node3, node4, node5])
+        return parsed

@@ -20,12 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.node import Node
-from mwparserfromhell.string_mixin import StringMixIn
+from mwparserfromhell.nodes import Node
 
 __all__ = ["Template"]
 
-class Template(Node, StringMixIn):
+class Template(Node):
     def __init__(self, name, params=None):
         self._name = name
         if params:

@@ -20,18 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-`mwparserfromhell <https://github.com/earwig/mwparserfromhell>`_ (the MediaWiki
-Parser from Hell) is a Python package that provides an easy-to-use and
-outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
-"""
+from mwparserfromhell.string_mixin import StringMixIn
 
-__author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012 Ben Kurtovic"
-__license__ = "MIT License"
-__version__ = "0.1.dev"
-__email__ = "ben.kurtovic@verizon.net"
+__all__ = ["Node"]
 
-from mwparserfromhell import nodes, parser, string_mixin, wikicode
+class Node(StringMixIn):
+    pass
 
-parse = lambda text: parser.Parser().parse(text)
+from mwparserfromhell.nodes import extras
+from mwparserfromhell.nodes.template import Template
+from mwparserfromhell.nodes.text import Text

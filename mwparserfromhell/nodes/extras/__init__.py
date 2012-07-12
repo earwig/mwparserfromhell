@@ -20,18 +20,4 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.node import Node
-from mwparserfromhell.string_mixin import StringMixIn
-
-__all__ = ["Text"]
-
-class Text(Node, StringMixIn):
-    def __init__(self, value):
-        self._value = value
-
-    def __unicode__(self):
-        return unicode(self.value)
-
-    @property
-    def value(self):
-        return self._value
+from mwparserfromhell.nodes.extras.parameter import Parameter
