@@ -27,7 +27,7 @@ class StringMixIn(object):
         return unicode(self).encode("utf8")
 
     def __repr__(self):
-        return repr(unicode(self).encode("utf8"))
+        return repr(unicode(self))
 
     def __lt__(self, other):
         if isinstance(other, unicodeingMixin):

@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import htmlentitydefs
 import re
 
 import mwparserfromhell
@@ -182,9 +183,9 @@ class Wikicode(StringMixIn):
     def filter_text(self, recursive=False, matches=None, flags=FLAGS):
         return list(self.ifilter_text(recursive, matches, flags))
 
-    def normalize(self):
-        ##  Create a deep copy of self  ##
-        return normalized
+    def strip_code(self, normalize=True):
+        # Magic with htmlentitydefs if normalize
+        return normalized(u" ".join(self.ifilter_text()))
 
     def show_tree(self):
         marker = object()  # Random object we can find with certainty in a list
