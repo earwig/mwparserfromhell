@@ -92,7 +92,7 @@ class Wikicode(StringMixIn):
                     return callback(self, value, i)
                 if self._contains(self._get_children(node), obj):
                     return self._do_search(obj, value, recursive, callback,
-                                           context=obj)
+                                           context=node)
             raise ValueError(obj)
 
         callback(self, value, self.index(obj, recursive=False))
