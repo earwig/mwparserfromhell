@@ -22,7 +22,7 @@
 
 __all__ = ["StringMixIn"]
 
-class StringMixIn(object):
+class StringMixIn(unicode):
     def __str__(self):
         return unicode(self).encode("utf8")
 

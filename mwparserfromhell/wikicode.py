@@ -20,11 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import htmlentitydefs
 import re
 
 import mwparserfromhell
-from mwparserfromhell.nodes import Node, Template, Text
+from mwparserfromhell.nodes import HTMLEntity, Node, Template, Text
 from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Wikicode"]
@@ -43,10 +42,18 @@ class Wikicode(StringMixIn):
             return value.nodes
         if isinstance(value, Node):
             return [value]
-        if isinstance(value, str) or isinstance(value, unicode):
+        if isinstance(value, basestring):
             return mwparserfromhell.parse(value).nodes
-        error = "Needs string, Node, or Wikicode object, but got {0}: {1}"
-        raise ValueError(error.format(type(value), value))
+
+        try:
+            nodelist = list(value)
+        except TypeError:
+            error = "Needs string, Node, iterable of Nodes, or Wikicode object, but got {0}: {1}"
+            raise ValueError(error.format(type(value), value))
+        if not all([isinstance(node, Node) for node in nodelist]):
+            error = "Was passed an interable {0}, but it did not contain all Nodes: {1}"
+            raise ValueError(error.format(type(value), value))
+        return nodelist
 
     def _get_children(self, node):
         yield node
@@ -217,8 +224,17 @@ class Wikicode(StringMixIn):
         return list(self.ifilter_text(recursive, matches, flags))
 
     def strip_code(self, normalize=True):
-        # Magic with htmlentitydefs if normalize
-        return normalized(u" ".join(self.ifilter_text()))
+        nodes = []
+        for node in self.nodes:
+            if isinstance(node, Text):
+                nodes.append(node)
+            elif isinstance(node, HTMLEntity):
+                if normalize:
+                    nodes.append(node.normalize())
+                else:
+                    nodes.append(node)
+
+        return u" ".join(nodes)
 
     def get_tree(self):
         marker = object()  # Random object we can find with certainty in a list

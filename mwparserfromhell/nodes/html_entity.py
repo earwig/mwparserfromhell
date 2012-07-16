@@ -20,14 +20,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixIn
+import htmlentitydefs
 
-__all__ = ["Node"]
+from mwparserfromhell.nodes import Node
 
-class Node(StringMixIn):
-    pass
+__all__ = ["HTMLEntity"]
 
-from mwparserfromhell.nodes import extras
-from mwparserfromhell.nodes.html_entity import HTMLEntity
-from mwparserfromhell.nodes.template import Template
-from mwparserfromhell.nodes.text import Text
+class HTMLEntity(Node):
+    def __init__(self, value, named):
+        self._value = value
+        self._named = named
+
+    def __unicode__(self):
+        if self.named:
+            return u"&{0};".format(self.value)
+        return u"&#{0};".format(self.value)
+
+    @property
+    def value(self):
+        return self._value
+
+    @property
+    def named(self):
+        return self._named
+
+    def normalize(self):
+        if self.named:
+            return unichr(htmlentitydefs.name2codepoint[self.value])
+        return unichr(self.value)
