@@ -125,10 +125,8 @@ class Wikicode(StringMixIn):
                     lines.append(marker)  # Continue from this line
                     self._get_tree(param.value, lines, marker, indent + 1)
                 write("}}")
-            elif isinstance(node, Text):
-                write(unicode(node))
             else:
-                raise NotImplementedError(node)
+                write(unicode(node))
         return lines
 
     @property
