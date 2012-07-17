@@ -22,9 +22,9 @@
 
 import mwparserfromhell
 from mwparserfromhell.nodes import Node
-from mwparserfromhell.wikicode import Wikicode
 
 def parse_anything(value):
+    Wikicode = mwparserfromhell.wikicode.Wikicode
     if isinstance(value, Wikicode):
         return value
     if isinstance(value, Node):

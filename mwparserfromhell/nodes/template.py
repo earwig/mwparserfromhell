@@ -22,7 +22,7 @@
 
 from mwparserfromhell.nodes import Node
 from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.parser.utils import parse_anything
+from mwparserfromhell.utils import parse_anything
 
 __all__ = ["Template"]
 

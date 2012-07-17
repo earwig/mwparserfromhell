@@ -23,8 +23,8 @@
 import re
 
 from mwparserfromhell.nodes import HTMLEntity, Node, Template, Text
-from mwparserfromhell.parser.utils import parse_anything
 from mwparserfromhell.string_mixin import StringMixIn
+from mwparserfromhell.utils import parse_anything
 
 __all__ = ["Wikicode"]
 
