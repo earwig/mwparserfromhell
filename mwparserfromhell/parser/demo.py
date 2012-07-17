@@ -31,6 +31,7 @@ class DemoParser(object):
         return text
 
     def parse(self, text):
+        # Ensure text is unicode!
         text = u"This is a {{test}} message with a {{template|with|foo={{params}}}}."
 
         node1 = Text(u"This is a ")
