@@ -34,4 +34,4 @@ __email__ = "ben.kurtovic@verizon.net"
 
 from mwparserfromhell import nodes, parser, string_mixin, wikicode
 
-parse = lambda text: parser.Parser().parse(text)
+parse = lambda text: parser.Parser(text).parse()

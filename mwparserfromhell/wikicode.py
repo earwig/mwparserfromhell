@@ -22,8 +22,8 @@
 
 import re
 
-import mwparserfromhell
 from mwparserfromhell.nodes import HTMLEntity, Node, Template, Text
+from mwparserfromhell.parser.utils import parse_anything
 from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Wikicode"]
@@ -36,24 +36,6 @@ class Wikicode(StringMixIn):
 
     def __unicode__(self):
         return "".join([unicode(node) for node in self.nodes])
-
-    def _nodify(self, value):
-        if isinstance(value, Wikicode):
-            return value.nodes
-        if isinstance(value, Node):
-            return [value]
-        if isinstance(value, basestring):
-            return mwparserfromhell.parse(value).nodes
-
-        try:
-            nodelist = list(value)
-        except TypeError:
-            error = "Needs string, Node, iterable of Nodes, or Wikicode object, but got {0}: {1}"
-            raise ValueError(error.format(type(value), value))
-        if not all([isinstance(node, Node) for node in nodelist]):
-            error = "Was passed an interable {0}, but it did not contain all Nodes: {1}"
-            raise ValueError(error.format(type(value), value))
-        return nodelist
 
     def _iterate_over_children(self, node):
         yield (None, node)
@@ -147,7 +129,7 @@ class Wikicode(StringMixIn):
         return self.nodes[index]
 
     def set(self, index, value):
-        nodes = self._nodify(value)
+        nodes = parse_anything(value).nodes
         if len(nodes) > 1:
             raise ValueError("Cannot coerce multiple nodes into one index")
         if index >= len(self.nodes) or -1 * index > len(self.nodes):
@@ -169,7 +151,7 @@ class Wikicode(StringMixIn):
         raise ValueError(obj)
 
     def insert(self, index, value):
-        nodes = self._nodify(value)
+        nodes = parse_anything(value).nodes
         for node in reversed(nodes):
             self.nodes.insert(index, node)
 
@@ -189,7 +171,7 @@ class Wikicode(StringMixIn):
         self._do_search(obj, recursive, callback, self, value)
 
     def append(self, value):
-        nodes = self._nodify(value)
+        nodes = parse_anything(value).nodes
         for node in nodes:
             self.nodes.append(node)
 

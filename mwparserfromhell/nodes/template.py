@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 from mwparserfromhell.nodes import Node
+from mwparserfromhell.nodes.extras import Parameter
+from mwparserfromhell.parser.utils import parse_anything
 
 __all__ = ["Template"]
 
@@ -39,6 +41,9 @@ class Template(Node):
         else:
             return "{{" + unicode(self.name) + "}}"
 
+    def _blank_param_value(self, value):                                            # TODO
+        pass
+
     @property
     def name(self):
         return self._name
@@ -47,14 +52,53 @@ class Template(Node):
     def params(self):
         return self._params
 
-    def has_param(self):
-        pass
+    def has_param(self, name):
+        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        for param in self.params:
+            if param.name.strip() == name:
+                return True
+        return False
 
-    def get_param(self):
-        pass
+    def get_param(self, name):
+        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        for param in self.params:
+            if param.name.strip() == name:
+                return param
+        raise ValueError(name)
 
-    def add_param(self):
-        pass
+    def add_param(self, name, value, showkey=None):
+        name, value = parse_anything(name), parse_anything(value)
+        surface_text = value.filter_text(recursive=False)
+        for node in surface_text:
+            node.replace("|", "&#124;")                                             # INSERT AS HTMLEntity INSTEAD OF RAW TEXT
 
-    def remove_param(self):
-        pass
+        if showkey is None:
+            if any(["=" in node for node in surface_text]):
+                showkey = True
+            else:
+                try:
+                    int(name)
+                except ValueError:
+                    showkey = False
+                else:
+                    showkey = True
+        elif not showkey:
+            for node in surface_text:
+                node.replace("=", "&#124;")                                         # INSERT AS HTMLEntity INSTEAD OF RAW TEXT
+
+        if self.has_param(name):
+            self.remove_param(name, keep_field=True)
+            existing = self.get_param(name).value
+            self.get_param(name).value = value                                      # CONFORM TO FORMATTING?
+        else:
+            self.params.append(Parameter(name, value, showkey))                     # CONFORM TO FORMATTING CONVENTIONS?
+
+    def remove_param(self, name, keep_field=False):                                 # DON'T MESS UP NUMBERING WITH show_key = False AND keep_field = False
+        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        for param in self.params:
+            if param.name.strip() == name:
+                if keep_field:
+                    return self._blank_param_value(param.value)
+                else:
+                    return self.params.remove(param)
+        raise ValueError(name)

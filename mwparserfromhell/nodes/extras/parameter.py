@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from mwparserfromhell.parser.utils import parse_anything
 from mwparserfromhell.string_mixin import StringMixIn
 
 __all__ = ["Parameter"]
@@ -46,3 +47,15 @@ class Parameter(StringMixIn):
     @property
     def showkey(self):
         return self._showkey
+
+    @name.setter
+    def name(self, newval):
+        self._name = parse_anything(newval)
+
+    @value.setter
+    def value(self, newval):
+        self._value = parse_anything(newval)
+
+    @showkey.setter
+    def showkey(self, newval):
+        self._showkey = newval

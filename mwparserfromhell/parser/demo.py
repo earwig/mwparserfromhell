@@ -27,10 +27,13 @@ from mwparserfromhell.wikicode import Wikicode
 __all__ = ["DemoParser"]
 
 class DemoParser(object):
-    def _tokenize(self, text):
-        return text
+    def __init__(self, text):
+        self.text = text
 
-    def parse(self, text):
+    def _tokenize(self):
+        return []
+
+    def parse(self):
         # Ensure text is unicode!
         text = u"This is a {{test}} message with a {{template|with|foo={{params}}}}."
 

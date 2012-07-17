@@ -20,20 +20,26 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import mwparserfromhell
 from mwparserfromhell.nodes import Node
+from mwparserfromhell.wikicode import Wikicode
 
-__all__ = ["Text"]
-
-class Text(Node):
-    def __init__(self, value):
-        self._value = value
-
-    def __unicode__(self):
-        return unicode(self.value)
-
-    @property
-    def value(self):
-        return self._value
-
-    def replace(self, old, new, count):                                              # TODO
-        pass
+def parse_anything(value):
+    if isinstance(value, Wikicode):
+        return value
+    if isinstance(value, Node):
+        return Wikicode([value])
+    if isinstance(value, basestring):
+        return mwparserfromhell.parse(value)
+    if isinstance(value, int):
+        return mwparserfromhell.parse(unicode(value))
+    if value is None:
+        return Wikicode([])
+    try:
+        nodelist = []
+        for item in value:
+            nodelist += parse_anything(item).nodes
+    except TypeError:
+        error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
+        raise ValueError(error.format(type(value), value))
+    return Wikicode(nodelist)

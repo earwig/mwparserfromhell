@@ -27,13 +27,16 @@ from mwparserfromhell.nodes import Node
 __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
-    def __init__(self, value, named):
+    def __init__(self, value, named, hexadecimal=False):
         self._value = value
         self._named = named
+        self._hexadecimal = hexadecimal
 
     def __unicode__(self):
         if self.named:
             return u"&{0};".format(self.value)
+        if self.hexadecimal:
+            return u"&#x{0};".format(self.value)
         return u"&#{0};".format(self.value)
 
     @property
@@ -44,7 +47,13 @@ class HTMLEntity(Node):
     def named(self):
         return self._named
 
+    @property
+    def hexadecimal(self):
+        return self._hexadecimal
+
     def normalize(self):
         if self.named:
             return unichr(htmlentitydefs.name2codepoint[self.value])
+        if self.hexadecimal:
+            return unichr(int(str(self.value), 16))
         return unichr(self.value)
