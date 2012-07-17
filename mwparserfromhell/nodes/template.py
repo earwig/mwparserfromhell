@@ -59,14 +59,14 @@ class Template(Node):
                 return True
         return False
 
-    def get_param(self, name):
+    def get(self, name):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
         for param in self.params:
             if param.name.strip() == name:
                 return param
         raise ValueError(name)
 
-    def add_param(self, name, value, showkey=None):
+    def add(self, name, value, showkey=None):
         name, value = parse_anything(name), parse_anything(value)
         surface_text = value.filter_text(recursive=False)
         for node in surface_text:
@@ -93,7 +93,7 @@ class Template(Node):
         else:
             self.params.append(Parameter(name, value, showkey))                     # CONFORM TO FORMATTING CONVENTIONS?
 
-    def remove_param(self, name, keep_field=False):                                 # DON'T MESS UP NUMBERING WITH show_key = False AND keep_field = False
+    def remove(self, name, keep_field=False):                                       # DON'T MESS UP NUMBERING WITH show_key = False AND keep_field = False
         name = name.strip() if isinstance(name, basestring) else unicode(name)
         for param in self.params:
             if param.name.strip() == name:

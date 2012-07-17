@@ -33,32 +33,32 @@ class StringMixIn(object):
         raise NotImplementedError()
 
     def __lt__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) < unicode(other)
         return unicode(self) < other
 
     def __le__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) <= unicode(other)
         return unicode(self) <= other
 
     def __eq__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) == unicode(other)
         return unicode(self) == other
 
     def __ne__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) != unicode(other)
         return unicode(self) != other
 
     def __gt__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) > unicode(other)
         return unicode(self) > other
 
     def __ge__(self, other):
-        if isinstance(other, StringMixin):
+        if isinstance(other, StringMixIn):
             return unicode(self) >= unicode(other)
         return unicode(self) >= other
 
@@ -82,3 +82,6 @@ class StringMixIn(object):
 
     def replace(self, old, new, count):
         return unicode(self).replace(old, new, count)
+
+    def strip(self, chars=None):
+        return unicode(self).strip(chars)
