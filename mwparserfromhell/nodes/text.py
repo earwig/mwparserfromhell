@@ -34,6 +34,3 @@ class Text(Node):
     @property
     def value(self):
         return self._value
-
-    def replace(self, old, new, count):                                              # TODO
-        pass

@@ -79,3 +79,6 @@ class StringMixIn(object):
         if isinstance(item, StringMixIn):
             return unicode(item) in unicode(self)
         return item in unicode(self)
+
+    def replace(self, old, new, count):
+        return unicode(self).replace(old, new, count)

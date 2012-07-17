@@ -70,7 +70,7 @@ class Template(Node):
         name, value = parse_anything(name), parse_anything(value)
         surface_text = value.filter_text(recursive=False)
         for node in surface_text:
-            node.replace("|", "&#124;")                                             # INSERT AS HTMLEntity INSTEAD OF RAW TEXT
+            value.replace(node, node.replace("|", "&#124;"))
 
         if showkey is None:
             if any(["=" in node for node in surface_text]):
@@ -84,7 +84,7 @@ class Template(Node):
                     showkey = True
         elif not showkey:
             for node in surface_text:
-                node.replace("=", "&#124;")                                         # INSERT AS HTMLEntity INSTEAD OF RAW TEXT
+                value.replace(node, node.replace("=", "&#124;"))
 
         if self.has_param(name):
             self.remove_param(name, keep_field=True)
