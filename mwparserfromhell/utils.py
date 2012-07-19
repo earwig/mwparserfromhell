@@ -24,17 +24,17 @@ import mwparserfromhell
 from mwparserfromhell.nodes import Node
 
 def parse_anything(value):
-    Wikicode = mwparserfromhell.wikicode.Wikicode
-    if isinstance(value, Wikicode):
+    wikicode = mwparserfromhell.wikicode.Wikicode
+    if isinstance(value, wikicode):
         return value
     if isinstance(value, Node):
-        return Wikicode([value])
+        return wikicode([value])
     if isinstance(value, basestring):
         return mwparserfromhell.parse(value)
     if isinstance(value, int):
         return mwparserfromhell.parse(unicode(value))
     if value is None:
-        return Wikicode([])
+        return wikicode([])
     try:
         nodelist = []
         for item in value:
@@ -42,4 +42,4 @@ def parse_anything(value):
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value), value))
-    return Wikicode(nodelist)
+    return wikicode(nodelist)

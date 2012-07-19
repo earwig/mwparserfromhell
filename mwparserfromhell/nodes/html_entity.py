@@ -27,8 +27,10 @@ from mwparserfromhell.nodes import Node
 __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
-    def __init__(self, value, named, hexadecimal=False):
+    def __init__(self, value, named=None, hexadecimal=False):
         self._value = value
+        if named is None:  # Try to guess whether or not the entity is named
+            named = False if isinstance(value, int) else True
         self._named = named
         self._hexadecimal = hexadecimal
 

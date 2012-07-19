@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.nodes import Node
+from mwparserfromhell.nodes import HTMLEntity, Node
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.utils import parse_anything
 
@@ -41,8 +41,14 @@ class Template(Node):
         else:
             return "{{" + unicode(self.name) + "}}"
 
+    def _surface_escape(self, code, char):
+        replacement = HTMLEntity(value=ord(char))
+        for node in code.filter_text(recursive=False):
+            if char in node:
+                code.replace(node, node.replace(char, replacement))
+
     def _blank_param_value(self, value):                                            # TODO
-        pass
+        pass  # MAKE VALUE CONTAIN ABSOLUTELY TWO TEXT NODES: FIRST IS SPACING BEFORE CHUNK AND SECOND IS SPACING AFTER CHUNK
 
     @property
     def name(self):
@@ -68,30 +74,31 @@ class Template(Node):
 
     def add(self, name, value, showkey=None):
         name, value = parse_anything(name), parse_anything(value)
-        surface_text = value.filter_text(recursive=False)
-        for node in surface_text:
-            value.replace(node, node.replace("|", "&#124;"))
-
-        if showkey is None:
-            if any(["=" in node for node in surface_text]):
-                showkey = True
-            else:
-                try:
-                    int(name)
-                except ValueError:
-                    showkey = False
-                else:
-                    showkey = True
-        elif not showkey:
-            for node in surface_text:
-                value.replace(node, node.replace("=", "&#124;"))
+        self._surface_escape(value, "|")
 
         if self.has_param(name):
-            self.remove_param(name, keep_field=True)
-            existing = self.get_param(name).value
-            self.get_param(name).value = value                                      # CONFORM TO FORMATTING?
-        else:
-            self.params.append(Parameter(name, value, showkey))                     # CONFORM TO FORMATTING CONVENTIONS?
+            self.remove(name, keep_field=True)
+            existing = self.get(name)
+            if showkey is None:  # Infer showkey from current value
+                showkey = existing.showkey
+            if not showkey:
+                self._surface_escape(value, "=")
+            nodes = existing.value.nodes
+            existing.value = parse_anything([nodes[0], value, nodes[1]])
+            return existing
+
+        if showkey is None:
+            try:
+                int(name)
+            except ValueError:
+                showkey = False
+            else:
+                showkey = True
+        if not showkey:
+            self._surface_escape(value, "=")
+        param = Parameter(name, value, showkey)                                     # CONFORM TO FORMATTING CONVENTIONS?
+        self.params.append(param)
+        return param
 
     def remove(self, name, keep_field=False):                                       # DON'T MESS UP NUMBERING WITH show_key = False AND keep_field = False
         name = name.strip() if isinstance(name, basestring) else unicode(name)
