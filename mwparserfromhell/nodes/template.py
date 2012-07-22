@@ -58,10 +58,12 @@ class Template(Node):
     def params(self):
         return self._params
 
-    def has_param(self, name):
+    def has_param(self, name, ignore_empty=True):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
         for param in self.params:
             if param.name.strip() == name:
+                if ignore_empty and not param.value.strip():
+                    continue
                 return True
         return False
 
