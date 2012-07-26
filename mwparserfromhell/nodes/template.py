@@ -20,7 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.nodes import HTMLEntity, Node
+import re
+
+from mwparserfromhell.nodes import HTMLEntity, Node, Text
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.utils import parse_anything
 
@@ -47,8 +49,9 @@ class Template(Node):
             if char in node:
                 code.replace(node, node.replace(char, replacement))
 
-    def _blank_param_value(self, value):                                            # TODO
-        pass  # MAKE VALUE CONTAIN ABSOLUTELY TWO TEXT NODES: FIRST IS SPACING BEFORE CHUNK AND SECOND IS SPACING AFTER CHUNK
+    def _blank_param_value(self, value):
+        match = re.search("^(\s*).*?(\s*)$", value, re.DOTALL|re.UNICODE)
+        value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     @property
     def name(self):
