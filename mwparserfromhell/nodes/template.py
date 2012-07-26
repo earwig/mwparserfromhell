@@ -92,22 +92,23 @@ class Template(Node):
         if showkey is None:
             try:
                 int(name)
+                showkey = True
             except ValueError:
                 showkey = False
-            else:
-                showkey = True
         if not showkey:
             self._surface_escape(value, "=")
         param = Parameter(name, value, showkey)                                     # CONFORM TO FORMATTING CONVENTIONS?
         self.params.append(param)
         return param
 
-    def remove(self, name, keep_field=False):                                       # DON'T MESS UP NUMBERING WITH show_key = False AND keep_field = False
+    def remove(self, name, keep_field=False, force_no_field=False):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
-        for param in self.params:
+        for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:
                     return self._blank_param_value(param.value)
-                else:
-                    return self.params.remove(param)
+                dependent = [not after.showkey for after in self.params[i+1:]]
+                if any(dependent) and not param.showkey and not force_no_field:
+                    return self._blank_param_value(param.value)
+                return self.params.remove(param)
         raise ValueError(name)
