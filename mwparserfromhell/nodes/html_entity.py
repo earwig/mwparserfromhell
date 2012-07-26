@@ -41,6 +41,28 @@ class HTMLEntity(Node):
             return u"&#x{0};".format(self.value)
         return u"&#{0};".format(self.value)
 
+    def _unichr(self, value):
+        """Implement the builtin unichr() with support for non-BMP code points.
+
+        On wide Python builds, this functions like the normal unichr(). On
+        narrow builds, this returns the value's corresponding surrogate pair.
+        """
+        try:
+            return unichr(value)
+        except ValueError:
+            # Test whether we're on the wide or narrow Python build. Check the
+            # length of a non-BMP code point (U+1F64A, SPEAK-NO-EVIL MONKEY):
+            if len(u"\U0001F64A") == 2:
+                # Ensure this code point is within the range we can encode:
+                if value > 0x10FFFF:
+                    raise ValueError("unichr() arg not in range(0x110000)")
+                if value >= 0x10000:
+                    code = value - 0x10000
+                    lead = 0xD800 + (code >> 10)
+                    trail = 0xDC00 + (code % (1 << 10))
+                    return unichr(lead) + unichr(trail)
+            raise
+
     @property
     def value(self):
         return self._value
@@ -57,5 +79,5 @@ class HTMLEntity(Node):
         if self.named:
             return unichr(htmlentitydefs.name2codepoint[self.value])
         if self.hexadecimal:
-            return unichr(int(str(self.value), 16))
-        return unichr(self.value)
+            return self._unichr(int(self.value, 16))
+        return self._unichr(int(self.value))
