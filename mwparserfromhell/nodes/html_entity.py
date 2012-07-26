@@ -30,9 +30,21 @@ class HTMLEntity(Node):
     def __init__(self, value, named=None, hexadecimal=False):
         self._value = value
         if named is None:  # Try to guess whether or not the entity is named
-            named = False if isinstance(value, int) else True
-        self._named = named
-        self._hexadecimal = hexadecimal
+            try:
+                int(value)
+                self._named = False
+                self._hexadecimal = False
+            except ValueError:
+                try:
+                    int(value, 16)
+                    self._named = False
+                    self._hexadecimal = True
+                except ValueError:
+                    self._named = True
+                    self._hexadecimal = False
+        else:
+            self._named = named
+            self._hexadecimal = hexadecimal
 
     def __unicode__(self):
         if self.named:
@@ -53,14 +65,15 @@ class HTMLEntity(Node):
             # Test whether we're on the wide or narrow Python build. Check the
             # length of a non-BMP code point (U+1F64A, SPEAK-NO-EVIL MONKEY):
             if len(u"\U0001F64A") == 2:
-                # Ensure this code point is within the range we can encode:
+                # Ensure this is within the range we can encode:
                 if value > 0x10FFFF:
                     raise ValueError("unichr() arg not in range(0x110000)")
-                if value >= 0x10000:
-                    code = value - 0x10000
-                    lead = 0xD800 + (code >> 10)
-                    trail = 0xDC00 + (code % (1 << 10))
-                    return unichr(lead) + unichr(trail)
+                code = value - 0x10000
+                if value < 0:  # Invalid code point
+                    raise
+                lead = 0xD800 + (code >> 10)
+                trail = 0xDC00 + (code % (1 << 10))
+                return unichr(lead) + unichr(trail)
             raise
 
     @property
