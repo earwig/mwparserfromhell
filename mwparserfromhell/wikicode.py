@@ -206,7 +206,7 @@ class Wikicode(StringMixIn):
     def filter_text(self, recursive=False, matches=None, flags=FLAGS):
         return list(self.ifilter_text(recursive, matches, flags))
 
-    def strip_code(self, normalize=True):
+    def strip_code(self, normalize=True, collapse=True):
         nodes = []
         for node in self.nodes:
             if isinstance(node, Text):
@@ -217,7 +217,13 @@ class Wikicode(StringMixIn):
                 else:
                     nodes.append(node)
 
-        return u" ".join(nodes)
+        if collapse:
+            stripped = u"".join(nodes).strip("\n")
+            while "\n\n\n" in stripped:
+                stripped = stripped.replace("\n\n\n", "\n\n")
+            return stripped
+        else:
+            return u"".join(nodes)
 
     def get_tree(self):
         marker = object()  # Random object we can find with certainty in a list
