@@ -28,6 +28,6 @@ class Node(StringMixIn):
     pass
 
 from mwparserfromhell.nodes import extras
+from mwparserfromhell.nodes.text import Text
 from mwparserfromhell.nodes.html_entity import HTMLEntity
 from mwparserfromhell.nodes.template import Template
-from mwparserfromhell.nodes.text import Text

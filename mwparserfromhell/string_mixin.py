@@ -22,6 +22,11 @@
 
 __all__ = ["StringMixIn"]
 
+def inheritdoc(method):
+    method.__doc__ = getattr(unicode, method.func_name).__doc__
+    return method
+
+
 class StringMixIn(object):
     def __str__(self):
         return unicode(self).encode("utf8")
@@ -80,122 +85,165 @@ class StringMixIn(object):
             return unicode(item) in unicode(self)
         return item in unicode(self)
 
+    @inheritdoc
     def capitalize(self):
         return unicode(self).capitalize()
 
+    @inheritdoc
     def center(self, width, fillchar=None):
         return unicode(self).center(width, fillchar)
 
+    @inheritdoc
     def count(self, sub=None, start=None, end=None):
         return unicode(self).count(sub, start, end)
 
+    @inheritdoc
     def decode(self, encoding=None, errors=None):
         return unicode(self).decode(encoding, errors)
 
+    @inheritdoc
     def encode(self, encoding=None, errors=None):
         return unicode(self).encode(encoding, errors)
 
+    @inheritdoc
     def endswith(self, prefix, start=None, end=None):
         return unicode(self).endswith(prefix, start, end)
 
+    @inheritdoc
     def expandtabs(self, tabsize=None):
         return unicode(self).expandtabs(tabsize)
 
+    @inheritdoc
     def find(self, sub=None, start=None, end=None):
         return unicode(self).find(sub, start, end)
 
+    @inheritdoc
     def format(self, *args, **kwargs):
         return unicode(self).format(*args, **kwargs)
 
+    @inheritdoc
     def index(self, sub=None, start=None, end=None):
         return unicode(self).index(sub, start, end)
 
+    @inheritdoc
     def isalnum(self):
         return unicode(self).isalnum()
 
+    @inheritdoc
     def isalpha(self):
         return unicode(self).isalpha()
 
+    @inheritdoc
     def isdecimal(self):
         return unicode(self).isdecimal()
 
+    @inheritdoc
     def isdigit(self):
         return unicode(self).isdigit()
 
+    @inheritdoc
     def islower(self):
         return unicode(self).islower()
 
+    @inheritdoc
     def isnumeric(self):
         return unicode(self).isnumeric()
 
+    @inheritdoc
     def isspace(self):
         return unicode(self).isspace()
 
+    @inheritdoc
     def istitle(self):
         return unicode(self).istitle()
 
+    @inheritdoc
     def isupper(self):
         return unicode(self).isupper()
 
+    @inheritdoc
     def join(self, iterable):
         return unicode(self).join(iterable)
 
+    @inheritdoc
     def ljust(self, width, fillchar=None):
         return unicode(self).ljust(width, fillchar)
 
+    @inheritdoc
     def lower(self):
         return unicode(self).lower()
 
+    @inheritdoc
     def lstrip(self, chars=None):
         return unicode(self).lstrip(chars)
 
+    @inheritdoc
     def partition(self, sep):
         return unicode(self).partition(sep)
 
+    @inheritdoc
     def replace(self, old, new, count):
         return unicode(self).replace(old, new, count)
 
+    @inheritdoc
     def rfind(self, sub=None, start=None, end=None):
         return unicode(self).rfind(sub, start, end)
 
+    @inheritdoc
     def rindex(self, sub=None, start=None, end=None):
         return unicode(self).rindex(sub, start, end)
 
+    @inheritdoc
     def rjust(self, width, fillchar=None):
         return unicode(self).rjust(width, fillchar)
 
+    @inheritdoc
     def rpartition(self, sep):
         return unicode(self).rpartition(sep)
 
+    @inheritdoc
     def rsplit(self, sep=None, maxsplit=None):
         return unicode(self).rsplit(sep, maxsplit)
 
+    @inheritdoc
     def rstrip(self, chars=None):
         return unicode(self).rstrip(chars)
 
+    @inheritdoc
     def split(self, sep=None, maxsplit=None):
         return unicode(self).split(sep, maxsplit)
 
+    @inheritdoc
     def splitlines(self, keepends=None):
         return unicode(self).splitlines(keepends)
 
+    @inheritdoc
     def startswith(self, prefix, start=None, end=None):
         return unicode(self).startswith(prefix, start, end)
 
+    @inheritdoc
     def strip(self, chars=None):
         return unicode(self).strip(chars)
 
+    @inheritdoc
     def swapcase(self):
         return unicode(self).swapcase()
 
+    @inheritdoc
     def title(self):
         return unicode(self).title()
 
+    @inheritdoc
     def translate(self, table, deletechars=None):
         return unicode(self).translate(table, deletechars)
 
+    @inheritdoc
     def upper(self):
         return unicode(self).upper()
 
+    @inheritdoc
     def zfill(self, width):
         return unicode(self).zfill(width)
+
+
+del inheritdoc
