@@ -253,20 +253,10 @@ class Wikicode(StringMixIn):
     def strip_code(self, normalize=True, collapse=True):
         nodes = []
         for node in self.nodes:
-            if isinstance(node, Heading):
-                nodes.append(child.title)
-            elif isinstance(node, HTMLEntity):
-                if normalize:
-                    nodes.append(node.normalize())
-                else:
-                    nodes.append(node)
-            elif isinstance(node, Tag):
-                if node.type in node.TAGS_VISIBLE:
-                    nodes.append(node.contents.strip_code(normalize, collapse))
-            elif isinstance(node, Text):
-                nodes.append(node)
+            stripped = node.__strip__(normalize)
+            if stripped:
+                nodes.append(unicode(stripped))
 
-        nodes = map(unicode, nodes)
         if collapse:
             stripped = u"".join(nodes).strip("\n")
             while "\n\n\n" in stripped:

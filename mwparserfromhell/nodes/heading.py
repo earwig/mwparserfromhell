@@ -32,6 +32,9 @@ class Heading(Node):
     def __unicode__(self):
         return ("=" * self.level) + self.title + ("=" * self.level)
 
+    def __strip__(self, normalize=True, collapse=True):
+        return self.title
+
     @property
     def title(self):
         return self._title

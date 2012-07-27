@@ -100,6 +100,11 @@ class Tag(Node):
             result += "</" + unicode(self.tag) + " " * self.close_padding + ">"
         return result
 
+    def __strip__(self, normalize=True, collapse=True):
+        if self.type in self.TAGS_VISIBLE:
+            return self.contents.strip_code(normalize, collapse)
+        return None
+
     def translate(self):
         translations {
             self.TAG_ITALIC: ("''", "''"),

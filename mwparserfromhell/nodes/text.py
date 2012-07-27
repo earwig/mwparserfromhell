@@ -31,6 +31,9 @@ class Text(Node):
     def __unicode__(self):
         return unicode(self.value)
 
+    def __strip__(self, normalize=True, collapse=True):
+        return self
+
     @property
     def value(self):
         return self._value
