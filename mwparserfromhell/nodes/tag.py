@@ -27,15 +27,46 @@ __all__ = ["Tag"]
 
 class Tag(Node):
     TAG_UNKNOWN = 0
-    TAG_BOLD = 1
-    TAG_ITALIC = 2
 
-    TAG_REF
+    # Basic HTML:
+    TAG_ITALIC = 1
+    TAG_BOLD = 2
+    TAG_UNDERLINE = 3
+    TAG_STRIKETHROUGH = 4
+    TAG_UNORDERED_LIST = 5
+    TAG_ORDERED_LIST = 6
+    TAG_DEF_TERM = 7
+    TAG_DEF_ITEM = 8
+    TAG_BLOCKQUOTE = 9
+    TAG_RULE = 10
+    TAG_BREAK = 11
+    TAG_ABBR = 12
+    TAG_PRE = 13
+    TAG_MONOSPACE = 14
+    TAG_CODE = 15
+    TAG_SPAN = 16
+    TAG_DIV = 17
+    TAG_FONT = 18
+    TAG_SMALL = 19
+    TAG_BIG = 20
+    TAG_CENTER = 21
 
-    TAG_MISC_HTML = 99
+    # MediaWiki parser hooks:
+    TAG_REF = 101
+    TAG_GALLERY = 102
+    TAG_MATH = 103
+    TAG_NOWIKI = 104
+    TAG_NOINCLUDE = 105
+    TAG_INCLUDEONLY = 106
+    TAG_ONLYINCLUDE = 107
 
-    TAGS_VISIBLE = []
-    TAGS_INVISIBLE = []
+    # Additional parser hooks:
+    TAG_SYNTAXHIGHLIGHT = 201
+    TAG_POEM = 202
+
+    # Lists of tags:
+    TAGS_INVISIBLE = [TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE]
+    TAGS_VISIBLE = range(300) - TAGS_INVISIBLE
 
     def __init__(self, type_, tag, contents, attrs=None, showtag=True,
                  self_closing=False, open_padding=0, close_padding=0):
@@ -53,7 +84,11 @@ class Tag(Node):
 
     def __unicode__(self):
         if not self.showtag:
-            raise NotImplementedError()
+            open_, close = self._translate()
+            if self.self_closing:
+                return _open
+            else:
+                return open_ + unicode(self.contents) + close
 
         result = "<" + unicode(self.tag)
         if self.attrs:
@@ -64,6 +99,18 @@ class Tag(Node):
             result += " " * self.open_padding + ">" + unicode(self.contents)
             result += "</" + unicode(self.tag) + " " * self.close_padding + ">"
         return result
+
+    def translate(self):
+        translations {
+            self.TAG_ITALIC: ("''", "''"),
+            self.TAG_BOLD: ("'''", "'''"),
+            self.TAG_UNORDERED_LIST: ("*", ""),
+            self.TAG_ORDERED_LIST: ("#", ""),
+            self.TAG_DEF_TERM: (";", ""),
+            self.TAG_DEF_ITEM: (":", ""),
+            self.TAG_RULE: ("----", ""),
+        }
+        return translations[self.type]
 
     @property
     def type(self):
