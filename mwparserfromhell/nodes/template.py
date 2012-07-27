@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from collections import defaultdict
 import re
 
 from mwparserfromhell.nodes import HTMLEntity, Node, Text
@@ -53,6 +54,26 @@ class Template(Node):
         match = re.search("^(\s*).*?(\s*)$", value, re.DOTALL|re.UNICODE)
         value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
+    def _select_theory(self, theories):
+        if theories:
+            best = max(theories.values())
+            confidence = float(best) / sum(theories.values())
+            if confidence > 0.75:
+                return theories.keys()[theories.values().index(best)]
+
+    def _get_spacing_conventions(self):
+        before_theories = defaultdict(lambda: 0)
+        after_theories = defaultdict(lambda: 0)
+        for param in self.params:
+            match = re.search("^(\s*).*?(\s*)$", param.value, re.S|re.U)
+            before, after = match.group(1), match.group(2)
+            before_theories[before] += 1
+            after_theories[after] += 1
+
+        before = self._select_theory(before_theories)
+        after = self._select_theory(after_theories)
+        return before, after
+
     @property
     def name(self):
         return self._name
@@ -77,7 +98,7 @@ class Template(Node):
                 return param
         raise ValueError(name)
 
-    def add(self, name, value, showkey=None):
+    def add(self, name, value, showkey=None, force_nonconformity=False):
         name, value = parse_anything(name), parse_anything(value)
         self._surface_escape(value, "|")
 
@@ -89,7 +110,10 @@ class Template(Node):
             if not showkey:
                 self._surface_escape(value, "=")
             nodes = existing.value.nodes
-            existing.value = parse_anything([nodes[0], value, nodes[1]])
+            if force_nonconformity:
+                existing.value = value
+            else:
+                existing.value = parse_anything([nodes[0], value, nodes[1]])
             return existing
 
         if showkey is None:
@@ -100,7 +124,15 @@ class Template(Node):
                 showkey = False
         if not showkey:
             self._surface_escape(value, "=")
-        param = Parameter(name, value, showkey)                                     # CONFORM TO FORMATTING CONVENTIONS?
+        if not force_nonconformity:
+            before, after = self._get_spacing_conventions()
+            if before and after:
+                value = parse_anything([before, value, after])
+            elif before:
+                value = parse_anything([before, value])
+            elif after:
+                value = parse_anything([value, after])
+        param = Parameter(name, value, showkey)
         self.params.append(param)
         return param
 
