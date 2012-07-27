@@ -28,7 +28,7 @@ from mwparserfromhell.utils import parse_anything
 
 __all__ = ["Wikicode"]
 
-FLAGS = re.I | re.S | re.U
+FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
 
 class Wikicode(StringMixIn):
     def __init__(self, nodes):

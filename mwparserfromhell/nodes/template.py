@@ -29,6 +29,8 @@ from mwparserfromhell.utils import parse_anything
 
 __all__ = ["Template"]
 
+FLAGS = re.DOTALL | re.UNICODE
+
 class Template(Node):
     def __init__(self, name, params=None):
         self._name = name
@@ -51,7 +53,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement))
 
     def _blank_param_value(self, value):
-        match = re.search("^(\s*).*?(\s*)$", value, re.DOTALL|re.UNICODE)
+        match = re.search("^(\s*).*?(\s*)$", unicode(value), FLAGS)
         value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     def _select_theory(self, theories):
@@ -65,7 +67,7 @@ class Template(Node):
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
         for param in self.params:
-            match = re.search("^(\s*).*?(\s*)$", param.value, re.S|re.U)
+            match = re.search("^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
             before, after = match.group(1), match.group(2)
             before_theories[before] += 1
             after_theories[after] += 1
