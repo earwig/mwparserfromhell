@@ -253,7 +253,7 @@ class Wikicode(StringMixIn):
     def strip_code(self, normalize=True, collapse=True):
         nodes = []
         for node in self.nodes:
-            stripped = node.__strip__(normalize)
+            stripped = node.__strip__(normalize, collapse)
             if stripped:
                 nodes.append(unicode(stripped))
 

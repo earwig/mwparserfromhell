@@ -53,7 +53,7 @@ class HTMLEntity(Node):
             return u"&#x{0};".format(self.value)
         return u"&#{0};".format(self.value)
 
-    def __strip__(self, normalize=True, collapse=True):
+    def __strip__(self, normalize, collapse):
         if normalize:
             return self.normalize()
         return self

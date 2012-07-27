@@ -100,7 +100,7 @@ class Tag(Node):
             result += "</" + unicode(self.tag) + " " * self.close_padding + ">"
         return result
 
-    def __strip__(self, normalize=True, collapse=True):
+    def __strip__(self, normalize, collapse):
         if self.type in self.TAGS_VISIBLE:
             return self.contents.strip_code(normalize, collapse)
         return None
