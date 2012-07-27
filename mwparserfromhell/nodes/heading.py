@@ -20,16 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixIn
+from mwparserfromhell.nodes import Node
 
-__all__ = ["Node"]
+__all__ = ["Heading"]
 
-class Node(StringMixIn):
-    pass
+class Heading(Node):
+    def __init__(self, title, level):
+        self._title = title
+        self._level = level
 
-from mwparserfromhell.nodes import extras
-from mwparserfromhell.nodes.text import Text
-from mwparserfromhell.nodes.heading import Heading
-from mwparserfromhell.nodes.html_entity import HTMLEntity
-from mwparserfromhell.nodes.tag import Tag
-from mwparserfromhell.nodes.template import Template
+    def __unicode__(self):
+        return ("=" * self.level) + self.title + ("=" * self.level)
+
+    @property
+    def title(self):
+        return self._title
+
+    @property
+    def level(self):
+        return self._level

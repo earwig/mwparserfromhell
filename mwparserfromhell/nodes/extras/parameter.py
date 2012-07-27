@@ -26,7 +26,7 @@ from mwparserfromhell.utils import parse_anything
 __all__ = ["Parameter"]
 
 class Parameter(StringMixIn):
-    def __init__(self, name, value=None, showkey=True):
+    def __init__(self, name, value, showkey=True):
         self._name = name
         self._value = value
         self._showkey = showkey

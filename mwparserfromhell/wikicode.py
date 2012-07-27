@@ -22,7 +22,9 @@
 
 import re
 
-from mwparserfromhell.nodes import HTMLEntity, Node, Template, Text
+from mwparserfromhell.nodes import (
+    Heading, HTMLEntity, Node, Tag, Template, Text
+)
 from mwparserfromhell.string_mixin import StringMixIn
 from mwparserfromhell.utils import parse_anything
 
@@ -39,7 +41,22 @@ class Wikicode(StringMixIn):
 
     def _iterate_over_children(self, node):
         yield (None, node)
-        if isinstance(node, Template):
+        if isinstance(node, Heading):
+            for child in self._get_all_nodes(node.title):
+                yield (node.title, child)
+        elif isinstance(node, Tag):
+            if node.showtag:
+                for child in self._get_all_nodes(node.tag):
+                    yield (node.tag, tag)
+                for attr in node.attrs:
+                    for child in self._get_all_nodes(attr.name):
+                        yield (attr.name, child)
+                    if attr.value:
+                        for child in self._get_all_nodes(attr.value):
+                            yield (attr.value, child)
+            for child in self._get_all_nodes(node.contents):
+                yield (node.contents, child)
+        elif isinstance(node, Template):
             for child in self._get_all_nodes(node.name):
                 yield (node.name, child)
             for param in node.params:
@@ -103,11 +120,38 @@ class Wikicode(StringMixIn):
                 last = lines.pop()
                 lines.append(last + " ".join(args))
             else:
-                lines.append("      " * indent + " ".join(args))
+                lines.append(" " * 6 * indent + " ".join(args))
 
         for node in code.nodes:
-            if isinstance(node, Template):
-                write("{{", )
+            if isinstance(node, Heading):
+                write("=" * node.level)
+                self._get_tree(node.title, lines, marker, indent + 1)
+                write("=" * node.level)
+            elif isinstance(node, Tag):
+                tagnodes = node.tag.nodes
+                if (not node.attrs and len(tagnodes) == 1 and
+                        isinstance(tagnodes[0], Text)):
+                    write("<" + unicode(tagnodes[0]) + ">")
+                else:
+                    write("<")
+                    self._get_tree(node.tag, lines, marker, indent + 1)
+                    for attr in node.attrs:
+                        self._get_tree(attr.name, lines, marker, indent + 1)
+                        if not attr.value:
+                            continue
+                        write("    = ")
+                        lines.append(marker)  # Continue from this line
+                        self._get_tree(attr.value, lines, marker, indent + 1)
+                    write(">")
+                self._get_tree(node.contents, lines, marker, indent + 1)
+                if len(tagnodes) == 1 and isinstance(tagnodes[0], Text):
+                    write("</" + unicode(tagnodes[0]) + ">")
+                else:
+                    write("</")
+                    self._get_tree(node.tag, lines, marker, indent + 1)
+                    write(">")
+            elif isinstance(node, Template):
+                write("{{")
                 self._get_tree(node.name, lines, marker, indent + 1)
                 for param in node.params:
                     write("    | ")
@@ -209,14 +253,20 @@ class Wikicode(StringMixIn):
     def strip_code(self, normalize=True, collapse=True):
         nodes = []
         for node in self.nodes:
-            if isinstance(node, Text):
-                nodes.append(node)
+            if isinstance(node, Heading):
+                nodes.append(child.title)
             elif isinstance(node, HTMLEntity):
                 if normalize:
                     nodes.append(node.normalize())
                 else:
                     nodes.append(node)
+            elif isinstance(node, Tag):
+                if node.type in node.TAGS_VISIBLE:
+                    nodes.append(node.contents.strip_code(normalize, collapse))
+            elif isinstance(node, Text):
+                nodes.append(node)
 
+        nodes = map(unicode, nodes)
         if collapse:
             stripped = u"".join(nodes).strip("\n")
             while "\n\n\n" in stripped:

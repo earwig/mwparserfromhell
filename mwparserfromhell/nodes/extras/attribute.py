@@ -22,14 +22,29 @@
 
 from mwparserfromhell.string_mixin import StringMixIn
 
-__all__ = ["Node"]
+__all__ = ["Attribute"]
 
-class Node(StringMixIn):
-    pass
+class Attribute(StringMixIn):
+    def __init__(self, name, value=None, quoted=True):
+        self._name = name
+        self._value = value
+        self._quoted = quoted
 
-from mwparserfromhell.nodes import extras
-from mwparserfromhell.nodes.text import Text
-from mwparserfromhell.nodes.heading import Heading
-from mwparserfromhell.nodes.html_entity import HTMLEntity
-from mwparserfromhell.nodes.tag import Tag
-from mwparserfromhell.nodes.template import Template
+    def __unicode__(self):
+        if self.value:
+            if self.quoted:
+                return unicode(self.name) + '="' + unicode(self.value) + '"'
+            return unicode(self.name) + "=" + unicode(self.value)
+        return unicode(self.name)
+
+    @property
+    def name(self):
+        return self._name
+
+    @property
+    def value(self):
+        return self._value
+
+    @property
+    def quoted(self):
+        return self._quoted

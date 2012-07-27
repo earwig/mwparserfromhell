@@ -20,4 +20,5 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from mwparserfromhell.nodes.extras.attribute import Attribute
 from mwparserfromhell.nodes.extras.parameter import Parameter
