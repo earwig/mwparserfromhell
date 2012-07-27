@@ -25,7 +25,10 @@ from mwparserfromhell.string_mixin import StringMixIn
 __all__ = ["Node"]
 
 class Node(StringMixIn):
-    def __strip__(self, normalize=True, collapse=True):
+    def __iternodes__(self, getter):
+        yield None, self
+
+    def __strip__(self, normalize, collapse):
         return None
 
 from mwparserfromhell.nodes import extras

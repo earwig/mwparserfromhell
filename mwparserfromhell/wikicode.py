@@ -39,39 +39,12 @@ class Wikicode(StringMixIn):
     def __unicode__(self):
         return "".join([unicode(node) for node in self.nodes])
 
-    def _iterate_over_children(self, node):
-        yield (None, node)
-        if isinstance(node, Heading):
-            for child in self._get_all_nodes(node.title):
-                yield (node.title, child)
-        elif isinstance(node, Tag):
-            if node.showtag:
-                for child in self._get_all_nodes(node.tag):
-                    yield (node.tag, tag)
-                for attr in node.attrs:
-                    for child in self._get_all_nodes(attr.name):
-                        yield (attr.name, child)
-                    if attr.value:
-                        for child in self._get_all_nodes(attr.value):
-                            yield (attr.value, child)
-            for child in self._get_all_nodes(node.contents):
-                yield (node.contents, child)
-        elif isinstance(node, Template):
-            for child in self._get_all_nodes(node.name):
-                yield (node.name, child)
-            for param in node.params:
-                if param.showkey:
-                    for child in self._get_all_nodes(param.name):
-                        yield (param.name, child)
-                for child in self._get_all_nodes(param.value):
-                    yield (param.value, child)
-
     def _get_children(self, node):
-        for context, child in self._iterate_over_children(node):
+        for context, child in node.__iternodes__(self._get_all_nodes):
             yield child
 
     def _get_context(self, node, obj):
-        for context, child in self._iterate_over_children(node):
+        for context, child in node.__iternodes__(self._get_all_nodes):
             if child is obj:
                 return context
         raise ValueError(obj)

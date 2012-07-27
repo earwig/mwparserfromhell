@@ -46,6 +46,17 @@ class Template(Node):
         else:
             return "{{" + unicode(self.name) + "}}"
 
+    def __iternodes__(self, getter):
+        yield None, self
+        for child in getter(self.name):
+            yield self.name, child
+        for param in self.params:
+            if param.showkey:
+                for child in getter(param.name):
+                    yield param.name, child
+            for child in getter(param.value):
+                yield param.value, child
+
     def _surface_escape(self, code, char):
         replacement = HTMLEntity(value=ord(char))
         for node in code.filter_text(recursive=False):

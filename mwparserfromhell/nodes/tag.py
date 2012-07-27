@@ -100,6 +100,20 @@ class Tag(Node):
             result += "</" + unicode(self.tag) + " " * self.close_padding + ">"
         return result
 
+    def __iternodes__(self, getter):
+        yield None, self
+        if self.showtag:
+            for child in getter(self.tag):
+                yield self.tag, tag
+            for attr in self.attrs:
+                for child in getter(attr.name):
+                    yield attr.name, child
+                if attr.value:
+                    for child in getter(attr.value):
+                        yield attr.value, child
+        for child in getter(self.contents):
+            yield self.contents, child
+
     def __strip__(self, normalize, collapse):
         if self.type in self.TAGS_VISIBLE:
             return self.contents.strip_code(normalize, collapse)
