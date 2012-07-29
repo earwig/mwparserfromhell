@@ -65,8 +65,8 @@ class Tag(Node):
     TAG_POEM = 202
 
     # Lists of tags:
-    TAGS_INVISIBLE = [TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE]
-    TAGS_VISIBLE = range(300) - TAGS_INVISIBLE
+    TAGS_INVISIBLE = set((TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE))
+    TAGS_VISIBLE = set(range(300)) - TAGS_INVISIBLE
 
     def __init__(self, type_, tag, contents, attrs=None, showtag=True,
                  self_closing=False, open_padding=0, close_padding=0):
@@ -120,7 +120,7 @@ class Tag(Node):
         return None
 
     def translate(self):
-        translations {
+        translations = {
             self.TAG_ITALIC: ("''", "''"),
             self.TAG_BOLD: ("'''", "'''"),
             self.TAG_UNORDERED_LIST: ("*", ""),
