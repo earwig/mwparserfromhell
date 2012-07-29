@@ -20,8 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.nodes import Node
-from mwparserfromhell.nodes.extras import Attribute
+from mwparserfromhell.nodes import Node, Text
 
 __all__ = ["Tag"]
 
@@ -86,7 +85,7 @@ class Tag(Node):
         if not self.showtag:
             open_, close = self._translate()
             if self.self_closing:
-                return _open
+                return open_
             else:
                 return open_ + unicode(self.contents) + close
 
@@ -104,7 +103,7 @@ class Tag(Node):
         yield None, self
         if self.showtag:
             for child in getter(self.tag):
-                yield self.tag, tag
+                yield self.tag, child
             for attr in self.attrs:
                 for child in getter(attr.name):
                     yield attr.name, child
@@ -119,7 +118,31 @@ class Tag(Node):
             return self.contents.strip_code(normalize, collapse)
         return None
 
-    def translate(self):
+    def __showtree__(self, write, get, mark):
+        tagnodes = self.tag.nodes
+        if (not self.attrs and len(tagnodes) == 1 and
+                                        isinstance(tagnodes[0], Text)):
+            write("<" + unicode(tagnodes[0]) + ">")
+        else:
+            write("<")
+            get(self.tag)
+            for attr in self.attrs:
+                get(attr.name)
+                if not attr.value:
+                    continue
+                write("    = ")
+                mark()
+                get(attr.value)
+            write(">")
+        get(self.contents)
+        if len(tagnodes) == 1 and isinstance(tagnodes[0], Text):
+            write("</" + unicode(tagnodes[0]) + ">")
+        else:
+            write("</")
+            get(self.tag)
+            write(">")
+
+    def _translate(self):
         translations = {
             self.TAG_ITALIC: ("''", "''"),
             self.TAG_BOLD: ("'''", "'''"),

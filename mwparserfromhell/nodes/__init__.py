@@ -31,6 +31,10 @@ class Node(StringMixIn):
     def __strip__(self, normalize, collapse):
         return None
 
+    def __showtree__(self, write, get, mark):
+        write(unicode(self))
+
+
 from mwparserfromhell.nodes import extras
 from mwparserfromhell.nodes.text import Text
 from mwparserfromhell.nodes.heading import Heading

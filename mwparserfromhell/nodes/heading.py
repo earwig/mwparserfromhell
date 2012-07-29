@@ -40,6 +40,11 @@ class Heading(Node):
     def __strip__(self, normalize, collapse):
         return self.title
 
+    def __showtree__(self, write, get, mark):
+        write("=" * self.level)
+        get(self.title)
+        write("=" * self.level)
+
     @property
     def title(self):
         return self._title

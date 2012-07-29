@@ -22,9 +22,7 @@
 
 import re
 
-from mwparserfromhell.nodes import (
-    Heading, HTMLEntity, Node, Tag, Template, Text
-)
+from mwparserfromhell.nodes import Node, Template, Text
 from mwparserfromhell.string_mixin import StringMixIn
 from mwparserfromhell.utils import parse_anything
 
@@ -95,47 +93,10 @@ class Wikicode(StringMixIn):
             else:
                 lines.append(" " * 6 * indent + " ".join(args))
 
+        get = lambda code: self._get_tree(code, lines, marker, indent + 1)
+        mark = lambda: lines.append(marker)
         for node in code.nodes:
-            if isinstance(node, Heading):
-                write("=" * node.level)
-                self._get_tree(node.title, lines, marker, indent + 1)
-                write("=" * node.level)
-            elif isinstance(node, Tag):
-                tagnodes = node.tag.nodes
-                if (not node.attrs and len(tagnodes) == 1 and
-                        isinstance(tagnodes[0], Text)):
-                    write("<" + unicode(tagnodes[0]) + ">")
-                else:
-                    write("<")
-                    self._get_tree(node.tag, lines, marker, indent + 1)
-                    for attr in node.attrs:
-                        self._get_tree(attr.name, lines, marker, indent + 1)
-                        if not attr.value:
-                            continue
-                        write("    = ")
-                        lines.append(marker)  # Continue from this line
-                        self._get_tree(attr.value, lines, marker, indent + 1)
-                    write(">")
-                self._get_tree(node.contents, lines, marker, indent + 1)
-                if len(tagnodes) == 1 and isinstance(tagnodes[0], Text):
-                    write("</" + unicode(tagnodes[0]) + ">")
-                else:
-                    write("</")
-                    self._get_tree(node.tag, lines, marker, indent + 1)
-                    write(">")
-            elif isinstance(node, Template):
-                write("{{")
-                self._get_tree(node.name, lines, marker, indent + 1)
-                for param in node.params:
-                    write("    | ")
-                    lines.append(marker)  # Continue from this line
-                    self._get_tree(param.name, lines, marker, indent + 1)
-                    write("    = ")
-                    lines.append(marker)  # Continue from this line
-                    self._get_tree(param.value, lines, marker, indent + 1)
-                write("}}")
-            else:
-                write(unicode(node))
+            node.__showtree__(write, get, mark)
         return lines
 
     @property

@@ -57,6 +57,18 @@ class Template(Node):
             for child in getter(param.value):
                 yield param.value, child
 
+    def __showtree__(self, write, get, mark):
+        write("{{")
+        get(self.name)
+        for param in self.params:
+            write("    | ")
+            mark()
+            get(param.name)
+            write("    = ")
+            mark()
+            get(param.value)
+        write("}}")
+
     def _surface_escape(self, code, char):
         replacement = HTMLEntity(value=ord(char))
         for node in code.filter_text(recursive=False):
