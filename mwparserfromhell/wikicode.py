@@ -22,7 +22,7 @@
 
 import re
 
-from mwparserfromhell.nodes import Node, Template, Text
+from mwparserfromhell.nodes import Node, Tag, Template, Text
 from mwparserfromhell.string_mixin import StringMixIn
 from mwparserfromhell.utils import parse_anything
 
@@ -84,7 +84,7 @@ class Wikicode(StringMixIn):
 
         callback(context, self.index(obj, recursive=False), *args, **kwargs)
 
-    def _get_tree(self, code, lines, marker=None, indent=0):
+    def _get_tree(self, code, lines, marker, indent):
         def write(*args):
             if lines and lines[-1] is marker:  # Continue from the last line
                 lines.pop()  # Remove the marker
@@ -174,6 +174,9 @@ class Wikicode(StringMixIn):
     def ifilter_text(self, recursive=False, matches=None, flags=FLAGS):
         return self.filter(recursive, matches, flags, forcetype=Text)
 
+    def ifilter_tags(self, recursive=False, matches=None, flags=FLAGS):
+        return self.ifilter(recursive, matches, flags, forcetype=Tag)
+
     def filter(self, recursive=False, matches=None, flags=FLAGS,
                forcetype=None):
         return list(self.ifilter(recursive, matches, flags, forcetype))
@@ -183,6 +186,9 @@ class Wikicode(StringMixIn):
 
     def filter_text(self, recursive=False, matches=None, flags=FLAGS):
         return list(self.ifilter_text(recursive, matches, flags))
+
+    def filter_tags(self, recursive=False, matches=None, flags=FLAGS):
+        return list(self.ifilter_tags(recursive, matches, flags))
 
     def strip_code(self, normalize=True, collapse=True):
         nodes = []
@@ -201,4 +207,4 @@ class Wikicode(StringMixIn):
 
     def get_tree(self):
         marker = object()  # Random object we can find with certainty in a list
-        return "\n".join(self._get_tree(self, [], marker))
+        return "\n".join(self._get_tree(self, [], marker, 0))
