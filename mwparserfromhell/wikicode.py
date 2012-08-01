@@ -21,8 +21,9 @@
 # SOFTWARE.
 
 import re
+import sys
 
-from mwparserfromhell.nodes import Node, Tag, Template, Text
+from mwparserfromhell.nodes import Heading, Node, Tag, Template, Text
 from mwparserfromhell.string_mixin import StringMixIn
 from mwparserfromhell.utils import parse_anything
 
@@ -189,6 +190,34 @@ class Wikicode(StringMixIn):
 
     def filter_tags(self, recursive=False, matches=None, flags=FLAGS):
         return list(self.ifilter_tags(recursive, matches, flags))
+
+    def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
+                     include_headings=True):
+        if matches:
+            matches = r"^(=+?)\s*" + matches + r"\s*\1$"
+        headings = self.filter(recursive=True, matches=matches, flags=flags,
+                                forcetype=Heading)
+        if levels:
+            headings = [head for head in headings if head.level in levels]
+
+        sections = []
+        buffers = [[sys.maxint, 0]]
+        i = 0
+        while i < len(self.nodes):
+            if self.nodes[i] in headings:
+                this = self.nodes[i].level
+                for (level, start) in buffers:
+                    if not flat or this <= level:
+                        buffers.remove([level, start])
+                        sections.append(self.nodes[start:i])
+                buffers.append([this, i])
+                if not include_headings:
+                    i += 1
+            i += 1
+        for (level, start) in buffers:
+            if start != i:
+                sections.append(self.nodes[start:i])
+        return sections
 
     def strip_code(self, normalize=True, collapse=True):
         nodes = []

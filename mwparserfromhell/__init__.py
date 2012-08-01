@@ -32,6 +32,6 @@ __license__ = "MIT License"
 __version__ = "0.1.dev"
 __email__ = "ben.kurtovic@verizon.net"
 
-from mwparserfromhell import nodes, parser, string_mixin, wikicode
+from mwparserfromhell import nodes, parser, smart_list, string_mixin, wikicode
 
 parse = lambda text: parser.Parser(text).parse()

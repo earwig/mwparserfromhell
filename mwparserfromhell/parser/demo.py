@@ -22,6 +22,7 @@
 
 from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.nodes.extras import Parameter
+from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
 __all__ = ["DemoParser"]
@@ -48,5 +49,5 @@ class DemoParser(object):
         node4_param2 = Parameter(node4_param2_name, node4_param2_value, showkey=True)
         node4 = Template(Wikicode([Text(u"template")]), [node4_param1, node4_param2])
         node5 = Text(u".")
-        parsed = Wikicode([node1, node2, node3, node4, node5])
+        parsed = Wikicode(SmartList([node1, node2, node3, node4, node5]))
         return parsed
