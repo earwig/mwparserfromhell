@@ -39,7 +39,15 @@ class SmartList(list):
         self._children[id(child)] = (child, sliceinfo)
         return child
 
-    # def __setslice__(self, start, stop):
+    def __setslice__(self, start, stop, iterable):
+        obj = list(iterable)
+        super(SmartList, self).__setslice__(start, stop, obj)
+        diff = len(obj) - stop + start
+        for child, (ch_start, ch_stop, step) in self._children.itervalues():
+            if ch_start >= stop:
+                self._children[id(child)][1][0] += diff
+            if ch_stop >= stop and ch_stop != sys.maxint:
+                self._children[id(child)][1][1] += diff
 
     def append(self, obj):
         super(SmartList, self).append(obj)
@@ -53,6 +61,9 @@ class _ListProxy(list):
         super(_ListProxy, self).__init__()
         self._parent = parent
         self._sliceinfo = sliceinfo
+
+    def __repr__(self):
+        return repr(self._render())
 
     def __len__(self):
         return (self._stop - self._start) / self._step
@@ -68,6 +79,12 @@ class _ListProxy(list):
 
     def __getslice__(self, start, stop):
         return self._render()[start:stop]
+
+    def __setitem__(self, index, obj):
+        self._parent[self._start + index] = obj
+
+    def __setslice__(self, start, stop, iterable):
+        self._parent[self._start + start:self._start + stop] = iterable
 
     @property
     def _start(self):
