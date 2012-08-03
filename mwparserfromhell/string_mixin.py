@@ -34,9 +34,6 @@ class StringMixIn(object):
     def __repr__(self):
         return repr(unicode(self))
 
-    def __unicode__(self):
-        raise NotImplementedError()
-
     def __lt__(self, other):
         if isinstance(other, StringMixIn):
             return unicode(self) < unicode(other)
@@ -70,6 +67,9 @@ class StringMixIn(object):
     def __nonzero__(self):
         return bool(unicode(self))
 
+    def __unicode__(self):
+        raise NotImplementedError()
+
     def __len__(self):
         return len(unicode(self))
 
@@ -77,8 +77,8 @@ class StringMixIn(object):
         for char in unicode(self):
             yield char
 
-    def __getitem__(self, index):
-        return unicode(self)[index]
+    def __getitem__(self, key):
+        return unicode(self)[key]
 
     def __contains__(self, item):
         if isinstance(item, StringMixIn):
