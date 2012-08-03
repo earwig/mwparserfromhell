@@ -189,22 +189,44 @@ class _ListProxy(list):
     def _render(self):
         return self._parent[self._start:self._stop:self._step]
 
-    def append(self, obj):
-        self._parent.insert(self._stop, obj)
+    def append(self, item):
+        self._parent.insert(self._stop, item)
 
-    count
+    def count(self, item):
+        return self._render().count(item)
 
-    index
+    def index(self, item, start=None, stop=None):
+        if start is not None:
+            if stop is not None:
+                return self._render().index(item, start, stop)
+            return self._render().index(item, start)
+        return self._render().index(item)
 
-    extend
+    def extend(self, item):
+        self._parent[self._stop:self._stop] = item
 
-    def insert(self, index, obj):
-        self._parent.insert(self._start + index, obj)
+    def insert(self, index, item):
+        self._parent.insert(self._start + index, item)
 
     pop
 
     remove
 
-    reverse
+    def reverse(self):
+        item = self._render()
+        item.reverse()
+        self._parent[self._start:self._stop:self._step] = item
 
-    sort
+    def sort(self, cmp=None, key=None, reverse=None):
+        item = self._render()
+        if cmp is not None:
+            if key is not None:
+                if reverse is not None:
+                    item.sort(cmp, key, reverse)
+                else:
+                    item.sort(cmp, key)
+            else:
+                item.sort(cmp)
+        else:
+            item.sort()
+        self._parent[self._start:self._stop:self._step] = item
