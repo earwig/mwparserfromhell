@@ -83,26 +83,46 @@ class SmartList(list):
         self.extend(other)
 
     def append(self, item):
-        super(SmartList, self).append(item)
-        for child, (start, stop, step) in self._children.itervalues():
-            if stop >= len(self) - 1 and stop != sys.maxint:
-                self._children[id(child)][1][1] += 1
+        head = len(self)
+        self[head:head] = [item]
 
-    #count
+    def extend(self, item):
+        head = len(self)
+        self[head:head] = item
 
-    #index
+    def insert(self, index, item):
+        self[index:index] = [item]
 
-    #extend
+    def pop(self, index=None):
+        if index is None:
+            index = len(self) - 1
+        item = self[index]
+        del self[index]
+        return item
 
-    #insert
+    def remove(item):
+        del self[self.index(item)]
 
-    #pop
+    def reverse(self):
+        copy = list(self)
+        for child in self._children:
+            child._parent = copy
+        super(SmartList, self).reverse()
 
-    #remove
-
-    #reverse
-
-    #sort
+    def sort(self, cmp=None, key=None, reverse=None):
+        copy = list(self)
+        for child in self._children:
+            child._parent = copy
+        if cmp is not None:
+            if key is not None:
+                if reverse is not None:
+                    super(SmartList, self).sort(cmp, key, reverse)
+                else:
+                    super(SmartList, self).sort(cmp, key)
+            else:
+                super(SmartList, self).sort(cmp)
+        else:
+            super(SmartList, self).sort()
 
 
 class _ListProxy(list):
@@ -237,8 +257,8 @@ class _ListProxy(list):
         self._parent.insert(self._start + index, item)
 
     def pop(self, index=None):
-        if not index:
-            index = len(self)
+        if index is None:
+            index = len(self) - 1
         return self._parent.pop(self._start + index)
 
     def remove(self, item):
