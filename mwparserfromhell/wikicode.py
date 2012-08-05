@@ -23,9 +23,9 @@
 import re
 import sys
 
-from mwparserfromhell.nodes import Heading, Node, Tag, Template, Text
-from mwparserfromhell.string_mixin import StringMixIn
-from mwparserfromhell.utils import parse_anything
+from .nodes import Heading, Node, Tag, Template, Text
+from .string_mixin import StringMixIn
+from .utils import parse_anything
 
 __all__ = ["Wikicode"]
 

@@ -23,9 +23,9 @@
 from collections import defaultdict
 import re
 
-from mwparserfromhell.nodes import HTMLEntity, Node, Text
-from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.utils import parse_anything
+from . import HTMLEntity, Node, Text
+from .extras import Parameter
+from ..utils import parse_anything
 
 __all__ = ["Template"]
 

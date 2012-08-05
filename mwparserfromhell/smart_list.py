@@ -53,7 +53,16 @@ class SmartList(list):
                 if stop >= key.stop and stop != sys.maxint:
                     self._children[id(child)][1][1] += diff
 
-    __delitem__
+    def __delitem__(self, key):
+        super(SmartList, self).__delitem__(key)
+        if not isinstance(key, slice):
+            key = slice(key, key + 1)
+        diff = key.stop - key.start
+        for child, (start, stop, step) in self._children.itervalues():
+            if start > key.start:
+                self._children[id(child)][1][0] -= diff
+            if stop >= key.stop:
+                self._children[id(child)][1][1] -= diff
 
     def __getslice__(self, start, stop):
         return self.__getitem__(slice(start, stop))
@@ -64,17 +73,14 @@ class SmartList(list):
     def __delslice__(self, start, stop):
         self.__delitem__(slice(start, stop))
 
-    __add__
+    def __add__(self, other):
+        return SmartList(list(self) + other)
 
-    __radd__
+    def __radd__(self, other):
+        return SmartList(other + list(self))
 
-    __iadd__
-
-    __mul__
-
-    __rmul__
-
-    __imul__
+    def __iadd__(self, other):
+        self.extend(other)
 
     def append(self, item):
         super(SmartList, self).append(item)
@@ -82,21 +88,21 @@ class SmartList(list):
             if stop >= len(self) - 1 and stop != sys.maxint:
                 self._children[id(child)][1][1] += 1
 
-    count
+    #count
 
-    index
+    #index
 
-    extend
+    #extend
 
-    insert
+    #insert
 
-    pop
+    #pop
 
-    remove
+    #remove
 
-    reverse
+    #reverse
 
-    sort
+    #sort
 
 
 class _ListProxy(list):
@@ -108,19 +114,19 @@ class _ListProxy(list):
     def __repr__(self):
         return repr(self._render())
 
-    __lt__
+    #__lt__
 
-    __le__
+    #__le__
 
-    __eq__
+    #__eq__
 
-    __ne__
+    #__ne__
 
-    __gt__
+    #__gt__
 
-    __ge__
+    #__ge__
 
-    __nonzero__
+    #__nonzero__
 
     def __len__(self):
         return (self._stop - self._start) / self._step
@@ -136,7 +142,7 @@ class _ListProxy(list):
         else:
             self._parent[self._start + index] = item
 
-    __delitem__
+    #__delitem__
 
     def __iter__(self):
         i = self._start
@@ -162,17 +168,14 @@ class _ListProxy(list):
     def __delslice__(self, start, stop):
         self.__delitem__(slice(start, stop))
 
-    __add__
+    def __add__(self, other):
+        return SmartList(list(self) + other)
 
-    __radd__
+    def __radd__(self, other):
+        return SmartList(other + list(self))
 
-    __iadd__
-
-    __mul__
-
-    __rmul__
-
-    __imul__
+    def __iadd__(self, other):
+        self.extend(other)
 
     @property
     def _start(self):
@@ -208,9 +211,9 @@ class _ListProxy(list):
     def insert(self, index, item):
         self._parent.insert(self._start + index, item)
 
-    pop
+    #pop
 
-    remove
+    #remove
 
     def reverse(self):
         item = self._render()

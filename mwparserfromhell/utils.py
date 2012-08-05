@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 import mwparserfromhell
-from mwparserfromhell.nodes import Node
+from .nodes import Node
 
 def parse_anything(value):
     wikicode = mwparserfromhell.wikicode.Wikicode

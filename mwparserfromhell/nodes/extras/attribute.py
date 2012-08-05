@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixIn
+from ...string_mixin import StringMixIn
 
 __all__ = ["Attribute"]
 

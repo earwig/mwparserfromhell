@@ -20,8 +20,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixIn
-from mwparserfromhell.utils import parse_anything
+from ...string_mixin import StringMixIn
+from ...utils import parse_anything
 
 __all__ = ["Parameter"]
 

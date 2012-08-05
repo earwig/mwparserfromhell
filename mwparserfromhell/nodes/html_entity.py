@@ -22,7 +22,7 @@
 
 import htmlentitydefs
 
-from mwparserfromhell.nodes import Node
+from . import Node
 
 __all__ = ["HTMLEntity"]
 

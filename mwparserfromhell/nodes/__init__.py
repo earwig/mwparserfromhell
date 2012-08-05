@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.string_mixin import StringMixIn
+from ..string_mixin import StringMixIn
 
 __all__ = ["Node"]
 
@@ -35,9 +35,9 @@ class Node(StringMixIn):
         write(unicode(self))
 
 
-from mwparserfromhell.nodes import extras
-from mwparserfromhell.nodes.text import Text
-from mwparserfromhell.nodes.heading import Heading
-from mwparserfromhell.nodes.html_entity import HTMLEntity
-from mwparserfromhell.nodes.tag import Tag
-from mwparserfromhell.nodes.template import Template
+from . import extras
+from .text import Text
+from .heading import Heading
+from .html_entity import HTMLEntity
+from .tag import Tag
+from .template import Template

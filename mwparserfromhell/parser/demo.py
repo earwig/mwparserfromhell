@@ -20,10 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.nodes import Template, Text
-from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
+from ..nodes import Template, Text
+from ..nodes.extras import Parameter
+from ..smart_list import SmartList
+from ..wikicode import Wikicode
 
 __all__ = ["DemoParser"]
 
