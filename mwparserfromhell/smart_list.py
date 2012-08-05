@@ -114,19 +114,38 @@ class _ListProxy(list):
     def __repr__(self):
         return repr(self._render())
 
-    #__lt__
+    def __lt__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() < list(other)
+        return self._render() < other
 
-    #__le__
+    def __le__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() <= list(other)
+        return self._render() <= other
 
-    #__eq__
+    def __eq__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() == list(other)
+        return self._render() == other
 
-    #__ne__
+    def __ne__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() != list(other)
+        return self._render() != other
 
-    #__gt__
+    def __gt__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() > list(other)
+        return self._render() > other
 
-    #__ge__
+    def __ge__(self, other):
+        if isinstance(other, _ListProxy):
+            return self._render() >= list(other)
+        return self._render() >= other
 
-    #__nonzero__
+    def __nonzero__(self):
+        return bool(self._render())
 
     def __len__(self):
         return (self._stop - self._start) / self._step
@@ -140,9 +159,15 @@ class _ListProxy(list):
                              key.step)
             self._parent[adjusted] = item
         else:
-            self._parent[self._start + index] = item
+            self._parent[self._start + key] = item
 
-    #__delitem__
+    def __delitem__(self, key):
+        if isinstance(key, slice):
+            adjusted = slice(key.start + self._start, key.stop + self._stop,
+                             key.step)
+            del self._parent[adjusted]
+        else:
+            del self._parent[self._start + key]
 
     def __iter__(self):
         i = self._start
@@ -190,7 +215,7 @@ class _ListProxy(list):
         return self._sliceinfo[2]
 
     def _render(self):
-        return self._parent[self._start:self._stop:self._step]
+        return list(self._parent)[self._start:self._stop:self._step]
 
     def append(self, item):
         self._parent.insert(self._stop, item)
@@ -211,9 +236,14 @@ class _ListProxy(list):
     def insert(self, index, item):
         self._parent.insert(self._start + index, item)
 
-    #pop
+    def pop(self, index=None):
+        if not index:
+            index = len(self)
+        return self._parent.pop(self._start + index)
 
-    #remove
+    def remove(self, item):
+        index = self.index(item)
+        del self._parent[index]
 
     def reverse(self):
         item = self._render()
