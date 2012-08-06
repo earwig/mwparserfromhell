@@ -20,24 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from ..string_mixin import StringMixIn
+from . import tokens
 
-__all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
+__all__ = ["Tokenizer"]
 
-class Node(StringMixIn):
-    def __iternodes__(self, getter):
-        yield None, self
-
-    def __strip__(self, normalize, collapse):
-        return None
-
-    def __showtree__(self, write, get, mark):
-        write(unicode(self))
-
-
-from . import extras
-from .text import Text
-from .heading import Heading
-from .html_entity import HTMLEntity
-from .tag import Tag
-from .template import Template
+class Tokenizer(object):
+    def tokenize(self, text):
+        tokens = [tokens.Text(text=text)]
+        return tokens

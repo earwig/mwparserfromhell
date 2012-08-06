@@ -20,4 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .demo import DemoParser as Parser
+from .builder import Builder
+from .tokenizer import Tokenizer
+
+__all__ = ["Parser"]
+
+class Parser(object):
+    def __init__(self, text):
+        self.text = text
+        self._tokenizer = Tokenizer()
+        self._builder = Builder()
+
+    def parse(self):
+        tokens = self._tokenizer.tokenize(self.text)
+        code = self._builder.build(tokens)
+        return code

@@ -20,24 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from ..string_mixin import StringMixIn
+__all__ = ["BuildStack"]
 
-__all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
+class BuildStack(object):
+    def __init__(self):
+        pass
 
-class Node(StringMixIn):
-    def __iternodes__(self, getter):
-        yield None, self
+    def write(self, item):
+        pass
 
-    def __strip__(self, normalize, collapse):
-        return None
+    def push(self):
+        pass
 
-    def __showtree__(self, write, get, mark):
-        write(unicode(self))
-
-
-from . import extras
-from .text import Text
-from .heading import Heading
-from .html_entity import HTMLEntity
-from .tag import Tag
-from .template import Template
+    def pop(self):
+        pass
