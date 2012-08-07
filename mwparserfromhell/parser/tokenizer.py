@@ -25,6 +25,12 @@ from . import tokens
 __all__ = ["Tokenizer"]
 
 class Tokenizer(object):
+    def __init__(self):
+        self._text = None
+        self._head = 0
+        self._tokens = []
+
     def tokenize(self, text):
-        tokenized = [tokens.TEXT(text=text)]
-        return tokenized
+        self._text = text
+        self._tokens.append(tokens.TEXT(text=text))
+        return self._tokens
