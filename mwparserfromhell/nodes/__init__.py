@@ -25,6 +25,9 @@ from ..string_mixin import StringMixIn
 __all__ = ["Node"]
 
 class Node(StringMixIn):
+    def __unicode__(self):
+        raise NotImplementedError()
+
     def __iternodes__(self, getter):
         yield None, self
 

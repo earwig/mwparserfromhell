@@ -69,6 +69,7 @@ class Tag(Node):
 
     def __init__(self, type_, tag, contents, attrs=None, showtag=True,
                  self_closing=False, open_padding=0, close_padding=0):
+        super(Tag, self).__init__(self)
         self._type = type_
         self._tag = tag
         self._contents = contents

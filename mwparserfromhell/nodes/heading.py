@@ -26,6 +26,7 @@ __all__ = ["Heading"]
 
 class Heading(Node):
     def __init__(self, title, level):
+        super(Heading, self).__init__(self)
         self._title = title
         self._level = level
 

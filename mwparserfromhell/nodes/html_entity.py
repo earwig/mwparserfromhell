@@ -28,6 +28,7 @@ __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
     def __init__(self, value, named=None, hexadecimal=False):
+        super(HTMLEntity, self).__init__(self)
         self._value = value
         if named is None:  # Try to guess whether or not the entity is named
             try:

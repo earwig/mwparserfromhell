@@ -100,7 +100,7 @@ class SmartList(list):
         del self[index]
         return item
 
-    def remove(item):
+    def remove(self, item):
         del self[self.index(item)]
 
     def reverse(self):

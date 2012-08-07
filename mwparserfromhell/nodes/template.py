@@ -33,6 +33,7 @@ FLAGS = re.DOTALL | re.UNICODE
 
 class Template(Node):
     def __init__(self, name, params=None):
+        super(Template, self).__init__(self)
         self._name = name
         if params:
             self._params = params

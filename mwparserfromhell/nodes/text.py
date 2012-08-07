@@ -26,6 +26,7 @@ __all__ = ["Text"]
 
 class Text(Node):
     def __init__(self, value):
+        super(Text, self).__init__(self)
         self._value = value
 
     def __unicode__(self):
