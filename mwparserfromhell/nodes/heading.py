@@ -30,7 +30,7 @@ class Heading(Node):
         self._level = level
 
     def __unicode__(self):
-        return ("=" * self.level) + self.title + ("=" * self.level)
+        return ("=" * self.level) + unicode(self.title) + ("=" * self.level)
 
     def __iternodes__(self, getter):
         yield None, self

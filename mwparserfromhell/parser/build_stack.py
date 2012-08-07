@@ -20,17 +20,20 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from ..smart_list import SmartList
+from ..wikicode import Wikicode
+
 __all__ = ["BuildStack"]
 
 class BuildStack(object):
     def __init__(self):
-        pass
+        self._stacks = []
 
     def write(self, item):
-        pass
+        self._stacks[-1].append(item)
 
     def push(self):
-        pass
+        self._stacks.append([])
 
     def pop(self):
-        pass
+        return Wikicode(SmartList(self._stacks.pop()))

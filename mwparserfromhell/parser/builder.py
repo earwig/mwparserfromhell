@@ -24,10 +24,8 @@ import re
 
 from . import tokens
 from .build_stack import BuildStack
-from ..nodes import Template, Text
-from ..nodes.extras import Parameter
-from ..smart_list import SmartList
-from ..wikicode import Wikicode
+from ..nodes import Heading, HTMLEntity, Tag, Template, Text
+from ..nodes.extras import Attribute, Parameter
 
 __all__ = ["Builder"]
 
@@ -36,22 +34,19 @@ class Builder(object):
         self._tokens = []
         self._stack = BuildStack()
 
-    def _pop(self):
-        return Wikicode(SmartList(stack.pop()))
-
     def _handle_parameter(self, key):
         showkey = False
         self._stack.push()
         while self._tokens:
             token = self._tokens.pop(0)
             if isinstance(token, tokens.TEMPLATE_PARAM_EQUALS):
-                key = self._pop()
+                key = self._stack.pop()
                 showkey = True
                 self._stack.push()
             elif isinstance(token, (tokens.TEMPLATE_PARAM_SEPARATOR,
-                                  tokens.TEMPLATE_CLOSE)):
+                                    tokens.TEMPLATE_CLOSE)):
                 self._tokens.insert(0, token)
-                value = self._pop()
+                value = self._stack.pop()
                 return Parameter(key, value, showkey)
             else:
                 self._stack.write(self._handle_token())
@@ -65,7 +60,7 @@ class Builder(object):
             token = self._tokens.pop(0)
             if isinstance(token, tokens.TEMPLATE_PARAM_SEPARATOR):
                 if not params:
-                    name = self._pop()
+                    name = self._stack.pop()
                 param = self._handle_parameter(min(int_key_range - int_keys))
                 if re.match(r"[1-9][0-9]*$", param.key.strip()):
                     int_keys.add(int(param.key))
@@ -73,8 +68,71 @@ class Builder(object):
                 params.append(param)
             elif isinstance(token, tokens.TEMPLATE_CLOSE):
                 if not params:
-                    name = self._pop()
+                    name = self._stack.pop()
                 return Template(name, params)
+            else:
+                self._stack.write(self._handle_token())
+
+    def _handle_entity(self):
+        token = self._tokens.pop(0)
+        if isinstance(token, tokens.HTML_ENTITY_NUMERIC):
+            token = self._tokens.pop(0)
+            if isinstance(token, tokens.HTML_ENTITY_HEX):
+                token = self._tokens.pop(0)
+                return HTMLEntity(token.text, named=False, hexadecimal=True)
+            return HTMLEntity(token.text, named=False, hexadecimal=False)
+        return HTMLEntity(token.text, named=True, hexadecimal=False)
+
+    def _handle_heading(self, token):
+        level = token.level
+        self._stack.push()
+        while self._tokens:
+            token = self._tokens.pop(0)
+            if isinstance(token, tokens.HEADING_BLOCK):
+                title = self._stack.pop()
+                return Heading(title, level)
+            else:
+                self._stack.write(self._handle_token())
+
+    def _handle_attribute(self):
+        name, quoted = None, False
+        self._stack.push()
+        while self._tokens:
+            token = self._tokens.pop(0)
+            if isinstance(token, tokens.TAG_ATTR_EQUALS):
+                name = self._stack.pop()
+                self._stack.push()
+            elif isinstance(token, tokens.TAG_ATTR_QUOTE):
+                quoted = True
+            elif isinstance(token, (tokens.TAG_ATTR_START,
+                                    tokens.TAG_CLOSE_OPEN)):
+                self._tokens.insert(0, token)
+                if name is not None:
+                    return Attribute(name, self._stack.pop(), quoted)
+                return Attribute(self._stack.pop(), quoted=quoted)
+            else:
+                self._stack.write(self._handle_token())
+
+    def _handle_tag(self, token):
+        type_, showtag, attrs = token.type, token.showtag, attrs
+        self._stack.push()
+        while self._tokens:
+            token = self._tokens.pop(0)
+            if isinstance(token, tokens.TAG_ATTR_START):
+                attrs.append(self._handle_attribute())
+            elif isinstance(token, tokens.TAG_CLOSE_OPEN):
+                open_pad = token.padding
+                tag = self._stack.pop()
+                self._stack.push()
+            elif isinstance(token, tokens.TAG_CLOSE_SELFCLOSE):
+                tag = self._stack.pop()
+                return Tag(type_, tag, attrs=attrs, showtag=showtag,
+                           self_closing=True, open_padding=token.padding)
+            elif isinstance(token, tokens.TAG_OPEN_CLOSE):
+                contents = self._stack.pop()
+            elif isinstance(token, tokens.TAG_CLOSE_CLOSE):
+                return Tag(type_, tag, contents, attrs, showtag, self_closing,
+                           open_pad, token.padding)
             else:
                 self._stack.write(self._handle_token())
 
@@ -84,10 +142,16 @@ class Builder(object):
             return Text(token.text)
         elif isinstance(token, tokens.TEMPLATE_OPEN):
             return self._handle_template()
+        elif isinstance(token, tokens.HTML_ENTITY_START):
+            return self._handle_entity()
+        elif isinstance(token, tokens.HEADING_BLOCK):
+            return self._handle_heading(token)
+        elif isinstance(token, tokens.TAG_OPEN_OPEN):
+            return self._handle_tag(token)
 
     def build(self, tokens):
         self._tokens = tokens
         self._stack.push()
         while self._tokens:
             self._stack.write(self._handle_token())
-        return self._pop()
+        return self._stack.pop()

@@ -55,6 +55,7 @@ HTML_ENTITY_END = make("HTML_ENTITY_END")                           # ;
 HEADING_BLOCK = make("HEADING_BLOCK")                               # =...
 
 TAG_OPEN_OPEN = make("TAG_OPEN_OPEN")                               # <
+TAG_ATTR_START = make("TAG_ATTR_START")
 TAG_ATTR_EQUALS = make("TAG_ATTR_EQUALS")                           # =
 TAG_ATTR_QUOTE = make("TAG_ATTR_QUOTE")                             # "
 TAG_CLOSE_OPEN = make("TAG_CLOSE_OPEN")                             # >
