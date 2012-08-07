@@ -26,5 +26,5 @@ __all__ = ["Tokenizer"]
 
 class Tokenizer(object):
     def tokenize(self, text):
-        tokens = [tokens.Text(text=text)]
-        return tokens
+        tokenized = [tokens.TEXT(text=text)]
+        return tokenized

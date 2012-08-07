@@ -62,8 +62,8 @@ class Builder(object):
                 if not params:
                     name = self._stack.pop()
                 param = self._handle_parameter(min(int_key_range - int_keys))
-                if re.match(r"[1-9][0-9]*$", param.key.strip()):
-                    int_keys.add(int(param.key))
+                if re.match(r"[1-9][0-9]*$", param.name.strip()):
+                    int_keys.add(int(param.name))
                     int_key_range.add(len(int_keys) + 1)
                 params.append(param)
             elif isinstance(token, tokens.TEMPLATE_CLOSE):
@@ -114,7 +114,8 @@ class Builder(object):
                 self._stack.write(self._handle_token())
 
     def _handle_tag(self, token):
-        type_, showtag, attrs = token.type, token.showtag, attrs
+        type_, showtag = token.type, token.showtag
+        attrs = []
         self._stack.push()
         while self._tokens:
             token = self._tokens.pop(0)
@@ -131,7 +132,7 @@ class Builder(object):
             elif isinstance(token, tokens.TAG_OPEN_CLOSE):
                 contents = self._stack.pop()
             elif isinstance(token, tokens.TAG_CLOSE_CLOSE):
-                return Tag(type_, tag, contents, attrs, showtag, self_closing,
+                return Tag(type_, tag, contents, attrs, showtag, False,
                            open_pad, token.padding)
             else:
                 self._stack.write(self._handle_token())
@@ -149,8 +150,8 @@ class Builder(object):
         elif isinstance(token, tokens.TAG_OPEN_OPEN):
             return self._handle_tag(token)
 
-    def build(self, tokens):
-        self._tokens = tokens
+    def build(self, tokenlist):
+        self._tokens = tokenlist
         self._stack.push()
         while self._tokens:
             self._stack.write(self._handle_token())
