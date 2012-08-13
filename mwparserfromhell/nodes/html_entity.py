@@ -27,7 +27,7 @@ from . import Node
 __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
-    def __init__(self, value, named=None, hexadecimal=False):
+    def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
         self._value = value
         if named is None:  # Try to guess whether or not the entity is named
             try:
@@ -45,12 +45,13 @@ class HTMLEntity(Node):
         else:
             self._named = named
             self._hexadecimal = hexadecimal
+        self._hex_char = hex_char
 
     def __unicode__(self):
         if self.named:
             return u"&{0};".format(self.value)
         if self.hexadecimal:
-            return u"&#x{0};".format(self.value)
+            return u"&#{0}{1};".format(self.hex_char, self.value)
         return u"&#{0};".format(self.value)
 
     def __strip__(self, normalize, collapse):
@@ -92,6 +93,10 @@ class HTMLEntity(Node):
     @property
     def hexadecimal(self):
         return self._hexadecimal
+
+    @property
+    def hex_char(self):
+        return self._hex_char
 
     def normalize(self):
         if self.named:

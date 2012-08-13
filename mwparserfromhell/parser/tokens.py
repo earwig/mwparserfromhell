@@ -49,7 +49,7 @@ TemplateClose = make("TemplateClose")                               # }}
 
 HTMLEntityStart = make("HTMLEntityStart")                           # &
 HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
-HTMLEntityHex = make("HTMLEntityHex")                               # X
+HTMLEntityHex = make("HTMLEntityHex")                               # x
 HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 
 HeadingBlock = make("HeadingBlock")                                 # =...

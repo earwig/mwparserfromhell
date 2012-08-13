@@ -88,8 +88,9 @@ class Builder(object):
         if isinstance(token, tokens.HTMLEntityNumeric):
             token = self._tokens.pop(0)
             if isinstance(token, tokens.HTMLEntityHex):
-                token = self._tokens.pop(0)
-                return HTMLEntity(token.text, named=False, hexadecimal=True)
+                text = self._tokens.pop(0)
+                return HTMLEntity(text.text, named=False, hexadecimal=True,
+                                  hex_char=token.char)
             return HTMLEntity(token.text, named=False, hexadecimal=False)
         return HTMLEntity(token.text, named=True, hexadecimal=False)
 
