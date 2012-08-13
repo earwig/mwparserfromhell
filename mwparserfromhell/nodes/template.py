@@ -90,7 +90,7 @@ class Template(Node):
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
         for param in self.params:
-            match = re.search("^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
+            match = re.search(r"^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
             before, after = match.group(1), match.group(2)
             before_theories[before] += 1
             after_theories[after] += 1

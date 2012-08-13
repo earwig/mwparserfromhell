@@ -25,12 +25,51 @@ from . import tokens
 __all__ = ["Tokenizer"]
 
 class Tokenizer(object):
+    START = object()
+    END = object()
+
     def __init__(self):
         self._text = None
         self._head = 0
-        self._tokens = []
+        self._stacks = []
+
+        self._modifiers = []
+
+    def _push(self):
+        self._stacks.append([])
+
+    def _pop(self):
+        return self._stacks.pop()
+
+    def _write(self, token, stack=None):
+        if stack is None:
+            stack = self._stacks[-1]
+        if not stack:
+            stack.append(token)
+            return
+        last = stack[-1]
+        if isinstance(token, tokens.Text) and isinstance(last, tokens.Text):
+            last.text += token.text
+        else:
+            stack.append(token)
+
+    def _read(self, delta=0, wrap=False):
+        index = self._head + delta
+        if index < 0 and (not wrap or abs(index) > len(self._text)):
+            return self.START
+        if index >= len(self._text):
+            return self.END
+        return self._text[index]
+
+    def _parse_until(self, stop):
+        self._push()
+        while True:
+            if self._read() in (stop, self.END):
+                return self._pop()
+            else:
+                self._write(tokens.Text(text=self._read()))
+            self._head += 1
 
     def tokenize(self, text):
-        self._text = text
-        self._tokens.append(tokens.TEXT(text=text))
-        return self._tokens
+        self._text = list(text)
+        return self._parse_until(stop=self.END)

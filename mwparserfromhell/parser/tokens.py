@@ -24,43 +24,43 @@ __all__ = ["Token"]
 
 class Token(object):
     def __init__(self, **kwargs):
-        self.__kwargs = kwargs
+        super(Token, self).__setattr__("_kwargs", kwargs)
 
     def __getattr__(self, key):
-        return self.__kwargs[key]
+        return self._kwargs[key]
 
     def __setattr__(self, key, value):
-        self.__kwargs[key] = value
+        self._kwargs[key] = value
 
     def __delattr__(self, key):
-        del self.__kwargs[key]
+        del self._kwargs[key]
 
 
 def make(name):
     __all__.append(name)
     return type(name, (Token,), {})
 
-TEXT = make("TEXT")
+Text = make("Text")
 
-TEMPLATE_OPEN = make("TEMPLATE_OPEN")                               # {{
-TEMPLATE_PARAM_SEPARATOR = make("TEMPLATE_PARAM_SEPARATOR")         # |
-TEMPLATE_PARAM_EQUALS = make("TEMPLATE_PARAM_EQUALS")               # =
-TEMPLATE_CLOSE = make("TEMPLATE_CLOSE")                             # }}
+TemplateOpen = make("TemplateOpen")                                 # {{
+TemplateParamSeparator = make("TemplateParamSeparator")             # |
+TemplateParamEquals = make("TemplateParamEquals")                   # =
+TemplateClose = make("TemplateClose")                               # }}
 
-HTML_ENTITY_START = make("HTML_ENTITY_START")                       # &
-HTML_ENTITY_NUMERIC = make("HTML_ENTITY_NUMERIC")                   # #
-HTML_ENTITY_HEX = make("HTML_ENTITY_HEX")                           # x
-HTML_ENTITY_END = make("HTML_ENTITY_END")                           # ;
+HTMLEntityStart = make("HTMLEntityStart")                           # &
+HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
+HTMLEntityHex = make("HTMLEntityHex")                               # X
+HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 
-HEADING_BLOCK = make("HEADING_BLOCK")                               # =...
+HeadingBlock = make("HeadingBlock")                                 # =...
 
-TAG_OPEN_OPEN = make("TAG_OPEN_OPEN")                               # <
-TAG_ATTR_START = make("TAG_ATTR_START")
-TAG_ATTR_EQUALS = make("TAG_ATTR_EQUALS")                           # =
-TAG_ATTR_QUOTE = make("TAG_ATTR_QUOTE")                             # "
-TAG_CLOSE_OPEN = make("TAG_CLOSE_OPEN")                             # >
-TAG_CLOSE_SELFCLOSE = make("TAG_CLOSE_SELFCLOSE")                   # />
-TAG_OPEN_CLOSE = make("TAG_OPEN_CLOSE")                             # </
-TAG_CLOSE_CLOSE = make("TAG_CLOSE_CLOSE")                           # >
+TagOpenOpen = make("TagOpenOpen")                                   # <
+TagAttrStart = make("TagAttrStart")
+TagAttrEquals = make("TagAttrEquals")                               # =
+TagAttrQuote = make("TagAttrQuote")                                 # "
+TagCloseOpen = make("TagCloseOpen")                                 # >
+TagCloseSelfclose = make("TagCloseSelfclose")                       # />
+TagOpenClose = make("TagOpenClose")                                 # </
+TagCloseClose = make("TagCloseClose")                               # >
 
 del make

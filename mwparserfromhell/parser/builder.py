@@ -49,17 +49,17 @@ class Builder(object):
         self._push()
         while self._tokens:
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.TEMPLATE_PARAM_EQUALS):
+            if isinstance(token, tokens.TemplateParamEquals):
                 key = self._pop()
                 showkey = True
                 self._push()
-            elif isinstance(token, (tokens.TEMPLATE_PARAM_SEPARATOR,
-                                    tokens.TEMPLATE_CLOSE)):
+            elif isinstance(token, (tokens.TemplateParamSeparator,
+                                    tokens.TemplateClose)):
                 self._tokens.insert(0, token)
                 value = self._pop()
                 return Parameter(key, value, showkey)
             else:
-                self._stack.write(self._handle_token())
+                self._write(self._handle_token())
 
     def _handle_template(self):
         params = []
@@ -68,7 +68,7 @@ class Builder(object):
         self._push()
         while self._tokens:
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.TEMPLATE_PARAM_SEPARATOR):
+            if isinstance(token, tokens.TemplateParamSeparator):
                 if not params:
                     name = self._pop()
                 param = self._handle_parameter(min(int_key_range - int_keys))
@@ -76,18 +76,18 @@ class Builder(object):
                     int_keys.add(int(param.name))
                     int_key_range.add(len(int_keys) + 1)
                 params.append(param)
-            elif isinstance(token, tokens.TEMPLATE_CLOSE):
+            elif isinstance(token, tokens.TemplateClose):
                 if not params:
                     name = self._pop()
                 return Template(name, params)
             else:
-                self._stack.write(self._handle_token())
+                self._write(self._handle_token())
 
     def _handle_entity(self):
         token = self._tokens.pop(0)
-        if isinstance(token, tokens.HTML_ENTITY_NUMERIC):
+        if isinstance(token, tokens.HTMLEntityNumeric):
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.HTML_ENTITY_HEX):
+            if isinstance(token, tokens.HTMLEntityHex):
                 token = self._tokens.pop(0)
                 return HTMLEntity(token.text, named=False, hexadecimal=True)
             return HTMLEntity(token.text, named=False, hexadecimal=False)
@@ -98,30 +98,30 @@ class Builder(object):
         self._push()
         while self._tokens:
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.HEADING_BLOCK):
+            if isinstance(token, tokens.HeadingBlock):
                 title = self._pop()
                 return Heading(title, level)
             else:
-                self._stack.write(self._handle_token())
+                self._write(self._handle_token())
 
     def _handle_attribute(self):
         name, quoted = None, False
         self._push()
         while self._tokens:
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.TAG_ATTR_EQUALS):
+            if isinstance(token, tokens.TagAttrEquals):
                 name = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TAG_ATTR_QUOTE):
+            elif isinstance(token, tokens.TagAttrQuote):
                 quoted = True
-            elif isinstance(token, (tokens.TAG_ATTR_START,
-                                    tokens.TAG_CLOSE_OPEN)):
+            elif isinstance(token, (tokens.TagAttrStart,
+                                    tokens.TagCloseOpen)):
                 self._tokens.insert(0, token)
                 if name is not None:
                     return Attribute(name, self._pop(), quoted)
                 return Attribute(self._pop(), quoted=quoted)
             else:
-                self._stack.write(self._handle_token())
+                self._write(self._handle_token())
 
     def _handle_tag(self, token):
         type_, showtag = token.type, token.showtag
@@ -129,40 +129,40 @@ class Builder(object):
         self._push()
         while self._tokens:
             token = self._tokens.pop(0)
-            if isinstance(token, tokens.TAG_ATTR_START):
+            if isinstance(token, tokens.TagAttrStart):
                 attrs.append(self._handle_attribute())
-            elif isinstance(token, tokens.TAG_CLOSE_OPEN):
+            elif isinstance(token, tokens.TagCloseOpen):
                 open_pad = token.padding
                 tag = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TAG_CLOSE_SELFCLOSE):
+            elif isinstance(token, tokens.TagCloseSelfclose):
                 tag = self._pop()
                 return Tag(type_, tag, attrs=attrs, showtag=showtag,
                            self_closing=True, open_padding=token.padding)
-            elif isinstance(token, tokens.TAG_OPEN_CLOSE):
+            elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
-            elif isinstance(token, tokens.TAG_CLOSE_CLOSE):
+            elif isinstance(token, tokens.TagCloseClose):
                 return Tag(type_, tag, contents, attrs, showtag, False,
                            open_pad, token.padding)
             else:
-                self._stack.write(self._handle_token())
+                self._write(self._handle_token())
 
     def _handle_token(self):
         token = self._tokens.pop(0)
-        if isinstance(token, tokens.TEXT):
+        if isinstance(token, tokens.Text):
             return Text(token.text)
-        elif isinstance(token, tokens.TEMPLATE_OPEN):
+        elif isinstance(token, tokens.TemplateOpen):
             return self._handle_template()
-        elif isinstance(token, tokens.HTML_ENTITY_START):
+        elif isinstance(token, tokens.HTMLEntityStart):
             return self._handle_entity()
-        elif isinstance(token, tokens.HEADING_BLOCK):
+        elif isinstance(token, tokens.HeadingBlock):
             return self._handle_heading(token)
-        elif isinstance(token, tokens.TAG_OPEN_OPEN):
+        elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
 
     def build(self, tokenlist):
         self._tokens = tokenlist
         self._push()
         while self._tokens:
-            self._stack.write(self._handle_token())
+            self._write(self._handle_token())
         return self._pop()

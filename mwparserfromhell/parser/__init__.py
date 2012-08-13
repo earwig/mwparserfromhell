@@ -20,8 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from .builder import Builder
-from .tokenizer import Tokenizer
+try:
+    from ._builder import CBuilder as Builder
+    from ._tokenizer import CTokenizer as Tokenizer
+except ImportError:
+    from .builder import Builder
+    from .tokenizer import Tokenizer
 
 __all__ = ["Parser"]
 
