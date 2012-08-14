@@ -20,6 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from . import contexts
 from . import tokens
 
 __all__ = ["Tokenizer"]
@@ -35,8 +36,7 @@ class Tokenizer(object):
         self._text = None
         self._head = 0
         self._stacks = []
-
-        self._context = []
+        self._context = 0
 
     def _push(self):
         self._stacks.append([])
@@ -64,9 +64,29 @@ class Tokenizer(object):
             return self.END
         return self._text[index]
 
+    def _verify_context(self):
+        if self._read() is self.END:
+            if self._context & contexts.INSIDE_TEMPLATE:
+                raise BadRoute()
+
+    def _catch_stop(self, stop):
+        if self._read() is self.END:
+            return True
+        try:
+            iter(stop)
+        except TypeError:
+            if self._read() is stop:
+                return True
+        else:
+            if all([self._read(i) == stop[i] for i in xrange(len(stop))]):
+                self._head += len(stop) - 1
+                return True
+        return False
+
     def _parse_template(self):
         reset = self._head
         self._head += 2
+        self._context |= contexts.TEMPLATE_NAME
         try:
             template = self._parse_until("}}")
         except BadRoute:
@@ -77,20 +97,17 @@ class Tokenizer(object):
             self._stacks[-1] += template
             self._write(tokens.TemplateClose())
 
-    def _parse_until(self, stop=None):
+        ending = (contexts.TEMPLATE_NAME, contexts.TEMPLATE_PARAM_KEY,
+                  contexts.TEMPLATE_PARAM_VALUE)
+        for context in ending:
+            self._context ^= context if self._context & context else 0
+
+    def _parse_until(self, stop):
         self._push()
         while True:
-            if self._read() is self.END:
+            self._verify_context()
+            if self._catch_stop(stop):
                 return self._pop()
-            try:
-                iter(stop)
-            except TypeError:
-                if self._read() is stop:
-                    return self._pop()
-            else:
-                if all([self._read(i) == stop[i] for i in xrange(len(stop))]):
-                    self._head += len(stop) - 1
-                    return self._pop()
             if self._read(0) == "{" and self._read(1) == "{":
                 self._parse_template()
             else:
