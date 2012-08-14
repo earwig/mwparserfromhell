@@ -64,23 +64,35 @@ class Tokenizer(object):
             return self.END
         return self._text[index]
 
-    def _parse_until(self, stop):
+    def _parse_template(self):
+        reset = self._head
+        self._head += 2
+        try:
+            template = self._parse_until("}}")
+        except BadRoute:
+            self._head = reset
+            self._write(tokens.Text(text=self._read()))
+        else:
+            self._write(tokens.TemplateOpen())
+            self._stacks[-1] += template
+            self._write(tokens.TemplateClose())
+
+    def _parse_until(self, stop=None):
         self._push()
         while True:
-            if self._read() in (stop, self.END):
+            if self._read() is self.END:
                 return self._pop()
-            elif self._read(0) == "{" and self._read(1) == "{":
-                reset = self._head
-                self._head += 2
-                try:
-                    template = self._parse_until("}")
-                except BadRoute:
-                    self._head = reset
-                    self._write(tokens.Text(text=self._read()))
-                else:
-                    self._write(tokens.TemplateOpen())
-                    self._stacks[-1] += template
-                    self._write(tokens.TemplateClose())
+            try:
+                iter(stop)
+            except TypeError:
+                if self._read() is stop:
+                    return self._pop()
+            else:
+                if all([self._read(i) == stop[i] for i in xrange(len(stop))]):
+                    self._head += len(stop) - 1
+                    return self._pop()
+            if self._read(0) == "{" and self._read(1) == "{":
+                self._parse_template()
             else:
                 self._write(tokens.Text(text=self._read()))
             self._head += 1
