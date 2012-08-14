@@ -24,6 +24,9 @@ from . import tokens
 
 __all__ = ["Tokenizer"]
 
+class BadRoute(Exception):
+    pass
+
 class Tokenizer(object):
     START = object()
     END = object()
@@ -33,7 +36,7 @@ class Tokenizer(object):
         self._head = 0
         self._stacks = []
 
-        self._modifiers = []
+        self._context = []
 
     def _push(self):
         self._stacks.append([])
@@ -66,6 +69,18 @@ class Tokenizer(object):
         while True:
             if self._read() in (stop, self.END):
                 return self._pop()
+            elif self._read(0) == "{" and self._read(1) == "{":
+                reset = self._head
+                self._head += 2
+                try:
+                    template = self._parse_until("}")
+                except BadRoute:
+                    self._head = reset
+                    self._write(tokens.Text(text=self._read()))
+                else:
+                    self._write(tokens.TemplateOpen())
+                    self._stacks[-1] += template
+                    self._write(tokens.TemplateClose())
             else:
                 self._write(tokens.Text(text=self._read()))
             self._head += 1

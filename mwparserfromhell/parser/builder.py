@@ -59,7 +59,7 @@ class Builder(object):
                 value = self._pop()
                 return Parameter(key, value, showkey)
             else:
-                self._write(self._handle_token())
+                self._write(self._handle_token(token))
 
     def _handle_template(self):
         params = []
@@ -81,7 +81,7 @@ class Builder(object):
                     name = self._pop()
                 return Template(name, params)
             else:
-                self._write(self._handle_token())
+                self._write(self._handle_token(token))
 
     def _handle_entity(self):
         token = self._tokens.pop(0)
@@ -103,7 +103,7 @@ class Builder(object):
                 title = self._pop()
                 return Heading(title, level)
             else:
-                self._write(self._handle_token())
+                self._write(self._handle_token(token))
 
     def _handle_attribute(self):
         name, quoted = None, False
@@ -122,7 +122,7 @@ class Builder(object):
                     return Attribute(name, self._pop(), quoted)
                 return Attribute(self._pop(), quoted=quoted)
             else:
-                self._write(self._handle_token())
+                self._write(self._handle_token(token))
 
     def _handle_tag(self, token):
         type_, showtag = token.type, token.showtag
@@ -146,10 +146,9 @@ class Builder(object):
                 return Tag(type_, tag, contents, attrs, showtag, False,
                            open_pad, token.padding)
             else:
-                self._write(self._handle_token())
+                self._write(self._handle_token(token))
 
-    def _handle_token(self):
-        token = self._tokens.pop(0)
+    def _handle_token(self, token):
         if isinstance(token, tokens.Text):
             return Text(token.text)
         elif isinstance(token, tokens.TemplateOpen):
@@ -165,5 +164,6 @@ class Builder(object):
         self._tokens = tokenlist
         self._push()
         while self._tokens:
-            self._write(self._handle_token())
+            node = self._handle_token(self._tokens.pop(0))
+            self._write(node)
         return self._pop()
