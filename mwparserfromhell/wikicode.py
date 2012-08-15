@@ -104,6 +104,10 @@ class Wikicode(StringMixIn):
     def nodes(self):
         return self._nodes
 
+    @nodes.setter
+    def nodes(self, value):
+        self._nodes = value
+
     def get(self, index):
         return self.nodes[index]
 

@@ -35,11 +35,16 @@ class Builder(object):
         self._tokens = []
         self._stacks = []
 
+    def _wrap(self, nodes):
+        return Wikicode(SmartList(nodes))
+
     def _push(self):
         self._stacks.append([])
 
-    def _pop(self):
-        return Wikicode(SmartList(self._stacks.pop()))
+    def _pop(self, wrap=True):
+        if wrap:
+            return self._wrap(self._stacks.pop())
+        return self._stacks.pop()
 
     def _write(self, item):
         self._stacks[-1].append(item)
@@ -71,9 +76,10 @@ class Builder(object):
             if isinstance(token, tokens.TemplateParamSeparator):
                 if not params:
                     name = self._pop()
-                param = self._handle_parameter(min(int_key_range - int_keys))
+                default = self._wrap(unicode(min(int_key_range - int_keys)))
+                param = self._handle_parameter(default)
                 if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                    int_keys.add(int(param.name))
+                    int_keys.add(int(unicode(param.name)))
                     int_key_range.add(len(int_keys) + 1)
                 params.append(param)
             elif isinstance(token, tokens.TemplateClose):

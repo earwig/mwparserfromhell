@@ -130,10 +130,10 @@ class Template(Node):
         if self.has_param(name):
             self.remove(name, keep_field=True)
             existing = self.get(name)
-            if showkey is None:  # Infer showkey from current value
-                showkey = existing.showkey
-            if not showkey:
-                self._surface_escape(value, "=")
+            if showkey is not None:
+                if not showkey:
+                    self._surface_escape(value, "=")
+                existing.showkey = showkey
             nodes = existing.value.nodes
             if force_nonconformity:
                 existing.value = value
@@ -143,10 +143,10 @@ class Template(Node):
 
         if showkey is None:
             try:
-                int(name)
-                showkey = True
+                int(unicode(name))
+                showkey = False                                                     # DEPENDENTS?
             except ValueError:
-                showkey = False
+                showkey = True
         if not showkey:
             self._surface_escape(value, "=")
         if not force_nonconformity:

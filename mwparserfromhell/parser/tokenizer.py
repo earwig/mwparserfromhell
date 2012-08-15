@@ -66,7 +66,7 @@ class Tokenizer(object):
 
     def _verify_context(self):
         if self._read() is self.END:
-            if self._context & contexts.INSIDE_TEMPLATE:
+            if self._context & contexts.TEMPLATE:
                 raise BadRoute()
 
     def _catch_stop(self, stop):
@@ -110,6 +110,13 @@ class Tokenizer(object):
                 return self._pop()
             if self._read(0) == "{" and self._read(1) == "{":
                 self._parse_template()
+            elif self._read(0) == "|" and self._context & contexts.TEMPLATE:
+                if self._context & contexts.TEMPLATE_NAME:
+                    self._context ^= contexts.TEMPLATE_NAME
+                if self._context & contexts.TEMPLATE_PARAM_VALUE:
+                    self._context ^= contexts.TEMPLATE_PARAM_VALUE
+                self._context |= contexts.TEMPLATE_PARAM_KEY
+                self._write(tokens.TemplateParamSeparator())
             else:
                 self._write(tokens.Text(text=self._read()))
             self._head += 1
