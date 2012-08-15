@@ -20,8 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
-
 from . import tokens
 from ..nodes import Heading, HTMLEntity, Tag, Template, Text
 from ..nodes.extras import Attribute, Parameter
@@ -78,9 +76,11 @@ class Builder(object):
                     name = self._pop()
                 default = self._wrap(unicode(min(int_key_range - int_keys)))
                 param = self._handle_parameter(default)
-                if re.match(r"[1-9][0-9]*$", param.name.strip()):
+                try:
                     int_keys.add(int(unicode(param.name)))
                     int_key_range.add(len(int_keys) + 1)
+                except ValueError:
+                    pass
                 params.append(param)
             elif isinstance(token, tokens.TemplateClose):
                 if not params:

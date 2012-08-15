@@ -143,10 +143,21 @@ class Template(Node):
 
         if showkey is None:
             try:
-                int(unicode(name))
-                showkey = False                                                     # DEPENDENTS?
+                int_name = int(unicode(name))
             except ValueError:
                 showkey = True
+            else:
+                int_keys = set()
+                for param in self.params:
+                    try:
+                        int_keys.add(int(unicode(param.name)))
+                    except ValueError:
+                        pass
+                expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
+                if expected == int_name:
+                    showkey = False
+                else:
+                    showkey = True
         if not showkey:
             self._surface_escape(value, "=")
         if not force_nonconformity:
