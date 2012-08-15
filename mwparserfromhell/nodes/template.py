@@ -76,7 +76,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement))
 
     def _blank_param_value(self, value):
-        match = re.search("^(\s*).*?(\s*)$", unicode(value), FLAGS)
+        match = re.search(r"^(\s*).*?(\s*)$", unicode(value), FLAGS)
         value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     def _select_theory(self, theories):
@@ -149,10 +149,8 @@ class Template(Node):
             else:
                 int_keys = set()
                 for param in self.params:
-                    try:
+                    if re.match(r"[1-9][0-9]*$", param.name.strip()):
                         int_keys.add(int(unicode(param.name)))
-                    except ValueError:
-                        pass
                 expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
                 if expected == int_name:
                     showkey = False
