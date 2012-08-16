@@ -107,9 +107,9 @@ class Tokenizer(object):
         if self._context & contexts.TEMPLATE_NAME and self._stack:
             head = self._stack[-1]
             if isinstance(head, tokens.Text):
-                text, this = head.text, self._read()
-                if text.strip() and text.endswith("\n") and this != "\n":
-                    raise BadRoute(self._pop())
+                if head.text.strip() and head.text.endswith("\n"):
+                    if self._read() not in ["|", "=", "\n"]:
+                        raise BadRoute(self._pop())
 
     def _parse_template(self):
         reset = self._head

@@ -76,8 +76,8 @@ class Builder(object):
             if isinstance(token, tokens.TemplateParamSeparator):
                 if not params:
                     name = self._pop()
-                default = self._wrap(unicode(min(int_key_range - int_keys)))
-                param = self._handle_parameter(default)
+                default = unicode(min(int_key_range - int_keys))
+                param = self._handle_parameter(self._wrap([Text(default)]))
                 if re.match(r"[1-9][0-9]*$", param.name.strip()):
                     # We try a more restrictive test for integers than
                     # try: int(), because "01" as a key will pass through int()
