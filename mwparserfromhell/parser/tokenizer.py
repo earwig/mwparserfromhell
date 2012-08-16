@@ -36,17 +36,24 @@ class Tokenizer(object):
         self._text = None
         self._head = 0
         self._stacks = []
-        self._context = 0
+
+    @property
+    def _context(self):
+        return self._stacks[-1][1]
+
+    @_context.setter
+    def _context(self, value):
+        self._stacks[-1][1] = value
 
     def _push(self):
-        self._stacks.append([])
+        self._stacks.append([[], 0])
 
     def _pop(self):
-        return self._stacks.pop()
+        return self._stacks.pop()[0]
 
     def _write(self, token, stack=None):
         if stack is None:
-            stack = self._stacks[-1]
+            stack = self._stacks[-1][0]
         if not stack:
             stack.append(token)
             return
@@ -56,6 +63,11 @@ class Tokenizer(object):
         else:
             stack.append(token)
 
+    def _write_all(self, tokenlist, stack=None):
+        if stack is None:
+            stack = self._stacks[-1][0]
+        stack.extend(tokenlist)
+
     def _read(self, delta=0, wrap=False):
         index = self._head + delta
         if index < 0 and (not wrap or abs(index) > len(self._text)):
@@ -64,10 +76,13 @@ class Tokenizer(object):
             return self.END
         return self._text[index]
 
+    def _at_head(self, chars):
+        return all([self._read(i) == chars[i] for i in xrange(len(chars))])
+
     def _verify_context(self):
         if self._read() is self.END:
             if self._context & contexts.TEMPLATE:
-                raise BadRoute()
+                raise BadRoute(self._pop())
 
     def _catch_stop(self, stop):
         if self._read() is self.END:
@@ -86,37 +101,36 @@ class Tokenizer(object):
     def _parse_template(self):
         reset = self._head
         self._head += 2
-        self._context |= contexts.TEMPLATE_NAME
         try:
-            template = self._parse_until("}}")
+            template = self._parse_until("}}", contexts.TEMPLATE_NAME)
         except BadRoute:
             self._head = reset
             self._write(tokens.Text(text=self._read()))
         else:
             self._write(tokens.TemplateOpen())
-            self._stacks[-1] += template
+            self._write_all(template)
             self._write(tokens.TemplateClose())
 
-        ending = (contexts.TEMPLATE_NAME, contexts.TEMPLATE_PARAM_KEY,
-                  contexts.TEMPLATE_PARAM_VALUE)
-        for context in ending:
-            self._context ^= context if self._context & context else 0
-
-    def _parse_until(self, stop):
+    def _parse_until(self, stop, context=0):
         self._push()
+        self._context = context
         while True:
             self._verify_context()
             if self._catch_stop(stop):
                 return self._pop()
-            if self._read(0) == "{" and self._read(1) == "{":
+            if self._at_head("{{"):
                 self._parse_template()
-            elif self._read(0) == "|" and self._context & contexts.TEMPLATE:
+            elif self._at_head("|") and self._context & contexts.TEMPLATE:
                 if self._context & contexts.TEMPLATE_NAME:
                     self._context ^= contexts.TEMPLATE_NAME
                 if self._context & contexts.TEMPLATE_PARAM_VALUE:
                     self._context ^= contexts.TEMPLATE_PARAM_VALUE
                 self._context |= contexts.TEMPLATE_PARAM_KEY
                 self._write(tokens.TemplateParamSeparator())
+            elif self._at_head("=") and self._context & contexts.TEMPLATE_PARAM_KEY:
+                self._context ^= contexts.TEMPLATE_PARAM_KEY
+                self._context |= contexts.TEMPLATE_PARAM_VALUE
+                self._write(tokens.TemplateParamEquals())
             else:
                 self._write(tokens.Text(text=self._read()))
             self._head += 1
