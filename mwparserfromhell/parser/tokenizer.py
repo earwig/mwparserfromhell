@@ -115,7 +115,6 @@ class Tokenizer(object):
         self._push_textbuffer()
         if self._stack:
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
-            print text
             text = "".join([token.text for token in text])
             if text.strip() and "\n" in text.strip():
                 raise BadRoute(self._pop())
