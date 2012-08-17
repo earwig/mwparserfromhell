@@ -98,9 +98,12 @@ class Builder(object):
             token = self._tokens.pop(0)
             if isinstance(token, tokens.HTMLEntityHex):
                 text = self._tokens.pop(0)
+                self._tokens.pop(0)  # Remove HTMLEntityEnd
                 return HTMLEntity(text.text, named=False, hexadecimal=True,
                                   hex_char=token.char)
+            self._tokens.pop(0)  # Remove HTMLEntityEnd
             return HTMLEntity(token.text, named=False, hexadecimal=False)
+        self._tokens.pop(0)  # Remove HTMLEntityEnd
         return HTMLEntity(token.text, named=True, hexadecimal=False)
 
     def _handle_heading(self, token):
