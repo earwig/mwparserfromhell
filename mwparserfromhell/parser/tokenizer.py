@@ -64,26 +64,24 @@ class Tokenizer(object):
     def _push(self, context=0):
         self._stacks.append([[], context, []])
 
+    def _push_textbuffer(self):
+        if self._textbuffer:
+            self._stack.append(tokens.Text(text="".join(self._textbuffer)))
+            self._textbuffer = []
+
     def _pop(self):
-        top = self._stacks.pop()
-        stack, text = top[0], top[2]
-        if text:
-            stack.append(tokens.Text(text="".join(text)))
-        return stack
+        self._push_textbuffer()
+        return self._stacks.pop()[0]
 
     def _write(self, data, text=False):
         if text:
             self._textbuffer.append(data)
             return
-        if self._textbuffer:
-            self._stack.append(tokens.Text(text="".join(self._textbuffer)))
-            self._textbuffer = []
+        self._push_textbuffer()
         self._stack.append(data)
 
     def _write_all(self, tokenlist):
-        if self._textbuffer:
-            self._stack.append(tokens.Text(text="".join(self._textbuffer)))
-            self._textbuffer = []
+        self._push_textbuffer()
         self._stack.extend(tokenlist)
 
     def _read(self, delta=0, wrap=False):
@@ -114,10 +112,12 @@ class Tokenizer(object):
             self._write(tokens.TemplateClose())
 
     def _verify_template_name(self):
+        self._push_textbuffer()
         if self._stack:
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
+            print text
             text = "".join([token.text for token in text])
-            if text.strip() and "\n" in text:
+            if text.strip() and "\n" in text.strip():
                 raise BadRoute(self._pop())
 
     def _handle_template_param(self):
