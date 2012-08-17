@@ -88,15 +88,10 @@ class Tokenizer(object):
         index = self._head + delta
         if index < 0 and (not wrap or abs(index) > len(self._text)):
             return self.START
-        if index >= len(self._text):
+        try:
+            return self._text[index]
+        except IndexError:
             return self.END
-        return self._text[index]
-
-    def _at_head(self, chars):
-        length = len(chars)
-        if length == 1:
-            return self._read() == chars
-        return all([self._read(i) == chars[i] for i in xrange(len(chars))])
 
     def _parse_template(self):
         reset = self._head
@@ -146,7 +141,7 @@ class Tokenizer(object):
             self._push()
             self._write(tokens.HTMLEntityStart())
             numeric = hexadecimal = False
-            if self._at_head("#"):
+            if self._read() == "#":
                 numeric = True
                 self._write(tokens.HTMLEntityNumeric())
                 if self._read(1).lower() == "x":
@@ -160,7 +155,8 @@ class Tokenizer(object):
             if not numeric and not hexadecimal:
                 valid += string.ascii_letters
             while True:
-                if self._at_head(";"):
+                this = self._read()
+                if this == ";":
                     text = "".join(text)
                     if numeric:
                         test = int(text, 16) if hexadecimal else int(text)
@@ -172,9 +168,9 @@ class Tokenizer(object):
                     self._write(tokens.Text(text=text))
                     self._write(tokens.HTMLEntityEnd())
                     break
-                if self._read() is self.END or self._read() not in valid:
+                if this is self.END or this not in valid:
                     raise BadRoute(self._pop())
-                text.append(self._read())
+                text.append(this)
                 self._head += 1
         except BadRoute:
             self._head = reset
@@ -185,26 +181,28 @@ class Tokenizer(object):
     def _parse(self, context=0):
         self._push(context)
         while True:
-            if self._read() not in self.SENTINELS:
+            this = self._read()
+            if this not in self.SENTINELS:
                 self._write(self._read(), text=True)
                 self._head += 1
                 continue
-            if self._read() is self.END:
+            if this is self.END:
                 if self._context & contexts.TEMPLATE:
                     raise BadRoute(self._pop())
                 return self._pop()
-            if self._at_head("{{"):
+            next = self._read(1)
+            if this == next == "{":
                 self._parse_template()
-            elif self._at_head("|") and self._context & contexts.TEMPLATE:
+            elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
-            elif self._at_head("=") and self._context & contexts.TEMPLATE_PARAM_KEY:
+            elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
                 self._handle_template_param_value()
-            elif self._at_head("}}") and self._context & contexts.TEMPLATE:
+            elif this == next == "}" and self._context & contexts.TEMPLATE:
                 return self._handle_template_end()
-            elif self._at_head("&"):
+            elif this == "&":
                 self._parse_entity()
             else:
-                self._write(self._read(), text=True)
+                self._write(this, text=True)
             self._head += 1
 
     def tokenize(self, text):
