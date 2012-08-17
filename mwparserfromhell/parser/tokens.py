@@ -27,7 +27,13 @@ class Token(object):
         super(Token, self).__setattr__("_kwargs", kwargs)
 
     def __repr__(self):
-        return type(self).__name__
+        args = []
+        for key, value in self._kwargs.iteritems():
+            if len(value) > 100:
+                args.append(key + "=" + repr(value[:97] + "..."))
+            else:
+                args.append(key + "=" + repr(value))
+        return u"{0}({1})".format(type(self).__name__, u", ".join(args))
 
     def __getattr__(self, key):
         return self._kwargs[key]

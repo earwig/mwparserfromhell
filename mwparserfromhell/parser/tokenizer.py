@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import htmlentitydefs
+import re
 import string
 
 from . import contexts
@@ -35,6 +36,7 @@ class Tokenizer(object):
     START = object()
     END = object()
     SENTINELS = ["{", "}", "[", "]", "|", "=", "&", END]
+    REGEX = r"([{}\[\]|=&;])"
 
     def __init__(self):
         self._text = None
@@ -135,48 +137,45 @@ class Tokenizer(object):
         return self._pop()
 
     def _parse_entity(self):
-        reset = self._head
-        self._head += 1
         try:
             self._push()
             self._write(tokens.HTMLEntityStart())
+            this = self._read(1)
+            if this is self.END:
+                raise BadRoute(self._pop())
             numeric = hexadecimal = False
-            if self._read() == "#":
+            skip = 0
+            if this.startswith("#"):
                 numeric = True
                 self._write(tokens.HTMLEntityNumeric())
-                if self._read(1).lower() == "x":
+                if this[1:].lower().startswith("x"):
                     hexadecimal = True
-                    self._write(tokens.HTMLEntityHex(char=self._read(1)))
-                    self._head += 2
+                    self._write(tokens.HTMLEntityHex(char=this[1]))
+                    skip = 2
                 else:
-                    self._head += 1
-            text = []
+                    skip = 1
+            text = this[skip:]
             valid = string.hexdigits if hexadecimal else string.digits
             if not numeric and not hexadecimal:
                 valid += string.ascii_letters
-            while True:
-                this = self._read()
-                if this == ";":
-                    text = "".join(text)
-                    if numeric:
-                        test = int(text, 16) if hexadecimal else int(text)
-                        if test < 1 or test > 0x10FFFF:
-                            raise BadRoute(self._pop())
-                    else:
-                        if text not in htmlentitydefs.entitydefs:
-                            raise BadRoute(self._pop())
-                    self._write(tokens.Text(text=text))
-                    self._write(tokens.HTMLEntityEnd())
-                    break
-                if this is self.END or this not in valid:
+            if not text or not all([char in valid for char in text]):
+                raise BadRoute(self._pop())
+            if self._read(2) != ";":
+                raise BadRoute(self._pop())
+            if numeric:
+                test = int(text, 16) if hexadecimal else int(text)
+                if test < 1 or test > 0x10FFFF:
                     raise BadRoute(self._pop())
-                text.append(this)
-                self._head += 1
+            else:
+                if text not in htmlentitydefs.entitydefs:
+                    raise BadRoute(self._pop())
+            self._write(tokens.Text(text=text))
+            self._write(tokens.HTMLEntityEnd())
         except BadRoute:
-            self._head = reset
             self._write(self._read(), text=True)
         else:
             self._write_all(self._pop())
+            self._head += 2
 
     def _parse(self, context=0):
         self._push(context)
@@ -206,5 +205,6 @@ class Tokenizer(object):
             self._head += 1
 
     def tokenize(self, text):
-        self._text = list(text)
+        split = re.split(self.REGEX, text, flags=re.I)
+        self._text = [segment for segment in split if segment]
         return self._parse()
