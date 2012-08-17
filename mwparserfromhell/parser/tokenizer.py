@@ -34,6 +34,7 @@ class BadRoute(Exception):
 class Tokenizer(object):
     START = object()
     END = object()
+    SENTINELS = ["{", "}", "[", "]", "|", "=", "&", END]
 
     def __init__(self):
         self._text = None
@@ -52,28 +53,38 @@ class Tokenizer(object):
     def _context(self, value):
         self._stacks[-1][1] = value
 
+    @property
+    def _textbuffer(self):
+        return self._stacks[-1][2]
+
+    @_textbuffer.setter
+    def _textbuffer(self, value):
+        self._stacks[-1][2] = value
+
     def _push(self, context=0):
-        self._stacks.append([[], context])
+        self._stacks.append([[], context, []])
 
     def _pop(self):
-        return self._stacks.pop()[0]
+        top = self._stacks.pop()
+        stack, text = top[0], top[2]
+        if text:
+            stack.append(tokens.Text(text="".join(text)))
+        return stack
 
-    def _write(self, token, stack=None):
-        if stack is None:
-            stack = self._stack
-        if not stack:
-            stack.append(token)
+    def _write(self, data, text=False):
+        if text:
+            self._textbuffer.append(data)
             return
-        last = stack[-1]
-        if isinstance(token, tokens.Text) and isinstance(last, tokens.Text):
-            last.text += token.text
-        else:
-            stack.append(token)
+        if self._textbuffer:
+            self._stack.append(tokens.Text(text="".join(self._textbuffer)))
+            self._textbuffer = []
+        self._stack.append(data)
 
-    def _write_all(self, tokenlist, stack=None):
-        if stack is None:
-            stack = self._stack
-        stack.extend(tokenlist)
+    def _write_all(self, tokenlist):
+        if self._textbuffer:
+            self._stack.append(tokens.Text(text="".join(self._textbuffer)))
+            self._textbuffer = []
+        self._stack.extend(tokenlist)
 
     def _read(self, delta=0, wrap=False):
         index = self._head + delta
@@ -84,50 +95,34 @@ class Tokenizer(object):
         return self._text[index]
 
     def _at_head(self, chars):
+        length = len(chars)
+        if length == 1:
+            return self._read() == chars
         return all([self._read(i) == chars[i] for i in xrange(len(chars))])
-
-    def _verify_context_pre_stop(self):
-        if self._read() is self.END:
-            if self._context & contexts.TEMPLATE:
-                raise BadRoute(self._pop())
-
-    def _catch_stop(self, stop):
-        if self._read() is self.END:
-            return True
-        try:
-            iter(stop)
-        except TypeError:
-            if self._read() is stop:
-                return True
-        else:
-            if all([self._read(i) == stop[i] for i in xrange(len(stop))]):
-                self._head += len(stop) - 1
-                return True
-        return False
-
-    def _verify_context_post_stop(self):
-        if self._context & contexts.TEMPLATE_NAME and self._stack:
-            head = self._stack[-1]
-            if isinstance(head, tokens.Text):
-                if head.text.strip() and head.text.endswith("\n"):
-                    if self._read() not in ["|", "=", "\n"]:
-                        raise BadRoute(self._pop())
 
     def _parse_template(self):
         reset = self._head
         self._head += 2
         try:
-            template = self._parse_until("}}", contexts.TEMPLATE_NAME)
+            template = self._parse(contexts.TEMPLATE_NAME)
         except BadRoute:
             self._head = reset
-            self._write(tokens.Text(text=self._read()))
+            self._write(self._read(), text=True)
         else:
             self._write(tokens.TemplateOpen())
             self._write_all(template)
             self._write(tokens.TemplateClose())
 
+    def _verify_template_name(self):
+        if self._stack:
+            text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
+            text = "".join([token.text for token in text])
+            if text.strip() and "\n" in text:
+                raise BadRoute(self._pop())
+
     def _handle_template_param(self):
         if self._context & contexts.TEMPLATE_NAME:
+            self._verify_template_name()
             self._context ^= contexts.TEMPLATE_NAME
         if self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
@@ -138,6 +133,12 @@ class Tokenizer(object):
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
+
+    def _handle_template_end(self):
+        if self._context & contexts.TEMPLATE_NAME:
+            self._verify_template_name()
+        self._head += 1
+        return self._pop()
 
     def _parse_entity(self):
         reset = self._head
@@ -178,29 +179,35 @@ class Tokenizer(object):
                 self._head += 1
         except BadRoute:
             self._head = reset
-            self._write(tokens.Text(text=self._read()))
+            self._write(self._read(), text=True)
         else:
             self._write_all(self._pop())
 
-    def _parse_until(self, stop, context=0):
+    def _parse(self, context=0):
         self._push(context)
         while True:
-            self._verify_context_pre_stop()
-            if self._catch_stop(stop):
+            if self._read() not in self.SENTINELS:
+                self._write(self._read(), text=True)
+                self._head += 1
+                continue
+            if self._read() is self.END:
+                if self._context & contexts.TEMPLATE:
+                    raise BadRoute(self._pop())
                 return self._pop()
-            self._verify_context_post_stop()
             if self._at_head("{{"):
                 self._parse_template()
             elif self._at_head("|") and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif self._at_head("=") and self._context & contexts.TEMPLATE_PARAM_KEY:
                 self._handle_template_param_value()
+            elif self._at_head("}}") and self._context & contexts.TEMPLATE:
+                return self._handle_template_end()
             elif self._at_head("&"):
                 self._parse_entity()
             else:
-                self._write(tokens.Text(text=self._read()))
+                self._write(self._read(), text=True)
             self._head += 1
 
     def tokenize(self, text):
         self._text = list(text)
-        return self._parse_until(stop=self.END)
+        return self._parse()

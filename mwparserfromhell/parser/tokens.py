@@ -26,6 +26,9 @@ class Token(object):
     def __init__(self, **kwargs):
         super(Token, self).__setattr__("_kwargs", kwargs)
 
+    def __repr__(self):
+        return type(self).__name__
+
     def __getattr__(self, key):
         return self._kwargs[key]
 
