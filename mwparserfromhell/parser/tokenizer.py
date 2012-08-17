@@ -183,7 +183,7 @@ class Tokenizer(object):
         while True:
             this = self._read()
             if this not in self.SENTINELS:
-                self._write(self._read(), text=True)
+                self._write(this, text=True)
                 self._head += 1
                 continue
             if this is self.END:
