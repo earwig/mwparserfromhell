@@ -75,12 +75,12 @@ class Tokenizer(object):
         self._push_textbuffer()
         return self._stacks.pop()[0]
 
-    def _write(self, data, text=False):
-        if text:
-            self._textbuffer.append(data)
-            return
+    def _write(self, token):
         self._push_textbuffer()
-        self._stack.append(data)
+        self._stack.append(token)
+
+    def _write_text(self, text):
+        self._textbuffer.append(text)
 
     def _write_all(self, tokenlist):
         self._push_textbuffer()
@@ -102,7 +102,7 @@ class Tokenizer(object):
             template = self._parse(contexts.TEMPLATE_NAME)
         except BadRoute:
             self._head = reset
-            self._write(self._read(), text=True)
+            self._write_text(self._read())
         else:
             self._write(tokens.TemplateOpen())
             self._write_all(template)
@@ -137,8 +137,8 @@ class Tokenizer(object):
         return self._pop()
 
     def _parse_entity(self):
+        self._push()
         try:
-            self._push()
             self._write(tokens.HTMLEntityStart())
             this = self._read(1)
             if this is self.END:
@@ -172,7 +172,7 @@ class Tokenizer(object):
             self._write(tokens.Text(text=text))
             self._write(tokens.HTMLEntityEnd())
         except BadRoute:
-            self._write(self._read(), text=True)
+            self._write_text(self._read())
         else:
             self._write_all(self._pop())
             self._head += 2
@@ -182,7 +182,7 @@ class Tokenizer(object):
         while True:
             this = self._read()
             if this not in self.SENTINELS:
-                self._write(this, text=True)
+                self._write_text(this)
                 self._head += 1
                 continue
             if this is self.END:
@@ -201,7 +201,7 @@ class Tokenizer(object):
             elif this == "&":
                 self._parse_entity()
             else:
-                self._write(this, text=True)
+                self._write_text(this)
             self._head += 1
 
     def tokenize(self, text):

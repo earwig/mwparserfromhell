@@ -35,6 +35,11 @@ class Token(object):
                 args.append(key + "=" + repr(value))
         return u"{0}({1})".format(type(self).__name__, u", ".join(args))
 
+    def __eq__(self, other):
+        if isinstance(other, type(self)):
+            return self._kwargs == other._kwargs
+        return False
+
     def __getattr__(self, key):
         return self._kwargs[key]
 
