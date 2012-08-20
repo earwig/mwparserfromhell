@@ -29,7 +29,8 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.wikicode.Wikicode`` object, which acts
-like an ordinary unicode object with some extra methods. For example::
+like an ordinary ``unicode`` object (or ``str`` on Python 3) with some extra
+methods. For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
@@ -95,6 +96,8 @@ saving the page!) by calling ``unicode()`` on it::
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> text == code
     True
+
+Likewise, in Python 3, use ``str(code)``.
 
 Integration
 -----------
