@@ -99,6 +99,21 @@ class Template(Node):
         after = self._select_theory(after_theories)
         return before, after
 
+    def _remove_with_field(self, param, i, name):
+        if param.showkey:
+            following = self.params[i+1:]
+            better_matches = [after.name.strip() == name and not after.showkey for after in following]
+            if any(better_matches):
+                return False
+        return True
+
+    def _remove_without_field(self, param, i, force_no_field):
+        if not param.showkey and not force_no_field:
+            dependents = [not after.showkey for after in self.params[i+1:]]
+            if any(dependents):
+                return False
+        return True
+
     @property
     def name(self):
         return self._name
@@ -171,14 +186,23 @@ class Template(Node):
         self.params.append(param)
         return param
 
-    def remove(self, name, keep_field=False, force_no_field=False):                     # KEEP FIRST FIELD, REMOVE ALL AFTER
+    def remove(self, name, keep_field=False, force_no_field=False):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
+        removed = False
         for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:
-                    return self._blank_param_value(param.value)
-                dependent = [not after.showkey for after in self.params[i+1:]]
-                if any(dependent) and not param.showkey and not force_no_field:
-                    return self._blank_param_value(param.value)
-                return self.params.remove(param)
-        raise ValueError(name)
+                    if self._remove_with_field(param, i, name):
+                        self._blank_param_value(param.value)
+                        keep_field = False
+                    else:
+                        self.params.remove(param)
+                else:
+                    if self._remove_without_field(param, i, force_no_field):
+                        self.params.remove(param)
+                    else:
+                        self._blank_param_value(param.value)
+                if not removed:
+                    removed = True
+        if not removed:
+            raise ValueError(name)
