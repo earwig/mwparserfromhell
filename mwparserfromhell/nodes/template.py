@@ -33,7 +33,7 @@ FLAGS = re.DOTALL | re.UNICODE
 
 class Template(Node):
     def __init__(self, name, params=None):
-        super(Template, self).__init__(self)
+        super(Template, self).__init__()
         self._name = name
         if params:
             self._params = params
@@ -77,7 +77,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement))
 
     def _blank_param_value(self, value):
-        match = re.search("^(\s*).*?(\s*)$", unicode(value), FLAGS)
+        match = re.search(r"^(\s*).*?(\s*)$", unicode(value), FLAGS)
         value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     def _select_theory(self, theories):
@@ -91,7 +91,7 @@ class Template(Node):
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
         for param in self.params:
-            match = re.search("^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
+            match = re.search(r"^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
             before, after = match.group(1), match.group(2)
             before_theories[before] += 1
             after_theories[after] += 1
@@ -99,6 +99,21 @@ class Template(Node):
         before = self._select_theory(before_theories)
         after = self._select_theory(after_theories)
         return before, after
+
+    def _remove_with_field(self, param, i, name):
+        if param.showkey:
+            following = self.params[i+1:]
+            better_matches = [after.name.strip() == name and not after.showkey for after in following]
+            if any(better_matches):
+                return False
+        return True
+
+    def _remove_without_field(self, param, i, force_no_field):
+        if not param.showkey and not force_no_field:
+            dependents = [not after.showkey for after in self.params[i+1:]]
+            if any(dependents):
+                return False
+        return True
 
     @property
     def name(self):
@@ -119,7 +134,7 @@ class Template(Node):
 
     def get(self, name):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
-        for param in self.params:
+        for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
         raise ValueError(name)
@@ -131,10 +146,10 @@ class Template(Node):
         if self.has_param(name):
             self.remove(name, keep_field=True)
             existing = self.get(name)
-            if showkey is None:  # Infer showkey from current value
-                showkey = existing.showkey
-            if not showkey:
-                self._surface_escape(value, "=")
+            if showkey is not None:
+                if not showkey:
+                    self._surface_escape(value, "=")
+                existing.showkey = showkey
             nodes = existing.value.nodes
             if force_nonconformity:
                 existing.value = value
@@ -144,10 +159,20 @@ class Template(Node):
 
         if showkey is None:
             try:
-                int(name)
-                showkey = True
+                int_name = int(unicode(name))
             except ValueError:
-                showkey = False
+                showkey = True
+            else:
+                int_keys = set()
+                for param in self.params:
+                    if not param.showkey:
+                        if re.match(r"[1-9][0-9]*$", param.name.strip()):
+                            int_keys.add(int(unicode(param.name)))
+                expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
+                if expected == int_name:
+                    showkey = False
+                else:
+                    showkey = True
         if not showkey:
             self._surface_escape(value, "=")
         if not force_nonconformity:
@@ -164,12 +189,21 @@ class Template(Node):
 
     def remove(self, name, keep_field=False, force_no_field=False):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
+        removed = False
         for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:
-                    return self._blank_param_value(param.value)
-                dependent = [not after.showkey for after in self.params[i+1:]]
-                if any(dependent) and not param.showkey and not force_no_field:
-                    return self._blank_param_value(param.value)
-                return self.params.remove(param)
-        raise ValueError(name)
+                    if self._remove_with_field(param, i, name):
+                        self._blank_param_value(param.value)
+                        keep_field = False
+                    else:
+                        self.params.remove(param)
+                else:
+                    if self._remove_without_field(param, i, force_no_field):
+                        self.params.remove(param)
+                    else:
+                        self._blank_param_value(param.value)
+                if not removed:
+                    removed = True
+        if not removed:
+            raise ValueError(name)

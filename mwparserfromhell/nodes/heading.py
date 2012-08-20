@@ -26,12 +26,12 @@ __all__ = ["Heading"]
 
 class Heading(Node):
     def __init__(self, title, level):
-        super(Heading, self).__init__(self)
+        super(Heading, self).__init__()
         self._title = title
         self._level = level
 
     def __unicode__(self):
-        return ("=" * self.level) + self.title + ("=" * self.level)
+        return ("=" * self.level) + unicode(self.title) + ("=" * self.level)
 
     def __iternodes__(self, getter):
         yield None, self

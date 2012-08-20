@@ -27,7 +27,7 @@ __all__ = ["Parameter"]
 
 class Parameter(StringMixIn):
     def __init__(self, name, value, showkey=True):
-        super(Parameter, self).__init__(self)
+        super(Parameter, self).__init__()
         self._name = name
         self._value = value
         self._showkey = showkey

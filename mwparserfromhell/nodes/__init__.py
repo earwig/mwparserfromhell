@@ -22,7 +22,7 @@
 
 from ..string_mixin import StringMixIn
 
-__all__ = ["Node"]
+__all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
 
 class Node(StringMixIn):
     def __unicode__(self):

@@ -26,7 +26,7 @@ __all__ = ["Attribute"]
 
 class Attribute(StringMixIn):
     def __init__(self, name, value=None, quoted=True):
-        super(Attribute, self).__init__(self)
+        super(Attribute, self).__init__()
         self._name = name
         self._value = value
         self._quoted = quoted

@@ -67,9 +67,9 @@ class Tag(Node):
     TAGS_INVISIBLE = set((TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE))
     TAGS_VISIBLE = set(range(300)) - TAGS_INVISIBLE
 
-    def __init__(self, type_, tag, contents, attrs=None, showtag=True,
+    def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
                  self_closing=False, open_padding=0, close_padding=0):
-        super(Tag, self).__init__(self)
+        super(Tag, self).__init__()
         self._type = type_
         self._tag = tag
         self._contents = contents

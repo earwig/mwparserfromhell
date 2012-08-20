@@ -20,22 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-try:
-    from ._builder import CBuilder as Builder
-    from ._tokenizer import CTokenizer as Tokenizer
-except ImportError:
-    from .builder import Builder
-    from .tokenizer import Tokenizer
+# Local (stack-specific) contexts:
 
-__all__ = ["Parser"]
+TEMPLATE =              0b000000111
+TEMPLATE_NAME =         0b000000001
+TEMPLATE_PARAM_KEY =    0b000000010
+TEMPLATE_PARAM_VALUE =  0b000000100
 
-class Parser(object):
-    def __init__(self, text):
-        self.text = text
-        self._tokenizer = Tokenizer()
-        self._builder = Builder()
+HEADING =               0b111111000
+HEADING_LEVEL_1 =       0b000001000
+HEADING_LEVEL_2 =       0b000010000
+HEADING_LEVEL_3 =       0b000100000
+HEADING_LEVEL_4 =       0b001000000
+HEADING_LEVEL_5 =       0b010000000
+HEADING_LEVEL_6 =       0b100000000
 
-    def parse(self):
-        tokens = self._tokenizer.tokenize(self.text)
-        code = self._builder.build(tokens)
-        return code
+
+# Global contexts:
+
+GL_HEADING = 0b1

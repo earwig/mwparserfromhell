@@ -81,6 +81,7 @@ class SmartList(list):
 
     def __iadd__(self, other):
         self.extend(other)
+        return self
 
     def append(self, item):
         head = len(self)
@@ -221,6 +222,7 @@ class _ListProxy(list):
 
     def __iadd__(self, other):
         self.extend(other)
+        return self
 
     @property
     def _start(self):

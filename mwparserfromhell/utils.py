@@ -22,24 +22,25 @@
 
 import mwparserfromhell
 from .nodes import Node
+from .smart_list import SmartList
 
 def parse_anything(value):
     wikicode = mwparserfromhell.wikicode.Wikicode
     if isinstance(value, wikicode):
         return value
     if isinstance(value, Node):
-        return wikicode([value])
+        return wikicode(SmartList([value]))
     if isinstance(value, basestring):
         return mwparserfromhell.parse(value)
     if isinstance(value, int):
         return mwparserfromhell.parse(unicode(value))
     if value is None:
-        return wikicode([])
+        return wikicode(SmartList())
     try:
-        nodelist = []
+        nodelist = SmartList()
         for item in value:
             nodelist += parse_anything(item).nodes
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
-        raise ValueError(error.format(type(value), value))
+        raise ValueError(error.format(type(value).__name__, value))
     return wikicode(nodelist)
