@@ -118,7 +118,7 @@ class Template(Node):
 
     def get(self, name):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
-        for param in self.params:
+        for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
         raise ValueError(name)
@@ -149,8 +149,9 @@ class Template(Node):
             else:
                 int_keys = set()
                 for param in self.params:
-                    if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                        int_keys.add(int(unicode(param.name)))
+                    if not param.showkey:
+                        if re.match(r"[1-9][0-9]*$", param.name.strip()):
+                            int_keys.add(int(unicode(param.name)))
                 expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
                 if expected == int_name:
                     showkey = False
@@ -170,7 +171,7 @@ class Template(Node):
         self.params.append(param)
         return param
 
-    def remove(self, name, keep_field=False, force_no_field=False):
+    def remove(self, name, keep_field=False, force_no_field=False):                     # KEEP FIRST FIELD, REMOVE ALL AFTER
         name = name.strip() if isinstance(name, basestring) else unicode(name)
         for i, param in enumerate(self.params):
             if param.name.strip() == name:

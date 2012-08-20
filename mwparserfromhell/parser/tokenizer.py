@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 import htmlentitydefs
+from math import log
 import re
 import string
 
@@ -32,17 +33,19 @@ __all__ = ["Tokenizer"]
 class BadRoute(Exception):
     pass
 
+
 class Tokenizer(object):
     START = object()
     END = object()
-    SENTINELS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";",
-                 ":", "/", "-", END]
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/-])", flags=re.IGNORECASE)
+    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
+               "/", "-", "\n", END]
+    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-\n])", flags=re.IGNORECASE)
 
     def __init__(self):
         self._text = None
         self._head = 0
         self._stacks = []
+        self._global = 0
 
     @property
     def _stack(self):
@@ -76,6 +79,10 @@ class Tokenizer(object):
         self._push_textbuffer()
         return self._stacks.pop()[0]
 
+    def _fail_route(self):
+        self._pop()
+        raise BadRoute()
+
     def _write(self, token):
         self._push_textbuffer()
         self._stack.append(token)
@@ -84,16 +91,20 @@ class Tokenizer(object):
         self._textbuffer.append(text)
 
     def _write_all(self, tokenlist):
+        if tokenlist and isinstance(tokenlist[0], tokens.Text):
+            self._write_text(tokenlist.pop(0).text)
         self._push_textbuffer()
         self._stack.extend(tokenlist)
 
-    def _read(self, delta=0, wrap=False):
+    def _read(self, delta=0, wrap=False, strict=False):
         index = self._head + delta
         if index < 0 and (not wrap or abs(index) > len(self._text)):
             return self.START
         try:
             return self._text[index]
         except IndexError:
+            if strict:
+                self._fail_route()
             return self.END
 
     def _parse_template(self):
@@ -115,7 +126,7 @@ class Tokenizer(object):
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
             text = "".join([token.text for token in text])
             if text.strip() and "\n" in text.strip():
-                raise BadRoute(self._pop())
+                self._fail_route()
 
     def _handle_template_param(self):
         if self._context & contexts.TEMPLATE_NAME:
@@ -137,44 +148,98 @@ class Tokenizer(object):
         self._head += 1
         return self._pop()
 
+    def _parse_heading(self):
+        self._global |= contexts.GL_HEADING
+        reset = self._head
+        self._head += 1
+        best = 1
+        while self._read() == "=":
+            best += 1
+            self._head += 1
+        context = contexts.HEADING_LEVEL_1 << min(best - 1, 5)
+
+        try:
+            title, level = self._parse(context)
+        except BadRoute:
+            self._head = reset + best - 1
+            self._write_text("=" * best)
+        else:
+            self._write(tokens.HeadingStart(level=level))
+            if level < best:
+                self._write_text("=" * (best - level))
+            self._write_all(title)
+            self._write(tokens.HeadingEnd())
+        finally:
+            self._global ^= contexts.GL_HEADING
+
+    def _handle_heading_end(self):
+        reset = self._head
+        self._head += 1
+        best = 1
+        while self._read() == "=":
+            best += 1
+            self._head += 1
+        current = int(log(self._context / contexts.HEADING_LEVEL_1, 2)) + 1
+        level = min(current, min(best, 6))
+
+        try:
+            after, after_level = self._parse(self._context)
+        except BadRoute:
+            if level < best:
+                self._write_text("=" * (best - level))
+            self._head = reset + best - 1
+            return self._pop(), level
+        else:
+            self._write_text("=" * best)
+            self._write_all(after)
+            return self._pop(), after_level
+
+    def _really_parse_entity(self):
+        self._write(tokens.HTMLEntityStart())
+        self._head += 1
+
+        this = self._read(strict=True)
+        if this == "#":
+            numeric = True
+            self._write(tokens.HTMLEntityNumeric())
+            self._head += 1
+            this = self._read(strict=True)
+            if this[0].lower() == "x":
+                hexadecimal = True
+                self._write(tokens.HTMLEntityHex(char=this[0]))
+                this = this[1:]
+                if not this:
+                    self._fail_route()
+            else:
+                hexadecimal = False
+        else:
+            numeric = hexadecimal = False
+
+        valid = string.hexdigits if hexadecimal else string.digits
+        if not numeric and not hexadecimal:
+            valid += string.ascii_letters
+        if not all([char in valid for char in this]):
+            self._fail_route()
+
+        self._head += 1
+        if self._read() != ";":
+            self._fail_route()
+        if numeric:
+            test = int(this, 16) if hexadecimal else int(this)
+            if test < 1 or test > 0x10FFFF:
+                self._fail_route()
+        else:
+            if this not in htmlentitydefs.entitydefs:
+                self._fail_route()
+
+        self._write(tokens.Text(text=this))
+        self._write(tokens.HTMLEntityEnd())
+
     def _parse_entity(self):
         reset = self._head
         self._push()
         try:
-            self._write(tokens.HTMLEntityStart())
-            self._head += 1
-            this = self._read()
-            if not this or this is self.END:
-                raise BadRoute(self._pop())
-            numeric = hexadecimal = False
-            if this == "#":
-                numeric = True
-                self._write(tokens.HTMLEntityNumeric())
-                self._head += 1
-                this = self._read()
-                if not this or this is self.END:
-                    raise BadRoute(self._pop())
-                if this[0].lower() == "x":
-                    hexadecimal = True
-                    self._write(tokens.HTMLEntityHex(char=this[0]))
-                    this = this[1:]
-            valid = string.hexdigits if hexadecimal else string.digits
-            if not numeric and not hexadecimal:
-                valid += string.ascii_letters
-            if not all([char in valid for char in this]):
-                raise BadRoute(self._pop())
-            self._head += 1
-            if self._read() != ";":
-                raise BadRoute(self._pop())
-            if numeric:
-                test = int(this, 16) if hexadecimal else int(this)
-                if test < 1 or test > 0x10FFFF:
-                    raise BadRoute(self._pop())
-            else:
-                if this not in htmlentitydefs.entitydefs:
-                    raise BadRoute(self._pop())
-            self._write(tokens.Text(text=this))
-            self._write(tokens.HTMLEntityEnd())
+            self._really_parse_entity()
         except BadRoute:
             self._head = reset
             self._write_text(self._read())
@@ -185,15 +250,15 @@ class Tokenizer(object):
         self._push(context)
         while True:
             this = self._read()
-            if this not in self.SENTINELS:
+            if this not in self.MARKERS:
                 self._write_text(this)
                 self._head += 1
                 continue
             if this is self.END:
-                if self._context & contexts.TEMPLATE:
-                    raise BadRoute(self._pop())
+                if self._context & (contexts.TEMPLATE | contexts.HEADING):
+                    self._fail_route()
                 return self._pop()
-            next = self._read(1)
+            prev, next = self._read(-1), self._read(1)
             if this == next == "{":
                 self._parse_template()
             elif this == "|" and self._context & contexts.TEMPLATE:
@@ -202,6 +267,12 @@ class Tokenizer(object):
                 self._handle_template_param_value()
             elif this == next == "}" and self._context & contexts.TEMPLATE:
                 return self._handle_template_end()
+            elif (prev == "\n" or prev == self.START) and this == "=" and not self._global & contexts.GL_HEADING:
+                self._parse_heading()
+            elif this == "=" and self._context & contexts.HEADING:
+                return self._handle_heading_end()
+            elif this == "\n" and self._context & contexts.HEADING:
+                self._fail_route()
             elif this == "&":
                 self._parse_entity()
             else:

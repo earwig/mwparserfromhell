@@ -29,7 +29,7 @@ class Token(object):
     def __repr__(self):
         args = []
         for key, value in self._kwargs.iteritems():
-            if len(value) > 100:
+            if isinstance(value, basestring) and len(value) > 100:
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
                 args.append(key + "=" + repr(value))
@@ -66,7 +66,8 @@ HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
 HTMLEntityHex = make("HTMLEntityHex")                               # x
 HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 
-HeadingBlock = make("HeadingBlock")                                 # =...
+HeadingStart = make("HeadingStart")                                 # =...
+HeadingEnd = make("HeadingEnd")                                     # =...
 
 TagOpenOpen = make("TagOpenOpen")                                   # <
 TagAttrStart = make("TagAttrStart")

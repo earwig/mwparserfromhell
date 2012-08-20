@@ -20,8 +20,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import re
-
 from . import tokens
 from ..nodes import Heading, HTMLEntity, Tag, Template, Text
 from ..nodes.extras import Attribute, Parameter
@@ -49,42 +47,39 @@ class Builder(object):
     def _write(self, item):
         self._stacks[-1].append(item)
 
-    def _handle_parameter(self, key):
+    def _handle_parameter(self, default):
+        key = None
         showkey = False
         self._push()
         while self._tokens:
-            token = self._tokens.pop(0)
+            token = self._tokens.pop()
             if isinstance(token, tokens.TemplateParamEquals):
                 key = self._pop()
                 showkey = True
                 self._push()
             elif isinstance(token, (tokens.TemplateParamSeparator,
                                     tokens.TemplateClose)):
-                self._tokens.insert(0, token)
+                self._tokens.append(token)
                 value = self._pop()
+                if not key:
+                    key = self._wrap([Text(unicode(default))])
                 return Parameter(key, value, showkey)
             else:
                 self._write(self._handle_token(token))
 
     def _handle_template(self):
         params = []
-        int_keys = set()
-        int_key_range = {1}
+        default = 1
         self._push()
         while self._tokens:
-            token = self._tokens.pop(0)
+            token = self._tokens.pop()
             if isinstance(token, tokens.TemplateParamSeparator):
                 if not params:
                     name = self._pop()
-                default = unicode(min(int_key_range - int_keys))
-                param = self._handle_parameter(self._wrap([Text(default)]))
-                if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                    # We try a more restrictive test for integers than
-                    # try: int(), because "01" as a key will pass through int()
-                    # correctly but is not a valid integer key in wikicode:
-                    int_keys.add(int(unicode(param.name)))
-                    int_key_range.add(len(int_keys) + 1)
+                param = self._handle_parameter(default)
                 params.append(param)
+                if not param.showkey:
+                    default += 1
             elif isinstance(token, tokens.TemplateClose):
                 if not params:
                     name = self._pop()
@@ -93,25 +88,25 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_entity(self):
-        token = self._tokens.pop(0)
+        token = self._tokens.pop()
         if isinstance(token, tokens.HTMLEntityNumeric):
-            token = self._tokens.pop(0)
+            token = self._tokens.pop()
             if isinstance(token, tokens.HTMLEntityHex):
-                text = self._tokens.pop(0)
-                self._tokens.pop(0)  # Remove HTMLEntityEnd
+                text = self._tokens.pop()
+                self._tokens.pop()  # Remove HTMLEntityEnd
                 return HTMLEntity(text.text, named=False, hexadecimal=True,
                                   hex_char=token.char)
-            self._tokens.pop(0)  # Remove HTMLEntityEnd
+            self._tokens.pop()  # Remove HTMLEntityEnd
             return HTMLEntity(token.text, named=False, hexadecimal=False)
-        self._tokens.pop(0)  # Remove HTMLEntityEnd
+        self._tokens.pop()  # Remove HTMLEntityEnd
         return HTMLEntity(token.text, named=True, hexadecimal=False)
 
     def _handle_heading(self, token):
         level = token.level
         self._push()
         while self._tokens:
-            token = self._tokens.pop(0)
-            if isinstance(token, tokens.HeadingBlock):
+            token = self._tokens.pop()
+            if isinstance(token, tokens.HeadingEnd):
                 title = self._pop()
                 return Heading(title, level)
             else:
@@ -121,7 +116,7 @@ class Builder(object):
         name, quoted = None, False
         self._push()
         while self._tokens:
-            token = self._tokens.pop(0)
+            token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrEquals):
                 name = self._pop()
                 self._push()
@@ -129,7 +124,7 @@ class Builder(object):
                 quoted = True
             elif isinstance(token, (tokens.TagAttrStart,
                                     tokens.TagCloseOpen)):
-                self._tokens.insert(0, token)
+                self._tokens.append(token)
                 if name is not None:
                     return Attribute(name, self._pop(), quoted)
                 return Attribute(self._pop(), quoted=quoted)
@@ -141,7 +136,7 @@ class Builder(object):
         attrs = []
         self._push()
         while self._tokens:
-            token = self._tokens.pop(0)
+            token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrStart):
                 attrs.append(self._handle_attribute())
             elif isinstance(token, tokens.TagCloseOpen):
@@ -167,15 +162,16 @@ class Builder(object):
             return self._handle_template()
         elif isinstance(token, tokens.HTMLEntityStart):
             return self._handle_entity()
-        elif isinstance(token, tokens.HeadingBlock):
+        elif isinstance(token, tokens.HeadingStart):
             return self._handle_heading(token)
         elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
 
     def build(self, tokenlist):
         self._tokens = tokenlist
+        self._tokens.reverse()
         self._push()
         while self._tokens:
-            node = self._handle_token(self._tokens.pop(0))
+            node = self._handle_token(self._tokens.pop())
             self._write(node)
         return self._pop()
