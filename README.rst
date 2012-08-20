@@ -3,7 +3,7 @@ mwparserfromhell
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
-wikicode.
+wikicode. It supports Python 2 and Python 3.
 
 Developed by Earwig_ and named by `Σ`_.
 
@@ -28,21 +28,21 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> import mwparserfromhell
     >>> wikicode = mwparserfromhell.parse(text)
 
-``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
-ordinary unicode object with some extra methods. For example::
+``wikicode`` is a ``mwparserfromhell.wikicode.Wikicode`` object, which acts
+like an ordinary unicode object with some extra methods. For example::
 
-    >>> text = u"I has a template! {{foo|bar|baz|eggs=spam}} See it?"
+    >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
     >>> print wikicode
     I has a template! {{foo|bar|baz|eggs=spam}} See it?
     >>> templates = wikicode.filter_templates()
     >>> print templates
-    [u'{{foo|bar|baz|eggs=spam}}']
+    ['{{foo|bar|baz|eggs=spam}}']
     >>> template = templates[0]
     >>> print template.name
     foo
     >>> print template.params
-    [u'bar', u'baz', u'eggs=spam']
+    ['bar', 'baz', 'eggs=spam']
     >>> print template.get(1).value
     bar
     >>> print template.get("eggs").value
@@ -53,7 +53,7 @@ nested templates::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
     >>> print code.filter_templates()
-    [u'{{foo|this {{includes a|template}}}}']
+    ['{{foo|this {{includes a|template}}}}']
     >>> foo = code.filter_templates()[0]
     >>> print foo.get(1).value
     this {{includes a|template}}
@@ -67,10 +67,10 @@ passing ``recursive=True``::
 
     >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
     >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
-    [u'{{foo|{{bar}}={{baz|{{spam}}}}}}', u'{{bar}}', u'{{baz|{{spam}}}}', u'{{spam}}']
+    ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
 
 Templates can be easily modified to add, remove, alter or params. ``Wikicode``
-can also be treated like lists with ``append()``, ``insert()``, ``remove()``,
+can also be treated like a list with ``append()``, ``insert()``, ``remove()``,
 ``replace()``, and more::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
@@ -85,7 +85,7 @@ can also be treated like lists with ``append()``, ``insert()``, ``remove()``,
     >>> print code
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> print code.filter_templates()
-    [u'{{cleanup|date=July 2012}}', u'{{bar-stub}}']
+    ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
 You can then convert ``code`` back into a regular ``unicode`` object (for
 saving the page!) by calling ``unicode()`` on it::
