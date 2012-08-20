@@ -33,7 +33,7 @@ FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
 
 class Wikicode(StringMixIn):
     def __init__(self, nodes):
-        super(Wikicode, self).__init__(self)
+        super(Wikicode, self).__init__()
         self._nodes = nodes
 
     def __unicode__(self):

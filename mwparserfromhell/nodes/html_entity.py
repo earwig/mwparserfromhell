@@ -26,7 +26,7 @@ from . import Node
 
 __all__ = ["HTMLEntity"]
 
-<<<<<<< HEAD
+class HTMLEntity(Node):
     def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
         super(HTMLEntity, self).__init__()
         self._value = value

@@ -29,63 +29,89 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
-ordinary unicode object. It also contains a list of nodes representing the
-components of the wikicode, including ordinary text nodes, templates, and
-links. For example::
+ordinary unicode object with some extra methods. For example::
 
-    >>> wikicode = mwparserfromhell.parse(u"{{foo|bar|baz|eggs=spam}}")
+    >>> text = u"I has a template! {{foo|bar|baz|eggs=spam}} See it?"
+    >>> wikicode = mwparserfromhell.parse(text)
     >>> print wikicode
-    u"{{foo|bar|baz|eggs=spam}}"
-    >>>
-
-
-    [Template(name="foo", params={"1": "bar", "2": "baz", "eggs": "spam"})]
+    I has a template! {{foo|bar|baz|eggs=spam}} See it?
+    >>> templates = wikicode.filter_templates()
+    >>> print templates
+    [u'{{foo|bar|baz|eggs=spam}}']
     >>> template = templates[0]
     >>> print template.name
     foo
     >>> print template.params
-    ['bar', 'baz']
-    >>> print template[0]
+    [u'bar', u'baz', u'eggs=spam']
+    >>> print template.get(1).value
     bar
-    >>> print template["eggs"]
+    >>> print template.get("eggs").value
     spam
-    >>> print template.render()
-    {{foo|bar|baz|eggs=spam}}
 
-If ``get``\ 's argument is a number *n*, it'll return the *n*\ th parameter,
-otherwise it will return the parameter with the given name. Unnamed parameters
-are given numerical names starting with 1, so ``{{foo|bar}}`` is the same as
-``{{foo|1=bar}}``, and ``templates[0].get(0) is templates[0].get("1")``.
+Since every node you reach is also a ``Wikicode`` object, it's trivial to get
+nested templates::
 
-By default, nested templates are supported like so::
-
-    >>> templates = parser.parse("{{foo|this {{includes a|template}}}}")
-    >>> print templates
-    [Template(name="foo", params={"1": "this {{includes a|template}}"})]
-    >>> print templates[0].get(0)
+    >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
+    >>> print code.filter_templates()
+    [u'{{foo|this {{includes a|template}}}}']
+    >>> foo = code.filter_templates()[0]
+    >>> print foo.get(1).value
     this {{includes a|template}}
-    >>> print templates[0].get(0).templates
-    [Template(name="includes a", params={"1": "template"})]
-    >>> print templates[0].get(0).templates[0].params[0]
+    >>> print foo.get(1).value.filter_templates()[0]
+    {{includes a|template}}
+    >>> print foo.get(1).value.filter_templates()[0].get(1).value
     template
+
+Additionally, you can get include nested templates in ``filter_templates()`` by
+passing ``recursive=True``::
+
+    >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
+    >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
+    [u'{{foo|{{bar}}={{baz|{{spam}}}}}}', u'{{bar}}', u'{{baz|{{spam}}}}', u'{{spam}}']
+
+Templates can be easily modified to add, remove, alter or params. ``Wikicode``
+can also be treated like lists with ``append()``, ``insert()``, ``remove()``,
+``replace()``, and more::
+
+    >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
+    >>> code = mwparserfromhell.parse(text)
+    >>> for template in code.filter_templates():
+    ...     if template.name == "cleanup" and not template.has_param("date"):
+    ...         template.add("date", "July 2012")
+    ...
+    >>> print code
+    {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
+    >>> code.replace("{{uncategorized}}", "{{bar-stub}}")
+    >>> print code
+    {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
+    >>> print code.filter_templates()
+    [u'{{cleanup|date=July 2012}}', u'{{bar-stub}}']
+
+You can then convert ``code`` back into a regular ``unicode`` object (for
+saving the page!) by calling ``unicode()`` on it::
+
+    >>> text = unicode(code)
+    >>> print text
+    {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
+    >>> text == code
+    True
 
 Integration
 -----------
 
 ``mwparserfromhell`` is used by and originally developed for EarwigBot_;
-``Page`` objects have a ``parse_templates`` method that essentially calls
-``Parser().parse()`` on ``page.get()``.
+``Page`` objects have a ``parse`` method that essentially calls
+``mwparserfromhell.parse()`` on ``page.get()``.
 
 If you're using PyWikipedia_, your code might look like this::
 
     import mwparserfromhell
     import wikipedia as pywikibot
-    def parse_templates(title):
+    def parse(title):
         site = pywikibot.get_site()
         page = pywikibot.Page(site, title)
         text = page.get()
-        parser = mwparserfromhell.Parser()
-        return parser.parse(text)
+        return mwparserfromhell.parse(text)
 
 If you're not using a library, you can parse templates in any page using the
 following code (via the API_)::
@@ -94,12 +120,11 @@ following code (via the API_)::
     import urllib
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
-    def parse_templates(title):
+    def parse(title):
         raw = urllib.urlopen(API_URL, data).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
-        parser = mwparserfromhell.Parser()
-        return parser.parse(text)
+        return mwparserfromhell.parse(text)
 
 .. _MediaWiki:            http://mediawiki.org
 .. _Earwig:               http://en.wikipedia.org/wiki/User:The_Earwig
