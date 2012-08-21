@@ -20,13 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import htmlentitydefs
+from __future__ import unicode_literals
 from math import log
 import re
 import string
 
 from . import contexts
 from . import tokens
+from ..compat import htmlentitydefs
 
 __all__ = ["Tokenizer"]
 

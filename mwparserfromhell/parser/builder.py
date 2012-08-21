@@ -20,11 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from . import tokens
 from ..nodes import Heading, HTMLEntity, Tag, Template, Text
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
+from ..compat import str, bytes
 
 __all__ = ["Builder"]
 
@@ -62,7 +65,7 @@ class Builder(object):
                 self._tokens.append(token)
                 value = self._pop()
                 if not key:
-                    key = self._wrap([Text(unicode(default))])
+                    key = self._wrap([Text(str(default))])
                 return Parameter(key, value, showkey)
             else:
                 self._write(self._handle_token(token))
