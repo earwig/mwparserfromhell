@@ -32,10 +32,12 @@ from ..compat import htmlentities
 __all__ = ["Tokenizer"]
 
 class BadRoute(Exception):
+    """Raised internally when the current tokenization route ss invalid."""
     pass
 
 
 class Tokenizer(object):
+    """Creates a list of tokens from a string of wikicode."""
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
@@ -50,10 +52,12 @@ class Tokenizer(object):
 
     @property
     def _stack(self):
+        """The current token stack."""
         return self._stacks[-1][0]
 
     @property
     def _context(self):
+        """The current token context."""
         return self._stacks[-1][1]
 
     @_context.setter
@@ -62,6 +66,7 @@ class Tokenizer(object):
 
     @property
     def _textbuffer(self):
+        """Return the current textbuffer."""
         return self._stacks[-1][2]
 
     @_textbuffer.setter
@@ -69,35 +74,57 @@ class Tokenizer(object):
         self._stacks[-1][2] = value
 
     def _push(self, context=0):
+        """Add a new token stack, context, and textbuffer to the list."""
         self._stacks.append([[], context, []])
 
     def _push_textbuffer(self):
+        """Push the textbuffer onto the stack as a Text node and clear it."""
         if self._textbuffer:
             self._stack.append(tokens.Text(text="".join(self._textbuffer)))
             self._textbuffer = []
 
     def _pop(self):
+        """Pop the current stack/context/textbuffer, returing the stack."""
         self._push_textbuffer()
         return self._stacks.pop()[0]
 
     def _fail_route(self):
+        """Fail the current tokenization route.
+
+        Discards the current stack/context/textbuffer and raises
+        :py:exc:`~mwparserfromhell.parser.tokenizer.BadRoute`.
+        """
         self._pop()
         raise BadRoute()
 
     def _write(self, token):
+        """Write a token to the current token stack."""
         self._push_textbuffer()
         self._stack.append(token)
 
     def _write_text(self, text):
+        """Write text to the current textbuffer."""
         self._textbuffer.append(text)
 
     def _write_all(self, tokenlist):
+        """Write a series of tokens to the current stack at once."""
         if tokenlist and isinstance(tokenlist[0], tokens.Text):
             self._write_text(tokenlist.pop(0).text)
         self._push_textbuffer()
         self._stack.extend(tokenlist)
 
     def _read(self, delta=0, wrap=False, strict=False):
+        """Read the value at a relative point in the wikicode.
+
+        The value is read from :py:attr:`self._head <_head>` plus the value of
+        *delta* (which can be negative). If *wrap* is ``False``, we will not
+        allow attempts to read from the end of the string if ``self._head +
+        delta`` is negative. If *strict* is ``True``, the route will be failed
+        (with ``:py:meth:`_fail_route`) if we try to read from past the end of
+        the string; otherwise, :py:attr:`self.END <END>` is returned. If we try
+        to read from before the start of the string, :py:attr:`self.START
+        <START>` is returned.
+        """
         index = self._head + delta
         if index < 0 and (not wrap or abs(index) > len(self._text)):
             return self.START
@@ -109,6 +136,7 @@ class Tokenizer(object):
             return self.END
 
     def _parse_template(self):
+        """Parse a template at the head of the wikicode string."""
         reset = self._head
         self._head += 2
         try:
@@ -122,6 +150,11 @@ class Tokenizer(object):
             self._write(tokens.TemplateClose())
 
     def _verify_template_name(self):
+        """Verify that a template's name is valid wikisyntax.
+
+        The route will be failed if the name contains a newline inside of it
+        (not merely at the beginning or end).
+        """
         self._push_textbuffer()
         if self._stack:
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
@@ -130,6 +163,7 @@ class Tokenizer(object):
                 self._fail_route()
 
     def _handle_template_param(self):
+        """Handle a template parameter at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_template_name()
             self._context ^= contexts.TEMPLATE_NAME
@@ -139,17 +173,20 @@ class Tokenizer(object):
         self._write(tokens.TemplateParamSeparator())
 
     def _handle_template_param_value(self):
+        """Handle a template parameter's value at the head of the string."""
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
 
     def _handle_template_end(self):
+        """Handle the end of the template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_template_name()
         self._head += 1
         return self._pop()
 
     def _parse_heading(self):
+        """Parse a section heading at the head of the wikicode string."""
         self._global |= contexts.GL_HEADING
         reset = self._head
         self._head += 1
@@ -174,6 +211,7 @@ class Tokenizer(object):
             self._global ^= contexts.GL_HEADING
 
     def _handle_heading_end(self):
+        """Handle the end of a section heading at the head of the string."""
         reset = self._head
         self._head += 1
         best = 1
@@ -196,6 +234,7 @@ class Tokenizer(object):
             return self._pop(), after_level
 
     def _really_parse_entity(self):
+        """Actually parse a HTML entity and ensure that it is valid."""
         self._write(tokens.HTMLEntityStart())
         self._head += 1
 
@@ -237,6 +276,7 @@ class Tokenizer(object):
         self._write(tokens.HTMLEntityEnd())
 
     def _parse_entity(self):
+        """Parse a HTML entity at the head of the wikicode string."""
         reset = self._head
         self._push()
         try:
@@ -248,6 +288,7 @@ class Tokenizer(object):
             self._write_all(self._pop())
 
     def _parse(self, context=0):
+        """Parse the wikicode string, using *context* for when to stop."""
         self._push(context)
         while True:
             this = self._read()
@@ -281,6 +322,7 @@ class Tokenizer(object):
             self._head += 1
 
     def tokenize(self, text):
+        """Build a list of tokens from a string of wikicode and return it."""
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
         return self._parse()

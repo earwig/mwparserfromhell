@@ -20,6 +20,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains the token definitions that are used as an intermediate
+parsing data type - they are stored in a flat list, with each token being
+identified by its type and optional attributes. The token list is generated in
+a syntactically valid form by the
+:py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then converted
+into the :py:class`~mwparserfromhell.wikicode.Wikicode` tree by the
+:py:class:`~mwparserfromhell.parser.builder.Builder`.
+"""
+
 from __future__ import unicode_literals
 
 from ..compat import basestring, py3k
@@ -27,6 +37,8 @@ from ..compat import basestring, py3k
 __all__ = ["Token"]
 
 class Token(object):
+    """A token represents the semantic meaning of a unit of wikicode."""
+
     def __init__(self, **kwargs):
         super(Token, self).__setattr__("_kwargs", kwargs)
 
@@ -54,6 +66,7 @@ class Token(object):
         del self._kwargs[key]
 
 def make(name):
+    """Create a new Token class using ``type()`` and add it to ``__all__``."""
     __all__.append(name)
     return type(name if py3k else name.encode("utf8"), (Token,), {})
 

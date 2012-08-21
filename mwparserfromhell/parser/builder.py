@@ -53,7 +53,7 @@ class Builder(object):
         self._stacks.append([])
 
     def _pop(self, wrap=True):
-        """Pop the topmost node list off of the stack.
+        """Pop the current node list off of the stack.
 
         If *wrap* is ``True``, we will call :py:meth:`_wrap` on the list.
         """
@@ -62,7 +62,7 @@ class Builder(object):
         return self._stacks.pop()
 
     def _write(self, item):
-        """Append a node to the topmost node list."""
+        """Append a node to the current node list."""
         self._stacks[-1].append(item)
 
     def _handle_parameter(self, default):
