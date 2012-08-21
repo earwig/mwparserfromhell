@@ -21,7 +21,8 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from ..compat import str, bytes, v
+
+from ..compat import basestring, str
 
 __all__ = ["Token"]
 
@@ -31,7 +32,7 @@ class Token(object):
 
     def __repr__(self):
         args = []
-        for key, value in self._kwargs.iteritems():
+        for key, value in self._kwargs.items():
             if isinstance(value, basestring) and len(value) > 100:
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
@@ -52,15 +53,9 @@ class Token(object):
     def __delattr__(self, key):
         del self._kwargs[key]
 
-if v >= 3:
-    def make(name):
-        __all__.append(name)
-        return type(name, (Token,), {})
-else:
-    def make(name):
-        name = name.encode("utf-8")
-        __all__.append(name)
-        return type(name, (Token,), {})
+def make(name):
+    __all__.append(name)
+    return type(name, (Token,), {})
 
 Text = make("Text")
 

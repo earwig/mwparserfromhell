@@ -23,11 +23,11 @@
 from __future__ import unicode_literals
 
 from . import tokens
+from ..compat import str
 from ..nodes import Heading, HTMLEntity, Tag, Template, Text
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
-from ..compat import str, bytes
 
 __all__ = ["Builder"]
 

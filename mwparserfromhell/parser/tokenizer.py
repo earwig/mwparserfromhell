@@ -27,7 +27,7 @@ import string
 
 from . import contexts
 from . import tokens
-from ..compat import htmlentitydefs
+from ..compat import htmlentities
 
 __all__ = ["Tokenizer"]
 
@@ -230,7 +230,7 @@ class Tokenizer(object):
             if test < 1 or test > 0x10FFFF:
                 self._fail_route()
         else:
-            if this not in htmlentitydefs.entitydefs:
+            if this not in htmlentities.entitydefs:
                 self._fail_route()
 
         self._write(tokens.Text(text=this))
