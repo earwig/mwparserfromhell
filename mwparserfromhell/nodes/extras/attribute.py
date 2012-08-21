@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from ...string_mixin import StringMixIn
+from ...compat import str, bytes
 
 __all__ = ["Attribute"]
 
@@ -34,9 +37,9 @@ class Attribute(StringMixIn):
     def __unicode__(self):
         if self.value:
             if self.quoted:
-                return unicode(self.name) + '="' + unicode(self.value) + '"'
-            return unicode(self.name) + "=" + unicode(self.value)
-        return unicode(self.name)
+                return str(self.name) + '="' + str(self.value) + '"'
+            return str(self.name) + "=" + str(self.value)
+        return str(self.name)
 
     @property
     def name(self):
