@@ -20,9 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 import mwparserfromhell
 from .nodes import Node
 from .smart_list import SmartList
+from .compat import str, bytes, basestring
 
 def parse_anything(value):
     wikicode = mwparserfromhell.wikicode.Wikicode
@@ -33,7 +36,7 @@ def parse_anything(value):
     if isinstance(value, basestring):
         return mwparserfromhell.parse(value)
     if isinstance(value, int):
-        return mwparserfromhell.parse(unicode(value))
+        return mwparserfromhell.parse(str(value))
     if value is None:
         return wikicode(SmartList())
     try:

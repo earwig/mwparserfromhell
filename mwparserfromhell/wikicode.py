@@ -20,12 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
 import re
 import sys
 
 from .nodes import Heading, Node, Tag, Template, Text
 from .string_mixin import StringMixIn
 from .utils import parse_anything
+from .compat import str, bytes
 
 __all__ = ["Wikicode"]
 
@@ -40,7 +42,7 @@ class Wikicode(StringMixIn):
         self._nodes = nodes
 
     def __unicode__(self):
-        return "".join([unicode(node) for node in self.nodes])
+        return "".join([str(node) for node in self.nodes])
 
     def _get_children(self, node):
         """Iterate over all descendants of a given node, including itself.
@@ -193,7 +195,7 @@ class Wikicode(StringMixIn):
             nodes = self.nodes
         for node in nodes:
             if not forcetype or isinstance(node, forcetype):
-                if not matches or re.search(matches, unicode(node), flags):
+                if not matches or re.search(matches, str(node), flags):
                     yield node
 
     def ifilter_templates(self, recursive=False, matches=None, flags=FLAGS):
@@ -251,15 +253,15 @@ class Wikicode(StringMixIn):
         for node in self.nodes:
             stripped = node.__strip__(normalize, collapse)
             if stripped:
-                nodes.append(unicode(stripped))
+                nodes.append(str(stripped))
 
         if collapse:
-            stripped = u"".join(nodes).strip("\n")
+            stripped = "".join(nodes).strip("\n")
             while "\n\n\n" in stripped:
                 stripped = stripped.replace("\n\n\n", "\n\n")
             return stripped
         else:
-            return u"".join(nodes)
+            return "".join(nodes)
 
     def get_tree(self):
         marker = object()  # Random object we can find with certainty in a list

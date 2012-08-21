@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from . import Node, Text
+from ..compat import str, bytes
 
 __all__ = ["Tag"]
 
@@ -92,7 +95,7 @@ class Tag(Node):
 
         result = "<" + unicode(self.tag)
         if self.attrs:
-            result += " " + u" ".join([unicode(attr) for attr in self.attrs])
+            result += " " + " ".join([unicode(attr) for attr in self.attrs])
         if self.self_closing:
             result += " " * self.open_padding + "/>"
         else:

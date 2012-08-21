@@ -20,9 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import htmlentitydefs
+from __future__ import unicode_literals
 
 from . import Node
+from ..compat import str, bytes, htmlentitydefs
 
 __all__ = ["HTMLEntity"]
 
@@ -50,10 +51,10 @@ class HTMLEntity(Node):
 
     def __unicode__(self):
         if self.named:
-            return u"&{0};".format(self.value)
+            return "&{0};".format(self.value)
         if self.hexadecimal:
-            return u"&#{0}{1};".format(self.hex_char, self.value)
-        return u"&#{0};".format(self.value)
+            return "&#{0}{1};".format(self.hex_char, self.value)
+        return "&#{0};".format(self.value)
 
     def __strip__(self, normalize, collapse):
         if normalize:
@@ -71,7 +72,7 @@ class HTMLEntity(Node):
         except ValueError:
             # Test whether we're on the wide or narrow Python build. Check the
             # length of a non-BMP code point (U+1F64A, SPEAK-NO-EVIL MONKEY):
-            if len(u"\U0001F64A") == 2:
+            if len("\U0001F64A") == 2:
                 # Ensure this is within the range we can encode:
                 if value > 0x10FFFF:
                     raise ValueError("unichr() arg not in range(0x110000)")

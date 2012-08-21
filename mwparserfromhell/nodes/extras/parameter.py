@@ -20,8 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
+from ...compat import str, bytes
 
 __all__ = ["Parameter"]
 
@@ -34,8 +37,8 @@ class Parameter(StringMixIn):
 
     def __unicode__(self):
         if self.showkey:
-            return unicode(self.name) + "=" + unicode(self.value)
-        return unicode(self.value)
+            return str(self.name) + "=" + str(self.value)
+        return str(self.value)
 
     @property
     def name(self):
