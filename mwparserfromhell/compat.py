@@ -1,16 +1,25 @@
 # -*- coding: utf-8 -*-
 
+"""
+Implements support for both Python 2 and Python 3.
+"""
+
 import sys
 
-v = sys.version_info[0]
+py3k = sys.version_info.major == 3
 
-if v >= 3:
+if py3k:
     bytes = bytes
     str = str
-    basestring = (str, bytes)
-    import html.entities as htmlentitydefs
+    basestring = str
+    maxsize = sys.maxsize
+    import html.entities as htmlentities
+
 else:
     bytes = str
     str = unicode
     basestring = basestring
-    import htmlentitydefs
+    maxsize = sys.maxint
+    import htmlentitydefs as htmlentities
+
+del sys

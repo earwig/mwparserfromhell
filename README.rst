@@ -5,7 +5,7 @@ mwparserfromhell
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
 wikicode. It supports Python 2 and Python 3.
 
-Developed by Earwig_ and named by `Σ`_.
+Developed by Earwig_ with help from `Σ`_.
 
 Installation
 ------------

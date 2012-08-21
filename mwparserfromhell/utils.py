@@ -23,21 +23,24 @@
 from __future__ import unicode_literals
 
 import mwparserfromhell
+from .compat import basestring, bytes, str
 from .nodes import Node
 from .smart_list import SmartList
-from .compat import str, bytes, basestring
 
 def parse_anything(value):
     wikicode = mwparserfromhell.wikicode.Wikicode
     if isinstance(value, wikicode):
         return value
-    if isinstance(value, Node):
+    elif isinstance(value, Node):
         return wikicode(SmartList([value]))
-    if isinstance(value, basestring):
+    elif isinstance(value, basestring):
         return mwparserfromhell.parse(value)
-    if isinstance(value, int):
+    elif isinstance(value, bytes):
+        # This should only happen in py3k when bytes is not in basestring:
+        return mwparserfromhell.parse(value.decode("utf8"))
+    elif isinstance(value, int):
         return mwparserfromhell.parse(str(value))
-    if value is None:
+    elif value is None:
         return wikicode(SmartList())
     try:
         nodelist = SmartList()

@@ -21,25 +21,29 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from .compat import str, bytes, v
+
+from .compat import py3k, str
 
 __all__ = ["StringMixIn"]
 
 def inheritdoc(method):
-    try:
-        method.__doc__ = getattr(str, method.__name__).__doc__
-    except AttributeError:
-        method.__doc__ = "This feature is only available on Python 2."
+    method.__doc__ = getattr(str, method.__name__).__doc__
     return method
 
 
 class StringMixIn(object):
-    if v >= 3:
-      def __str__(self):
-          return self.__unicode__()
+    if py3k:
+        def __str__(self):
+            return self.__unicode__()
+
+        def __bytes__(self):
+            return self.__unicode__().encode("utf8")
     else:
         def __str__(self):
             return self.__unicode__().encode("utf8")
+
+    def __unicode__(self):
+        raise NotImplementedError()
 
     def __repr__(self):
         return repr(self.__unicode__())
@@ -74,11 +78,12 @@ class StringMixIn(object):
             return self.__unicode__() >= other.__unicode__()
         return self.__unicode__() >= other
 
-    def __nonzero__(self):
-        return bool(self.__unicode__())
-
-    def __unicode__(self):
-        raise NotImplementedError()
+    if py3k:
+        def __bool__(self):
+            return bool(self.__unicode__())
+    else:
+        def __nonzero__(self):
+            return bool(self.__unicode__())
 
     def __len__(self):
         return len(self.__unicode__())
@@ -92,7 +97,7 @@ class StringMixIn(object):
 
     def __contains__(self, item):
         if isinstance(item, StringMixIn):
-            return unicode(item) in self.__unicode__()
+            return str(item) in self.__unicode__()
         return item in self.__unicode__()
 
     @inheritdoc
@@ -107,9 +112,10 @@ class StringMixIn(object):
     def count(self, sub=None, start=None, end=None):
         return self.__unicode__().count(sub, start, end)
 
-    @inheritdoc
-    def decode(self, encoding=None, errors=None):
-        return self.__unicode__().decode(encoding, errors)
+    if not py3k:
+        @inheritdoc
+        def decode(self, encoding=None, errors=None):
+            return self.__unicode__().decode(encoding, errors)
 
     @inheritdoc
     def encode(self, encoding=None, errors=None):

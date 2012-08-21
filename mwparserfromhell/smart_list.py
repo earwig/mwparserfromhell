@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import sys
+from .compat import maxsize, py3k
 
 __all__ = ["SmartList"]
 
@@ -50,7 +50,7 @@ class SmartList(list):
             for child, (start, stop, step) in self._children.itervalues():
                 if start >= key.stop:
                     self._children[id(child)][1][0] += diff
-                if stop >= key.stop and stop != sys.maxint:
+                if stop >= key.stop and stop != maxsize:
                     self._children[id(child)][1][1] += diff
 
     def __delitem__(self, key):
@@ -64,14 +64,15 @@ class SmartList(list):
             if stop >= key.stop:
                 self._children[id(child)][1][1] -= diff
 
-    def __getslice__(self, start, stop):
-        return self.__getitem__(slice(start, stop))
+    if not py3k:
+        def __getslice__(self, start, stop):
+            return self.__getitem__(slice(start, stop))
 
-    def __setslice__(self, start, stop, iterable):
-        self.__setitem__(slice(start, stop), iterable)
+        def __setslice__(self, start, stop, iterable):
+            self.__setitem__(slice(start, stop), iterable)
 
-    def __delslice__(self, start, stop):
-        self.__delitem__(slice(start, stop))
+        def __delslice__(self, start, stop):
+            self.__delitem__(slice(start, stop))
 
     def __add__(self, other):
         return SmartList(list(self) + other)
@@ -165,8 +166,12 @@ class _ListProxy(list):
             return self._render() >= list(other)
         return self._render() >= other
 
-    def __nonzero__(self):
-        return bool(self._render())
+    if py3k:
+        def __bool__(self):
+            return bool(self._render())
+    else:
+        def __nonzero__(self):
+            return bool(self._render())
 
     def __len__(self):
         return (self._stop - self._start) / self._step
@@ -205,14 +210,15 @@ class _ListProxy(list):
     def __contains__(self, item):
         return item in self._render()
 
-    def __getslice__(self, start, stop):
-        return self.__getitem__(slice(start, stop))
+    if not py3k:
+        def __getslice__(self, start, stop):
+            return self.__getitem__(slice(start, stop))
 
-    def __setslice__(self, start, stop, iterable):
-        self.__setitem__(slice(start, stop), iterable)
+        def __setslice__(self, start, stop, iterable):
+            self.__setitem__(slice(start, stop), iterable)
 
-    def __delslice__(self, start, stop):
-        self.__delitem__(slice(start, stop))
+        def __delslice__(self, start, stop):
+            self.__delitem__(slice(start, stop))
 
     def __add__(self, other):
         return SmartList(list(self) + other)
