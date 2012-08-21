@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from ..compat import basestring, str
+from ..compat import basestring, py3k, str
 
 __all__ = ["Token"]
 
@@ -55,7 +55,7 @@ class Token(object):
 
 def make(name):
     __all__.append(name)
-    return type(name, (Token,), {})
+    return type(name if py3k else name.encode("utf8"), (Token,), {})
 
 Text = make("Text")
 
