@@ -44,21 +44,21 @@ class Wikicode(StringMixIn):
         return "".join([str(node) for node in self.nodes])
 
     def _get_children(self, node):
-        """Iterate over all descendants of a given node, including itself.
+        """Iterate over all descendants of a given *node*, including itself.
 
-        This is implemented by the __iternodes__() generator of Node classes,
-        which by default yields itself and nothing more.
+        This is implemented by the ``__iternodes__()`` generator of ``Node``
+        classes, which by default yields itself and nothing more.
         """
         for context, child in node.__iternodes__(self._get_all_nodes):
             yield child
 
     def _get_context(self, node, obj):
-        """Return a ``Wikicode`` that contains ``obj`` in its descendants.
+        """Return a ``Wikicode`` that contains *obj* in its descendants.
 
-        The closest (shortest distance from ``node``) suitable ``Wikicode``
-        will be returned, or ``None`` if the ``obj`` is the ``node`` itself.
+        The closest (shortest distance from *node*) suitable ``Wikicode`` will
+        be returned, or ``None`` if the *obj* is the *node* itself.
 
-        Raises ``ValueError`` if ``obj`` is not within ``node``.
+        Raises ``ValueError`` if *obj* is not within *node*.
         """
         for context, child in node.__iternodes__(self._get_all_nodes):
             if child is obj:
@@ -76,7 +76,10 @@ class Wikicode(StringMixIn):
                 yield child
 
     def _is_equivalent(self, obj, node):
-        """Return ``True`` if obj and node are equivalent, otherwise ``False``.
+        """Return ``True`` if *obj* and *node* are equivalent, else ``False``.
+
+        If *obj* is a ``Node``, the function will test whether they are the
+        same object, otherwise it will compare them with ``==``.
         """
         if isinstance(obj, Node):
             if node is obj:
@@ -87,16 +90,28 @@ class Wikicode(StringMixIn):
         return False
 
     def _contains(self, nodes, obj):
+        """Return ``True`` if *obj* is inside of *nodes*, else ``False``.
+
+        If *obj* is a ``Node``, we will only return ``True`` if *obj* is
+        actually in the list (and not just a node that equals it). Otherwise,
+        the test is simply ``obj in nodes``.
+        """
         if isinstance(obj, Node):
             for node in nodes:
                 if node is obj:
                     return True
-        else:
-            if obj in nodes:
-                return True
-        return False
+            return False
+        return obj in nodes
 
     def _do_search(self, obj, recursive, callback, context, *args, **kwargs):
+        """Look within *context* for *obj*, executing *callback* if found.
+
+        If *recursive* is ``True``, we'll look within context and its
+        descendants, otherwise we'll just execute callback. We raise
+        :py:exc:`ValueError` if *obj* isn't in our node list or context. If
+        found, *callback* is passed the context, the index of the node within
+        the context, and whatever were passed as ``*args`` and ``**kwargs``.
+        """
         if recursive:
             for i, node in enumerate(context.nodes):
                 if self._is_equivalent(obj, node):
@@ -110,6 +125,16 @@ class Wikicode(StringMixIn):
         callback(context, self.index(obj, recursive=False), *args, **kwargs)
 
     def _get_tree(self, code, lines, marker, indent):
+        """Build a tree to illustrate the way the Wikicode object was parsed.
+
+        The method that builds the actual tree is ``__showtree__`` of ``Node``
+        objects. *code* is the ``Wikicode`` object to build a tree for. *lines*
+        is the list to append the tree to, which is returned at the end of the
+        method. *marker* is some object to be used to indicate that the builder
+        should continue on from the last line instead of starting a new one; it
+        should be any object that can be tested for with ``is``. *indent* is
+        the starting indentation.
+        """
         def write(*args):
             if lines and lines[-1] is marker:  # Continue from the last line
                 lines.pop()  # Remove the marker
@@ -126,6 +151,11 @@ class Wikicode(StringMixIn):
 
     @property
     def nodes(self):
+        """A list of :py:class:`~mwparserfromhell.nodes.Node` objects.
+
+        This is the internal data actually stored within a
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object.
+        """
         return self._nodes
 
     @nodes.setter
@@ -133,9 +163,18 @@ class Wikicode(StringMixIn):
         self._nodes = value
 
     def get(self, index):
+        """Return the *index*\ th node within the list of nodes."""
         return self.nodes[index]
 
     def set(self, index, value):
+        """Set the ``Node`` at *index* to *value*.
+
+        Raises :py:exc:`IndexError` if *index* is out of range, or
+        :py:exc:`ValueError` if *value* cannot be coerced into one
+        :py:class:`~mwparserfromhell.nodes.Node`. To insert multiple nodes at
+        an index, use :py:meth:`get` with either :py:meth:`remove` and
+        :py:meth:`insert` or :py:meth:`replace`.
+        """
         nodes = parse_anything(value).nodes
         if len(nodes) > 1:
             raise ValueError("Cannot coerce multiple nodes into one index")
@@ -146,6 +185,13 @@ class Wikicode(StringMixIn):
             self.nodes[index] = nodes[0]
 
     def index(self, obj, recursive=False):
+        """Return the index of *obj* in the list of nodes.
+
+        Raises :py:exc:`ValueError` if *obj* is not found. If *recursive* is
+        ``True``, we will look in all nodes of ours and their descendants, and
+        return the index of our direct descendant node within *our* list of
+        nodes. Otherwise, the lookup is done only on direct descendants.
+        """
         if recursive:
             for i, node in enumerate(self.nodes):
                 if self._contains(self._get_children(node), obj):
@@ -158,15 +204,40 @@ class Wikicode(StringMixIn):
         raise ValueError(obj)
 
     def insert(self, index, value):
+        """Insert *value* at *index* in the list of nodes.
+
+        *value* can be anything parasable by
+        :py:func:`mwparserfromhell.utils.parse_anything`, which includes
+        strings or other :py:class:`~mwparserfromhell.wikicode.Wikicode` or
+        :py:class:`~mwparserfromhell.nodes.Node` objects.
+        """
         nodes = parse_anything(value).nodes
         for node in reversed(nodes):
             self.nodes.insert(index, node)
 
     def insert_before(self, obj, value, recursive=True):
+        """Insert *value* immediately before *obj* in the list of nodes.
+
+        *value* can be anything parasable by
+        :py:func:`mwparserfromhell.utils.parse_anything`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
+        in the node list, :py:exc:`ValueError` is raised.
+        """
         callback = lambda self, i, value: self.insert(i, value)
         self._do_search(obj, recursive, callback, self, value)
 
     def insert_after(self, obj, value, recursive=True):
+        """Insert *value* immediately after *obj* in the list of nodes.
+
+        *value* can be anything parasable by
+        :py:func:`mwparserfromhell.utils.parse_anything`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
+        in the node list, :py:exc:`ValueError` is raised.
+        """
         callback = lambda self, i, value: self.insert(i + 1, value)
         self._do_search(obj, recursive, callback, self, value)
 
