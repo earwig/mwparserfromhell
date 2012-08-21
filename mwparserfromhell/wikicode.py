@@ -218,10 +218,11 @@ class Wikicode(StringMixIn):
     def insert_before(self, obj, value, recursive=True):
         """Insert *value* immediately before *obj* in the list of nodes.
 
-        *value* can be anything parasable by
-        :py:func:`mwparserfromhell.utils.parse_anything`. If *recursive* is
-        ``True``, we will try to find *obj* within our child nodes even if it
-        is not a direct descendant of this
+        *obj* can be either a string or a
+        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
+        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
+        *recursive* is ``True``, we will try to find *obj* within our child
+        nodes even if it is not a direct descendant of this
         :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
         in the node list, :py:exc:`ValueError` is raised.
         """
@@ -231,10 +232,11 @@ class Wikicode(StringMixIn):
     def insert_after(self, obj, value, recursive=True):
         """Insert *value* immediately after *obj* in the list of nodes.
 
-        *value* can be anything parasable by
-        :py:func:`mwparserfromhell.utils.parse_anything`. If *recursive* is
-        ``True``, we will try to find *obj* within our child nodes even if it
-        is not a direct descendant of this
+        *obj* can be either a string or a
+        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
+        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
+        *recursive* is ``True``, we will try to find *obj* within our child
+        nodes even if it is not a direct descendant of this
         :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
         in the node list, :py:exc:`ValueError` is raised.
         """
@@ -242,6 +244,16 @@ class Wikicode(StringMixIn):
         self._do_search(obj, recursive, callback, self, value)
 
     def replace(self, obj, value, recursive=True):
+        """Replace *obj* with *value* in the list of nodes.
+
+        *obj* can be either a string or a
+        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
+        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
+        *recursive* is ``True``, we will try to find *obj* within our child
+        nodes even if it is not a direct descendant of this
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
+        in the node list, :py:exc:`ValueError` is raised.
+        """
         def callback(self, i, value):
             self.nodes.pop(i)
             self.insert(i, value)
@@ -249,16 +261,41 @@ class Wikicode(StringMixIn):
         self._do_search(obj, recursive, callback, self, value)
 
     def append(self, value):
+        """Insert *value* at the end of the list of nodes.
+
+        *value* can be anything parasable by
+        :py:func:`mwparserfromhell.utils.parse_anything`.
+        """
         nodes = parse_anything(value).nodes
         for node in nodes:
             self.nodes.append(node)
 
     def remove(self, obj, recursive=True):
+        """Remove *obj* from the list of nodes.
+
+        *obj* can be either a string or a
+        :py:class:`~mwparserfromhell.nodes.Node`. If *recursive* is ``True``,
+        we will try to find *obj* within our child nodes even if it is not a
+        direct descendant of this
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
+        in the node list, :py:exc:`ValueError` is raised.
+        """
         callback = lambda self, i: self.nodes.pop(i)
         self._do_search(obj, recursive, callback, self)
 
     def ifilter(self, recursive=False, matches=None, flags=FLAGS,
                 forcetype=None):
+        """Iterate over nodes in our list matching certain conditions.
+
+        If *recursive* is ``True``, we will iterate over our children and all
+        descendants of our children, otherwise just our immediate children. If
+        *matches* is given, we will only yield the nodes that match the given
+        regular expression (with :py:func:`re.search`). The default flags used
+        are :py:const:`re.IGNORECASE`, :py:const:`re.DOTALL`, and
+        :py:const:`re.UNICODE`, but custom flags can be specified by passing
+        *flags*. If *forcetype* is given, only nodes that are instances of this
+        type are yielded.
+        """
         if recursive:
             nodes = self._get_all_nodes(self)
         else:
@@ -269,25 +306,60 @@ class Wikicode(StringMixIn):
                     yield node
 
     def ifilter_templates(self, recursive=False, matches=None, flags=FLAGS):
+        """Iterate over template nodes.
+
+        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
+        :py:class:`~mwparserfromhell.nodes.template.Template`. It takes all
+        other arguments passable to :py:meth:`ifilter`.
+        """
         return self.filter(recursive, matches, flags, forcetype=Template)
 
     def ifilter_text(self, recursive=False, matches=None, flags=FLAGS):
+        """Iterate over text nodes.
+
+        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
+        :py:class:`~mwparserfromhell.nodes.text.Text`.
+        """
         return self.filter(recursive, matches, flags, forcetype=Text)
 
     def ifilter_tags(self, recursive=False, matches=None, flags=FLAGS):
+        """Iterate over tag nodes.
+
+        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
+        :py:class:`~mwparserfromhell.nodes.tag.Tag`.
+        """
         return self.ifilter(recursive, matches, flags, forcetype=Tag)
 
     def filter(self, recursive=False, matches=None, flags=FLAGS,
                forcetype=None):
+        """Return a list of nodes within our list matching certain conditions.
+
+        This is equivalent to calling :py:func:`list` on :py:meth:`ifilter`.
+        """
         return list(self.ifilter(recursive, matches, flags, forcetype))
 
     def filter_templates(self, recursive=False, matches=None, flags=FLAGS):
+        """Return a list of template nodes.
+
+        This is equivalent to calling :py:func:`list` on
+        :py:meth:`ifilter_templates`.
+        """
         return list(self.ifilter_templates(recursive, matches, flags))
 
     def filter_text(self, recursive=False, matches=None, flags=FLAGS):
+        """Return a list of text nodes.
+
+        This is equivalent to calling :py:func:`list` on
+        :py:meth:`ifilter_text`.
+        """
         return list(self.ifilter_text(recursive, matches, flags))
 
     def filter_tags(self, recursive=False, matches=None, flags=FLAGS):
+        """Return a list of tag nodes.
+
+        This is equivalent to calling :py:func:`list` on
+        :py:meth:`ifilter_tags`.
+        """
         return list(self.ifilter_tags(recursive, matches, flags))
 
     def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
