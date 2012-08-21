@@ -28,6 +28,8 @@ from ..compat import str
 __all__ = ["Tag"]
 
 class Tag(Node):
+    """Represents an HTML-style tag in wikicode, like ``<ref>``."""
+
     TAG_UNKNOWN = 0
 
     # Basic HTML:
@@ -146,6 +148,12 @@ class Tag(Node):
             write(">")
 
     def _translate(self):
+        """If the HTML-style tag has a wikicode representation, return that.
+
+        For example, ``<b>Foo</b>`` can be represented as ``'''Foo'''``. This
+        returns a tuple of the character starting the sequence and the
+        character ending it.
+        """
         translations = {
             self.TAG_ITALIC: ("''", "''"),
             self.TAG_BOLD: ("'''", "'''"),
@@ -159,32 +167,44 @@ class Tag(Node):
 
     @property
     def type(self):
+        """The tag type."""
         return self._type
 
     @property
     def tag(self):
+        """The tag itself, as a ``Wikicode`` object."""
         return self._tag
 
     @property
     def contents(self):
+        """The contents of the tag, as a ``Wikicode`` object."""
         return self._contents
 
     @property
     def attrs(self):
+        """The list of attributes affecting the tag.
+
+        Each attribute is an instance of
+        :py:class:`~mwparserfromhell.nodes.extas.attribute.Attribute`.
+        """
         return self._attrs
 
     @property
     def showtag(self):
+        """Whether to show the tag itself instead of a wikicode version."""
         return self._showtag
 
     @property
     def self_closing(self):
+        """Whether the tag is self-closing with no content."""
         return self._self_closing
 
     @property
     def open_padding(self):
+        """How much spacing to insert before the first closing >."""
         return self._open_padding
 
     @property
     def close_padding(self):
+        """How much spacing to insert before the last closing >."""
         return self._close_padding
