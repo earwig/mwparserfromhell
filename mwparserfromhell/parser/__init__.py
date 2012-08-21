@@ -20,6 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This package contains the actual wikicode parser, split up into two main
+modules: the :py:mod:`~mwparserfromhell.parser.tokenizer` and the
+:py:mod:`~mwparserfromhell.parser.builder`. This module joins them together
+under one interface.
+"""
+
 try:
     from ._builder import CBuilder as Builder
     from ._tokenizer import CTokenizer as Tokenizer
@@ -30,12 +37,24 @@ except ImportError:
 __all__ = ["Parser"]
 
 class Parser(object):
+    """Represents a parser for wikicode.
+
+    Actual parsing is a two-step process: first, the text is split up into a
+    series of tokens by the
+    :py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then the
+    tokens are converted into trees of
+    :py:class`~mwparserfromhell.wikicode.Wikicode` objects and
+    :py:class:`~mwparserfromhell.nodes.Node`\ nodes by the
+    :py:class:`~mwparserfromhell.parser.builder.Builder`.
+    """
+
     def __init__(self, text):
         self.text = text
         self._tokenizer = Tokenizer()
         self._builder = Builder()
 
     def parse(self):
+        """Return a string as a parsed ``Wikicode`` object tree."""
         tokens = self._tokenizer.tokenize(self.text)
         code = self._builder.build(tokens)
         return code
