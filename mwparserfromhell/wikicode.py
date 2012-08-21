@@ -33,7 +33,14 @@ __all__ = ["Wikicode"]
 FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
 
 class Wikicode(StringMixIn):
-    """A ``Wikicode`` is a container for nodes that functions like a string.
+    """A ``Wikicode`` is a container for nodes that operates like a string.
+
+    Additionally, it contains methods that can be used to extract data from or
+    modify the nodes, implemented in an interface similar to a list. For
+    example, :py:meth:`index` can get the index of a node in the list, and
+    :py:meth:`insert` can add a new node at that index. The :py:meth:`filter()
+    <ifilter>` series of functions is very useful for extracting and iterating
+    over, for example, all of the templates in the object.
     """
 
     def __init__(self, nodes):
@@ -364,6 +371,27 @@ class Wikicode(StringMixIn):
 
     def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
                      include_headings=True):
+        """Return a list of sections within the page.
+
+        Sections are returned as
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` objects with a shared
+        node list (implemented using
+        :py:class:`~mwparserfromhell.smart_list.SmartList`) so that changes to
+        sections are reflected in the parent Wikicode object.
+
+        With *flat* as ``True``, each returned section contains all of its
+        subsections within the :py:class:`~mwparserfromhell.wikicode.Wikicode`;
+        otherwise, the returned sections contain only the section up to the
+        next heading, regardless of its size. If *matches* is given, it should
+        be a regex to matched against the titles of section headings; only
+        sections whose headings match the regex will be included. If *levels*
+        is given, it should be a list of integers; only sections whose heading
+        levels are within the list will be returned. If *include_headings* is
+        ``True``, the section's literal
+        :py:class:`~mwparserfromhell.nodes.heading.Heading` object will be
+        included in returned :py:class:`~mwparserfromhell.wikicode.Wikicode`
+        objects; otherwise, this is skipped.
+        """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
         headings = self.filter(recursive=True, matches=matches, flags=flags,
@@ -380,17 +408,31 @@ class Wikicode(StringMixIn):
                 for (level, start) in buffers:
                     if not flat or this <= level:
                         buffers.remove([level, start])
-                        sections.append(self.nodes[start:i])
+                        sections.append(Wikicode(self.nodes[start:i]))
                 buffers.append([this, i])
                 if not include_headings:
                     i += 1
             i += 1
         for (level, start) in buffers:
             if start != i:
-                sections.append(self.nodes[start:i])
+                sections.append(Wikicode(self.nodes[start:i]))
         return sections
 
     def strip_code(self, normalize=True, collapse=True):
+        """Return a rendered string without unprintable code such as templates.
+
+        The way a node is stripped is handled by the
+        :py:meth:`~mwparserfromhell.nodes.Node.__showtree__` method of
+        :py:class:`~mwparserfromhell.nodes.Node` objects, which generally
+        return a subset of their nodes or ``None``. For example, templates and
+        tags are removed completely, links are stripped to just their display
+        part, headings are stripped to just their title. If *normalize* is
+        ``True``, various things may be done to strip code further, such as
+        converting HTML entities like ``&Sigma;``, ``&#931;``, and ``&#x3a3;``
+        to ``Σ``. If *collapse* is ``True``, we will try to remove excess
+        whitespace as well (three or more newlines are converted to two, for
+        example).
+        """
         nodes = []
         for node in self.nodes:
             stripped = node.__strip__(normalize, collapse)
@@ -406,5 +448,27 @@ class Wikicode(StringMixIn):
             return "".join(nodes)
 
     def get_tree(self):
+        """Return a hierarchical tree representation of the object.
+
+        The representation is a string makes the most sense printed. It is
+        built by calling :py:meth:`_get_tree` on the
+        :py:class:`~mwparserfromhell.wikicode.Wikicode` object and its children
+        recursively. The end result may look something like the following::
+
+            >>> text = "Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}"
+            >>> print mwparserfromhell.parse(text).get_tree()
+            Lorem ipsum
+            {{
+                  foo
+                | 1
+                = bar
+                | 2
+                = {{
+                        baz
+                  }}
+                | spam
+                = eggs
+            }}
+        """
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
