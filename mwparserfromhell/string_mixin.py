@@ -20,6 +20,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains the :py:class:`~mwparserfromhell.string_mixin.StringMixIn`
+type, which implements the interface for the ``unicode`` type (``str`` on py3k)
+in a dynamic manner.
+"""
+
 from __future__ import unicode_literals
 
 from .compat import py3k, str
@@ -27,11 +33,25 @@ from .compat import py3k, str
 __all__ = ["StringMixIn"]
 
 def inheritdoc(method):
+    """Set __doc__ of *method* to __doc__ of *method* in its parent class.
+
+    Since this is used on
+    :py:class:`~mwparserfromhell.string_mixin.StringMixIn`, the "parent class"
+    used is ``str``. This function can be used as a decorator.
+    """
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
 
 
 class StringMixIn(object):
+    """Implement the interface for ``unicode``/``str`` in a dynamic manner.
+
+    To use this class, inherit from it and override the :py:meth:`__unicode__`
+    method (same on py3k) to return the string representation of the object.
+    The various string methods will operate on the value of
+    :py:meth:`__unicode__` instead of the immutable ``self`` like the regular
+    ``str`` type.
+    """
     if py3k:
         def __str__(self):
             return self.__unicode__()

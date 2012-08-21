@@ -20,6 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains accessory functions that wrap around existing ones to
+provide additional functionality.
+"""
+
 from __future__ import unicode_literals
 
 import mwparserfromhell
@@ -28,15 +33,29 @@ from .nodes import Node
 from .smart_list import SmartList
 
 def parse_anything(value):
+    """Return a :py:class:`~mwparserfromhell.wikicode.Wikicode` for *value*.
+
+    This differs from :py:func:`mwparserfromhell.parse` in that we accept more
+    than just a string to be parsed. Unicode objects (strings in py3k), strings
+    (bytes in py3k), integers (converted to strings), ``None``, existing
+    :py:class:`~mwparserfromhell.nodes.Node` or
+    :py:class:`~mwparserfromhell.wikicode.Wikicode` objects, as well as an
+    iterable of these types, are supported. This is used to parse input
+    on-the-fly by various methods of
+    :py:class:`~mwparserfromhell.wikicode.Wikicode` and others like
+    :py:class:`~mwparserfromhell.nodes.template.Template`, such as
+    :py:meth:`wikicode.insert() <mwparserfromhell.wikicode.Wikicode.insert>`
+    or setting :py:meth:`template.name
+    <mwparserfromhell.nodes.template.Template.name>`.
+    """
     wikicode = mwparserfromhell.wikicode.Wikicode
     if isinstance(value, wikicode):
         return value
     elif isinstance(value, Node):
         return wikicode(SmartList([value]))
-    elif isinstance(value, basestring):
+    elif isinstance(value, str):
         return mwparserfromhell.parse(value)
     elif isinstance(value, bytes):
-        # This should only happen in py3k when bytes is not in basestring:
         return mwparserfromhell.parse(value.decode("utf8"))
     elif isinstance(value, int):
         return mwparserfromhell.parse(str(value))

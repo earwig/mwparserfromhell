@@ -316,8 +316,7 @@ class Wikicode(StringMixIn):
         """Iterate over template nodes.
 
         This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~mwparserfromhell.nodes.template.Template`. It takes all
-        other arguments passable to :py:meth:`ifilter`.
+        :py:class:`~mwparserfromhell.nodes.template.Template`.
         """
         return self.filter(recursive, matches, flags, forcetype=Template)
 

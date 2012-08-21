@@ -20,13 +20,54 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains the :py:class:`~mwparserfromhell.smart_list.SmartList`
+type, as well as its :py:class:`~mwparserfromhell.smart_list._ListProxy` child,
+which together implement a list whose sublists reflect changes made to the main
+list, and vice-versa.
+"""
+
 from __future__ import unicode_literals
 
 from .compat import maxsize, py3k
 
 __all__ = ["SmartList"]
 
+def inheritdoc(method):
+    """Set __doc__ of *method* to __doc__ of *method* in its parent class.
+
+    Since this is used on
+    :py:class:`~mwparserfromhell.smart_list.SmartList`, the "parent class" used
+    is ``list``. This function can be used as a decorator.
+    """
+    method.__doc__ = getattr(list, method.__name__).__doc__
+    return method
+
+
 class SmartList(list):
+    """Implements the ``list`` interface with special handling of sublists.
+
+    When a sublist is created (through list[i:j]), any changes made to this
+    list (such as the addition, removal, or replacement of elements) will be
+    reflected in the sublist, or vice-versa, to the greatest degree possible.
+    This is implemented by having sublists - instances of the
+    :py:class:`~mwparserfromhell.smart_list._ListProxy` type - dynamically
+    determine their elements by storing their slice info and retrieving that
+    slice from the parent. Methods that change the size of the list also change
+    the slice info. For example::
+
+        >>> parent = SmartList([0, 1, 2, 3])
+        >>> parent
+        [0, 1, 2, 3]
+        >>> child = parent[2:]
+        >>> child
+        [2, 3]
+        >>> child.append(4)
+        >>> child
+        [2, 3, 4]
+        >>> parent
+        [0, 1, 2, 3, 4]
+    """
     def __init__(self, iterable=None):
         if iterable:
             super(SmartList, self).__init__(iterable)
@@ -88,17 +129,21 @@ class SmartList(list):
         self.extend(other)
         return self
 
+    @inheritdoc
     def append(self, item):
         head = len(self)
         self[head:head] = [item]
 
+    @inheritdoc
     def extend(self, item):
         head = len(self)
         self[head:head] = item
 
+    @inheritdoc
     def insert(self, index, item):
         self[index:index] = [item]
 
+    @inheritdoc
     def pop(self, index=None):
         if index is None:
             index = len(self) - 1
@@ -106,15 +151,18 @@ class SmartList(list):
         del self[index]
         return item
 
+    @inheritdoc
     def remove(self, item):
         del self[self.index(item)]
 
+    @inheritdoc
     def reverse(self):
         copy = list(self)
         for child in self._children:
             child._parent = copy
         super(SmartList, self).reverse()
 
+    @inheritdoc
     def sort(self, cmp=None, key=None, reverse=None):
         copy = list(self)
         for child in self._children:
@@ -132,6 +180,13 @@ class SmartList(list):
 
 
 class _ListProxy(list):
+    """Implement the ``list`` interface by getting elements from a parent.
+
+    This is created by a :py:class:`~mwparserfromhell.smart_list.SmartList`
+    object when slicing. It does not actually store the list at any time;
+    instead, whenever the list is needed, it builds it dynamically using the
+    :py:meth:`_render` method.
+    """
     def __init__(self, parent, sliceinfo):
         super(_ListProxy, self).__init__()
         self._parent = parent
@@ -249,12 +304,15 @@ class _ListProxy(list):
     def _render(self):
         return list(self._parent)[self._start:self._stop:self._step]
 
+    @inheritdoc
     def append(self, item):
         self._parent.insert(self._stop, item)
 
+    @inheritdoc
     def count(self, item):
         return self._render().count(item)
 
+    @inheritdoc
     def index(self, item, start=None, stop=None):
         if start is not None:
             if stop is not None:
@@ -262,26 +320,32 @@ class _ListProxy(list):
             return self._render().index(item, start)
         return self._render().index(item)
 
+    @inheritdoc
     def extend(self, item):
         self._parent[self._stop:self._stop] = item
 
+    @inheritdoc
     def insert(self, index, item):
         self._parent.insert(self._start + index, item)
 
+    @inheritdoc
     def pop(self, index=None):
         if index is None:
             index = len(self) - 1
         return self._parent.pop(self._start + index)
 
+    @inheritdoc
     def remove(self, item):
         index = self.index(item)
         del self._parent[index]
 
+    @inheritdoc
     def reverse(self):
         item = self._render()
         item.reverse()
         self._parent[self._start:self._stop:self._step] = item
 
+    @inheritdoc
     def sort(self, cmp=None, key=None, reverse=None):
         item = self._render()
         if cmp is not None:
