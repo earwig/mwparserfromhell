@@ -28,16 +28,22 @@ from ..compat import str
 __all__ = ["Text"]
 
 class Text(Node):
+    """Represents ordinary, unformatted text with no special properties."""
     def __init__(self, value):
         super(Text, self).__init__()
         self._value = value
 
     def __unicode__(self):
-        return str(self.value)
+        return self.value
 
     def __strip__(self, normalize, collapse):
         return self
 
     @property
     def value(self):
+        """The actual text itself."""
         return self._value
+
+    @value.setter
+    def value(self, newval):
+        self._value = str(newval)

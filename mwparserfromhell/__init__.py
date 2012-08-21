@@ -20,13 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-
 """
 `mwparserfromhell <https://github.com/earwig/mwparserfromhell>`_ (the MediaWiki
 Parser from Hell) is a Python package that provides an easy-to-use and
 outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 """
+
+from __future__ import unicode_literals
 
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012 Ben Kurtovic"

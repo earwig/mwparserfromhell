@@ -29,6 +29,7 @@ __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
     """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
+
     def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
         super(HTMLEntity, self).__init__()
         self._value = value

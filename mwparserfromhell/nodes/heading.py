@@ -29,6 +29,7 @@ __all__ = ["Heading"]
 
 class Heading(Node):
     """Represents a section heading in wikicode, like ``== Foo ==``."""
+
     def __init__(self, title, level):
         super(Heading, self).__init__()
         self._title = title

@@ -28,7 +28,7 @@ provide additional functionality.
 from __future__ import unicode_literals
 
 import mwparserfromhell
-from .compat import basestring, bytes, str
+from .compat import bytes, str
 from .nodes import Node
 from .smart_list import SmartList
 
