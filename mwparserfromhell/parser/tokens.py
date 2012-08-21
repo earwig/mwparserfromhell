@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from ..compat import basestring, py3k, str
+from ..compat import basestring, py3k
 
 __all__ = ["Token"]
 

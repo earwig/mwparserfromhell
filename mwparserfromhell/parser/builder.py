@@ -32,25 +32,44 @@ from ..wikicode import Wikicode
 __all__ = ["Builder"]
 
 class Builder(object):
+    """Combines a sequence of tokens into a tree of ``Wikicode`` objects.
+
+    To use, pass a list of :py:class:`~mwparserfromhell.parser.tokens.Token`\ s
+    to the :py:meth:`build` method. The list will be exhausted as it is parsed
+    and a :py:class:`~mwparserfromhell.wikicode.Wikicode` object will be
+    returned.
+    """
+
     def __init__(self):
         self._tokens = []
         self._stacks = []
 
     def _wrap(self, nodes):
+        """Properly wrap a list of nodes in a ``Wikicode`` object."""
         return Wikicode(SmartList(nodes))
 
     def _push(self):
+        """Push a new node list onto the stack."""
         self._stacks.append([])
 
     def _pop(self, wrap=True):
+        """Pop the topmost node list off of the stack.
+
+        If *wrap* is ``True``, we will call :py:meth:`_wrap` on the list.
+        """
         if wrap:
             return self._wrap(self._stacks.pop())
         return self._stacks.pop()
 
     def _write(self, item):
+        """Append a node to the topmost node list."""
         self._stacks[-1].append(item)
 
     def _handle_parameter(self, default):
+        """Handle a case where a parameter is at the head of the tokens.
+
+        *default* is the value to use if no parameter name is defined.
+        """
         key = None
         showkey = False
         self._push()
@@ -71,6 +90,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_template(self):
+        """Handle a case where a template is at the head of the tokens."""
         params = []
         default = 1
         self._push()
@@ -91,6 +111,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_entity(self):
+        """Handle a case where a HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
         if isinstance(token, tokens.HTMLEntityNumeric):
             token = self._tokens.pop()
@@ -105,6 +126,7 @@ class Builder(object):
         return HTMLEntity(token.text, named=True, hexadecimal=False)
 
     def _handle_heading(self, token):
+        """Handle a case where a heading is at the head of the tokens."""
         level = token.level
         self._push()
         while self._tokens:
@@ -116,6 +138,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_attribute(self):
+        """Handle a case where a tag attribute is at the head of the tokens."""
         name, quoted = None, False
         self._push()
         while self._tokens:
@@ -135,6 +158,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_tag(self, token):
+        """Handle a case where a tag is at the head of the tokens."""
         type_, showtag = token.type, token.showtag
         attrs = []
         self._push()
@@ -159,6 +183,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_token(self, token):
+        """Handle a single token."""
         if isinstance(token, tokens.Text):
             return Text(token.text)
         elif isinstance(token, tokens.TemplateOpen):
@@ -171,6 +196,7 @@ class Builder(object):
             return self._handle_tag(token)
 
     def build(self, tokenlist):
+        """Build a Wikicode object from a list tokens and return it."""
         self._tokens = tokenlist
         self._tokens.reverse()
         self._push()

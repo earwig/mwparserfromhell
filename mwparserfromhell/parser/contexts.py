@@ -20,6 +20,18 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains various "context" definitions, which are essentially flags
+set during the tokenization process, either on the current parse stack (local
+contexts) or affecting all stacks (global contexts). They represent the context
+the tokenizer is in, such as inside a template's name definition, or inside a
+heading of level two. This is used to determine what tokens are valid at the
+current point and also if the current parsing route is invalid.
+
+The tokenizer stores context as an integer, with these definitions bitwise OR'd
+to add them, AND'd to check if they're set, and XOR'd to remove them.
+"""
+
 # Local (stack-specific) contexts:
 
 TEMPLATE =              0b000000111
