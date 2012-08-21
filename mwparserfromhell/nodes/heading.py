@@ -28,6 +28,7 @@ from ..compat import str
 __all__ = ["Heading"]
 
 class Heading(Node):
+    """Represents a section heading in wikicode, like ``== Foo ==``."""
     def __init__(self, title, level):
         super(Heading, self).__init__()
         self._title = title
@@ -51,8 +52,10 @@ class Heading(Node):
 
     @property
     def title(self):
+        """The title of the heading itself, as a ``Wikicode`` object."""
         return self._title
 
     @property
     def level(self):
+        """The heading level, as an integer between 1 and 6, inclusive."""
         return self._level

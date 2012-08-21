@@ -28,6 +28,7 @@ from ..compat import htmlentities
 __all__ = ["HTMLEntity"]
 
 class HTMLEntity(Node):
+    """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
     def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
         super(HTMLEntity, self).__init__()
         self._value = value
@@ -86,21 +87,36 @@ class HTMLEntity(Node):
 
     @property
     def value(self):
+        """The string value of the HTML entity."""
         return self._value
 
     @property
     def named(self):
+        """Whether the entity is a string name for a codepoint or an integer.
+
+        For example, ``&Sigma;``, ``&#931;``, and ``&#x3a3;`` refer to the same
+        character, but only the first is "named", while the others are integer
+        representations of the codepoint.
+        """
         return self._named
 
     @property
     def hexadecimal(self):
+        """If unnamed, this is whether the value is hexadecimal or decimal."""
         return self._hexadecimal
 
     @property
     def hex_char(self):
+        """If the value is hexadecimal, this is the letter denoting that.
+
+        For example, the hex_char of ``"&#x1234;"`` is ``"x"``, whereas the
+        hex_char of ``"&#X1234;"`` is ``"X"``. Lowercase and uppercase ``x``
+        are the only values supported.
+        """
         return self._hex_char
 
     def normalize(self):
+        """Return the unicode character represented by the HTML entity."""
         if self.named:
             return unichr(htmlentities.name2codepoint[self.value])
         if self.hexadecimal:

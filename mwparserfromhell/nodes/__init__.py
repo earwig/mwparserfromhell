@@ -20,6 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This package contains :py:class:`~mwparserfromhell.wikicode.Wikicode` "nodes",
+which represent a single unit of wikitext, such as a Template, an HTML tag,
+a Heading, or plain text. The node "tree" is far from flat, as most types can
+contain additional :py:class:`~mwparserfromhell.wikicode.Wikicode` types within
+them - and with that, more nodes. For example, the name of a
+:py:class:`~mwparserfromhell.nodes.template.Template` is a
+:py:class:`~mwparserfromhell.wikicode.Wikicode` object that can contain text or
+more templates.
+"""
+
 from __future__ import unicode_literals
 
 from ..compat import str
@@ -28,6 +39,20 @@ from ..string_mixin import StringMixIn
 __all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
 
 class Node(StringMixIn):
+    """Represents the base Node type, demonstrating the methods to override.
+
+    :py:meth:`__unicode__` must be overridden. It should return a ``unicode``
+    or (``str`` in py3k) representation of the node. If the node contains
+    :py:class:`~mwparserfromhell.wikicode.Wikicode` objects inside of it,
+    :py:meth:`__iternodes__` should be overridden to yield tuples of
+    (``wikicode``, ``node_in_wikicode``) for each node in each wikicode, as
+    well as the node itself (``None``, ``self``). If the node is printable,
+    :py:meth:`__strip__` should be overridden to return the printable version
+    of the node - it does not have to be a string, but something that can be
+    converted to a string with ``str()``. Finally, :py:meth:`__showtree__` can
+    be overridden to build a nice tree representation of the node, if desired,
+    for :py:meth:`~mwparserfromhell.wikicode.Wikicode.get_tree`.
+    """
     def __unicode__(self):
         raise NotImplementedError()
 
