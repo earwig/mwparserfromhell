@@ -20,12 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
 from collections import defaultdict
 import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
 from ..utils import parse_anything
+from ..compat import str, bytes, basestring
 
 __all__ = ["Template"]
 
@@ -42,10 +44,10 @@ class Template(Node):
 
     def __unicode__(self):
         if self.params:
-            params = u"|".join([unicode(param) for param in self.params])
-            return "{{" + unicode(self.name) + "|" + params + "}}"
+            params = "|".join([str(param) for param in self.params])
+            return "{{" + str(self.name) + "|" + params + "}}"
         else:
-            return "{{" + unicode(self.name) + "}}"
+            return "{{" + str(self.name) + "}}"
 
     def __iternodes__(self, getter):
         yield None, self
@@ -77,7 +79,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement))
 
     def _blank_param_value(self, value):
-        match = re.search(r"^(\s*).*?(\s*)$", unicode(value), FLAGS)
+        match = re.search(r"^(\s*).*?(\s*)$", str(value), FLAGS)
         value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     def _select_theory(self, theories):
@@ -85,13 +87,13 @@ class Template(Node):
             best = max(theories.values())
             confidence = float(best) / sum(theories.values())
             if confidence > 0.75:
-                return theories.keys()[theories.values().index(best)]
+                return tuple(theories.keys())[tuple(theories.values()).index(best)]
 
     def _get_spacing_conventions(self):
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
         for param in self.params:
-            match = re.search(r"^(\s*).*?(\s*)$", unicode(param.value), FLAGS)
+            match = re.search(r"^(\s*).*?(\s*)$", str(param.value), FLAGS)
             before, after = match.group(1), match.group(2)
             before_theories[before] += 1
             after_theories[after] += 1
@@ -124,7 +126,7 @@ class Template(Node):
         return self._params
 
     def has_param(self, name, ignore_empty=True):
-        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        name = name.strip() if isinstance(name, basestring) else str(name)
         for param in self.params:
             if param.name.strip() == name:
                 if ignore_empty and not param.value.strip():
@@ -133,7 +135,7 @@ class Template(Node):
         return False
 
     def get(self, name):
-        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        name = name.strip() if isinstance(name, basestring) else str(name)
         for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
@@ -159,7 +161,7 @@ class Template(Node):
 
         if showkey is None:
             try:
-                int_name = int(unicode(name))
+                int_name = int(str(name))
             except ValueError:
                 showkey = True
             else:
@@ -167,7 +169,7 @@ class Template(Node):
                 for param in self.params:
                     if not param.showkey:
                         if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                            int_keys.add(int(unicode(param.name)))
+                            int_keys.add(int(str(param.name)))
                 expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
                 if expected == int_name:
                     showkey = False
@@ -188,7 +190,7 @@ class Template(Node):
         return param
 
     def remove(self, name, keep_field=False, force_no_field=False):
-        name = name.strip() if isinstance(name, basestring) else unicode(name)
+        name = name.strip() if isinstance(name, basestring) else str(name)
         removed = False
         for i, param in enumerate(self.params):
             if param.name.strip() == name:

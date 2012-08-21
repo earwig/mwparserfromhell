@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+from ..compat import str, bytes, v
+
 __all__ = ["Token"]
 
 class Token(object):
@@ -33,7 +36,7 @@ class Token(object):
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
                 args.append(key + "=" + repr(value))
-        return u"{0}({1})".format(type(self).__name__, u", ".join(args))
+        return "{0}({1})".format(type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         if isinstance(other, type(self)):
@@ -49,10 +52,15 @@ class Token(object):
     def __delattr__(self, key):
         del self._kwargs[key]
 
-
-def make(name):
-    __all__.append(name)
-    return type(name, (Token,), {})
+if v >= 3:
+    def make(name):
+        __all__.append(name)
+        return type(name, (Token,), {})
+else:
+    def make(name):
+        name = name.encode("utf-8")
+        __all__.append(name)
+        return type(name, (Token,), {})
 
 Text = make("Text")
 

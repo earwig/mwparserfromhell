@@ -20,230 +20,240 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+from .compat import str, bytes, v
+
 __all__ = ["StringMixIn"]
 
 def inheritdoc(method):
-    method.__doc__ = getattr(unicode, method.func_name).__doc__
+    try:
+        method.__doc__ = getattr(str, method.__name__).__doc__
+    except AttributeError:
+        method.__doc__ = "This feature is only available on Python 2."
     return method
 
 
 class StringMixIn(object):
-    def __str__(self):
-        return unicode(self).encode("utf8")
+    if v >= 3:
+      def __str__(self):
+          return self.__unicode__()
+    else:
+        def __str__(self):
+            return self.__unicode__().encode("utf8")
 
     def __repr__(self):
-        return repr(unicode(self))
+        return repr(self.__unicode__())
 
     def __lt__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) < unicode(other)
-        return unicode(self) < other
+            return self.__unicode__() < other.__unicode__()
+        return self.__unicode__() < other
 
     def __le__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) <= unicode(other)
-        return unicode(self) <= other
+            return self.__unicode__() <= other.__unicode__()
+        return self.__unicode__() <= other
 
     def __eq__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) == unicode(other)
-        return unicode(self) == other
+            return self.__unicode__() == other.__unicode__()
+        return self.__unicode__() == other
 
     def __ne__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) != unicode(other)
-        return unicode(self) != other
+            return self.__unicode__() != other.__unicode__()
+        return self.__unicode__() != other
 
     def __gt__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) > unicode(other)
-        return unicode(self) > other
+            return self.__unicode__() > other.__unicode__()
+        return self.__unicode__() > other
 
     def __ge__(self, other):
         if isinstance(other, StringMixIn):
-            return unicode(self) >= unicode(other)
-        return unicode(self) >= other
+            return self.__unicode__() >= other.__unicode__()
+        return self.__unicode__() >= other
 
     def __nonzero__(self):
-        return bool(unicode(self))
+        return bool(self.__unicode__())
 
     def __unicode__(self):
         raise NotImplementedError()
 
     def __len__(self):
-        return len(unicode(self))
+        return len(self.__unicode__())
 
     def __iter__(self):
-        for char in unicode(self):
+        for char in self.__unicode__():
             yield char
 
     def __getitem__(self, key):
-        return unicode(self)[key]
+        return self.__unicode__()[key]
 
     def __contains__(self, item):
         if isinstance(item, StringMixIn):
-            return unicode(item) in unicode(self)
-        return item in unicode(self)
+            return unicode(item) in self.__unicode__()
+        return item in self.__unicode__()
 
     @inheritdoc
     def capitalize(self):
-        return unicode(self).capitalize()
+        return self.__unicode__().capitalize()
 
     @inheritdoc
     def center(self, width, fillchar=None):
-        return unicode(self).center(width, fillchar)
+        return self.__unicode__().center(width, fillchar)
 
     @inheritdoc
     def count(self, sub=None, start=None, end=None):
-        return unicode(self).count(sub, start, end)
+        return self.__unicode__().count(sub, start, end)
 
     @inheritdoc
     def decode(self, encoding=None, errors=None):
-        return unicode(self).decode(encoding, errors)
+        return self.__unicode__().decode(encoding, errors)
 
     @inheritdoc
     def encode(self, encoding=None, errors=None):
-        return unicode(self).encode(encoding, errors)
+        return self.__unicode__().encode(encoding, errors)
 
     @inheritdoc
     def endswith(self, prefix, start=None, end=None):
-        return unicode(self).endswith(prefix, start, end)
+        return self.__unicode__().endswith(prefix, start, end)
 
     @inheritdoc
     def expandtabs(self, tabsize=None):
-        return unicode(self).expandtabs(tabsize)
+        return self.__unicode__().expandtabs(tabsize)
 
     @inheritdoc
     def find(self, sub=None, start=None, end=None):
-        return unicode(self).find(sub, start, end)
+        return self.__unicode__().find(sub, start, end)
 
     @inheritdoc
     def format(self, *args, **kwargs):
-        return unicode(self).format(*args, **kwargs)
+        return self.__unicode__().format(*args, **kwargs)
 
     @inheritdoc
     def index(self, sub=None, start=None, end=None):
-        return unicode(self).index(sub, start, end)
+        return self.__unicode__().index(sub, start, end)
 
     @inheritdoc
     def isalnum(self):
-        return unicode(self).isalnum()
+        return self.__unicode__().isalnum()
 
     @inheritdoc
     def isalpha(self):
-        return unicode(self).isalpha()
+        return self.__unicode__().isalpha()
 
     @inheritdoc
     def isdecimal(self):
-        return unicode(self).isdecimal()
+        return self.__unicode__().isdecimal()
 
     @inheritdoc
     def isdigit(self):
-        return unicode(self).isdigit()
+        return self.__unicode__().isdigit()
 
     @inheritdoc
     def islower(self):
-        return unicode(self).islower()
+        return self.__unicode__().islower()
 
     @inheritdoc
     def isnumeric(self):
-        return unicode(self).isnumeric()
+        return self.__unicode__().isnumeric()
 
     @inheritdoc
     def isspace(self):
-        return unicode(self).isspace()
+        return self.__unicode__().isspace()
 
     @inheritdoc
     def istitle(self):
-        return unicode(self).istitle()
+        return self.__unicode__().istitle()
 
     @inheritdoc
     def isupper(self):
-        return unicode(self).isupper()
+        return self.__unicode__().isupper()
 
     @inheritdoc
     def join(self, iterable):
-        return unicode(self).join(iterable)
+        return self.__unicode__().join(iterable)
 
     @inheritdoc
     def ljust(self, width, fillchar=None):
-        return unicode(self).ljust(width, fillchar)
+        return self.__unicode__().ljust(width, fillchar)
 
     @inheritdoc
     def lower(self):
-        return unicode(self).lower()
+        return self.__unicode__().lower()
 
     @inheritdoc
     def lstrip(self, chars=None):
-        return unicode(self).lstrip(chars)
+        return self.__unicode__().lstrip(chars)
 
     @inheritdoc
     def partition(self, sep):
-        return unicode(self).partition(sep)
+        return self.__unicode__().partition(sep)
 
     @inheritdoc
     def replace(self, old, new, count):
-        return unicode(self).replace(old, new, count)
+        return self.__unicode__().replace(old, new, count)
 
     @inheritdoc
     def rfind(self, sub=None, start=None, end=None):
-        return unicode(self).rfind(sub, start, end)
+        return self.__unicode__().rfind(sub, start, end)
 
     @inheritdoc
     def rindex(self, sub=None, start=None, end=None):
-        return unicode(self).rindex(sub, start, end)
+        return self.__unicode__().rindex(sub, start, end)
 
     @inheritdoc
     def rjust(self, width, fillchar=None):
-        return unicode(self).rjust(width, fillchar)
+        return self.__unicode__().rjust(width, fillchar)
 
     @inheritdoc
     def rpartition(self, sep):
-        return unicode(self).rpartition(sep)
+        return self.__unicode__().rpartition(sep)
 
     @inheritdoc
     def rsplit(self, sep=None, maxsplit=None):
-        return unicode(self).rsplit(sep, maxsplit)
+        return self.__unicode__().rsplit(sep, maxsplit)
 
     @inheritdoc
     def rstrip(self, chars=None):
-        return unicode(self).rstrip(chars)
+        return self.__unicode__().rstrip(chars)
 
     @inheritdoc
     def split(self, sep=None, maxsplit=None):
-        return unicode(self).split(sep, maxsplit)
+        return self.__unicode__().split(sep, maxsplit)
 
     @inheritdoc
     def splitlines(self, keepends=None):
-        return unicode(self).splitlines(keepends)
+        return self.__unicode__().splitlines(keepends)
 
     @inheritdoc
     def startswith(self, prefix, start=None, end=None):
-        return unicode(self).startswith(prefix, start, end)
+        return self.__unicode__().startswith(prefix, start, end)
 
     @inheritdoc
     def strip(self, chars=None):
-        return unicode(self).strip(chars)
+        return self.__unicode__().strip(chars)
 
     @inheritdoc
     def swapcase(self):
-        return unicode(self).swapcase()
+        return self.__unicode__().swapcase()
 
     @inheritdoc
     def title(self):
-        return unicode(self).title()
+        return self.__unicode__().title()
 
     @inheritdoc
     def translate(self, table, deletechars=None):
-        return unicode(self).translate(table, deletechars)
+        return self.__unicode__().translate(table, deletechars)
 
     @inheritdoc
     def upper(self):
-        return unicode(self).upper()
+        return self.__unicode__().upper()
 
     @inheritdoc
     def zfill(self, width):
-        return unicode(self).zfill(width)
+        return self.__unicode__().zfill(width)
 
 
 del inheritdoc

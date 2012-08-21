@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from . import Node
+from ..compat import str, bytes, basestring
 
 __all__ = ["Text"]
 
@@ -30,7 +33,7 @@ class Text(Node):
         self._value = value
 
     def __unicode__(self):
-        return unicode(self.value)
+        return str(self.value)
 
     def __strip__(self, normalize, collapse):
         return self
