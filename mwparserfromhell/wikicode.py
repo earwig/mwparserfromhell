@@ -22,12 +22,11 @@
 
 from __future__ import unicode_literals
 import re
-import sys
 
+from .compat import maxsize, str
 from .nodes import Heading, Node, Tag, Template, Text
 from .string_mixin import StringMixIn
 from .utils import parse_anything
-from .compat import str, bytes
 
 __all__ = ["Wikicode"]
 
@@ -230,7 +229,7 @@ class Wikicode(StringMixIn):
             headings = [head for head in headings if head.level in levels]
 
         sections = []
-        buffers = [[sys.maxint, 0]]
+        buffers = [[maxsize, 0]]
         i = 0
         while i < len(self.nodes):
             if self.nodes[i] in headings:

@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 
 from . import Node, Text
-from ..compat import str, bytes
+from ..compat import str
 
 __all__ = ["Tag"]
 
@@ -91,16 +91,16 @@ class Tag(Node):
             if self.self_closing:
                 return open_
             else:
-                return open_ + unicode(self.contents) + close
+                return open_ + str(self.contents) + close
 
-        result = "<" + unicode(self.tag)
+        result = "<" + str(self.tag)
         if self.attrs:
-            result += " " + " ".join([unicode(attr) for attr in self.attrs])
+            result += " " + " ".join([str(attr) for attr in self.attrs])
         if self.self_closing:
             result += " " * self.open_padding + "/>"
         else:
-            result += " " * self.open_padding + ">" + unicode(self.contents)
-            result += "</" + unicode(self.tag) + " " * self.close_padding + ">"
+            result += " " * self.open_padding + ">" + str(self.contents)
+            result += "</" + str(self.tag) + " " * self.close_padding + ">"
         return result
 
     def __iternodes__(self, getter):
@@ -124,9 +124,8 @@ class Tag(Node):
 
     def __showtree__(self, write, get, mark):
         tagnodes = self.tag.nodes
-        if (not self.attrs and len(tagnodes) == 1 and
-                                        isinstance(tagnodes[0], Text)):
-            write("<" + unicode(tagnodes[0]) + ">")
+        if (not self.attrs and len(tagnodes) == 1 and isinstance(tagnodes[0], Text)):
+            write("<" + str(tagnodes[0]) + ">")
         else:
             write("<")
             get(self.tag)
@@ -140,7 +139,7 @@ class Tag(Node):
             write(">")
         get(self.contents)
         if len(tagnodes) == 1 and isinstance(tagnodes[0], Text):
-            write("</" + unicode(tagnodes[0]) + ">")
+            write("</" + str(tagnodes[0]) + ">")
         else:
             write("</")
             get(self.tag)

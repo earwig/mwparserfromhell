@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str, bytes, htmlentitydefs
+from ..compat import htmlentities
 
 __all__ = ["HTMLEntity"]
 
@@ -102,7 +102,7 @@ class HTMLEntity(Node):
 
     def normalize(self):
         if self.named:
-            return unichr(htmlentitydefs.name2codepoint[self.value])
+            return unichr(htmlentities.name2codepoint[self.value])
         if self.hexadecimal:
             return self._unichr(int(self.value, 16))
         return self._unichr(int(self.value))

@@ -26,8 +26,8 @@ import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
+from ..compat import basestring, str
 from ..utils import parse_anything
-from ..compat import str, bytes, basestring
 
 __all__ = ["Template"]
 
@@ -87,7 +87,8 @@ class Template(Node):
             best = max(theories.values())
             confidence = float(best) / sum(theories.values())
             if confidence > 0.75:
-                return tuple(theories.keys())[tuple(theories.values()).index(best)]
+                keys = tuple(theories.keys())
+                return keys[tuple(theories.values()).index(best)]
 
     def _get_spacing_conventions(self):
         before_theories = defaultdict(lambda: 0)

@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str, bytes, basestring
+from ..compat import str
 
 __all__ = ["Text"]
 

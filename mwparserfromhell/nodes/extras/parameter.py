@@ -22,9 +22,9 @@
 
 from __future__ import unicode_literals
 
+from ...compat import str
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
-from ...compat import str, bytes
 
 __all__ = ["Parameter"]
 

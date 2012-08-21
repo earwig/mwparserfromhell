@@ -20,7 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
 from . import Node
+from ..compat import str
 
 __all__ = ["Heading"]
 
@@ -31,7 +34,7 @@ class Heading(Node):
         self._level = level
 
     def __unicode__(self):
-        return ("=" * self.level) + unicode(self.title) + ("=" * self.level)
+        return ("=" * self.level) + str(self.title) + ("=" * self.level)
 
     def __iternodes__(self, getter):
         yield None, self

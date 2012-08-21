@@ -20,6 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
+
+from ..compat import str
 from ..string_mixin import StringMixIn
 
 __all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
@@ -35,7 +38,7 @@ class Node(StringMixIn):
         return None
 
     def __showtree__(self, write, get, mark):
-        write(unicode(self))
+        write(str(self))
 
 
 from . import extras

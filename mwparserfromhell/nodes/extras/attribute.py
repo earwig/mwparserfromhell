@@ -22,8 +22,8 @@
 
 from __future__ import unicode_literals
 
+from ...compat import str
 from ...string_mixin import StringMixIn
-from ...compat import str, bytes
 
 __all__ = ["Attribute"]
 
