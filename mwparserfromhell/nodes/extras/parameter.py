@@ -29,6 +29,14 @@ from ...utils import parse_anything
 __all__ = ["Parameter"]
 
 class Parameter(StringMixIn):
+    """Represents a paramater of a template.
+
+    For example, the template ``{{foo|bar|spam=eggs}}`` contains two
+    Parameters: one whose name is ``"1"``, value is ``"bar"``, and ``showkey``
+    is ``False``, and one whose name is ``"spam"``, value is ``"eggs"``, and
+    ``showkey`` is ``True``.
+    """
+
     def __init__(self, name, value, showkey=True):
         super(Parameter, self).__init__()
         self._name = name
@@ -42,14 +50,17 @@ class Parameter(StringMixIn):
 
     @property
     def name(self):
+        """The name of the parameter as a ``Wikicode`` object."""
         return self._name
 
     @property
     def value(self):
+        """The value of the parameter as a ``Wikicode`` object."""
         return self._value
 
     @property
     def showkey(self):
+        """Whether to show the parameter's key (i.e., its "name")."""
         return self._showkey
 
     @name.setter

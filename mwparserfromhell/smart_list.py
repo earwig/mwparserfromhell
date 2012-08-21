@@ -68,6 +68,7 @@ class SmartList(list):
         >>> parent
         [0, 1, 2, 3, 4]
     """
+
     def __init__(self, iterable=None):
         if iterable:
             super(SmartList, self).__init__(iterable)
@@ -187,6 +188,7 @@ class _ListProxy(list):
     instead, whenever the list is needed, it builds it dynamically using the
     :py:meth:`_render` method.
     """
+
     def __init__(self, parent, sliceinfo):
         super(_ListProxy, self).__init__()
         self._parent = parent

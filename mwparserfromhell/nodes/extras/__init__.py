@@ -20,5 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This package contains objects used by
+:py:class:`~mwparserfromhell.nodes.Node`\ s, but are not nodes themselves.
+This includes the parameters of Templates or the attributes of HTML tags.
+"""
+
 from .attribute import Attribute
 from .parameter import Parameter

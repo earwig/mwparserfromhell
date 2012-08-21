@@ -28,6 +28,13 @@ from ...string_mixin import StringMixIn
 __all__ = ["Attribute"]
 
 class Attribute(StringMixIn):
+    """Represents an attribute of an HTML tag.
+
+    This is used by :py:class:`~mwparserfromhell.nodes.tag.Tag` objects. For
+    example, the tag ``<ref name="foo">`` contains an Attribute whose name is
+    ``"name"`` and whose value is ``"foo"``.
+    """
+
     def __init__(self, name, value=None, quoted=True):
         super(Attribute, self).__init__()
         self._name = name
@@ -43,12 +50,15 @@ class Attribute(StringMixIn):
 
     @property
     def name(self):
+        """The name of the attribute as a ``Wikicode`` object."""
         return self._name
 
     @property
     def value(self):
+        """The value of the attribute as a ``Wikicode`` object."""
         return self._value
 
     @property
     def quoted(self):
+        """Whether the attribute's value is quoted with double quotes."""
         return self._quoted
