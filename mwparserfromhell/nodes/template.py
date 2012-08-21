@@ -123,6 +123,10 @@ class Template(Node):
     def params(self):
         return self._params
 
+    @name.setter
+    def name(self, value):
+        self._name = parse_anything(value)
+
     def has_param(self, name, ignore_empty=True):
         name = name.strip() if isinstance(name, basestring) else unicode(name)
         for param in self.params:

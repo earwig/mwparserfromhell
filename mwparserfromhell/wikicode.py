@@ -32,6 +32,9 @@ __all__ = ["Wikicode"]
 FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
 
 class Wikicode(StringMixIn):
+    """A ``Wikicode`` is a container for nodes that functions like a string.
+    """
+
     def __init__(self, nodes):
         super(Wikicode, self).__init__()
         self._nodes = nodes
@@ -40,21 +43,40 @@ class Wikicode(StringMixIn):
         return "".join([unicode(node) for node in self.nodes])
 
     def _get_children(self, node):
+        """Iterate over all descendants of a given node, including itself.
+
+        This is implemented by the __iternodes__() generator of Node classes,
+        which by default yields itself and nothing more.
+        """
         for context, child in node.__iternodes__(self._get_all_nodes):
             yield child
 
     def _get_context(self, node, obj):
+        """Return a ``Wikicode`` that contains ``obj`` in its descendants.
+
+        The closest (shortest distance from ``node``) suitable ``Wikicode``
+        will be returned, or ``None`` if the ``obj`` is the ``node`` itself.
+
+        Raises ``ValueError`` if ``obj`` is not within ``node``.
+        """
         for context, child in node.__iternodes__(self._get_all_nodes):
             if child is obj:
                 return context
         raise ValueError(obj)
 
     def _get_all_nodes(self, code):
+        """Iterate over all of our descendant nodes.
+
+        This is implemented by calling :py:meth:`_get_children` on every node
+        in our node list (:py:attr:`self.nodes <nodes>`).
+        """
         for node in code.nodes:
             for child in self._get_children(node):
                 yield child
 
     def _is_equivalent(self, obj, node):
+        """Return ``True`` if obj and node are equivalent, otherwise ``False``.
+        """
         if isinstance(obj, Node):
             if node is obj:
                 return True
