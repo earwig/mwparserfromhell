@@ -48,8 +48,9 @@ class SmartList(list):
         item = list(item)
         super(SmartList, self).__setitem__(key, item)
         diff = len(item) - key.stop + key.start
+        values = self._children.values if py3k else self._children.itervalues
         if diff:
-            for child, (start, stop, step) in self._children.itervalues():
+            for child, (start, stop, step) in values():
                 if start >= key.stop:
                     self._children[id(child)][1][0] += diff
                 if stop >= key.stop and stop != maxsize:
@@ -60,7 +61,8 @@ class SmartList(list):
         if not isinstance(key, slice):
             key = slice(key, key + 1)
         diff = key.stop - key.start
-        for child, (start, stop, step) in self._children.itervalues():
+        values = self._children.values if py3k else self._children.itervalues
+        for child, (start, stop, step) in values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
             if stop >= key.stop:
