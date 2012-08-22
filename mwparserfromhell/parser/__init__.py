@@ -43,8 +43,8 @@ class Parser(object):
     series of tokens by the
     :py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then the
     tokens are converted into trees of
-    :py:class`~mwparserfromhell.wikicode.Wikicode` objects and
-    :py:class:`~mwparserfromhell.nodes.Node`\ nodes by the
+    :py:class:`~mwparserfromhell.wikicode.Wikicode` objects and
+    :py:class:`~mwparserfromhell.nodes.Node`\ s by the
     :py:class:`~mwparserfromhell.parser.builder.Builder`.
     """
 

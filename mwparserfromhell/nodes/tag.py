@@ -185,7 +185,7 @@ class Tag(Node):
         """The list of attributes affecting the tag.
 
         Each attribute is an instance of
-        :py:class:`~mwparserfromhell.nodes.extas.attribute.Attribute`.
+        :py:class:`~mwparserfromhell.nodes.extras.attribute.Attribute`.
         """
         return self._attrs
 

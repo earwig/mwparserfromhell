@@ -47,7 +47,7 @@ def inheritdoc(method):
 class SmartList(list):
     """Implements the ``list`` interface with special handling of sublists.
 
-    When a sublist is created (through list[i:j]), any changes made to this
+    When a sublist is created (by ``list[i:j]``), any changes made to this
     list (such as the addition, removal, or replacement of elements) will be
     reflected in the sublist, or vice-versa, to the greatest degree possible.
     This is implemented by having sublists - instances of the

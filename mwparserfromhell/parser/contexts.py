@@ -25,31 +25,34 @@ This module contains various "context" definitions, which are essentially flags
 set during the tokenization process, either on the current parse stack (local
 contexts) or affecting all stacks (global contexts). They represent the context
 the tokenizer is in, such as inside a template's name definition, or inside a
-heading of level two. This is used to determine what tokens are valid at the
+level-two heading. This is used to determine what tokens are valid at the
 current point and also if the current parsing route is invalid.
 
 The tokenizer stores context as an integer, with these definitions bitwise OR'd
-to add them, AND'd to check if they're set, and XOR'd to remove them. The
-advantage of this is that contexts can have sub-contexts (as FOO == 0b11 will
-cover BAR == 0b10 and BAZ == 0b01).
+to set them, AND'd to check if they're set, and XOR'd to unset them. The
+advantage of this is that contexts can have sub-contexts (as ``FOO == 0b11``
+will cover ``BAR == 0b10`` and ``BAZ == 0b01``).
 
 Local (stack-specific) contexts:
 
-* TEMPLATE
-** TEMPLATE_NAME
-** TEMPLATE_PARAM_KEY
-** TEMPLATE_PARAM_VALUE
-* HEADING
-** HEADING_LEVEL_1
-** HEADING_LEVEL_2
-** HEADING_LEVEL_3
-** HEADING_LEVEL_4
-** HEADING_LEVEL_5
-** HEADING_LEVEL_6
+* :py:const:`TEMPLATE` (``0b000000111``)
+
+    * :py:const:`TEMPLATE_NAME` (``0b000000001``)
+    * :py:const:`TEMPLATE_PARAM_KEY` (``0b000000010``)
+    * :py:const:`TEMPLATE_PARAM_VALUE` (``0b000000100``)
+
+* :py:const:`HEADING` (``0b111111000``)
+
+    * :py:const:`HEADING_LEVEL_1` (``0b000001000``)
+    * :py:const:`HEADING_LEVEL_2` (``0b000010000``)
+    * :py:const:`HEADING_LEVEL_3` (``0b000100000``)
+    * :py:const:`HEADING_LEVEL_4` (``0b001000000``)
+    * :py:const:`HEADING_LEVEL_5` (``0b010000000``)
+    * :py:const:`HEADING_LEVEL_6` (``0b100000000``)
 
 Global contexts:
 
-* GL_HEADING
+* :py:const:`GL_HEADING` (``0b1``)
 """
 
 # Local contexts:

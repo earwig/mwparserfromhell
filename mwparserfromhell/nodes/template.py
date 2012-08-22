@@ -197,7 +197,7 @@ class Template(Node):
         raise ValueError(name)
 
     def add(self, name, value, showkey=None, force_nonconformity=False):
-        """Add a parameter to the template with a given *name* and *value.
+        """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parasable by
         :py:func:`mwparserfromhell.utils.parse_anything`; pipes (and equal

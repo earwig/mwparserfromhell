@@ -32,7 +32,7 @@ from ..compat import htmlentities
 __all__ = ["Tokenizer"]
 
 class BadRoute(Exception):
-    """Raised internally when the current tokenization route ss invalid."""
+    """Raised internally when the current tokenization route is invalid."""
     pass
 
 
@@ -120,7 +120,7 @@ class Tokenizer(object):
         *delta* (which can be negative). If *wrap* is ``False``, we will not
         allow attempts to read from the end of the string if ``self._head +
         delta`` is negative. If *strict* is ``True``, the route will be failed
-        (with ``:py:meth:`_fail_route`) if we try to read from past the end of
+        (with :py:meth:`_fail_route`) if we try to read from past the end of
         the string; otherwise, :py:attr:`self.END <END>` is returned. If we try
         to read from before the start of the string, :py:attr:`self.START
         <START>` is returned.

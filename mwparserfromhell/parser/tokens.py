@@ -28,32 +28,6 @@ a syntactically valid form by the
 :py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then converted
 into the :py:class`~mwparserfromhell.wikicode.Wikicode` tree by the
 :py:class:`~mwparserfromhell.parser.builder.Builder`.
-
-Tokens:
-
-* Text = make("Text")
-* *Templates*
-** TemplateOpen
-** TemplateParamSeparator
-** TemplateParamEquals
-** TemplateClose
-** HTMLEntityStart
-** HTMLEntityNumeric
-** HTMLEntityHex
-** HTMLEntityEnd
-* *Headings*
-** HeadingStart
-** HeadingEnd
-* *Tags*
-** TagOpenOpen
-** TagAttrStart
-** TagAttrEquals
-** TagAttrQuote
-** TagCloseOpen
-** TagCloseSelfclose
-** TagOpenClose
-** TagCloseClose
-
 """
 
 from __future__ import unicode_literals
@@ -63,7 +37,7 @@ from ..compat import basestring, py3k
 __all__ = ["Token"]
 
 class Token(object):
-    """A token represents the semantic meaning of a unit of wikicode."""
+    """A token stores the semantic meaning of a unit of wikicode."""
 
     def __init__(self, **kwargs):
         super(Token, self).__setattr__("_kwargs", kwargs)
