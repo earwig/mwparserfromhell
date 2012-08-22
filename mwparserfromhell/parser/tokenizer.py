@@ -66,7 +66,7 @@ class Tokenizer(object):
 
     @property
     def _textbuffer(self):
-        """Return the current textbuffer."""
+        """The current textbuffer."""
         return self._stacks[-1][2]
 
     @_textbuffer.setter

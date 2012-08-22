@@ -14,7 +14,7 @@ The easiest way to install the parser is through the `Python Package Index`_,
 so you can install the latest release with ``pip install mwparserfromhell``
 (`get pip`_). Alternatively, get the latest development version::
 
-    git clone git://github.com/earwig/mwparserfromhell.git mwparserfromhell
+    git clone git://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
     python setup.py install
 
@@ -63,7 +63,7 @@ nested templates::
     >>> print foo.get(1).value.filter_templates()[0].get(1).value
     template
 
-Additionally, you can get include nested templates in ``filter_templates()`` by
+Additionally, you can include nested templates in ``filter_templates()`` by
 passing ``recursive=True``::
 
     >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
