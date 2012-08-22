@@ -73,4 +73,4 @@ class Parameter(StringMixIn):
 
     @showkey.setter
     def showkey(self, newval):
-        self._showkey = newval
+        self._showkey = bool(newval)

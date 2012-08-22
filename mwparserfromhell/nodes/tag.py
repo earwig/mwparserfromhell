@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 
 from . import Node, Text
 from ..compat import str
+from ..utils import parse_anything
 
 __all__ = ["Tag"]
 
@@ -207,3 +208,34 @@ class Tag(Node):
     def close_padding(self):
         """How much spacing to insert before the last closing >."""
         return self._close_padding
+
+    @type.setter
+    def type(self, value):
+        value = int(value)
+        if value not in self.TAGS_INVISIBLE | self.TAGS_VISIBLE:
+            raise ValueError(value)
+        self._type = value
+
+    @tag.setter
+    def tag(self, value):
+        self._tag = parse_anything(value)
+
+    @contents.setter
+    def contents(self, value):
+        self._contents = parse_anything(value)
+
+    @showtag.setter
+    def showtag(self, value):
+        self._showtag = bool(value)
+
+    @self_closing.setter
+    def self_closing(self, value):
+        self._self_closing = bool(value)
+
+    @open_padding.setter
+    def open_padding(self, value):
+        self._open_padding = int(value)
+
+    @close_padding.setter
+    def close_padding(self, value):
+        self._close_padding = int(value)

@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 
 from . import Node
-from ..compat import htmlentities
+from ..compat import htmlentities, str
 
 __all__ = ["HTMLEntity"]
 
@@ -115,6 +115,27 @@ class HTMLEntity(Node):
         are the only values supported.
         """
         return self._hex_char
+
+    @value.setter
+    def value(self, newval):
+        newval = str(newval)
+        if newval not in htmlentities.entitydefs:
+            test = int(self.value, 16)
+            if test < 0 or (test > 0x10FFFF and int(self.value) > 0x10FFFF):
+                raise ValueError(newval)
+        self._value = newval
+
+    @named.setter
+    def named(self, newval):
+        self._named = bool(newval)
+
+    @hexadecimal.setter
+    def hexadecimal(self, newval):
+        self._hexadecimal = bool(newval)
+
+    @hex_char.setter
+    def hex_char(self, newval):
+        self._hex_char = bool(newval)
 
     def normalize(self):
         """Return the unicode character represented by the HTML entity."""

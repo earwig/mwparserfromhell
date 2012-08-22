@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 
 from . import Node
 from ..compat import str
+from ...utils import parse_anything
 
 __all__ = ["Heading"]
 
@@ -60,3 +61,14 @@ class Heading(Node):
     def level(self):
         """The heading level, as an integer between 1 and 6, inclusive."""
         return self._level
+
+    @title.setter
+    def title(self, value):
+        self._title = parse_anything(value)
+
+    @level.setter
+    def level(self, value):
+        value = int(value)
+        if value < 1 or value > 6:
+            raise ValueError(value)
+        self._level = value

@@ -24,6 +24,7 @@ from __future__ import unicode_literals
 
 from ...compat import str
 from ...string_mixin import StringMixIn
+from ...utils import parse_anything
 
 __all__ = ["Attribute"]
 
@@ -62,3 +63,15 @@ class Attribute(StringMixIn):
     def quoted(self):
         """Whether the attribute's value is quoted with double quotes."""
         return self._quoted
+
+    @name.setter
+    def name(self, newval):
+        self._name = parse_anything(newval)
+
+    @value.setter
+    def value(self, newval):
+        self._value = parse_anything(newval)
+
+    @quoted.setter
+    def quoted(self, newval):
+        self._quoted = bool(newval)
