@@ -41,6 +41,28 @@ class Argument(Node):
             return start + "|" + unicode(self.default) + "}}}"
         return start + "}}}"
 
+    def __iternodes__(self, getter):
+        yield None, self
+        for child in getter(self.name):
+            yield self.name, child
+        if self.default is not None:
+            for child in getter(self.default):
+                yield self.default, child
+
+    def __strip__(self, normalize, collapse):
+        if self.default is not None:
+            return self.default.strip_code(normalize, collapse)
+        return None
+
+    def __showtree__(self, write, get, mark):
+        write("{{{")
+        get(self.name)
+        if self.default is not None:
+            write("    | ")
+            mark()
+            get(self.default)
+        write("}}}")
+
     @property
     def name(self):
         """The name of the argument to substitute."""
