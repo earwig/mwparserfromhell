@@ -28,6 +28,32 @@ a syntactically valid form by the
 :py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then converted
 into the :py:class`~mwparserfromhell.wikicode.Wikicode` tree by the
 :py:class:`~mwparserfromhell.parser.builder.Builder`.
+
+Tokens:
+
+* Text = make("Text")
+* *Templates*
+** TemplateOpen
+** TemplateParamSeparator
+** TemplateParamEquals
+** TemplateClose
+** HTMLEntityStart
+** HTMLEntityNumeric
+** HTMLEntityHex
+** HTMLEntityEnd
+* *Headings*
+** HeadingStart
+** HeadingEnd
+* *Tags*
+** TagOpenOpen
+** TagAttrStart
+** TagAttrEquals
+** TagAttrQuote
+** TagCloseOpen
+** TagCloseSelfclose
+** TagOpenClose
+** TagCloseClose
+
 """
 
 from __future__ import unicode_literals

@@ -29,10 +29,30 @@ heading of level two. This is used to determine what tokens are valid at the
 current point and also if the current parsing route is invalid.
 
 The tokenizer stores context as an integer, with these definitions bitwise OR'd
-to add them, AND'd to check if they're set, and XOR'd to remove them.
+to add them, AND'd to check if they're set, and XOR'd to remove them. The
+advantage of this is that contexts can have sub-contexts (as FOO == 0b11 will
+cover BAR == 0b10 and BAZ == 0b01).
+
+Local (stack-specific) contexts:
+
+* TEMPLATE
+** TEMPLATE_NAME
+** TEMPLATE_PARAM_KEY
+** TEMPLATE_PARAM_VALUE
+* HEADING
+** HEADING_LEVEL_1
+** HEADING_LEVEL_2
+** HEADING_LEVEL_3
+** HEADING_LEVEL_4
+** HEADING_LEVEL_5
+** HEADING_LEVEL_6
+
+Global contexts:
+
+* GL_HEADING
 """
 
-# Local (stack-specific) contexts:
+# Local contexts:
 
 TEMPLATE =              0b000000111
 TEMPLATE_NAME =         0b000000001
