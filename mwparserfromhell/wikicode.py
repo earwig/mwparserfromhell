@@ -314,7 +314,7 @@ class Wikicode(StringMixIn):
         """Iterate over text nodes.
 
         This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Text`.
+        :py:class:`~.nodes.Text`.
         """
         return self.filter(recursive, matches, flags, forcetype=Text)
 
