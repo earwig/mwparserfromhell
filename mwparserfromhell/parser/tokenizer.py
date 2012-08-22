@@ -149,11 +149,12 @@ class Tokenizer(object):
             self._write_all(template)
             self._write(tokens.TemplateClose())
 
-    def _verify_template_name(self):
-        """Verify that a template's name is valid wikisyntax.
+    def _verify_no_newlines(self):
+        """Verify that there are no newlines in the current stack.
 
         The route will be failed if the name contains a newline inside of it
-        (not merely at the beginning or end).
+        (not merely at the beginning or end). This is used when parsing a
+        template name or parameter key, which cannot contain newlines.
         """
         self._push_textbuffer()
         if self._stack:
@@ -165,7 +166,7 @@ class Tokenizer(object):
     def _handle_template_param(self):
         """Handle a template parameter at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
-            self._verify_template_name()
+            self._verify_no_newlines()
             self._context ^= contexts.TEMPLATE_NAME
         if self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
@@ -174,6 +175,7 @@ class Tokenizer(object):
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
+        self._verify_no_newlines()
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
@@ -181,7 +183,7 @@ class Tokenizer(object):
     def _handle_template_end(self):
         """Handle the end of the template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
-            self._verify_template_name()
+            self._verify_no_newlines()
         self._head += 1
         return self._pop()
 
