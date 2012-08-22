@@ -75,6 +75,10 @@ TemplateParamSeparator = make("TemplateParamSeparator")             # |
 TemplateParamEquals = make("TemplateParamEquals")                   # =
 TemplateClose = make("TemplateClose")                               # }}
 
+ArgumentOpen = make("ArgumentOpen")                                 # {{{
+ArgumentSeparator = make("ArgumentSeparator")                       # |
+ArgumentClose = make("ArgumentClose")                               # }}}
+
 HTMLEntityStart = make("HTMLEntityStart")                           # &
 HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
 HTMLEntityHex = make("HTMLEntityHex")                               # x

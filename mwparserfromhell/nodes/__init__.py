@@ -34,7 +34,8 @@ from __future__ import unicode_literals
 from ..compat import str
 from ..string_mixin import StringMixIn
 
-__all__ = ["Node", "Text", "Heading", "HTMLEntity", "Tag", "Template"]
+__all__ = ["Node", "Text", "Argument", "Heading", "HTMLEntity", "Tag",
+           "Template"]
 
 class Node(StringMixIn):
     """Represents the base Node type, demonstrating the methods to override.
@@ -66,6 +67,7 @@ class Node(StringMixIn):
 
 from . import extras
 from .text import Text
+from .argument import Argument
 from .heading import Heading
 from .html_entity import HTMLEntity
 from .tag import Tag
