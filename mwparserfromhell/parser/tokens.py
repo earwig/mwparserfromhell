@@ -24,10 +24,8 @@
 This module contains the token definitions that are used as an intermediate
 parsing data type - they are stored in a flat list, with each token being
 identified by its type and optional attributes. The token list is generated in
-a syntactically valid form by the
-:py:class:`~mwparserfromhell.parser.tokenizer.Tokenizer`, and then converted
-into the :py:class`~mwparserfromhell.wikicode.Wikicode` tree by the
-:py:class:`~mwparserfromhell.parser.builder.Builder`.
+a syntactically valid form by the :py:class:`~.Tokenizer`, and then converted
+into the :py:class`~.Wikicode` tree by the :py:class:`~.Builder`.
 """
 
 from __future__ import unicode_literals

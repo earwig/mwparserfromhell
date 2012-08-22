@@ -33,20 +33,16 @@ from .nodes import Node
 from .smart_list import SmartList
 
 def parse_anything(value):
-    """Return a :py:class:`~mwparserfromhell.wikicode.Wikicode` for *value*.
+    """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
 
     This differs from :py:func:`mwparserfromhell.parse` in that we accept more
     than just a string to be parsed. Unicode objects (strings in py3k), strings
     (bytes in py3k), integers (converted to strings), ``None``, existing
-    :py:class:`~mwparserfromhell.nodes.Node` or
-    :py:class:`~mwparserfromhell.wikicode.Wikicode` objects, as well as an
+    :py:class:`~.Node` or :py:class:`~.Wikicode` objects, as well as an
     iterable of these types, are supported. This is used to parse input
-    on-the-fly by various methods of
-    :py:class:`~mwparserfromhell.wikicode.Wikicode` and others like
-    :py:class:`~mwparserfromhell.nodes.template.Template`, such as
-    :py:meth:`wikicode.insert() <mwparserfromhell.wikicode.Wikicode.insert>`
-    or setting :py:meth:`template.name
-    <mwparserfromhell.nodes.template.Template.name>`.
+    on-the-fly by various methods of :py:class:`~.Wikicode` and others like
+    :py:class:`~.Template`, such as :py:meth:`wikicode.insert()
+    <.Wikicode.insert>` or setting :py:meth:`template.name <.Template.name>`.
     """
     wikicode = mwparserfromhell.wikicode.Wikicode
     if isinstance(value, wikicode):

@@ -21,10 +21,9 @@
 # SOFTWARE.
 
 """
-This module contains the :py:class:`~mwparserfromhell.smart_list.SmartList`
-type, as well as its :py:class:`~mwparserfromhell.smart_list._ListProxy` child,
-which together implement a list whose sublists reflect changes made to the main
-list, and vice-versa.
+This module contains the :py:class:`~.SmartList` type, as well as its
+:py:class:`~._ListProxy` child, which together implement a list whose sublists
+reflect changes made to the main list, and vice-versa.
 """
 
 from __future__ import unicode_literals
@@ -36,9 +35,8 @@ __all__ = ["SmartList"]
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    Since this is used on
-    :py:class:`~mwparserfromhell.smart_list.SmartList`, the "parent class" used
-    is ``list``. This function can be used as a decorator.
+    Since this is used on :py:class:`~.SmartList`, the "parent class" used is
+    ``list``. This function can be used as a decorator.
     """
     method.__doc__ = getattr(list, method.__name__).__doc__
     return method
@@ -51,10 +49,9 @@ class SmartList(list):
     list (such as the addition, removal, or replacement of elements) will be
     reflected in the sublist, or vice-versa, to the greatest degree possible.
     This is implemented by having sublists - instances of the
-    :py:class:`~mwparserfromhell.smart_list._ListProxy` type - dynamically
-    determine their elements by storing their slice info and retrieving that
-    slice from the parent. Methods that change the size of the list also change
-    the slice info. For example::
+    :py:class:`~._ListProxy` type - dynamically determine their elements by
+    storing their slice info and retrieving that slice from the parent. Methods
+    that change the size of the list also change the slice info. For example::
 
         >>> parent = SmartList([0, 1, 2, 3])
         >>> parent
@@ -183,10 +180,9 @@ class SmartList(list):
 class _ListProxy(list):
     """Implement the ``list`` interface by getting elements from a parent.
 
-    This is created by a :py:class:`~mwparserfromhell.smart_list.SmartList`
-    object when slicing. It does not actually store the list at any time;
-    instead, whenever the list is needed, it builds it dynamically using the
-    :py:meth:`_render` method.
+    This is created by a :py:class:`~.SmartList` object when slicing. It does
+    not actually store the list at any time; instead, whenever the list is
+    needed, it builds it dynamically using the :py:meth:`_render` method.
     """
 
     def __init__(self, parent, sliceinfo):

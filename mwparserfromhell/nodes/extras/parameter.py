@@ -50,12 +50,12 @@ class Parameter(StringMixIn):
 
     @property
     def name(self):
-        """The name of the parameter as a ``Wikicode`` object."""
+        """The name of the parameter as a :py:class:`~.Wikicode` object."""
         return self._name
 
     @property
     def value(self):
-        """The value of the parameter as a ``Wikicode`` object."""
+        """The value of the parameter as a :py:class:`~.Wikicode` object."""
         return self._value
 
     @property

@@ -22,8 +22,8 @@
 
 """
 This package contains objects used by
-:py:class:`~mwparserfromhell.nodes.Node`\ s, but are not nodes themselves.
-This includes the parameters of Templates or the attributes of HTML tags.
+:py:class:`~.Node`\ s, but are not nodes themselves. This includes the
+parameters of Templates or the attributes of HTML tags.
 """
 
 from .attribute import Attribute

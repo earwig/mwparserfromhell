@@ -37,4 +37,4 @@ __email__ = "ben.kurtovic@verizon.net"
 from . import nodes, parser, smart_list, string_mixin, wikicode
 
 parse = lambda text: parser.Parser(text).parse()
-parse.__doc__ = "Short for ``mwparserfromhell.parser.Parser(text).parse()``."
+parse.__doc__ = "Short for :py:meth:`.Parser.parse`."

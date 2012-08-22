@@ -53,7 +53,7 @@ class Heading(Node):
 
     @property
     def title(self):
-        """The title of the heading itself, as a ``Wikicode`` object."""
+        """The title of the heading, as a :py:class:`~.Wikicode` object."""
         return self._title
 
     @property

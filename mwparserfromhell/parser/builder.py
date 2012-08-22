@@ -34,10 +34,9 @@ __all__ = ["Builder"]
 class Builder(object):
     """Combines a sequence of tokens into a tree of ``Wikicode`` objects.
 
-    To use, pass a list of :py:class:`~mwparserfromhell.parser.tokens.Token`\ s
-    to the :py:meth:`build` method. The list will be exhausted as it is parsed
-    and a :py:class:`~mwparserfromhell.wikicode.Wikicode` object will be
-    returned.
+    To use, pass a list of :py:class:`~.Token`\ s to the :py:meth:`build`
+    method. The list will be exhausted as it is parsed and a
+    :py:class:`~.Wikicode` object will be returned.
     """
 
     def __init__(self):

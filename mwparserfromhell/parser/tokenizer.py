@@ -92,7 +92,7 @@ class Tokenizer(object):
         """Fail the current tokenization route.
 
         Discards the current stack/context/textbuffer and raises
-        :py:exc:`~mwparserfromhell.parser.tokenizer.BadRoute`.
+        :py:exc:`~.BadRoute`.
         """
         self._pop()
         raise BadRoute()

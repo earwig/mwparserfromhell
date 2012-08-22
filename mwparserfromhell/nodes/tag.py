@@ -172,20 +172,19 @@ class Tag(Node):
 
     @property
     def tag(self):
-        """The tag itself, as a ``Wikicode`` object."""
+        """The tag itself, as a :py:class:`~.Wikicode` object."""
         return self._tag
 
     @property
     def contents(self):
-        """The contents of the tag, as a ``Wikicode`` object."""
+        """The contents of the tag, as a :py:class:`~.Wikicode` object."""
         return self._contents
 
     @property
     def attrs(self):
         """The list of attributes affecting the tag.
 
-        Each attribute is an instance of
-        :py:class:`~mwparserfromhell.nodes.extras.attribute.Attribute`.
+        Each attribute is an instance of :py:class:`~.Attribute`.
         """
         return self._attrs
 

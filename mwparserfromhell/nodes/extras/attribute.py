@@ -30,9 +30,9 @@ __all__ = ["Attribute"]
 class Attribute(StringMixIn):
     """Represents an attribute of an HTML tag.
 
-    This is used by :py:class:`~mwparserfromhell.nodes.tag.Tag` objects. For
-    example, the tag ``<ref name="foo">`` contains an Attribute whose name is
-    ``"name"`` and whose value is ``"foo"``.
+    This is used by :py:class:`~.Tag` objects. For example, the tag
+    ``<ref name="foo">`` contains an Attribute whose name is ``"name"`` and
+    whose value is ``"foo"``.
     """
 
     def __init__(self, name, value=None, quoted=True):
@@ -50,12 +50,12 @@ class Attribute(StringMixIn):
 
     @property
     def name(self):
-        """The name of the attribute as a ``Wikicode`` object."""
+        """The name of the attribute as a :py:class:`~.Wikicode` object."""
         return self._name
 
     @property
     def value(self):
-        """The value of the attribute as a ``Wikicode`` object."""
+        """The value of the attribute as a :py:class:`~.Wikicode` object."""
         return self._value
 
     @property

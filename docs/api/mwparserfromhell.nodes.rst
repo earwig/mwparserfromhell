@@ -7,6 +7,7 @@ nodes Package
 .. automodule:: mwparserfromhell.nodes
 
 .. autoclass:: mwparserfromhell.nodes.Node
+    :special-members:
 
 :mod:`heading` Module
 ---------------------

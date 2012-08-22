@@ -158,10 +158,10 @@ class Wikicode(StringMixIn):
 
     @property
     def nodes(self):
-        """A list of :py:class:`~mwparserfromhell.nodes.Node` objects.
+        """A list of :py:class:`~.Node` objects.
 
         This is the internal data actually stored within a
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object.
+        :py:class:`~.Wikicode` object.
         """
         return self._nodes
 
@@ -178,9 +178,9 @@ class Wikicode(StringMixIn):
 
         Raises :py:exc:`IndexError` if *index* is out of range, or
         :py:exc:`ValueError` if *value* cannot be coerced into one
-        :py:class:`~mwparserfromhell.nodes.Node`. To insert multiple nodes at
-        an index, use :py:meth:`get` with either :py:meth:`remove` and
-        :py:meth:`insert` or :py:meth:`replace`.
+        :py:class:`~.Node`. To insert multiple nodes at an index, use
+        :py:meth:`get` with either :py:meth:`remove` and :py:meth:`insert` or
+        :py:meth:`replace`.
         """
         nodes = parse_anything(value).nodes
         if len(nodes) > 1:
@@ -213,10 +213,9 @@ class Wikicode(StringMixIn):
     def insert(self, index, value):
         """Insert *value* at *index* in the list of nodes.
 
-        *value* can be anything parasable by
-        :py:func:`mwparserfromhell.utils.parse_anything`, which includes
-        strings or other :py:class:`~mwparserfromhell.wikicode.Wikicode` or
-        :py:class:`~mwparserfromhell.nodes.Node` objects.
+        *value* can be anything parasable by :py:func:`.parse_anything`, which
+        includes strings or other :py:class:`~.Wikicode` or :py:class:`~.Node`
+        objects.
         """
         nodes = parse_anything(value).nodes
         for node in reversed(nodes):
@@ -225,13 +224,11 @@ class Wikicode(StringMixIn):
     def insert_before(self, obj, value, recursive=True):
         """Insert *value* immediately before *obj* in the list of nodes.
 
-        *obj* can be either a string or a
-        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
-        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
-        *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
-        in the node list, :py:exc:`ValueError` is raised.
+        *obj* can be either a string or a :py:class:`~.Node`. *value* can be
+        anything parasable by :py:func:`.parse_anything`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this :py:class:`~.Wikicode` object. If
+        *obj* is not in the node list, :py:exc:`ValueError` is raised.
         """
         callback = lambda self, i, value: self.insert(i, value)
         self._do_search(obj, recursive, callback, self, value)
@@ -239,13 +236,11 @@ class Wikicode(StringMixIn):
     def insert_after(self, obj, value, recursive=True):
         """Insert *value* immediately after *obj* in the list of nodes.
 
-        *obj* can be either a string or a
-        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
-        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
-        *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
-        in the node list, :py:exc:`ValueError` is raised.
+        *obj* can be either a string or a :py:class:`~.Node`. *value* can be
+        anything parasable by :py:func:`.parse_anything`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this :py:class:`~.Wikicode` object. If
+        *obj* is not in the node list, :py:exc:`ValueError` is raised.
         """
         callback = lambda self, i, value: self.insert(i + 1, value)
         self._do_search(obj, recursive, callback, self, value)
@@ -253,13 +248,11 @@ class Wikicode(StringMixIn):
     def replace(self, obj, value, recursive=True):
         """Replace *obj* with *value* in the list of nodes.
 
-        *obj* can be either a string or a
-        :py:class:`~mwparserfromhell.nodes.Node`. *value* can be anything
-        parasable by :py:func:`mwparserfromhell.utils.parse_anything`. If
-        *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
-        in the node list, :py:exc:`ValueError` is raised.
+        *obj* can be either a string or a :py:class:`~.Node`. *value* can be
+        anything parasable by :py:func:`.parse_anything`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this :py:class:`~.Wikicode` object. If
+        *obj* is not in the node list, :py:exc:`ValueError` is raised.
         """
         def callback(self, i, value):
             self.nodes.pop(i)
@@ -270,8 +263,7 @@ class Wikicode(StringMixIn):
     def append(self, value):
         """Insert *value* at the end of the list of nodes.
 
-        *value* can be anything parasable by
-        :py:func:`mwparserfromhell.utils.parse_anything`.
+        *value* can be anything parasable by :py:func:`.parse_anything`.
         """
         nodes = parse_anything(value).nodes
         for node in nodes:
@@ -280,12 +272,10 @@ class Wikicode(StringMixIn):
     def remove(self, obj, recursive=True):
         """Remove *obj* from the list of nodes.
 
-        *obj* can be either a string or a
-        :py:class:`~mwparserfromhell.nodes.Node`. If *recursive* is ``True``,
-        we will try to find *obj* within our child nodes even if it is not a
-        direct descendant of this
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object. If *obj* is not
-        in the node list, :py:exc:`ValueError` is raised.
+        *obj* can be either a string or a :py:class:`~.Node`. If *recursive* is
+        ``True``, we will try to find *obj* within our child nodes even if it
+        is not a direct descendant of this :py:class:`~.Wikicode` object. If
+        *obj* is not in the node list, :py:exc:`ValueError` is raised.
         """
         callback = lambda self, i: self.nodes.pop(i)
         self._do_search(obj, recursive, callback, self)
@@ -316,7 +306,7 @@ class Wikicode(StringMixIn):
         """Iterate over template nodes.
 
         This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~mwparserfromhell.nodes.template.Template`.
+        :py:class:`~.Template`.
         """
         return self.filter(recursive, matches, flags, forcetype=Template)
 
@@ -324,7 +314,7 @@ class Wikicode(StringMixIn):
         """Iterate over text nodes.
 
         This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~mwparserfromhell.nodes.text.Text`.
+        :py:class:`~.Text`.
         """
         return self.filter(recursive, matches, flags, forcetype=Text)
 
@@ -332,7 +322,7 @@ class Wikicode(StringMixIn):
         """Iterate over tag nodes.
 
         This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~mwparserfromhell.nodes.tag.Tag`.
+        :py:class:`~.Tag`.
         """
         return self.ifilter(recursive, matches, flags, forcetype=Tag)
 
@@ -372,24 +362,20 @@ class Wikicode(StringMixIn):
                      include_headings=True):
         """Return a list of sections within the page.
 
-        Sections are returned as
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` objects with a shared
-        node list (implemented using
-        :py:class:`~mwparserfromhell.smart_list.SmartList`) so that changes to
-        sections are reflected in the parent Wikicode object.
+        Sections are returned as :py:class:`~.Wikicode` objects with a shared
+        node list (implemented using :py:class:`~.SmartList`) so that changes
+        to sections are reflected in the parent Wikicode object.
 
         With *flat* as ``True``, each returned section contains all of its
-        subsections within the :py:class:`~mwparserfromhell.wikicode.Wikicode`;
-        otherwise, the returned sections contain only the section up to the
-        next heading, regardless of its size. If *matches* is given, it should
-        be a regex to matched against the titles of section headings; only
-        sections whose headings match the regex will be included. If *levels*
-        is given, it should be a list of integers; only sections whose heading
-        levels are within the list will be returned. If *include_headings* is
-        ``True``, the section's literal
-        :py:class:`~mwparserfromhell.nodes.heading.Heading` object will be
-        included in returned :py:class:`~mwparserfromhell.wikicode.Wikicode`
-        objects; otherwise, this is skipped.
+        subsections within the :py:class:`~.Wikicode`; otherwise, the returned
+        sections contain only the section up to the next heading, regardless of
+        its size. If *matches* is given, it should be a regex to matched
+        against the titles of section headings; only sections whose headings
+        match the regex will be included. If *levels* is given, it should be a =
+        list of integers; only sections whose heading levels are within the
+        list will be returned. If *include_headings* is ``True``, the section's
+        literal :py:class:`~.Heading` object will be included in returned
+        :py:class:`~.Wikicode` objects; otherwise, this is skipped.
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
@@ -421,16 +407,15 @@ class Wikicode(StringMixIn):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
-        :py:meth:`~mwparserfromhell.nodes.Node.__showtree__` method of
-        :py:class:`~mwparserfromhell.nodes.Node` objects, which generally
-        return a subset of their nodes or ``None``. For example, templates and
-        tags are removed completely, links are stripped to just their display
-        part, headings are stripped to just their title. If *normalize* is
-        ``True``, various things may be done to strip code further, such as
-        converting HTML entities like ``&Sigma;``, ``&#931;``, and ``&#x3a3;``
-        to ``Σ``. If *collapse* is ``True``, we will try to remove excess
-        whitespace as well (three or more newlines are converted to two, for
-        example).
+        :py:meth:`~.Node.__showtree__` method of :py:class:`~.Node` objects,
+        which generally return a subset of their nodes or ``None``. For
+        example, templates and tags are removed completely, links are stripped
+        to just their display part, headings are stripped to just their title.
+        If *normalize* is ``True``, various things may be done to strip code
+        further, such as converting HTML entities like ``&Sigma;``, ``&#931;``,
+        and ``&#x3a3;`` to ``Σ``. If *collapse* is ``True``, we will try to
+        remove excess whitespace as well (three or more newlines are converted
+        to two, for example).
         """
         nodes = []
         for node in self.nodes:
@@ -451,8 +436,8 @@ class Wikicode(StringMixIn):
 
         The representation is a string makes the most sense printed. It is
         built by calling :py:meth:`_get_tree` on the
-        :py:class:`~mwparserfromhell.wikicode.Wikicode` object and its children
-        recursively. The end result may look something like the following::
+        :py:class:`~.Wikicode` object and its children recursively. The end
+        result may look something like the following::
 
             >>> text = "Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}"
             >>> print mwparserfromhell.parse(text).get_tree()

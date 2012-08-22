@@ -152,7 +152,7 @@ class Template(Node):
 
     @property
     def name(self):
-        """The name of the template, as a ``Wikicode`` object."""
+        """The name of the template, as a :py:class:`~.Wikicode` object."""
         return self._name
 
     @property
@@ -184,11 +184,10 @@ class Template(Node):
         """Get the parameter whose name is *name*.
 
         The returned object is a
-        :py:class:`~mwparserfromhell.nodes.extras.parameter.Parameter`
-        instance. Raises :py:exc:`ValueError` if no parameter has this name.
-        Since multiple parameters can have the same name, we'll return the last
-        match, since the last parameter is the only one read by the MediaWiki
-        parser.
+        :py:class:`~.Parameter` instance. Raises :py:exc:`ValueError` if no
+        parameter has this name. Since multiple parameters can have the same
+        name, we'll return the last match, since the last parameter is the only
+        one read by the MediaWiki parser.
         """
         name = name.strip() if isinstance(name, basestring) else str(name)
         for param in reversed(self.params):
@@ -200,14 +199,14 @@ class Template(Node):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parasable by
-        :py:func:`mwparserfromhell.utils.parse_anything`; pipes (and equal
-        signs, if appropriate) are automatically escaped from *value* where
-        applicable. If *showkey* is given, this will determine whether or not
-        to show the parameter's name (e.g., ``{{foo|bar}}``'s parameter has a
-        name of ``"1"`` but it is hidden); otherwise, we'll make a safe and
-        intelligent guess. If *name* is already a parameter, we'll replace its
-        value while keeping the same spacing rules unless *force_nonconformity*
-        is ``True``. We will also try to guess the dominant spacing convention
+        :py:func:`.utils.parse_anything`; pipes (and equal signs, if
+        appropriate) are automatically escaped from *value* where applicable.
+        If *showkey* is given, this will determine whether or not to show the
+        parameter's name (e.g., ``{{foo|bar}}``'s parameter has a name of
+        ``"1"`` but it is hidden); otherwise, we'll make a safe and intelligent
+        guess. If *name* is already a parameter, we'll replace its value while
+        keeping the same spacing rules unless *force_nonconformity* is
+        ``True``. We will also try to guess the dominant spacing convention
         when adding a new parameter using :py:meth:`_get_spacing_conventions`
         unless *force_nonconformity* is ``True``.
         """

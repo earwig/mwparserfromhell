@@ -21,9 +21,8 @@
 # SOFTWARE.
 
 """
-This module contains the :py:class:`~mwparserfromhell.string_mixin.StringMixIn`
-type, which implements the interface for the ``unicode`` type (``str`` on py3k)
-in a dynamic manner.
+This module contains the :py:class:`~.StringMixIn` type, which implements the
+interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
 """
 
 from __future__ import unicode_literals
@@ -35,9 +34,8 @@ __all__ = ["StringMixIn"]
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    Since this is used on
-    :py:class:`~mwparserfromhell.string_mixin.StringMixIn`, the "parent class"
-    used is ``str``. This function can be used as a decorator.
+    Since this is used on :py:class:`~.StringMixIn`, the "parent class" used is
+    ``str``. This function can be used as a decorator.
     """
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
