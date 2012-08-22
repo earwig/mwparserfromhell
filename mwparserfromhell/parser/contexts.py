@@ -35,20 +35,25 @@ will cover ``BAR == 0b10`` and ``BAZ == 0b01``).
 
 Local (stack-specific) contexts:
 
-* :py:const:`TEMPLATE` (``0b000000111``)
+* :py:const:`TEMPLATE` (``0b00000000111``)
 
-    * :py:const:`TEMPLATE_NAME` (``0b000000001``)
-    * :py:const:`TEMPLATE_PARAM_KEY` (``0b000000010``)
-    * :py:const:`TEMPLATE_PARAM_VALUE` (``0b000000100``)
+    * :py:const:`TEMPLATE_NAME` (``0b00000000001``)
+    * :py:const:`TEMPLATE_PARAM_KEY` (``0b00000000010``)
+    * :py:const:`TEMPLATE_PARAM_VALUE` (``0b00000000100``)
+
+* :py:const:`ARGUMENT` (``0b00000011000``)
+
+    * :py:const:`ARGUMENT_NAME` (``0b00000001000``)
+    * :py:const:`ARGUMENT_DEFAULT` (``0b00000010000``)
 
 * :py:const:`HEADING` (``0b111111000``)
 
-    * :py:const:`HEADING_LEVEL_1` (``0b000001000``)
-    * :py:const:`HEADING_LEVEL_2` (``0b000010000``)
-    * :py:const:`HEADING_LEVEL_3` (``0b000100000``)
-    * :py:const:`HEADING_LEVEL_4` (``0b001000000``)
-    * :py:const:`HEADING_LEVEL_5` (``0b010000000``)
-    * :py:const:`HEADING_LEVEL_6` (``0b100000000``)
+    * :py:const:`HEADING_LEVEL_1` (``0b00000100000``)
+    * :py:const:`HEADING_LEVEL_2` (``0b00001000000``)
+    * :py:const:`HEADING_LEVEL_3` (``0b00010000000``)
+    * :py:const:`HEADING_LEVEL_4` (``0b00100000000``)
+    * :py:const:`HEADING_LEVEL_5` (``0b01000000000``)
+    * :py:const:`HEADING_LEVEL_6` (``0b10000000000``)
 
 Global contexts:
 
@@ -57,18 +62,22 @@ Global contexts:
 
 # Local contexts:
 
-TEMPLATE =              0b000000111
-TEMPLATE_NAME =         0b000000001
-TEMPLATE_PARAM_KEY =    0b000000010
-TEMPLATE_PARAM_VALUE =  0b000000100
+TEMPLATE =              0b00000000111
+TEMPLATE_NAME =         0b00000000001
+TEMPLATE_PARAM_KEY =    0b00000000010
+TEMPLATE_PARAM_VALUE =  0b00000000100
 
-HEADING =               0b111111000
-HEADING_LEVEL_1 =       0b000001000
-HEADING_LEVEL_2 =       0b000010000
-HEADING_LEVEL_3 =       0b000100000
-HEADING_LEVEL_4 =       0b001000000
-HEADING_LEVEL_5 =       0b010000000
-HEADING_LEVEL_6 =       0b100000000
+ARGUMENT =              0b00000011000
+ARGUMENT_NAME =         0b00000001000
+ARGUMENT_DEFAULT =      0b00000010000
+
+HEADING =               0b11111100000
+HEADING_LEVEL_1 =       0b00000100000
+HEADING_LEVEL_2 =       0b00001000000
+HEADING_LEVEL_3 =       0b00010000000
+HEADING_LEVEL_4 =       0b00100000000
+HEADING_LEVEL_5 =       0b01000000000
+HEADING_LEVEL_6 =       0b10000000000
 
 
 # Global contexts:

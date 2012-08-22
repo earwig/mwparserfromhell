@@ -135,10 +135,23 @@ class Tokenizer(object):
                 self._fail_route()
             return self.END
 
-    def _parse_template(self):
+    def _parse_template_or_argument(self):
         """Parse a template at the head of the wikicode string."""
         reset = self._head
         self._head += 2
+
+        if self._read() == "{":
+            self._head += 1
+            try:
+                argument = self._parse(contexts.ARGUMENT_NAME)
+            except BadRoute:
+                pass
+            else:
+                self._write(tokens.ArgumentOpen())
+                self._write_all(argument)
+                self._write(tokens.ArgumentClose())
+                return
+
         try:
             template = self._parse(contexts.TEMPLATE_NAME)
         except BadRoute:
@@ -181,10 +194,24 @@ class Tokenizer(object):
         self._write(tokens.TemplateParamEquals())
 
     def _handle_template_end(self):
-        """Handle the end of the template at the head of the string."""
+        """Handle the end of a template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_no_newlines()
         self._head += 1
+        return self._pop()
+
+    def _handle_argument_separator(self):
+        """Handle the separator between an argument's name and default."""
+        self._verify_no_newlines()
+        self._context ^= contexts.ARGUMENT_NAME
+        self._context |= contexts.ARGUMENT_DEFAULT
+        self._write(tokens.ArgumentSeparator())
+
+    def _handle_argument_end(self):
+        """Handle the end of an argument at the head of the string."""
+        if self._context & contexts.TEMPLATE_NAME:
+            self._verify_no_newlines()
+        self._head += 2
         return self._pop()
 
     def _parse_heading(self):
@@ -299,20 +326,31 @@ class Tokenizer(object):
                 self._head += 1
                 continue
             if this is self.END:
-                if self._context & (contexts.TEMPLATE | contexts.HEADING):
+                fail = contexts.TEMPLATE | contexts.ARGUMENT | contexts.HEADING
+                if self._context & fail:
                     self._fail_route()
                 return self._pop()
-            prev, next = self._read(-1), self._read(1)
+            next = self._read(1)
             if this == next == "{":
-                self._parse_template()
+                self._parse_template_or_argument()
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
                 self._handle_template_param_value()
             elif this == next == "}" and self._context & contexts.TEMPLATE:
                 return self._handle_template_end()
-            elif (prev == "\n" or prev == self.START) and this == "=" and not self._global & contexts.GL_HEADING:
-                self._parse_heading()
+            elif this == "|" and self._context & contexts.ARGUMENT_NAME:
+                self._handle_argument_separator()
+            elif this == next == "}" and self._context & contexts.ARGUMENT:
+                if self._read(2) == "}":
+                    return self._handle_argument_end()
+                else:
+                    self._write_text("}")
+            elif this == "=" and not self._global & contexts.GL_HEADING:
+                if self._read(-1) in ("\n", self.START):
+                    self._parse_heading()
+                else:
+                    self._write_text("=")
             elif this == "=" and self._context & contexts.HEADING:
                 return self._handle_heading_end()
             elif this == "\n" and self._context & contexts.HEADING:

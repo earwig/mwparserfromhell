@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from . import Node
 from ..compat import str
-from ...utils import parse_anything
+from ..utils import parse_anything
 
 __all__ = ["Heading"]
 
