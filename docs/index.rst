@@ -1,4 +1,4 @@
-MWParserFromHell v0.1 Documentation
+MWParserFromHell v0.2 Documentation
 ===================================
 
 :py:mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python
@@ -9,7 +9,7 @@ Developed by Earwig_ with help from `Σ`_.
 
 .. _MediaWiki:            http://mediawiki.org
 .. _Earwig:               http://en.wikipedia.org/wiki/User:The_Earwig
-.. _Σ:                    http://en.wikipedia.org/wiki/User:Σ
+.. _Σ:                    http://en.wikipedia.org/wiki/User:%CE%A3
 
 Installation
 ------------

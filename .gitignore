@@ -4,4 +4,5 @@
 .DS_Store
 __pycache__
 build
+dist
 docs/_build
