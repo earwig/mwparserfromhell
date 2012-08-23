@@ -98,9 +98,14 @@ class Tokenizer(object):
         raise BadRoute()
 
     def _write(self, token):
-        """Write a token to the current token stack."""
+        """Write a token to the end of the current token stack."""
         self._push_textbuffer()
         self._stack.append(token)
+
+    def _write_first(self, token):
+        """Write a token to the beginning of the current token stack."""
+        self._push_textbuffer()
+        self._stack.insert(0, token)
 
     def _write_text(self, text):
         """Write text to the current textbuffer."""
@@ -112,6 +117,13 @@ class Tokenizer(object):
             self._write_text(tokenlist.pop(0).text)
         self._push_textbuffer()
         self._stack.extend(tokenlist)
+
+    def _write_text_then_stack(self, text):
+        """Pop the current stack, write *text*, and then write the stack."""
+        stack = self._pop()
+        self._write_text(text)
+        self._write_all(stack)
+        self._head -= 1
 
     def _read(self, delta=0, wrap=False, strict=False):
         """Read the value at a relative point in the wikicode.
@@ -146,20 +158,12 @@ class Tokenizer(object):
 
         while braces:
             if braces == 1:
-                stack = self._pop()
-                self._write_text("{")
-                self._write_all(stack)
-                self._head -= 1
-                return
+                return self._write_text_then_stack("{")
             if braces == 2:
                 try:
                     self._parse_template()
                 except BadRoute:
-                    stack = self._pop()
-                    self._write_text("{{")
-                    self._write_all(stack)
-                    self._head -= 1
-                    return
+                    return self._write_text_then_stack("{{")
                 break
             try:
                 self._parse_argument()
@@ -167,16 +171,11 @@ class Tokenizer(object):
                 try:
                     self._parse_template()
                 except BadRoute:
-                    stack = self._pop()
-                    self._write_text("{" * braces)
-                    self._write_all(stack)
-                    self._head -= 1
-                    return
-                else:
-                    stack = self._pop()
-                    self._write_text("{")
-                    self._push()
-                    self._write_all(stack)
+                    return self._write_text_then_stack("{" * braces)
+                stack = self._pop()
+                self._write_text("{")
+                self._push()
+                self._write_all(stack)
             braces -= 3
             if braces:
                 self._head += 1
@@ -192,10 +191,7 @@ class Tokenizer(object):
             self._head = reset
             raise
         else:
-            stack = self._pop()
-            self._push()
-            self._write(tokens.TemplateOpen())
-            self._write_all(stack)
+            self._write_first(tokens.TemplateOpen())
             self._write_all(template)
             self._write(tokens.TemplateClose())
 
@@ -208,10 +204,7 @@ class Tokenizer(object):
             self._head = reset
             raise
         else:
-            stack = self._pop()
-            self._push()
-            self._write(tokens.ArgumentOpen())
-            self._write_all(stack)
+            self._write_first(tokens.ArgumentOpen())
             self._write_all(argument)
             self._write(tokens.ArgumentClose())
 
