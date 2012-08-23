@@ -143,6 +143,7 @@ class Wikicode(StringMixIn):
         the starting indentation.
         """
         def write(*args):
+            """Write a new line following the proper indentation rules."""
             if lines and lines[-1] is marker:  # Continue from the last line
                 lines.pop()  # Remove the marker
                 last = lines.pop()

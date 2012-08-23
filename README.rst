@@ -1,5 +1,5 @@
 mwparserfromhell
-========================
+================
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_

@@ -289,17 +289,21 @@ class _ListProxy(list):
 
     @property
     def _start(self):
+        """The starting index of this list, inclusive."""
         return self._sliceinfo[0]
 
     @property
     def _stop(self):
+        """The ending index of this list, exclusive."""
         return self._sliceinfo[1]
 
     @property
     def _step(self):
+        """The number to increase the index by between items."""
         return self._sliceinfo[2]
 
     def _render(self):
+        """Return the actual list from the stored start/stop/step."""
         return list(self._parent)[self._start:self._stop:self._step]
 
     @inheritdoc

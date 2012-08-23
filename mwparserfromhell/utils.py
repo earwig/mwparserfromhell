@@ -27,7 +27,6 @@ provide additional functionality.
 
 from __future__ import unicode_literals
 
-import mwparserfromhell
 from .compat import bytes, str
 from .nodes import Node
 from .smart_list import SmartList
@@ -44,19 +43,21 @@ def parse_anything(value):
     :py:class:`~.Template`, such as :py:meth:`wikicode.insert()
     <.Wikicode.insert>` or setting :py:meth:`template.name <.Template.name>`.
     """
-    wikicode = mwparserfromhell.wikicode.Wikicode
-    if isinstance(value, wikicode):
+    from . import parse
+    from .wikicode import Wikicode
+
+    if isinstance(value, Wikicode):
         return value
     elif isinstance(value, Node):
-        return wikicode(SmartList([value]))
+        return Wikicode(SmartList([value]))
     elif isinstance(value, str):
-        return mwparserfromhell.parse(value)
+        return parse(value)
     elif isinstance(value, bytes):
-        return mwparserfromhell.parse(value.decode("utf8"))
+        return parse(value.decode("utf8"))
     elif isinstance(value, int):
-        return mwparserfromhell.parse(str(value))
+        return parse(str(value))
     elif value is None:
-        return wikicode(SmartList())
+        return Wikicode(SmartList())
     try:
         nodelist = SmartList()
         for item in value:
@@ -64,4 +65,4 @@ def parse_anything(value):
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value).__name__, value))
-    return wikicode(nodelist)
+    return Wikicode(nodelist)
