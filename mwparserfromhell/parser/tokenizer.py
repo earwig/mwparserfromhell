@@ -122,7 +122,8 @@ class Tokenizer(object):
         """Pop the current stack, write *text*, and then write the stack."""
         stack = self._pop()
         self._write_text(text)
-        self._write_all(stack)
+        if stack:
+            self._write_all(stack)
         self._head -= 1
 
     def _read(self, delta=0, wrap=False, strict=False):

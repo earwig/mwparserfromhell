@@ -33,7 +33,7 @@ class Argument(Node):
     def __init__(self, name, default=None):
         super(Argument, self).__init__()
         self._name = name
-        self._default = None
+        self._default = default
 
     def __unicode__(self):
         start = "{{{" + str(self.name)
