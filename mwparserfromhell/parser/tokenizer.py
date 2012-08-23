@@ -136,50 +136,103 @@ class Tokenizer(object):
             return self.END
 
     def _parse_template_or_argument(self):
+        """Parse a template or argument at the head of the wikicode string."""
+        self._head += 2
+        braces = 2
+        while self._read() == "{":
+            braces += 1
+            self._head += 1
+        self._push()
+
+        while braces:
+            if braces == 1:
+                stack = self._pop()
+                self._write_text("{")
+                self._write_all(stack)
+                self._head -= 1
+                return
+            if braces == 2:
+                try:
+                    self._parse_template()
+                except BadRoute:
+                    stack = self._pop()
+                    self._write_text("{{")
+                    self._write_all(stack)
+                    self._head -= 1
+                    return
+                break
+            try:
+                self._parse_argument()
+            except BadRoute:
+                try:
+                    self._parse_template()
+                except BadRoute:
+                    stack = self._pop()
+                    self._write_text("{" * braces)
+                    self._write_all(stack)
+                    self._head -= 1
+                    return
+                else:
+                    stack = self._pop()
+                    self._write_text("{")
+                    self._push()
+                    self._write_all(stack)
+            braces -= 3
+            if braces:
+                self._head += 1
+
+        self._write_all(self._pop())
+
+    def _parse_template(self):
         """Parse a template at the head of the wikicode string."""
         reset = self._head
-        self._head += 2
-
-        if self._read() == "{":
-            self._head += 1
-            try:
-                argument = self._parse(contexts.ARGUMENT_NAME)
-            except BadRoute:
-                pass
-            else:
-                self._write(tokens.ArgumentOpen())
-                self._write_all(argument)
-                self._write(tokens.ArgumentClose())
-                return
-
         try:
             template = self._parse(contexts.TEMPLATE_NAME)
         except BadRoute:
             self._head = reset
-            self._write_text(self._read())
+            raise
         else:
+            stack = self._pop()
+            self._push()
             self._write(tokens.TemplateOpen())
+            self._write_all(stack)
             self._write_all(template)
             self._write(tokens.TemplateClose())
 
-    def _verify_no_newlines(self):
-        """Verify that there are no newlines in the current stack.
+    def _parse_argument(self):
+        """Parse an argument at the head of the wikicode string."""
+        reset = self._head
+        try:
+            argument = self._parse(contexts.ARGUMENT_NAME)
+        except BadRoute:
+            self._head = reset
+            raise
+        else:
+            stack = self._pop()
+            self._push()
+            self._write(tokens.ArgumentOpen())
+            self._write_all(stack)
+            self._write_all(argument)
+            self._write(tokens.ArgumentClose())
 
-        The route will be failed if the name contains a newline inside of it
-        (not merely at the beginning or end). This is used when parsing a
+    def _verify_safe(self, unsafes):
+        """Verify that there are no unsafe characters in the current stack.
+
+        The route will be failed if the name contains any element of *unsafes*
+        in it (not merely at the beginning or end). This is used when parsing a
         template name or parameter key, which cannot contain newlines.
         """
         self._push_textbuffer()
         if self._stack:
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
-            text = "".join([token.text for token in text])
-            if text.strip() and "\n" in text.strip():
+            text = "".join([token.text for token in text]).strip()
+            if text and any([unsafe in text for unsafe in unsafes]):
                 self._fail_route()
 
     def _handle_template_param(self):
         """Handle a template parameter at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
-            self._verify_no_newlines()
+            self._verify_safe(["\n", "{", "}", "[", "]"])
             self._context ^= contexts.TEMPLATE_NAME
         if self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
@@ -188,7 +241,7 @@ class Tokenizer(object):
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        self._verify_no_newlines()
+        self._verify_safe(["\n", "{{", "}}"])
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
@@ -196,21 +249,21 @@ class Tokenizer(object):
     def _handle_template_end(self):
         """Handle the end of a template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
-            self._verify_no_newlines()
+            self._verify_safe(["\n", "{", "}", "[", "]"])
         self._head += 1
         return self._pop()
 
     def _handle_argument_separator(self):
         """Handle the separator between an argument's name and default."""
-        self._verify_no_newlines()
+        self._verify_safe(["\n", "{{", "}}"])
         self._context ^= contexts.ARGUMENT_NAME
         self._context |= contexts.ARGUMENT_DEFAULT
         self._write(tokens.ArgumentSeparator())
 
     def _handle_argument_end(self):
         """Handle the end of an argument at the head of the string."""
-        if self._context & contexts.TEMPLATE_NAME:
-            self._verify_no_newlines()
+        if self._context & contexts.ARGUMENT_NAME:
+            self._verify_safe(["\n", "{{", "}}"])
         self._head += 2
         return self._pop()
 

@@ -32,13 +32,13 @@ class Argument(Node):
     """Represents a template argument substitution, like ``{{{foo}}}``."""
     def __init__(self, name, default=None):
         super(Argument, self).__init__()
-        self._value = value
+        self._name = name
         self._default = None
 
     def __unicode__(self):
-        start = "{{{" + unicode(self.name)
+        start = "{{{" + str(self.name)
         if self.default is not None:
-            return start + "|" + unicode(self.default) + "}}}"
+            return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
     def __iternodes__(self, getter):
