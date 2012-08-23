@@ -31,7 +31,7 @@ from __future__ import unicode_literals
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.1"
+__version__ = "0.2.dev"
 __email__ = "ben.kurtovic@verizon.net"
 
 from . import nodes, parser, smart_list, string_mixin, wikicode
