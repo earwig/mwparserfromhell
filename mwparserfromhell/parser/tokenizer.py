@@ -167,16 +167,13 @@ class Tokenizer(object):
                 break
             try:
                 self._parse_argument()
+                braces -= 3
             except BadRoute:
                 try:
                     self._parse_template()
+                    braces -= 2
                 except BadRoute:
                     return self._write_text_then_stack("{" * braces)
-                stack = self._pop()
-                self._write_text("{")
-                self._push()
-                self._write_all(stack)
-            braces -= 3
             if braces:
                 self._head += 1
 
