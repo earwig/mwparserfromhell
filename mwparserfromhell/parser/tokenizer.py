@@ -83,9 +83,18 @@ class Tokenizer(object):
             self._stack.append(tokens.Text(text="".join(self._textbuffer)))
             self._textbuffer = []
 
-    def _pop(self):
-        """Pop the current stack/context/textbuffer, returing the stack."""
+    def _pop(self, keep_context=False):
+        """Pop the current stack/context/textbuffer, returing the stack.
+
+        If *keep_context is ``True``, then we will replace the underlying
+        stack's context with the current stack's.
+        """
         self._push_textbuffer()
+        if keep_context:
+            context = self._context
+            stack = self._stacks.pop()[0]
+            self._context = context
+            return stack
         return self._stacks.pop()[0]
 
     def _fail_route(self):
@@ -225,14 +234,23 @@ class Tokenizer(object):
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_safe(["\n", "{", "}", "[", "]"])
             self._context ^= contexts.TEMPLATE_NAME
-        if self._context & contexts.TEMPLATE_PARAM_VALUE:
+        elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
+        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+            self._write_all(self._pop(keep_context=True))
         self._context |= contexts.TEMPLATE_PARAM_KEY
         self._write(tokens.TemplateParamSeparator())
+        self._push(self._context)
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        self._verify_safe(["\n", "{{", "}}"])
+        try:
+            self._verify_safe(["\n", "{{", "}}"])
+        except BadRoute:
+            self._pop()
+            raise
+        else:
+            self._write_all(self._pop(keep_context=True))
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
@@ -241,6 +259,8 @@ class Tokenizer(object):
         """Handle the end of a template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_safe(["\n", "{", "}", "[", "]"])
+        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+            self._write_all(self._pop(keep_context=True))
         self._head += 1
         return self._pop()
 

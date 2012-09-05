@@ -70,7 +70,7 @@ passing ``recursive=True``::
     >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
     ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
 
-Templates can be easily modified to add, remove, alter or params. ``Wikicode``
+Templates can be easily modified to add, remove, or alter params. ``Wikicode``
 can also be treated like a list with ``append()``, ``insert()``, ``remove()``,
 ``replace()``, and more::
 
