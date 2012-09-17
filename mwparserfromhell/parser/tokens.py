@@ -87,6 +87,9 @@ HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 HeadingStart = make("HeadingStart")                                 # =...
 HeadingEnd = make("HeadingEnd")                                     # =...
 
+CommentStart = make("CommentStart")                                 # <!--
+CommentEnd = make("CommentEnd")                                     # -->
+
 TagOpenOpen = make("TagOpenOpen")                                   # <
 TagAttrStart = make("TagAttrStart")
 TagAttrEquals = make("TagAttrEquals")                               # =

@@ -35,49 +35,53 @@ will cover ``BAR == 0b10`` and ``BAZ == 0b01``).
 
 Local (stack-specific) contexts:
 
-* :py:const:`TEMPLATE` (``0b00000000111``)
+* :py:const:`TEMPLATE`
 
-    * :py:const:`TEMPLATE_NAME` (``0b00000000001``)
-    * :py:const:`TEMPLATE_PARAM_KEY` (``0b00000000010``)
-    * :py:const:`TEMPLATE_PARAM_VALUE` (``0b00000000100``)
+    * :py:const:`TEMPLATE_NAME`
+    * :py:const:`TEMPLATE_PARAM_KEY`
+    * :py:const:`TEMPLATE_PARAM_VALUE`
 
-* :py:const:`ARGUMENT` (``0b00000011000``)
+* :py:const:`ARGUMENT`
 
-    * :py:const:`ARGUMENT_NAME` (``0b00000001000``)
-    * :py:const:`ARGUMENT_DEFAULT` (``0b00000010000``)
+    * :py:const:`ARGUMENT_NAME`
+    * :py:const:`ARGUMENT_DEFAULT`
 
-* :py:const:`HEADING` (``0b111111000``)
+* :py:const:`HEADING`
 
-    * :py:const:`HEADING_LEVEL_1` (``0b00000100000``)
-    * :py:const:`HEADING_LEVEL_2` (``0b00001000000``)
-    * :py:const:`HEADING_LEVEL_3` (``0b00010000000``)
-    * :py:const:`HEADING_LEVEL_4` (``0b00100000000``)
-    * :py:const:`HEADING_LEVEL_5` (``0b01000000000``)
-    * :py:const:`HEADING_LEVEL_6` (``0b10000000000``)
+    * :py:const:`HEADING_LEVEL_1`
+    * :py:const:`HEADING_LEVEL_2`
+    * :py:const:`HEADING_LEVEL_3`
+    * :py:const:`HEADING_LEVEL_4`
+    * :py:const:`HEADING_LEVEL_5`
+    * :py:const:`HEADING_LEVEL_6`
+
+* :py:const:`COMMENT`
 
 Global contexts:
 
-* :py:const:`GL_HEADING` (``0b1``)
+* :py:const:`GL_HEADING`
 """
 
 # Local contexts:
 
-TEMPLATE =              0b00000000111
-TEMPLATE_NAME =         0b00000000001
-TEMPLATE_PARAM_KEY =    0b00000000010
-TEMPLATE_PARAM_VALUE =  0b00000000100
+TEMPLATE =              0b000000000111
+TEMPLATE_NAME =         0b000000000001
+TEMPLATE_PARAM_KEY =    0b000000000010
+TEMPLATE_PARAM_VALUE =  0b000000000100
 
-ARGUMENT =              0b00000011000
-ARGUMENT_NAME =         0b00000001000
-ARGUMENT_DEFAULT =      0b00000010000
+ARGUMENT =              0b000000011000
+ARGUMENT_NAME =         0b000000001000
+ARGUMENT_DEFAULT =      0b000000010000
 
-HEADING =               0b11111100000
-HEADING_LEVEL_1 =       0b00000100000
-HEADING_LEVEL_2 =       0b00001000000
-HEADING_LEVEL_3 =       0b00010000000
-HEADING_LEVEL_4 =       0b00100000000
-HEADING_LEVEL_5 =       0b01000000000
-HEADING_LEVEL_6 =       0b10000000000
+HEADING =               0b011111100000
+HEADING_LEVEL_1 =       0b000000100000
+HEADING_LEVEL_2 =       0b000001000000
+HEADING_LEVEL_3 =       0b000010000000
+HEADING_LEVEL_4 =       0b000100000000
+HEADING_LEVEL_5 =       0b001000000000
+HEADING_LEVEL_6 =       0b010000000000
+
+COMMENT =               0b100000000000
 
 
 # Global contexts:
