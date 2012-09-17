@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from . import tokens
 from ..compat import str
-from ..nodes import Argument, Heading, HTMLEntity, Tag, Template, Text
+from ..nodes import Argument, Comment, Heading, HTMLEntity, Tag, Template, Text
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
@@ -152,6 +152,17 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
+    def _handle_comment(self):
+        """Handle a case where a hidden comment is at the head of the tokens."""
+        self._push()
+        while self._tokens:
+            token = self._tokens.pop()
+            if isinstance(token, tokens.CommentEnd):
+                contents = self._pop()
+                return Comment(contents)
+            else:
+                self._write(self._handle_token(token))
+
     def _handle_attribute(self):
         """Handle a case where a tag attribute is at the head of the tokens."""
         name, quoted = None, False
@@ -209,6 +220,8 @@ class Builder(object):
             return self._handle_entity()
         elif isinstance(token, tokens.HeadingStart):
             return self._handle_heading(token)
+        elif isinstance(token, tokens.CommentStart):
+            return self._handle_comment()
         elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
 

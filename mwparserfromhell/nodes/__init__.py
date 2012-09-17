@@ -68,6 +68,7 @@ class Node(StringMixIn):
 from . import extras
 from .text import Text
 from .argument import Argument
+from .comment import Comment
 from .heading import Heading
 from .html_entity import HTMLEntity
 from .tag import Tag
