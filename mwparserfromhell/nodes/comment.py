@@ -41,6 +41,6 @@ class Comment(Node):
         """The hidden text contained between ``<!--`` and ``-->``."""
         return self._contents
 
-    @value.setter
+    @contents.setter
     def contents(self, value):
         self._contents = str(value)

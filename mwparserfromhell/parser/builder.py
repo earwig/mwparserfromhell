@@ -126,7 +126,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_entity(self):
-        """Handle a case where a HTML entity is at the head of the tokens."""
+        """Handle a case where an HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
         if isinstance(token, tokens.HTMLEntityNumeric):
             token = self._tokens.pop()

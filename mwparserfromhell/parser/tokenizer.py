@@ -41,8 +41,8 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "\n", END]
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-\n])", flags=re.IGNORECASE)
+               "/", "-", "!", "\n", END]
+    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
 
     def __init__(self):
         self._text = None
@@ -327,7 +327,7 @@ class Tokenizer(object):
             return self._pop(), after_level
 
     def _really_parse_entity(self):
-        """Actually parse a HTML entity and ensure that it is valid."""
+        """Actually parse an HTML entity and ensure that it is valid."""
         self._write(tokens.HTMLEntityStart())
         self._head += 1
 
@@ -369,7 +369,7 @@ class Tokenizer(object):
         self._write(tokens.HTMLEntityEnd())
 
     def _parse_entity(self):
-        """Parse a HTML entity at the head of the wikicode string."""
+        """Parse an HTML entity at the head of the wikicode string."""
         reset = self._head
         self._push()
         try:
@@ -379,6 +379,21 @@ class Tokenizer(object):
             self._write_text(self._read())
         else:
             self._write_all(self._pop())
+
+    def _parse_comment(self):
+        """Parse an HTML comment at the head of the wikicode string."""
+        self._head += 4
+        reset = self._head - 1
+        try:
+            comment = self._parse(contexts.COMMENT)
+        except BadRoute:
+            self._head = reset
+            self._write_text("<!--")
+        else:
+            self._write(tokens.CommentStart())
+            self._write_all(comment)
+            self._write(tokens.CommentEnd())
+            self._head += 2
 
     def _parse(self, context=0):
         """Parse the wikicode string, using *context* for when to stop."""
@@ -390,12 +405,18 @@ class Tokenizer(object):
                 self._head += 1
                 continue
             if this is self.END:
-                fail = contexts.TEMPLATE | contexts.ARGUMENT | contexts.HEADING
+                fail = (contexts.TEMPLATE | contexts.ARGUMENT |
+                        contexts.HEADING | contexts.COMMENT)
                 if self._context & fail:
                     self._fail_route()
                 return self._pop()
             next = self._read(1)
-            if this == next == "{":
+            if self._context & contexts.COMMENT:
+                if this == next == "-" and self._read(2) == ">":
+                    return self._pop()
+                else:
+                    self._write_text(this)
+            elif this == next == "{":
                 self._parse_template_or_argument()
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
@@ -421,6 +442,11 @@ class Tokenizer(object):
                 self._fail_route()
             elif this == "&":
                 self._parse_entity()
+            elif this == "<" and next == "!":
+                if self._read(2) == self._read(3) == "-":
+                    self._parse_comment()
+                else:
+                    self._write_text(this)
             else:
                 self._write_text(this)
             self._head += 1
