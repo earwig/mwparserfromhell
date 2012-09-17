@@ -65,38 +65,43 @@ class Token(object):
 
 def make(name):
     """Create a new Token class using ``type()`` and add it to ``__all__``."""
+    token = type(name if py3k else name.encode("utf8"), (Token,), {})
+    globals()[name] = token
     __all__.append(name)
-    return type(name if py3k else name.encode("utf8"), (Token,), {})
 
-Text = make("Text")
+make("Text")
 
-TemplateOpen = make("TemplateOpen")                                 # {{
-TemplateParamSeparator = make("TemplateParamSeparator")             # |
-TemplateParamEquals = make("TemplateParamEquals")                   # =
-TemplateClose = make("TemplateClose")                               # }}
+make("TemplateOpen")                                                # {{
+make("TemplateParamSeparator")                                      # |
+make("TemplateParamEquals")                                         # =
+make("TemplateClose")                                               # }}
 
-ArgumentOpen = make("ArgumentOpen")                                 # {{{
-ArgumentSeparator = make("ArgumentSeparator")                       # |
-ArgumentClose = make("ArgumentClose")                               # }}}
+make("ArgumentOpen")                                                # {{{
+make("ArgumentSeparator")                                           # |
+make("ArgumentClose")                                               # }}}
 
-HTMLEntityStart = make("HTMLEntityStart")                           # &
-HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
-HTMLEntityHex = make("HTMLEntityHex")                               # x
-HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
+make("WikilinkOpen")                                                # [[
+make("WikilinkSeparator")                                           # |
+make("WikilinkClose")                                               # ]]
 
-HeadingStart = make("HeadingStart")                                 # =...
-HeadingEnd = make("HeadingEnd")                                     # =...
+make("HTMLEntityStart")                                             # &
+make("HTMLEntityNumeric")                                           # #
+make("HTMLEntityHex")                                               # x
+make("HTMLEntityEnd")                                               # ;
 
-CommentStart = make("CommentStart")                                 # <!--
-CommentEnd = make("CommentEnd")                                     # -->
+make("HeadingStart")                                                # =...
+make("HeadingEnd")                                                  # =...
 
-TagOpenOpen = make("TagOpenOpen")                                   # <
-TagAttrStart = make("TagAttrStart")
-TagAttrEquals = make("TagAttrEquals")                               # =
-TagAttrQuote = make("TagAttrQuote")                                 # "
-TagCloseOpen = make("TagCloseOpen")                                 # >
-TagCloseSelfclose = make("TagCloseSelfclose")                       # />
-TagOpenClose = make("TagOpenClose")                                 # </
-TagCloseClose = make("TagCloseClose")                               # >
+make("CommentStart")                                                # <!--
+make("CommentEnd")                                                  # -->
+
+make("TagOpenOpen")                                                 # <
+make("TagAttrStart")
+make("TagAttrEquals")                                               # =
+make("TagAttrQuote")                                                # "
+make("TagCloseOpen")                                                # >
+make("TagCloseSelfclose")                                           # />
+make("TagOpenClose")                                                # </
+make("TagCloseClose")                                               # >
 
 del make

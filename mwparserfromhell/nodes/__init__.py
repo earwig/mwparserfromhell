@@ -73,3 +73,4 @@ from .heading import Heading
 from .html_entity import HTMLEntity
 from .tag import Tag
 from .template import Template
+from .wikilink import Wikilink
