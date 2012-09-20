@@ -34,7 +34,7 @@ class Comment(Node):
         self._contents = contents
 
     def __unicode__(self):
-        return "<!--" + self.contents + "-->"
+        return "<!--" + str(self.contents) + "-->"
 
     @property
     def contents(self):
