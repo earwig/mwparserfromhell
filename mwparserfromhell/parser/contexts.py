@@ -46,6 +46,11 @@ Local (stack-specific) contexts:
     * :py:const:`ARGUMENT_NAME`
     * :py:const:`ARGUMENT_DEFAULT`
 
+* :py:const:`WIKILINK`
+
+    * :py:const:`WIKILINK_TITLE`
+    * :py:const:`WIKILINK_TEXT`
+
 * :py:const:`HEADING`
 
     * :py:const:`HEADING_LEVEL_1`

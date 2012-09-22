@@ -50,8 +50,8 @@ class Wikilink(Node):
 
     def __strip__(self, normalize, collapse):
         if self.text is not None:
-            return self.text
-        return self.title
+            return self.text.strip_code(normalize, collapse)
+        return self.title.strip_code(normalize, collapse)
 
     def __showtree__(self, write, get, mark):
         write("[[")

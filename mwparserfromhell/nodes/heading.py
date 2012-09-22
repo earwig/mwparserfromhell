@@ -45,7 +45,7 @@ class Heading(Node):
             yield self.title, child
 
     def __strip__(self, normalize, collapse):
-        return self.title
+        return self.title.strip_code(normalize, collapse)
 
     def __showtree__(self, write, get, mark):
         write("=" * self.level)
