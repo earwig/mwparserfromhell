@@ -63,45 +63,45 @@ class Token(object):
     def __delattr__(self, key):
         del self._kwargs[key]
 
+
 def make(name):
     """Create a new Token class using ``type()`` and add it to ``__all__``."""
-    token = type(name if py3k else name.encode("utf8"), (Token,), {})
-    globals()[name] = token
     __all__.append(name)
+    return type(name if py3k else name.encode("utf8"), (Token,), {})
 
-make("Text")
+Text = make("Text")
 
-make("TemplateOpen")                                                # {{
-make("TemplateParamSeparator")                                      # |
-make("TemplateParamEquals")                                         # =
-make("TemplateClose")                                               # }}
+TemplateOpen = make("TemplateOpen")                                 # {{
+TemplateParamSeparator = make("TemplateParamSeparator")             # |
+TemplateParamEquals = make("TemplateParamEquals")                   # =
+TemplateClose = make("TemplateClose")                               # }}
 
-make("ArgumentOpen")                                                # {{{
-make("ArgumentSeparator")                                           # |
-make("ArgumentClose")                                               # }}}
+ArgumentOpen = make("ArgumentOpen")                                 # {{{
+ArgumentSeparator = make("ArgumentSeparator")                       # |
+ArgumentClose = make("ArgumentClose")                               # }}}
 
-make("WikilinkOpen")                                                # [[
-make("WikilinkSeparator")                                           # |
-make("WikilinkClose")                                               # ]]
+WikilinkOpen = make("WikilinkOpen")                                 # [[
+WikilinkSeparator = make("WikilinkSeparator")                       # |
+WikilinkClose = make("WikilinkClose")                               # ]]
 
-make("HTMLEntityStart")                                             # &
-make("HTMLEntityNumeric")                                           # #
-make("HTMLEntityHex")                                               # x
-make("HTMLEntityEnd")                                               # ;
+HTMLEntityStart = make("HTMLEntityStart")                           # &
+HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
+HTMLEntityHex = make("HTMLEntityHex")                               # x
+HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 
-make("HeadingStart")                                                # =...
-make("HeadingEnd")                                                  # =...
+HeadingStart = make("HeadingStart")                                 # =...
+HeadingEnd = make("HeadingEnd")                                     # =...
 
-make("CommentStart")                                                # <!--
-make("CommentEnd")                                                  # -->
+CommentStart = make("CommentStart")                                 # <!--
+CommentEnd = make("CommentEnd")                                     # -->
 
-make("TagOpenOpen")                                                 # <
-make("TagAttrStart")
-make("TagAttrEquals")                                               # =
-make("TagAttrQuote")                                                # "
-make("TagCloseOpen")                                                # >
-make("TagCloseSelfclose")                                           # />
-make("TagOpenClose")                                                # </
-make("TagCloseClose")                                               # >
+TagOpenOpen = make("TagOpenOpen")                                   # <
+TagAttrStart = make("TagAttrStart")
+TagAttrEquals = make("TagAttrEquals")                               # =
+TagAttrQuote = make("TagAttrQuote")                                 # "
+TagCloseOpen = make("TagCloseOpen")                                 # >
+TagCloseSelfclose = make("TagCloseSelfclose")                       # />
+TagOpenClose = make("TagOpenClose")                                 # </
+TagCloseClose = make("TagCloseClose")                               # >
 
 del make
