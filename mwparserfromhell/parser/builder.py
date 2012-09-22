@@ -24,7 +24,8 @@ from __future__ import unicode_literals
 
 from . import tokens
 from ..compat import str
-from ..nodes import Argument, Heading, HTMLEntity, Tag, Template, Text
+from ..nodes import (Argument, Comment, Heading, HTMLEntity, Tag, Template,
+                     Text, Wikilink)
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
@@ -125,8 +126,24 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
+    def _handle_wikilink(self):
+        """Handle a case where a wikilink is at the head of the tokens."""
+        title = None
+        self._push()
+        while self._tokens:
+            token = self._tokens.pop()
+            if isinstance(token, tokens.WikilinkSeparator):
+                title = self._pop()
+                self._push()
+            elif isinstance(token, tokens.WikilinkClose):
+                if title is not None:
+                    return Wikilink(title, self._pop())
+                return Wikilink(self._pop())
+            else:
+                self._write(self._handle_token(token))
+
     def _handle_entity(self):
-        """Handle a case where a HTML entity is at the head of the tokens."""
+        """Handle a case where an HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
         if isinstance(token, tokens.HTMLEntityNumeric):
             token = self._tokens.pop()
@@ -149,6 +166,17 @@ class Builder(object):
             if isinstance(token, tokens.HeadingEnd):
                 title = self._pop()
                 return Heading(title, level)
+            else:
+                self._write(self._handle_token(token))
+
+    def _handle_comment(self):
+        """Handle a case where a hidden comment is at the head of the tokens."""
+        self._push()
+        while self._tokens:
+            token = self._tokens.pop()
+            if isinstance(token, tokens.CommentEnd):
+                contents = self._pop()
+                return Comment(contents)
             else:
                 self._write(self._handle_token(token))
 
@@ -205,10 +233,14 @@ class Builder(object):
             return self._handle_template()
         elif isinstance(token, tokens.ArgumentOpen):
             return self._handle_argument()
+        elif isinstance(token, tokens.WikilinkOpen):
+            return self._handle_wikilink()
         elif isinstance(token, tokens.HTMLEntityStart):
             return self._handle_entity()
         elif isinstance(token, tokens.HeadingStart):
             return self._handle_heading(token)
+        elif isinstance(token, tokens.CommentStart):
+            return self._handle_comment()
         elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
 

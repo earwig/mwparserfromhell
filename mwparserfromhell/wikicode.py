@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 import re
 
 from .compat import maxsize, str
-from .nodes import Heading, Node, Tag, Template, Text
+from .nodes import Heading, Node, Tag, Template, Text, Wikilink
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -303,6 +303,14 @@ class Wikicode(StringMixIn):
                 if not matches or re.search(matches, str(node), flags):
                     yield node
 
+    def ifilter_links(self, recursive=False, matches=None, flags=FLAGS):
+        """Iterate over wikilink nodes.
+
+        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
+        :py:class:`~.Wikilink`.
+        """
+        return self.ifilter(recursive, matches, flags, forcetype=Wikilink)
+
     def ifilter_templates(self, recursive=False, matches=None, flags=FLAGS):
         """Iterate over template nodes.
 
@@ -334,6 +342,14 @@ class Wikicode(StringMixIn):
         This is equivalent to calling :py:func:`list` on :py:meth:`ifilter`.
         """
         return list(self.ifilter(recursive, matches, flags, forcetype))
+
+    def filter_links(self, recursive=False, matches=None, flags=FLAGS):
+        """Return a list of wikilink nodes.
+
+        This is equivalent to calling :py:func:`list` on
+        :py:meth:`ifilter_links`.
+        """
+        return list(self.ifilter_links(recursive, matches, flags))
 
     def filter_templates(self, recursive=False, matches=None, flags=FLAGS):
         """Return a list of template nodes.

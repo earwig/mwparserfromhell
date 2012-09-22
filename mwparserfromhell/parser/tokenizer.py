@@ -41,8 +41,8 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "\n", END]
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-\n])", flags=re.IGNORECASE)
+               "/", "-", "!", "\n", END]
+    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
 
     def __init__(self):
         self._text = None
@@ -83,9 +83,18 @@ class Tokenizer(object):
             self._stack.append(tokens.Text(text="".join(self._textbuffer)))
             self._textbuffer = []
 
-    def _pop(self):
-        """Pop the current stack/context/textbuffer, returing the stack."""
+    def _pop(self, keep_context=False):
+        """Pop the current stack/context/textbuffer, returing the stack.
+
+        If *keep_context is ``True``, then we will replace the underlying
+        stack's context with the current stack's.
+        """
         self._push_textbuffer()
+        if keep_context:
+            context = self._context
+            stack = self._stacks.pop()[0]
+            self._context = context
+            return stack
         return self._stacks.pop()[0]
 
     def _fail_route(self):
@@ -225,14 +234,23 @@ class Tokenizer(object):
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_safe(["\n", "{", "}", "[", "]"])
             self._context ^= contexts.TEMPLATE_NAME
-        if self._context & contexts.TEMPLATE_PARAM_VALUE:
+        elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
+        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+            self._write_all(self._pop(keep_context=True))
         self._context |= contexts.TEMPLATE_PARAM_KEY
         self._write(tokens.TemplateParamSeparator())
+        self._push(self._context)
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        self._verify_safe(["\n", "{{", "}}"])
+        try:
+            self._verify_safe(["\n", "{{", "}}"])
+        except BadRoute:
+            self._pop()
+            raise
+        else:
+            self._write_all(self._pop(keep_context=True))
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())
@@ -241,6 +259,8 @@ class Tokenizer(object):
         """Handle the end of a template at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
             self._verify_safe(["\n", "{", "}", "[", "]"])
+        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+            self._write_all(self._pop(keep_context=True))
         self._head += 1
         return self._pop()
 
@@ -256,6 +276,34 @@ class Tokenizer(object):
         if self._context & contexts.ARGUMENT_NAME:
             self._verify_safe(["\n", "{{", "}}"])
         self._head += 2
+        return self._pop()
+
+    def _parse_wikilink(self):
+        """Parse an internal wikilink at the head of the wikicode string."""
+        self._head += 2
+        reset = self._head - 1
+        try:
+            wikilink = self._parse(contexts.WIKILINK_TITLE)
+        except BadRoute:
+            self._head = reset
+            self._write_text("[[")
+        else:
+            self._write(tokens.WikilinkOpen())
+            self._write_all(wikilink)
+            self._write(tokens.WikilinkClose())
+
+    def _handle_wikilink_separator(self):
+        """Handle the separator between a wikilink's title and its text."""
+        self._verify_safe(["\n", "{", "}", "[", "]"])
+        self._context ^= contexts.WIKILINK_TITLE
+        self._context |= contexts.WIKILINK_TEXT
+        self._write(tokens.WikilinkSeparator())
+
+    def _handle_wikilink_end(self):
+        """Handle the end of a wikilink at the head of the string."""
+        if self._context & contexts.WIKILINK_TITLE:
+            self._verify_safe(["\n", "{", "}", "[", "]"])
+        self._head += 1
         return self._pop()
 
     def _parse_heading(self):
@@ -307,7 +355,7 @@ class Tokenizer(object):
             return self._pop(), after_level
 
     def _really_parse_entity(self):
-        """Actually parse a HTML entity and ensure that it is valid."""
+        """Actually parse an HTML entity and ensure that it is valid."""
         self._write(tokens.HTMLEntityStart())
         self._head += 1
 
@@ -349,7 +397,7 @@ class Tokenizer(object):
         self._write(tokens.HTMLEntityEnd())
 
     def _parse_entity(self):
-        """Parse a HTML entity at the head of the wikicode string."""
+        """Parse an HTML entity at the head of the wikicode string."""
         reset = self._head
         self._push()
         try:
@@ -359,6 +407,21 @@ class Tokenizer(object):
             self._write_text(self._read())
         else:
             self._write_all(self._pop())
+
+    def _parse_comment(self):
+        """Parse an HTML comment at the head of the wikicode string."""
+        self._head += 4
+        reset = self._head - 1
+        try:
+            comment = self._parse(contexts.COMMENT)
+        except BadRoute:
+            self._head = reset
+            self._write_text("<!--")
+        else:
+            self._write(tokens.CommentStart())
+            self._write_all(comment)
+            self._write(tokens.CommentEnd())
+            self._head += 2
 
     def _parse(self, context=0):
         """Parse the wikicode string, using *context* for when to stop."""
@@ -370,12 +433,18 @@ class Tokenizer(object):
                 self._head += 1
                 continue
             if this is self.END:
-                fail = contexts.TEMPLATE | contexts.ARGUMENT | contexts.HEADING
+                fail = (contexts.TEMPLATE | contexts.ARGUMENT |
+                        contexts.HEADING | contexts.COMMENT)
                 if self._context & fail:
                     self._fail_route()
                 return self._pop()
             next = self._read(1)
-            if this == next == "{":
+            if self._context & contexts.COMMENT:
+                if this == next == "-" and self._read(2) == ">":
+                    return self._pop()
+                else:
+                    self._write_text(this)
+            elif this == next == "{":
                 self._parse_template_or_argument()
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
@@ -390,6 +459,15 @@ class Tokenizer(object):
                     return self._handle_argument_end()
                 else:
                     self._write_text("}")
+            elif this == next == "[":
+                if not self._context & contexts.WIKILINK_TITLE:
+                    self._parse_wikilink()
+                else:
+                    self._write_text("[")
+            elif this == "|" and self._context & contexts.WIKILINK_TITLE:
+                self._handle_wikilink_separator()
+            elif this == next == "]" and self._context & contexts.WIKILINK:
+                return self._handle_wikilink_end()
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
@@ -401,6 +479,11 @@ class Tokenizer(object):
                 self._fail_route()
             elif this == "&":
                 self._parse_entity()
+            elif this == "<" and next == "!":
+                if self._read(2) == self._read(3) == "-":
+                    self._parse_comment()
+                else:
+                    self._write_text(this)
             else:
                 self._write_text(this)
             self._head += 1

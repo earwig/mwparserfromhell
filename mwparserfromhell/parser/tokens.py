@@ -63,6 +63,7 @@ class Token(object):
     def __delattr__(self, key):
         del self._kwargs[key]
 
+
 def make(name):
     """Create a new Token class using ``type()`` and add it to ``__all__``."""
     __all__.append(name)
@@ -79,6 +80,10 @@ ArgumentOpen = make("ArgumentOpen")                                 # {{{
 ArgumentSeparator = make("ArgumentSeparator")                       # |
 ArgumentClose = make("ArgumentClose")                               # }}}
 
+WikilinkOpen = make("WikilinkOpen")                                 # [[
+WikilinkSeparator = make("WikilinkSeparator")                       # |
+WikilinkClose = make("WikilinkClose")                               # ]]
+
 HTMLEntityStart = make("HTMLEntityStart")                           # &
 HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
 HTMLEntityHex = make("HTMLEntityHex")                               # x
@@ -86,6 +91,9 @@ HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
 
 HeadingStart = make("HeadingStart")                                 # =...
 HeadingEnd = make("HeadingEnd")                                     # =...
+
+CommentStart = make("CommentStart")                                 # <!--
+CommentEnd = make("CommentEnd")                                     # -->
 
 TagOpenOpen = make("TagOpenOpen")                                   # <
 TagAttrStart = make("TagAttrStart")

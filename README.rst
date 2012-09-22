@@ -28,9 +28,9 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> import mwparserfromhell
     >>> wikicode = mwparserfromhell.parse(text)
 
-``wikicode`` is a ``mwparserfromhell.wikicode.Wikicode`` object, which acts
-like an ordinary ``unicode`` object (or ``str`` in Python 3) with some extra
-methods. For example::
+``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
+ordinary ``unicode`` object (or ``str`` in Python 3) with some extra methods.
+For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
@@ -70,7 +70,7 @@ passing ``recursive=True``::
     >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
     ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
 
-Templates can be easily modified to add, remove, alter or params. ``Wikicode``
+Templates can be easily modified to add, remove, or alter params. ``Wikicode``
 can also be treated like a list with ``append()``, ``insert()``, ``remove()``,
 ``replace()``, and more::
 
@@ -131,7 +131,7 @@ following code (via the API_)::
 
 .. _MediaWiki:            http://mediawiki.org
 .. _Earwig:               http://en.wikipedia.org/wiki/User:The_Earwig
-.. _Σ:                    http://en.wikipedia.org/wiki/User:Σ
+.. _Σ:                    http://en.wikipedia.org/wiki/User:%CE%A3
 .. _Python Package Index: http://pypi.python.org
 .. _get pip:              http://pypi.python.org/pypi/pip
 .. _EarwigBot:            https://github.com/earwig/earwigbot

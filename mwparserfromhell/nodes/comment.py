@@ -24,51 +24,23 @@ from __future__ import unicode_literals
 
 from . import Node
 from ..compat import str
-from ..utils import parse_anything
 
-__all__ = ["Heading"]
+__all__ = ["Comment"]
 
-class Heading(Node):
-    """Represents a section heading in wikicode, like ``== Foo ==``."""
-
-    def __init__(self, title, level):
-        super(Heading, self).__init__()
-        self._title = title
-        self._level = level
+class Comment(Node):
+    """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
+    def __init__(self, contents):
+        super(Comment, self).__init__()
+        self._contents = contents
 
     def __unicode__(self):
-        return ("=" * self.level) + str(self.title) + ("=" * self.level)
-
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.title):
-            yield self.title, child
-
-    def __strip__(self, normalize, collapse):
-        return self.title.strip_code(normalize, collapse)
-
-    def __showtree__(self, write, get, mark):
-        write("=" * self.level)
-        get(self.title)
-        write("=" * self.level)
+        return "<!--" + str(self.contents) + "-->"
 
     @property
-    def title(self):
-        """The title of the heading, as a :py:class:`~.Wikicode` object."""
-        return self._title
+    def contents(self):
+        """The hidden text contained between ``<!--`` and ``-->``."""
+        return self._contents
 
-    @property
-    def level(self):
-        """The heading level, as an integer between 1 and 6, inclusive."""
-        return self._level
-
-    @title.setter
-    def title(self, value):
-        self._title = parse_anything(value)
-
-    @level.setter
-    def level(self, value):
-        value = int(value)
-        if value < 1 or value > 6:
-            raise ValueError(value)
-        self._level = value
+    @contents.setter
+    def contents(self, value):
+        self._contents = str(value)
