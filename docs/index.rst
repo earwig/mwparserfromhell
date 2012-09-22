@@ -1,4 +1,4 @@
-MWParserFromHell v0.1 Documentation
+MWParserFromHell v0.2 Documentation
 ===================================
 
 :py:mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python
