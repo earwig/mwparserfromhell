@@ -17,6 +17,14 @@ nodes Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`comment` Module
+---------------------
+
+.. automodule:: mwparserfromhell.nodes.comment
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`heading` Module
 ---------------------
 
@@ -52,6 +60,14 @@ nodes Package
 ------------------
 
 .. automodule:: mwparserfromhell.nodes.text
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
+:mod:`wikilink` Module
+----------------------
+
+.. automodule:: mwparserfromhell.nodes.wikilink
     :members:
     :undoc-members:
     :show-inheritance:

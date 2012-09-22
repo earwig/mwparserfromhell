@@ -278,6 +278,34 @@ class Tokenizer(object):
         self._head += 2
         return self._pop()
 
+    def _parse_wikilink(self):
+        """Parse an internal wikilink at the head of the wikicode string."""
+        self._head += 2
+        reset = self._head - 1
+        try:
+            wikilink = self._parse(contexts.WIKILINK_TITLE)
+        except BadRoute:
+            self._head = reset
+            self._write_text("[[")
+        else:
+            self._write(tokens.WikilinkOpen())
+            self._write_all(wikilink)
+            self._write(tokens.WikilinkClose())
+
+    def _handle_wikilink_separator(self):
+        """Handle the separator between a wikilink's title and its text."""
+        self._verify_safe(["\n", "{", "}", "[", "]"])
+        self._context ^= contexts.WIKILINK_TITLE
+        self._context |= contexts.WIKILINK_TEXT
+        self._write(tokens.WikilinkSeparator())
+
+    def _handle_wikilink_end(self):
+        """Handle the end of a wikilink at the head of the string."""
+        if self._context & contexts.WIKILINK_TITLE:
+            self._verify_safe(["\n", "{", "}", "[", "]"])
+        self._head += 1
+        return self._pop()
+
     def _parse_heading(self):
         """Parse a section heading at the head of the wikicode string."""
         self._global |= contexts.GL_HEADING
@@ -431,6 +459,15 @@ class Tokenizer(object):
                     return self._handle_argument_end()
                 else:
                     self._write_text("}")
+            elif this == next == "[":
+                if not self._context & contexts.WIKILINK_TITLE:
+                    self._parse_wikilink()
+                else:
+                    self._write_text("[")
+            elif this == "|" and self._context & contexts.WIKILINK_TITLE:
+                self._handle_wikilink_separator()
+            elif this == next == "]" and self._context & contexts.WIKILINK:
+                return self._handle_wikilink_end()
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()

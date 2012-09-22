@@ -26,49 +26,56 @@ from . import Node
 from ..compat import str
 from ..utils import parse_anything
 
-__all__ = ["Heading"]
+__all__ = ["Wikilink"]
 
-class Heading(Node):
-    """Represents a section heading in wikicode, like ``== Foo ==``."""
-
-    def __init__(self, title, level):
-        super(Heading, self).__init__()
+class Wikilink(Node):
+    """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
+    def __init__(self, title, text=None):
+        super(Wikilink, self).__init__()
         self._title = title
-        self._level = level
+        self._text = text
 
     def __unicode__(self):
-        return ("=" * self.level) + str(self.title) + ("=" * self.level)
+        if self.text is not None:
+            return "[[" + str(self.title) + "|" + str(self.text) + "]]"
+        return "[[" + str(self.title) + "]]"
 
     def __iternodes__(self, getter):
         yield None, self
         for child in getter(self.title):
             yield self.title, child
+        if self.text is not None:
+            for child in getter(self.text):
+                yield self.text, child
 
     def __strip__(self, normalize, collapse):
+        if self.text is not None:
+            return self.text.strip_code(normalize, collapse)
         return self.title.strip_code(normalize, collapse)
 
     def __showtree__(self, write, get, mark):
-        write("=" * self.level)
+        write("[[")
         get(self.title)
-        write("=" * self.level)
+        if self.text is not None:
+            write("    | ")
+            mark()
+            get(self.text)
+        write("]]")
 
     @property
     def title(self):
-        """The title of the heading, as a :py:class:`~.Wikicode` object."""
+        """The title of the linked page, as a :py:class:`~.Wikicode` object."""
         return self._title
 
     @property
-    def level(self):
-        """The heading level, as an integer between 1 and 6, inclusive."""
-        return self._level
+    def text(self):
+        """The text to display (if any), as a :py:class:`~.Wikicode` object."""
+        return self._text
 
     @title.setter
     def title(self, value):
         self._title = parse_anything(value)
 
-    @level.setter
-    def level(self, value):
-        value = int(value)
-        if value < 1 or value > 6:
-            raise ValueError(value)
-        self._level = value
+    @text.setter
+    def text(self, value):
+        self._text = parse_anything(value)
