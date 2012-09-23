@@ -21,45 +21,7 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef PY_SSIZE_T_CLEAN
-#define PY_SSIZE_T_CLEAN
-#endif
-
-#include <Python.h>
-#include <setjmp.h>
-#include <structmember.h>
-
-static PyObject* EMPTY;
-
-#define PU (Py_UNICODE*)
-static const Py_UNICODE* MARKERS[] = {PU"{", PU"}", PU"[", PU"]", PU"<", PU">",
-                                      PU"|", PU"=", PU"&", PU"#", PU"*", PU";",
-                                      PU":", PU"/", PU"-", PU"!", PU"\n", PU""};
-static const int NUM_MARKERS = 17;
-
-#define CONTEXT(name) PyInt_AsSsize_t((PyIntObject*) \
-                                          PyObject_GetAttrString(contexts, name))
-
-static jmp_buf exception_env;
-static const int BAD_ROUTE = 1;
-
-static PyObject* contexts;
-static PyObject* tokens;
-
-static PyMethodDef
-module_methods[] = {
-    {NULL}
-};
-
-typedef struct {
-    PyObject_HEAD
-    PyObject* text;        /* text to tokenize */
-    PyObject* stacks;      /* token stacks */
-    PyObject* topstack;    /* topmost stack */
-    Py_ssize_t head;       /* current position in text */
-    Py_ssize_t length;     /* length of text */
-    Py_ssize_t global;     /* global context */
-} Tokenizer;
+#include "tokenizer.h"
 
 static PyObject*
 Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
@@ -103,11 +65,6 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
         return -1;
     return 0;
 }
-
-#define Tokenizer_STACK(self) PySequence_Fast_GET_ITEM(self->topstack, 0)
-#define Tokenizer_CONTEXT(self) PySequence_Fast_GET_ITEM(self->topstack, 1)
-#define Tokenizer_CONTEXT_VAL(self) PyInt_AsSsize_t((PyIntObject*) Tokenizer_CONTEXT(self))
-#define Tokenizer_TEXTBUFFER(self) PySequence_Fast_GET_ITEM(self->topstack, 2)
 
 static int
 Tokenizer_set_context(Tokenizer* self, Py_ssize_t value)
@@ -539,9 +496,7 @@ Tokenizer_parse_comment(Tokenizer* self)
 static PyObject*
 Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 {
-    Py_ssize_t fail_contexts = (
-        CONTEXT("TEMPLATE") | CONTEXT("ARGUMENT") | CONTEXT("HEADING") |
-        CONTEXT("COMMENT"));
+    Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
 
     PyObject *this, *next;
     Py_UNICODE *this_data, *next_data, *next_next_data, *last_data;
@@ -580,7 +535,7 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         next = Tokenizer_read(self, 1);
         next_data = PyUnicode_AS_UNICODE(next);
 
-        if (this_context & CONTEXT("COMMENT")) {
+        if (this_context & LC_COMMENT) {
             if (this_data == next_data && next_data == PU "-") {
                 if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU ">") {
                     return Tokenizer_pop(self);
@@ -591,42 +546,40 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         else if (this_data == next_data && next_data == PU "{") {
             Tokenizer_parse_template_or_argument(self);
         }
-        else if (this_data == PU "|" && this_context & CONTEXT("TEMPLATE")) {
+        else if (this_data == PU "|" && this_context & LC_TEMPLATE) {
             Tokenizer_handle_template_param(self);
         }
-        else if (this_data == PU "=" && this_context & CONTEXT("TEMPLATE_PARAM_KEY")) {
+        else if (this_data == PU "=" && this_context & LC_TEMPLATE_PARAM_KEY) {
             Tokenizer_handle_template_param_value(self);
         }
-        else if (this_data == next_data && next_data == PU "}" &&
-                 this_context & CONTEXT("TEMPLATE")) {
+        else if (this_data == next_data && next_data == PU "}" && this_context & LC_TEMPLATE) {
             Tokenizer_handle_template_end(self);
         }
-        else if (this_data == PU "|" && this_context & CONTEXT("ARGUMENT_NAME")) {
+        else if (this_data == PU "|" && this_context & LC_ARGUMENT_NAME) {
             Tokenizer_handle_argument_separator(self);
         }
-        else if (this_data == next_data && next_data == PU "}" &&
-                 this_context & CONTEXT("ARGUMENT")) {
+        else if (this_data == next_data && next_data == PU "}" && this_context & LC_ARGUMENT) {
             if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU "}") {
                 return Tokenizer_handle_argument_end(self);
             }
             Tokenizer_write_text(self, this);
         }
         else if (this_data == next_data && next_data == PU "[") {
-            if (!(this_context & CONTEXT("WIKILINK_TITLE"))) {
+            if (!(this_context & LC_WIKILINK_TITLE)) {
                 Tokenizer_parse_wikilink(self);
             }
             else {
                 Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == PU "|" && this_context & CONTEXT("WIKILINK_TITLE")) {
+        else if (this_data == PU "|" && this_context & LC_WIKILINK_TITLE) {
             Tokenizer_handle_wikilink_separator(self);
         }
         else if (this_data == next_data && next_data == PU "]" &&
-                 this_context & CONTEXT("WIKILINK")) {
+                 this_context & LC_WIKILINK) {
             return Tokenizer_handle_wikilink_end(self);
         }
-        else if (this_data == PU "=" && !(self->global & CONTEXT("GL_HEADING"))) {
+        else if (this_data == PU "=" && !(self->global & GL_HEADING)) {
             last_data = PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
             if (last_data == PU "\n" || last_data == PU "") {
                 Tokenizer_parse_heading(self);
@@ -635,10 +588,10 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
                 Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == PU "=" && this_context & CONTEXT("HEADING")) {
+        else if (this_data == PU "=" && this_context & LC_HEADING) {
             return Tokenizer_handle_heading_end(self);
         }
-        else if (this_data == PU "\n" && this_context & CONTEXT("HEADING")) {
+        else if (this_data == PU "\n" && this_context & LC_HEADING) {
             Tokenizer_fail_route(self);
         }
         else if (this_data == PU "&") {
@@ -700,61 +653,6 @@ Tokenizer_tokenize(Tokenizer* self, PyObject *args)
     return Tokenizer_parse(self, 0);
 }
 
-static PyMethodDef
-Tokenizer_methods[] = {
-    {"tokenize", (PyCFunction) Tokenizer_tokenize, METH_VARARGS,
-    "Build a list of tokens from a string of wikicode and return it."},
-    {NULL}
-};
-
-static PyMemberDef
-Tokenizer_members[] = {
-    {NULL}
-};
-
-static PyTypeObject
-TokenizerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                                      /* ob_size */
-    "_tokenizer.CTokenizer",                                /* tp_name */
-    sizeof(Tokenizer),                                      /* tp_basicsize */
-    0,                                                      /* tp_itemsize */
-    (destructor) Tokenizer_dealloc,                         /* tp_dealloc */
-    0,                                                      /* tp_print */
-    0,                                                      /* tp_getattr */
-    0,                                                      /* tp_setattr */
-    0,                                                      /* tp_compare */
-    0,                                                      /* tp_repr */
-    0,                                                      /* tp_as_number */
-    0,                                                      /* tp_as_sequence */
-    0,                                                      /* tp_as_mapping */
-    0,                                                      /* tp_hash  */
-    0,                                                      /* tp_call */
-    0,                                                      /* tp_str */
-    0,                                                      /* tp_getattro */
-    0,                                                      /* tp_setattro */
-    0,                                                      /* tp_as_buffer */
-    Py_TPFLAGS_DEFAULT,                                     /* tp_flags */
-    "Creates a list of tokens from a string of wikicode.",  /* tp_doc */
-    0,                                                      /* tp_traverse */
-    0,                                                      /* tp_clear */
-    0,                                                      /* tp_richcompare */
-    0,                                                      /* tp_weaklistoffset */
-    0,                                                      /* tp_iter */
-    0,                                                      /* tp_iternext */
-    Tokenizer_methods,                                      /* tp_methods */
-    Tokenizer_members,                                      /* tp_members */
-    0,                                                      /* tp_getset */
-    0,                                                      /* tp_base */
-    0,                                                      /* tp_dict */
-    0,                                                      /* tp_descr_get */
-    0,                                                      /* tp_descr_set */
-    0,                                                      /* tp_dictoffset */
-    (initproc) Tokenizer_init,                              /* tp_init */
-    0,                                                      /* tp_alloc */
-    Tokenizer_new,                                          /* tp_new */
-};
-
 PyMODINIT_FUNC
 init_tokenizer(void)
 {
@@ -775,7 +673,6 @@ init_tokenizer(void)
     PyObject* locals = PyEval_GetLocals();
     PyObject* fromlist = PyList_New(0);
 
-    contexts = PyImport_ImportModuleLevel("contexts", globals, locals, fromlist, 1);
     tokens = PyImport_ImportModuleLevel("tokens", globals, locals, fromlist, 1);
     Py_DECREF(fromlist);
 }
