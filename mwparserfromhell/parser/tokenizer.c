@@ -247,10 +247,9 @@ Tokenizer_pop_keeping_context(Tokenizer* self)
 }
 
 /*
-    Fail the current tokenization route.
-
-    Discards the current stack/context/textbuffer and "raises a BAD_ROUTE
-    exception", which is implemented using longjmp().
+    Fail the current tokenization route. Discards the current
+    stack/context/textbuffer and "raises a BAD_ROUTE exception", which is
+    implemented using longjmp().
 */
 static void
 Tokenizer_fail_route(Tokenizer* self)
@@ -268,12 +267,9 @@ Tokenizer_write(Tokenizer* self, PyObject* token)
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    if (PyList_Append(Tokenizer_STACK(self), token)) {
-        Py_XDECREF(token);
+    if (PyList_Append(Tokenizer_STACK(self), token))
         return -1;
-    }
 
-    Py_XDECREF(token);
     return 0;
 }
 
@@ -286,12 +282,9 @@ Tokenizer_write_first(Tokenizer* self, PyObject* token)
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    if (PyList_Insert(Tokenizer_STACK(self), 0, token)) {
-        Py_XDECREF(token);
+    if (PyList_Insert(Tokenizer_STACK(self), 0, token))
         return -1;
-    }
 
-    Py_XDECREF(token);
     return 0;
 }
 
@@ -301,12 +294,9 @@ Tokenizer_write_first(Tokenizer* self, PyObject* token)
 static int
 Tokenizer_write_text(Tokenizer* self, PyObject* text)
 {
-    if (PyList_Append(Tokenizer_TEXTBUFFER(self), text)) {
-        Py_XDECREF(text);
+    if (PyList_Append(Tokenizer_TEXTBUFFER(self), text))
         return -1;
-    }
 
-    Py_XDECREF(text);
     return 0;
 }
 
@@ -317,18 +307,40 @@ static int
 Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
 {
     if (Tokenizer_push_textbuffer(self))
-        Py_XDECREF(tokenlist);
         return -1;
 
     PyObject* stack = Tokenizer_STACK(self);
     Py_ssize_t size = PySequence_Fast_GET_SIZE(stack);
 
-    if (PyList_SetSlice(stack, size, size, tokenlist)) {
-        Py_XDECREF(tokenlist);
+    if (PyList_SetSlice(stack, size, size, tokenlist))
+        return -1;
+
+    return 0;
+}
+
+/*
+    Pop the current stack, write text, and then write the stack.
+*/
+static int
+Tokenizer_write_text_then_stack(Tokenizer* self, PyObject* text)
+{
+    PyObject* stack = Tokenizer_pop(self);
+    if (Tokenizer_write_text(self, text)) {
+        Py_XDECREF(stack);
         return -1;
     }
 
-    Py_XDECREF(tokenlist);
+    if (stack) {
+        if (PySequence_Fast_GET_SIZE(stack) > 0) {
+            if (Tokenizer_write_all(self, stack)) {
+                Py_DECREF(stack);
+                return -1;
+            }
+        }
+        Py_DECREF(stack);
+    }
+
+    self->head--;
     return 0;
 }
 
