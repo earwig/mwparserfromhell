@@ -87,12 +87,13 @@ typedef struct {
 } Tokenizer;
 
 
-/* Some macros for accessing Tokenizer data: */
+/* Macros for accessing Tokenizer data: */
 
 #define Tokenizer_STACK(self) PySequence_Fast_GET_ITEM(self->topstack, 0)
 #define Tokenizer_CONTEXT(self) PySequence_Fast_GET_ITEM(self->topstack, 1)
 #define Tokenizer_CONTEXT_VAL(self) PyInt_AsSsize_t(Tokenizer_CONTEXT(self))
 #define Tokenizer_TEXTBUFFER(self) PySequence_Fast_GET_ITEM(self->topstack, 2)
+#define Tokenizer_READ(self, num) PyUnicode_AS_UNICODE(Tokenizer_read(self, num))
 
 
 /* Tokenizer function prototypes: */

@@ -162,8 +162,8 @@ class Tokenizer(object):
         self._head += 2
         braces = 2
         while self._read() == "{":
-            braces += 1
             self._head += 1
+            braces += 1
         self._push()
 
         while braces:

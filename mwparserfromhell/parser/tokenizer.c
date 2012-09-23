@@ -313,9 +313,8 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index = self->head + delta;
 
-    if (index >= self->length) {
+    if (index >= self->length)
         return EMPTY;
-    }
 
     return PySequence_Fast_GET_ITEM(self->text, index);
 }
@@ -326,9 +325,8 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 static PyObject*
 Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 {
-    if (delta > self->head) {
+    if (delta > self->head)
         return EMPTY;
-    }
 
     Py_ssize_t index = self->head - delta;
     return PySequence_Fast_GET_ITEM(self->text, index);
@@ -340,7 +338,84 @@ Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 static int
 Tokenizer_parse_template_or_argument(Tokenizer* self)
 {
+    self->head += 2;
+    unsigned int braces = 2, i;
 
+    while (Tokenizer_READ(self, 0) == PU "{") {
+        self->head++;
+        braces++;
+    }
+    Tokenizer_push(self, 0);
+
+    while (braces) {
+        if (braces == 1) {
+            PyObject* text = PyUnicode_FromString("{");
+
+            if (Tokenizer_write_text_then_stack(self, text)) {
+                Py_XDECREF(text);
+                return -1;
+            }
+
+            Py_XDECREF(text);
+            return 0;
+        }
+
+        if (braces == 2) {
+            if (setjmp(exception_env) == BAD_ROUTE) {
+                PyObject* text = PyUnicode_FromString("{{");
+
+                if (Tokenizer_write_text_then_stack(self, text)) {
+                    Py_XDECREF(text);
+                    return -1;
+                }
+
+                Py_XDECREF(text);
+                return 0;
+            } else {
+                Tokenizer_parse_template(self);
+            }
+            break;
+        }
+
+        if (setjmp(exception_env) == BAD_ROUTE) {
+            if (setjmp(exception_env) == BAD_ROUTE) {
+                char bracestr[braces];
+                for (i = 0; i < braces; i++) {
+                        bracestr[i] = *"{";
+                }
+                PyObject* text = PyUnicode_FromString(bracestr);
+
+                if (Tokenizer_write_text_then_stack(self, text)) {
+                    Py_XDECREF(text);
+                    return -1;
+                }
+
+                Py_XDECREF(text);
+                return 0;
+            }
+            else {
+                Tokenizer_parse_template(self);
+                braces -= 2;
+            }
+        }
+        else {
+            Tokenizer_parse_argument(self);
+            braces -= 3;
+        }
+
+        if (braces) {
+            self->head++;
+        }
+    }
+
+    PyObject* tokenlist = Tokenizer_pop(self);
+    if (Tokenizer_write_all(self, tokenlist)) {
+        Py_DECREF(tokenlist);
+        return -1;
+    }
+
+    Py_DECREF(tokenlist);
+    return 0;
 }
 
 /*
@@ -498,8 +573,8 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 {
     Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
 
-    PyObject *this, *next;
-    Py_UNICODE *this_data, *next_data, *next_next_data, *last_data;
+    PyObject *this;
+    Py_UNICODE *this_data, *next, *next_next, *last;
     Py_ssize_t this_context;
     int is_marker, i;
 
@@ -532,18 +607,17 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
             return Tokenizer_pop(self);
         }
 
-        next = Tokenizer_read(self, 1);
-        next_data = PyUnicode_AS_UNICODE(next);
+        next = Tokenizer_READ(self, 1);
 
         if (this_context & LC_COMMENT) {
-            if (this_data == next_data && next_data == PU "-") {
-                if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU ">") {
+            if (this_data == next && next == PU "-") {
+                if (Tokenizer_READ(self, 2) == PU ">") {
                     return Tokenizer_pop(self);
                 }
             }
             Tokenizer_write_text(self, this);
         }
-        else if (this_data == next_data && next_data == PU "{") {
+        else if (this_data == next && next == PU "{") {
             Tokenizer_parse_template_or_argument(self);
         }
         else if (this_data == PU "|" && this_context & LC_TEMPLATE) {
@@ -552,19 +626,19 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         else if (this_data == PU "=" && this_context & LC_TEMPLATE_PARAM_KEY) {
             Tokenizer_handle_template_param_value(self);
         }
-        else if (this_data == next_data && next_data == PU "}" && this_context & LC_TEMPLATE) {
+        else if (this_data == next && next == PU "}" && this_context & LC_TEMPLATE) {
             Tokenizer_handle_template_end(self);
         }
         else if (this_data == PU "|" && this_context & LC_ARGUMENT_NAME) {
             Tokenizer_handle_argument_separator(self);
         }
-        else if (this_data == next_data && next_data == PU "}" && this_context & LC_ARGUMENT) {
-            if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU "}") {
+        else if (this_data == next && next == PU "}" && this_context & LC_ARGUMENT) {
+            if (Tokenizer_READ(self, 2) == PU "}") {
                 return Tokenizer_handle_argument_end(self);
             }
             Tokenizer_write_text(self, this);
         }
-        else if (this_data == next_data && next_data == PU "[") {
+        else if (this_data == next && next == PU "[") {
             if (!(this_context & LC_WIKILINK_TITLE)) {
                 Tokenizer_parse_wikilink(self);
             }
@@ -575,13 +649,12 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         else if (this_data == PU "|" && this_context & LC_WIKILINK_TITLE) {
             Tokenizer_handle_wikilink_separator(self);
         }
-        else if (this_data == next_data && next_data == PU "]" &&
-                 this_context & LC_WIKILINK) {
+        else if (this_data == next && next == PU "]" && this_context & LC_WIKILINK) {
             return Tokenizer_handle_wikilink_end(self);
         }
         else if (this_data == PU "=" && !(self->global & GL_HEADING)) {
-            last_data = PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
-            if (last_data == PU "\n" || last_data == PU "") {
+            last = PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
+            if (last == PU "\n" || last == PU "") {
                 Tokenizer_parse_heading(self);
             }
             else {
@@ -597,10 +670,9 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         else if (this_data == PU "&") {
             Tokenizer_parse_entity(self);
         }
-        else if (this_data == PU "<" && next_data == PU "!") {
-            next_next_data = PyUnicode_AS_UNICODE(Tokenizer_read(self, 2));
-            if (next_next_data == PyUnicode_AS_UNICODE(Tokenizer_read(self, 3)) &&
-                    next_next_data == PU "-") {
+        else if (this_data == PU "<" && next == PU "!") {
+            next_next = Tokenizer_READ(self, 2);
+            if (next_next == Tokenizer_READ(self, 3) && next_next == PU "-") {
                 Tokenizer_parse_comment(self);
             }
             else {
