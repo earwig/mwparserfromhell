@@ -26,14 +26,19 @@ SOFTWARE.
 #endif
 
 #include <Python.h>
+#include "setjmp.h"
 #include "structmember.h"
 
+static PyObject* EMPTY;
+
 #define PU (Py_UNICODE*)
-static const Py_UNICODE* OUT_OF_BOUNDS = PU"";
 static const Py_UNICODE* MARKERS[] = {PU"{", PU"}", PU"[", PU"]", PU"<", PU">",
                                       PU"|", PU"=", PU"&", PU"#", PU"*", PU";",
                                       PU":", PU"/", PU"-", PU"!", PU"\n", PU""};
 #undef PU
+
+static jmp_buf exception_env;
+static const int BAD_ROUTE = 1;
 
 static PyObject* contexts;
 static PyObject* tokens;
@@ -142,10 +147,7 @@ static int
 Tokenizer_push_textbuffer(Tokenizer* self)
 {
     if (PySequence_Fast_GET_SIZE(Tokenizer_TEXTBUFFER(self)) > 0) {
-        PyObject* sep = PyUnicode_FromString("");
-        if (!sep) return -1;
-        PyObject* text = PyUnicode_Join(sep, Tokenizer_TEXTBUFFER(self));
-        Py_DECREF(sep);
+        PyObject* text = PyUnicode_Join(EMPTY, Tokenizer_TEXTBUFFER(self));
         if (!text) return -1;
 
         PyObject* klass = PyObject_GetAttrString(tokens, "Text");
@@ -174,7 +176,7 @@ Tokenizer_push_textbuffer(Tokenizer* self)
             return -1;
         }
 
-        Py_XDECREF(token);
+        Py_DECREF(token);
 
         if (Tokenizer_set_textbuffer(self, PyList_New(0)))
             return -1;
@@ -245,19 +247,104 @@ Tokenizer_pop_keeping_context(Tokenizer* self)
 }
 
 /*
+    Fail the current tokenization route.
+
+    Discards the current stack/context/textbuffer and "raises a BAD_ROUTE
+    exception", which is implemented using longjmp().
+*/
+static void
+Tokenizer_fail_route(Tokenizer* self)
+{
+    Tokenizer_pop(self);
+    longjmp(exception_env, BAD_ROUTE);
+}
+
+/*
+    Write a token to the end of the current token stack.
+*/
+static int
+Tokenizer_write(Tokenizer* self, PyObject* token)
+{
+    if (Tokenizer_push_textbuffer(self))
+        return -1;
+
+    if (PyList_Append(Tokenizer_STACK(self), token)) {
+        Py_XDECREF(token);
+        return -1;
+    }
+
+    Py_XDECREF(token);
+    return 0;
+}
+
+/*
+    Write a token to the beginning of the current token stack.
+*/
+static int
+Tokenizer_write_first(Tokenizer* self, PyObject* token)
+{
+    if (Tokenizer_push_textbuffer(self))
+        return -1;
+
+    if (PyList_Insert(Tokenizer_STACK(self), 0, token)) {
+        Py_XDECREF(token);
+        return -1;
+    }
+
+    Py_XDECREF(token);
+    return 0;
+}
+
+/*
+    Write text to the current textbuffer.
+*/
+static int
+Tokenizer_write_text(Tokenizer* self, PyObject* text)
+{
+    if (PyList_Append(Tokenizer_TEXTBUFFER(self), text)) {
+        Py_XDECREF(text);
+        return -1;
+    }
+
+    Py_XDECREF(text);
+    return 0;
+}
+
+/*
+    Write a series of tokens to the current stack at once.
+*/
+static int
+Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
+{
+    if (Tokenizer_push_textbuffer(self))
+        Py_XDECREF(tokenlist);
+        return -1;
+
+    PyObject* stack = Tokenizer_STACK(self);
+    Py_ssize_t size = PySequence_Fast_GET_SIZE(stack);
+
+    if (PyList_SetSlice(stack, size, size, tokenlist)) {
+        Py_XDECREF(tokenlist);
+        return -1;
+    }
+
+    Py_XDECREF(tokenlist);
+    return 0;
+}
+
+/*
     Read the value at a relative point in the wikicode.
 */
-static Py_UNICODE*
+static PyObject*
 Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index = self->head + delta;
 
     if (index >= self->length) {
-        return (Py_UNICODE*) OUT_OF_BOUNDS;
+        return EMPTY;
     }
 
-    PyObject* item = PySequence_Fast_GET_ITEM(self->text, index);
-    return PyUnicode_AS_UNICODE(item);
+    return PySequence_Fast_GET_ITEM(self->text, index);
 }
 
 /*
@@ -266,7 +353,7 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 static PyObject*
 Tokenizer_parse(Tokenizer* self, int context)
 {
-    Py_UNICODE* this;
+    PyObject* this;
 
     Tokenizer_push(self, context);
 
@@ -275,10 +362,9 @@ Tokenizer_parse(Tokenizer* self, int context)
      /*   if (this not in MARKERS) {
             WRITE TEXT
         } */
-        if (this == OUT_OF_BOUNDS) {
+        if (this == EMPTY) {
             return Tokenizer_pop(self);
         }
-        printf("%p %i %c\n", this, *this, *this);
         self->head++;
     }
 }
@@ -389,6 +475,8 @@ init_tokenizer(void)
 
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+
+    EMPTY = PyUnicode_FromString("");
 
     PyObject* globals = PyEval_GetGlobals();
     PyObject* locals = PyEval_GetLocals();
