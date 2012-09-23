@@ -32,7 +32,7 @@ builder = Extension("mwparserfromhell.parser._builder",
                     sources = ["mwparserfromhell/parser/builder.c"])
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                    sources = ["mwparserfromhell/parser/tokenizer.c"])
+                      sources = ["mwparserfromhell/parser/tokenizer.c"])
 
 setup(
     name = "mwparserfromhell",

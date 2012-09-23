@@ -28,10 +28,15 @@ SOFTWARE.
 #include <Python.h>
 #include "structmember.h"
 
-static const Py_UNICODE* OUT_OF_BOUNDS = "";
-static const Py_UNICODE* MARKERS[] = {"{", "}", "[", "]", "<", ">", "|", "=",
-                                      "&", "#", "*", ";", ":", "/", "-", "!",
-                                      "\n", OUT_OF_BOUNDS};
+#define PU (Py_UNICODE*)
+static const Py_UNICODE* OUT_OF_BOUNDS = PU"";
+static const Py_UNICODE* MARKERS[] = {PU"{", PU"}", PU"[", PU"]", PU"<", PU">",
+                                      PU"|", PU"=", PU"&", PU"#", PU"*", PU";",
+                                      PU":", PU"/", PU"-", PU"!", PU"\n", PU""};
+#undef PU
+
+static PyObject* contexts;
+static PyObject* tokens;
 
 static PyMethodDef
 module_methods[] = {
@@ -60,7 +65,7 @@ Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
         Py_INCREF(Py_None);
 
         self->stacks = PyList_New(0);
-        if (self->stacks == NULL) {
+        if (!self->stacks) {
             Py_DECREF(self);
             return NULL;
         }
@@ -91,9 +96,9 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
     return 0;
 }
 
-#define Tokenizer_STACK(self) PyList_GET_ITEM(self->topstack, 0)
-#define Tokenizer_CONTEXT(self) PyList_GET_ITEM(self->topstack, 1)
-#define Tokenizer_TEXTBUFFER(self) PyList_GET_ITEM(self->topstack, 2)
+#define Tokenizer_STACK(self) PySequence_Fast_GET_ITEM(self->topstack, 0)
+#define Tokenizer_CONTEXT(self) PySequence_Fast_GET_ITEM(self->topstack, 1)
+#define Tokenizer_TEXTBUFFER(self) PySequence_Fast_GET_ITEM(self->topstack, 2)
 
 static int
 Tokenizer_set_context(Tokenizer* self, Py_ssize_t value)
@@ -136,19 +141,65 @@ Tokenizer_push(Tokenizer* self, int context)
 static int
 Tokenizer_push_textbuffer(Tokenizer* self)
 {
-    if (PyList_GET_SIZE(Tokenizer_TEXTBUFFER(self)) > 0) {
+    if (PySequence_Fast_GET_SIZE(Tokenizer_TEXTBUFFER(self)) > 0) {
+        PyObject* sep = PyUnicode_FromString("");
+        if (!sep) return -1;
+        PyObject* text = PyUnicode_Join(sep, Tokenizer_TEXTBUFFER(self));
+        Py_DECREF(sep);
+        if (!text) return -1;
 
-        PyObject* text;
-        // tokens.Text(text="".join(self._textbuffer))
+        PyObject* klass = PyObject_GetAttrString(tokens, "Text");
+        if (!klass) return -1;
+        PyObject* args = PyTuple_New(0);
+        if (!args) return -1;
+        PyObject* kwargs = PyDict_New();
+        if (!kwargs) return -1;
+        PyDict_SetItemString(kwargs, "text", text);
+        Py_DECREF(text);
 
-        if (PyList_Append(Tokenizer_STACK(self), text)
+        PyObject* token = PyInstance_New(klass, args, kwargs);
+        if (!token) {
+            Py_DECREF(klass);
+            Py_DECREF(args);
+            Py_DECREF(kwargs);
             return -1;
+        }
+
+        Py_DECREF(klass);
+        Py_DECREF(args);
+        Py_DECREF(kwargs);
+
+        if (PyList_Append(Tokenizer_STACK(self), token)) {
+            Py_XDECREF(token);
+            return -1;
+        }
+
+        Py_XDECREF(token);
 
         if (Tokenizer_set_textbuffer(self, PyList_New(0)))
             return -1;
-
-        return 0;
     }
+    return 0;
+}
+
+static int
+Tokenizer_delete_top_of_stack(Tokenizer* self)
+{
+    if (PySequence_DelItem(self->stacks, -1))
+        return -1;
+    Py_DECREF(self->topstack);
+
+    Py_ssize_t size = PySequence_Fast_GET_SIZE(self->stacks);
+    if (size > 0) {
+        PyObject* top = PySequence_Fast_GET_ITEM(self->stacks, size - 1);
+        self->topstack = top;
+        Py_INCREF(top);
+    }
+    else {
+        self->topstack = NULL;
+    }
+
+    return 0;
 }
 
 /*
@@ -160,7 +211,13 @@ Tokenizer_pop(Tokenizer* self)
     if (Tokenizer_push_textbuffer(self))
         return NULL;
 
-    self->stacks // POP!?
+    PyObject* stack = Tokenizer_STACK(self);
+    Py_INCREF(stack);
+
+    if (Tokenizer_delete_top_of_stack(self))
+        return NULL;
+
+    return stack;
 }
 
 /*
@@ -172,6 +229,19 @@ Tokenizer_pop_keeping_context(Tokenizer* self)
 {
     if (Tokenizer_push_textbuffer(self))
         return NULL;
+
+    PyObject* stack = Tokenizer_STACK(self);
+    PyObject* context = Tokenizer_CONTEXT(self);
+    Py_INCREF(stack);
+    Py_INCREF(context);
+
+    if (Tokenizer_delete_top_of_stack(self))
+        return NULL;
+
+    if (PyList_SetItem(self->topstack, 1, context))
+        return NULL;
+
+    return stack;
 }
 
 /*
@@ -183,7 +253,7 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
     Py_ssize_t index = self->head + delta;
 
     if (index >= self->length) {
-        return OUT_OF_BOUNDS;
+        return (Py_UNICODE*) OUT_OF_BOUNDS;
     }
 
     PyObject* item = PySequence_Fast_GET_ITEM(self->text, index);
@@ -202,11 +272,11 @@ Tokenizer_parse(Tokenizer* self, int context)
 
     while (1) {
         this = Tokenizer_read(self, 0);
-        if (this not in MARKERS) {
+     /*   if (this not in MARKERS) {
             WRITE TEXT
-        }
+        } */
         if (this == OUT_OF_BOUNDS) {
-            return Tokenizer_push(self);
+            return Tokenizer_pop(self);
         }
         printf("%p %i %c\n", this, *this, *this);
         self->head++;
@@ -233,7 +303,7 @@ Tokenizer_tokenize(Tokenizer* self, PyObject *args)
 
         PyObject* temp;
         temp = PyUnicode_FromStringAndSize(encoded, size);
-        if (text == NULL)
+        if (!text)
             return NULL;
 
         Py_XDECREF(self->text);
@@ -319,4 +389,12 @@ init_tokenizer(void)
 
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+
+    PyObject* globals = PyEval_GetGlobals();
+    PyObject* locals = PyEval_GetLocals();
+    PyObject* fromlist = PyList_New(0);
+
+    contexts = PyImport_ImportModuleLevel("contexts", globals, locals, fromlist, 1);
+    tokens = PyImport_ImportModuleLevel("tokens", globals, locals, fromlist, 1);
+    Py_DECREF(fromlist);
 }
