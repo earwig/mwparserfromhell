@@ -21,16 +21,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 from mwparserfromhell import __version__
 
 with open("README.rst") as fp:
     long_docs = fp.read()
 
+builder = Extension("mwparserfromhell.parser._builder",
+                    sources = ["mwparserfromhell/parser/builder.c"])
+
+tokenizer = Extension("mwparserfromhell.parser._tokenizer",
+                    sources = ["mwparserfromhell/parser/tokenizer.c"])
+
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
+    ext_modules = [builder, tokenizer],
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",
