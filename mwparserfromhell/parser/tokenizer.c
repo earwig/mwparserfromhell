@@ -377,108 +377,161 @@ Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
     return PySequence_Fast_GET_ITEM(self->text, index);
 }
 
+/*
+    Parse a template or argument at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_template_or_argument(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse a template at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_template(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse an argument at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_argument(Tokenizer* self)
 {
 
 }
 
+/*
+    Verify that there are no unsafe characters in the current stack. The route
+    will be failed if the name contains any element of unsafes in it (not
+    merely at the beginning or end). This is used when parsing a template name
+    or parameter key, which cannot contain newlines.
+*/
 static int
-Tokenizer_verify_safe(Tokenizer* self)
+Tokenizer_verify_safe(Tokenizer* self, Py_UNICODE* unsafes[])
 {
 
 }
 
+/*
+    Handle a template parameter at the head of the string.
+*/
 static int
 Tokenizer_handle_template_param(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle a template parameter's value at the head of the string.
+*/
 static int
 Tokenizer_handle_template_param_value(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the end of a template at the head of the string.
+*/
 static PyObject*
 Tokenizer_handle_template_end(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the separator between an argument's name and default.
+*/
 static int
 Tokenizer_handle_argument_separator(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the end of an argument at the head of the string.
+*/
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse an internal wikilink at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_wikilink(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the separator between a wikilink's title and its text.
+*/
 static int
 Tokenizer_handle_wikilink_separator(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the end of a wikilink at the head of the string.
+*/
 static PyObject*
 Tokenizer_handle_wikilink_end(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse a section heading at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_heading(Tokenizer* self)
 {
 
 }
 
+/*
+    Handle the end of a section heading at the head of the string.
+*/
 static PyObject*
 Tokenizer_handle_heading_end(Tokenizer* self)
 {
 
 }
 
+/*
+    Actually parse an HTML entity and ensure that it is valid.
+*/
 static int
 Tokenizer_really_parse_entity(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse an HTML entity at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_entity(Tokenizer* self)
 {
 
 }
 
+/*
+    Parse an HTML comment at the head of the wikicode string.
+*/
 static int
 Tokenizer_parse_comment(Tokenizer* self)
 {
 
 }
-
 
 /*
     Parse the wikicode string, using context for when to stop.
