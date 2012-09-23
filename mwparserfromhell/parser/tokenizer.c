@@ -26,8 +26,8 @@ SOFTWARE.
 #endif
 
 #include <Python.h>
-#include "setjmp.h"
-#include "structmember.h"
+#include <setjmp.h>
+#include <structmember.h>
 
 static PyObject* EMPTY;
 
@@ -35,7 +35,10 @@ static PyObject* EMPTY;
 static const Py_UNICODE* MARKERS[] = {PU"{", PU"}", PU"[", PU"]", PU"<", PU">",
                                       PU"|", PU"=", PU"&", PU"#", PU"*", PU";",
                                       PU":", PU"/", PU"-", PU"!", PU"\n", PU""};
-#undef PU
+static const int NUM_MARKERS = 17;
+
+#define CONTEXT(name) PyInt_AsSsize_t((PyIntObject*) \
+                                          PyObject_GetAttrString(contexts, name))
 
 static jmp_buf exception_env;
 static const int BAD_ROUTE = 1;
@@ -103,6 +106,7 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 
 #define Tokenizer_STACK(self) PySequence_Fast_GET_ITEM(self->topstack, 0)
 #define Tokenizer_CONTEXT(self) PySequence_Fast_GET_ITEM(self->topstack, 1)
+#define Tokenizer_CONTEXT_VAL(self) PyInt_AsSsize_t((PyIntObject*) Tokenizer_CONTEXT(self))
 #define Tokenizer_TEXTBUFFER(self) PySequence_Fast_GET_ITEM(self->topstack, 2)
 
 static int
@@ -125,11 +129,11 @@ Tokenizer_set_textbuffer(Tokenizer* self, PyObject* value)
     Add a new token stack, context, and textbuffer to the list.
 */
 static int
-Tokenizer_push(Tokenizer* self, int context)
+Tokenizer_push(Tokenizer* self, Py_ssize_t context)
 {
     PyObject* top = PyList_New(3);
     PyList_SET_ITEM(top, 0, PyList_New(0));
-    PyList_SET_ITEM(top, 1, PyInt_FromSsize_t(0));
+    PyList_SET_ITEM(top, 1, PyInt_FromSsize_t(context));
     PyList_SET_ITEM(top, 2, PyList_New(0));
 
     Py_XDECREF(self->topstack);
@@ -345,7 +349,7 @@ Tokenizer_write_text_then_stack(Tokenizer* self, PyObject* text)
 }
 
 /*
-    Read the value at a relative point in the wikicode.
+    Read the value at a relative point in the wikicode, forwards.
 */
 static PyObject*
 Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
@@ -360,23 +364,247 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 }
 
 /*
-    Parse the wikicode string, using *context* for when to stop.
+    Read the value at a relative point in the wikicode, backwards.
 */
 static PyObject*
-Tokenizer_parse(Tokenizer* self, int context)
+Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 {
-    PyObject* this;
+    if (delta > self->head) {
+        return EMPTY;
+    }
+
+    Py_ssize_t index = self->head - delta;
+    return PySequence_Fast_GET_ITEM(self->text, index);
+}
+
+static int
+Tokenizer_parse_template_or_argument(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_template(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_argument(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_verify_safe(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_handle_template_param(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_handle_template_param_value(Tokenizer* self)
+{
+
+}
+
+static PyObject*
+Tokenizer_handle_template_end(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_handle_argument_separator(Tokenizer* self)
+{
+
+}
+
+static PyObject*
+Tokenizer_handle_argument_end(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_wikilink(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_handle_wikilink_separator(Tokenizer* self)
+{
+
+}
+
+static PyObject*
+Tokenizer_handle_wikilink_end(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_heading(Tokenizer* self)
+{
+
+}
+
+static PyObject*
+Tokenizer_handle_heading_end(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_really_parse_entity(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_entity(Tokenizer* self)
+{
+
+}
+
+static int
+Tokenizer_parse_comment(Tokenizer* self)
+{
+
+}
+
+
+/*
+    Parse the wikicode string, using context for when to stop.
+*/
+static PyObject*
+Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
+{
+    Py_ssize_t fail_contexts = (
+        CONTEXT("TEMPLATE") | CONTEXT("ARGUMENT") | CONTEXT("HEADING") |
+        CONTEXT("COMMENT"));
+
+    PyObject *this, *next;
+    Py_UNICODE *this_data, *next_data, *next_next_data, *last_data;
+    Py_ssize_t this_context;
+    int is_marker, i;
 
     Tokenizer_push(self, context);
 
     while (1) {
         this = Tokenizer_read(self, 0);
-     /*   if (this not in MARKERS) {
-            WRITE TEXT
-        } */
+        this_data = PyUnicode_AS_UNICODE(this);
+
+        is_marker = 0;
+        for (i = 0; i < NUM_MARKERS; i++) {
+            if (MARKERS[i] == this_data) {
+                is_marker = 1;
+                break;
+            }
+        }
+
+        if (!is_marker) {
+            Tokenizer_write_text(self, this);
+            self->head++;
+            continue;
+        }
+
+        this_context = Tokenizer_CONTEXT_VAL(self);
+
         if (this == EMPTY) {
+            if (this_context & fail_contexts) {
+                Tokenizer_fail_route(self);
+            }
             return Tokenizer_pop(self);
         }
+
+        next = Tokenizer_read(self, 1);
+        next_data = PyUnicode_AS_UNICODE(next);
+
+        if (this_context & CONTEXT("COMMENT")) {
+            if (this_data == next_data && next_data == PU "-") {
+                if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU ">") {
+                    return Tokenizer_pop(self);
+                }
+            }
+            Tokenizer_write_text(self, this);
+        }
+        else if (this_data == next_data && next_data == PU "{") {
+            Tokenizer_parse_template_or_argument(self);
+        }
+        else if (this_data == PU "|" && this_context & CONTEXT("TEMPLATE")) {
+            Tokenizer_handle_template_param(self);
+        }
+        else if (this_data == PU "=" && this_context & CONTEXT("TEMPLATE_PARAM_KEY")) {
+            Tokenizer_handle_template_param_value(self);
+        }
+        else if (this_data == next_data && next_data == PU "}" &&
+                 this_context & CONTEXT("TEMPLATE")) {
+            Tokenizer_handle_template_end(self);
+        }
+        else if (this_data == PU "|" && this_context & CONTEXT("ARGUMENT_NAME")) {
+            Tokenizer_handle_argument_separator(self);
+        }
+        else if (this_data == next_data && next_data == PU "}" &&
+                 this_context & CONTEXT("ARGUMENT")) {
+            if (PyUnicode_AS_UNICODE(Tokenizer_read(self, 2)) == PU "}") {
+                return Tokenizer_handle_argument_end(self);
+            }
+            Tokenizer_write_text(self, this);
+        }
+        else if (this_data == next_data && next_data == PU "[") {
+            if (!(this_context & CONTEXT("WIKILINK_TITLE"))) {
+                Tokenizer_parse_wikilink(self);
+            }
+            else {
+                Tokenizer_write_text(self, this);
+            }
+        }
+        else if (this_data == PU "|" && this_context & CONTEXT("WIKILINK_TITLE")) {
+            Tokenizer_handle_wikilink_separator(self);
+        }
+        else if (this_data == next_data && next_data == PU "]" &&
+                 this_context & CONTEXT("WIKILINK")) {
+            return Tokenizer_handle_wikilink_end(self);
+        }
+        else if (this_data == PU "=" && !(self->global & CONTEXT("GL_HEADING"))) {
+            last_data = PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
+            if (last_data == PU "\n" || last_data == PU "") {
+                Tokenizer_parse_heading(self);
+            }
+            else {
+                Tokenizer_write_text(self, this);
+            }
+        }
+        else if (this_data == PU "=" && this_context & CONTEXT("HEADING")) {
+            return Tokenizer_handle_heading_end(self);
+        }
+        else if (this_data == PU "\n" && this_context & CONTEXT("HEADING")) {
+            Tokenizer_fail_route(self);
+        }
+        else if (this_data == PU "&") {
+            Tokenizer_parse_entity(self);
+        }
+        else if (this_data == PU "<" && next_data == PU "!") {
+            next_next_data = PyUnicode_AS_UNICODE(Tokenizer_read(self, 2));
+            if (next_next_data == PyUnicode_AS_UNICODE(Tokenizer_read(self, 3)) &&
+                    next_next_data == PU "-") {
+                Tokenizer_parse_comment(self);
+            }
+            else {
+                Tokenizer_write_text(self, this);
+            }
+        }
+        else {
+            Tokenizer_write_text(self, this);
+        }
+
         self->head++;
     }
 }
