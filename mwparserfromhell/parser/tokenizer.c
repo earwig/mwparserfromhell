@@ -111,29 +111,22 @@ Tokenizer_push_textbuffer(Tokenizer* self)
         PyObject* text = PyUnicode_Join(EMPTY, Tokenizer_TEXTBUFFER(self));
         if (!text) return -1;
 
-        PyObject* klass = PyObject_GetAttrString(tokens, "Text");
-        if (!klass) return -1;
-        PyObject* args = PyTuple_New(0);
-        if (!args) return -1;
+        PyObject* class = PyObject_GetAttrString(tokens, "Text");
+        if (!class) return -1;
         PyObject* kwargs = PyDict_New();
         if (!kwargs) return -1;
         PyDict_SetItemString(kwargs, "text", text);
         Py_DECREF(text);
 
-        PyObject* token = PyInstance_New(klass, args, kwargs);
+        PyObject* token = PyInstance_New(class, NOARGS, kwargs);
+        Py_DECREF(class);
+        Py_DECREF(kwargs);
         if (!token) {
-            Py_DECREF(klass);
-            Py_DECREF(args);
-            Py_DECREF(kwargs);
             return -1;
         }
 
-        Py_DECREF(klass);
-        Py_DECREF(args);
-        Py_DECREF(kwargs);
-
         if (PyList_Append(Tokenizer_STACK(self), token)) {
-            Py_XDECREF(token);
+            Py_DECREF(token);
             return -1;
         }
 
@@ -424,7 +417,36 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
 static int
 Tokenizer_parse_template(Tokenizer* self)
 {
+    Py_ssize_t reset = self->head;
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        self->head = reset;
+        longjmp(exception_env, BAD_ROUTE);
+    }
+    else {
+        PyObject* template = Tokenizer_parse(self, LC_TEMPLATE_NAME);
+        if (!template) return -1;
 
+        PyObject* class = PyObject_GetAttrString(tokens, "TemplateOpen");
+        if (!class) return -1;
+        PyObject* token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) return -1;
+
+        Tokenizer_write_first(self, token);
+        Py_DECREF(token);
+
+        Tokenizer_write_all(self, template);
+        Py_DECREF(template);
+
+        class = PyObject_GetAttrString(tokens, "TemplateClose");
+        if (!class) return -1;
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) return -1;
+
+        Tokenizer_write(self, token);
+        Py_DECREF(token);
+    }
 }
 
 /*
@@ -740,6 +762,8 @@ init_tokenizer(void)
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
 
     EMPTY = PyUnicode_FromString("");
+    NOARGS = PyTuple_New(0);
+    NOKWARGS = PyDict_New();
 
     PyObject* globals = PyEval_GetGlobals();
     PyObject* locals = PyEval_GetLocals();
