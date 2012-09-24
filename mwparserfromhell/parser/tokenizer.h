@@ -121,7 +121,7 @@ static PyObject* Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta);
 static int Tokenizer_parse_template_or_argument(Tokenizer* self);
 static int Tokenizer_parse_template(Tokenizer* self);
 static int Tokenizer_parse_argument(Tokenizer* self);
-static int Tokenizer_verify_safe(Tokenizer* self, Py_UNICODE* unsafes[]);
+static int Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[]);
 static int Tokenizer_handle_template_param(Tokenizer* self);
 static int Tokenizer_handle_template_param_value(Tokenizer* self);
 static PyObject* Tokenizer_handle_template_end(Tokenizer* self);
