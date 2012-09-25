@@ -827,8 +827,7 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-    if (context & LC_ARGUMENT_NAME) {
+    if (Tokenizer_CONTEXT_VAL(self) & LC_ARGUMENT_NAME) {
         const char* unsafes[] = {"\n", "{{", "}}"};
         if (Tokenizer_verify_safe(self, unsafes))
             return NULL;
@@ -910,7 +909,28 @@ Tokenizer_parse_wikilink(Tokenizer* self)
 static int
 Tokenizer_handle_wikilink_separator(Tokenizer* self)
 {
+    const char* unsafes[] = {"\n", "{", "}", "[", "]"};
+    if (Tokenizer_verify_safe(self, unsafes))
+        return -1;
 
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
+    context ^= LC_WIKILINK_TITLE;
+    context |= LC_WIKILINK_TEXT;
+    if (Tokenizer_set_context(self, context))
+        return -1;
+
+    PyObject* class = PyObject_GetAttrString(tokens, "WikilinkSeparator");
+    if (!class) return -1;
+    PyObject* token = PyInstance_New(class, NOARGS, NOKWARGS);
+    Py_DECREF(class);
+    if (!token) return -1;
+
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    return 0;
 }
 
 /*
@@ -919,7 +939,15 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_wikilink_end(Tokenizer* self)
 {
+    if (Tokenizer_CONTEXT_VAL(self) & LC_WIKILINK_TITLE) {
+        const char* unsafes[] = {"\n", "{", "}", "[", "]"};
+        if (Tokenizer_verify_safe(self, unsafes))
+            return NULL;
+    }
 
+    self->head += 1;
+    PyObject* stack = Tokenizer_pop(self);
+    return stack;
 }
 
 /*
