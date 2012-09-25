@@ -197,10 +197,9 @@ class Tokenizer(object):
         except BadRoute:
             self._head = reset
             raise
-        else:
-            self._write_first(tokens.TemplateOpen())
-            self._write_all(template)
-            self._write(tokens.TemplateClose())
+        self._write_first(tokens.TemplateOpen())
+        self._write_all(template)
+        self._write(tokens.TemplateClose())
 
     def _parse_argument(self):
         """Parse an argument at the head of the wikicode string."""
@@ -210,10 +209,9 @@ class Tokenizer(object):
         except BadRoute:
             self._head = reset
             raise
-        else:
-            self._write_first(tokens.ArgumentOpen())
-            self._write_all(argument)
-            self._write(tokens.ArgumentClose())
+        self._write_first(tokens.ArgumentOpen())
+        self._write_all(argument)
+        self._write(tokens.ArgumentClose())
 
     def _verify_safe(self, unsafes):
         """Verify that there are no unsafe characters in the current stack.
@@ -249,8 +247,7 @@ class Tokenizer(object):
         except BadRoute:
             self._pop()
             raise
-        else:
-            self._write_all(self._pop(keep_context=True))
+        self._write_all(self._pop(keep_context=True))
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._write(tokens.TemplateParamEquals())

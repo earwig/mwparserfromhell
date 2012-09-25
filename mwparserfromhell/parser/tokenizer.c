@@ -627,7 +627,8 @@ Tokenizer_handle_template_param(Tokenizer* self)
     Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
 
     if (context & LC_TEMPLATE_NAME) {
-        if (Tokenizer_verify_safe(self, {"\n", "{", "}", "[", "]"}))
+        const char* unsafes[] = {"\n", "{", "}", "[", "]"};
+        if (Tokenizer_verify_safe(self, unsafes))
             return -1;
         if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_NAME))
             return -1;
@@ -640,7 +641,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
     if (context & LC_TEMPLATE_PARAM_KEY) {
         PyObject* stack = Tokenizer_pop_keeping_context(self);
         if (!stack) return -1;
-        if (Tokenizer_write_all(stack)) {
+        if (Tokenizer_write_all(self, stack)) {
             Py_DECREF(stack);
             return -1;
         }
@@ -651,9 +652,9 @@ Tokenizer_handle_template_param(Tokenizer* self)
             return -1;
     }
 
-    class = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
+    PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
     if (!class) return -1;
-    token = PyInstance_New(class, NOARGS, NOKWARGS);
+    PyObject* token = PyInstance_New(class, NOARGS, NOKWARGS);
     Py_DECREF(class);
     if (!token) return -1;
 
@@ -673,7 +674,43 @@ Tokenizer_handle_template_param(Tokenizer* self)
 static int
 Tokenizer_handle_template_param_value(Tokenizer* self)
 {
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        PyObject* stack = Tokenizer_pop(self);
+        Py_XDECREF(stack);
+        longjmp(exception_env, BAD_ROUTE);
+    }
 
+    else {
+        const char* unsafes[] = {"\n", "{{", "}}"};
+        if (Tokenizer_verify_safe(self, unsafes))
+            return -1;
+    }
+
+    PyObject* stack = Tokenizer_pop_keeping_context(self);
+    if (!stack) return -1;
+    if (Tokenizer_write_all(self, stack)) {
+        Py_DECREF(stack);
+        return -1;
+    }
+    Py_DECREF(stack);
+
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
+    context ^= LC_TEMPLATE_PARAM_KEY;
+    context |= LC_TEMPLATE_PARAM_VALUE;
+    if (Tokenizer_set_context(self, context))
+        return -1;
+
+    PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamEquals");
+    if (!class) return -1;
+    PyObject* token = PyInstance_New(class, NOARGS, NOKWARGS);
+    Py_DECREF(class);
+    if (!token) return -1;
+
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
 }
 
 /*
