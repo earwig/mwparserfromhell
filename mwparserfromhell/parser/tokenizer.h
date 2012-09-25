@@ -76,6 +76,14 @@ static const Py_ssize_t LC_COMMENT =              0x2000;
 static const Py_ssize_t GL_HEADING = 0x1;
 
 
+/* Miscellaneous structs: */
+
+typedef struct {
+    PyObject* title;
+    Py_ssize_t level;
+} HeadingData;
+
+
 /* Tokenizer object definition: */
 
 typedef struct {
@@ -131,7 +139,7 @@ static int Tokenizer_parse_wikilink(Tokenizer* self);
 static int Tokenizer_handle_wikilink_separator(Tokenizer* self);
 static PyObject* Tokenizer_handle_wikilink_end(Tokenizer* self);
 static int Tokenizer_parse_heading(Tokenizer* self);
-static PyObject* Tokenizer_handle_heading_end(Tokenizer* self);
+static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self);
 static int Tokenizer_really_parse_entity(Tokenizer* self);
 static int Tokenizer_parse_entity(Tokenizer* self);
 static int Tokenizer_parse_comment(Tokenizer* self);

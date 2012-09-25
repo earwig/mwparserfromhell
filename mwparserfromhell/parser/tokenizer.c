@@ -112,9 +112,16 @@ Tokenizer_push_textbuffer(Tokenizer* self)
         if (!text) return -1;
 
         PyObject* class = PyObject_GetAttrString(tokens, "Text");
-        if (!class) return -1;
+        if (!class) {
+            Py_DECREF(text);
+            return -1;
+        }
         PyObject* kwargs = PyDict_New();
-        if (!kwargs) return -1;
+        if (!kwargs) {
+            Py_DECREF(class);
+            Py_DECREF(text);
+            return -1;
+        }
         PyDict_SetItemString(kwargs, "text", text);
         Py_DECREF(text);
 
@@ -406,9 +413,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
         if (setjmp(exception_env) == BAD_ROUTE) {
             if (setjmp(exception_env) == BAD_ROUTE) {
                 char bracestr[braces];
-                for (i = 0; i < braces; i++) {
-                        bracestr[i] = *"{";
-                }
+                for (i = 0; i < braces; i++) bracestr[i] = *"{";
                 PyObject* text = PyUnicode_FromString(bracestr);
 
                 if (Tokenizer_write_text_then_stack(self, text)) {
@@ -954,13 +959,116 @@ Tokenizer_handle_wikilink_end(Tokenizer* self)
 static int
 Tokenizer_parse_heading(Tokenizer* self)
 {
+    self->global |= GL_HEADING;
+    Py_ssize_t reset = self->head;
+    self->head += 1;
+    Py_ssize_t best = 1, i;
+    PyObject* text;
 
+    while (Tokenizer_READ(self, 0) == PU "=") {
+        best++;
+        self->head++;
+    }
+
+    Py_ssize_t context = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);
+
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        self->head = reset + best - 1;
+        char blocks[best];
+        for (i = 0; i < best; i++) blocks[i] = *"{";
+        text = PyUnicode_FromString(blocks);
+        if (!text) return -1;
+
+        if (Tokenizer_write_text_then_stack(self, text)) {
+            Py_DECREF(text);
+            return -1;
+        }
+        Py_DECREF(text);
+        self->global ^= GL_HEADING;
+    }
+    else {
+        HeadingData* heading = (HeadingData*) Tokenizer_parse(self, context);
+        if (!heading) return -1;
+
+        PyObject* level = PyInt_FromSsize_t(heading->level);
+        if (!level) {
+            Py_DECREF(heading->title);
+            return -1;
+        }
+
+        PyObject* class = PyObject_GetAttrString(tokens, "HeadingStart");
+        if (!class) {
+            Py_DECREF(level);
+            Py_DECREF(heading->title);
+            return -1;
+        }
+        PyObject* kwargs = PyDict_New();
+        if (!kwargs) {
+            Py_DECREF(class);
+            Py_DECREF(level);
+            Py_DECREF(heading->title);
+            return -1;
+        }
+        PyDict_SetItemString(kwargs, "level", level);
+        Py_DECREF(level);
+
+        PyObject* token = PyInstance_New(class, NOARGS, kwargs);
+        Py_DECREF(class);
+        Py_DECREF(kwargs);
+        if (!token) return -1;
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            Py_DECREF(heading->title);
+            return -1;
+        }
+        Py_DECREF(token);
+
+        if (heading->level < best) {
+            Py_ssize_t diff = best - heading->level;
+            char diffblocks[diff];
+            for (i = 0; i < diff; i++) diffblocks[i] = *"{";
+            PyObject* text = PyUnicode_FromString(diffblocks);
+            if (!text) {
+                Py_DECREF(heading->title);
+                return -1;
+            }
+
+            if (Tokenizer_write_text_then_stack(self, text)) {
+                Py_DECREF(text);
+                Py_DECREF(heading->title);
+                return -1;
+            }
+            Py_DECREF(text);
+        }
+
+        if (Tokenizer_write_all(self, heading->title)) {
+            Py_DECREF(heading->title);
+            return -1;
+        }
+        Py_DECREF(heading->title);
+
+        class = PyObject_GetAttrString(tokens, "HeadingEnd");
+        if (!class) return -1;
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) return -1;
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            return -1;
+        }
+        Py_DECREF(token);
+
+        self->global ^= GL_HEADING;
+    }
+    return 0;
 }
 
 /*
     Handle the end of a section heading at the head of the string.
 */
-static PyObject*
+static HeadingData*
 Tokenizer_handle_heading_end(Tokenizer* self)
 {
 
@@ -1167,7 +1275,7 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
             }
         }
         else if (this_data == PU "=" && this_context & LC_HEADING) {
-            return Tokenizer_handle_heading_end(self);
+            return (PyObject*) Tokenizer_handle_heading_end(self);
         }
         else if (this_data == PU "\n" && this_context & LC_HEADING) {
             Tokenizer_fail_route(self);
