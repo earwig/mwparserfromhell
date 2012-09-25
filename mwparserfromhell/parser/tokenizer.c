@@ -264,11 +264,12 @@ Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
         PyObject* class = PyObject_GetAttrString(tokens, "Text");
         if (!class) return -1;
 
+        PyObject* text;
         switch (PyObject_IsInstance(token, class)) {
             case 0:
                 break;
             case 1:
-                PyObject* text = PyObject_GetAttrString(token, "text");
+                text = PyObject_GetAttrString(token, "text");
                 if (!text) {
                     Py_DECREF(class);
                     return -1;
@@ -284,7 +285,7 @@ Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
                     return -1;
                 }
                 Py_DECREF(text);
-                break
+                break;
             case -1:
                 Py_DECREF(class);
                 return -1;
@@ -463,13 +464,20 @@ Tokenizer_parse_template(Tokenizer* self)
         if (!template) return -1;
 
         class = PyObject_GetAttrString(tokens, "TemplateOpen");
-        if (!class) return -1;
+        if (!class) {
+            Py_DECREF(template);
+            return -1;
+        }
         token = PyInstance_New(class, NOARGS, NOKWARGS);
         Py_DECREF(class);
-        if (!token) return -1;
+        if (!token) {
+            Py_DECREF(template);
+            return -1;
+        }
 
         if (Tokenizer_write_first(self, token)) {
             Py_DECREF(token);
+            Py_DECREF(template);
             return -1;
         }
         Py_DECREF(token);
@@ -515,13 +523,20 @@ Tokenizer_parse_argument(Tokenizer* self)
         if (!argument) return -1;
 
         class = PyObject_GetAttrString(tokens, "ArgumentOpen");
-        if (!class) return -1;
+        if (!class) {
+            Py_DECREF(argument);
+            return -1;
+        }
         token = PyInstance_New(class, NOARGS, NOKWARGS);
         Py_DECREF(class);
-        if (!token) return -1;
+        if (!token) {
+            Py_DECREF(argument);
+            return -1;
+        }
 
         if (Tokenizer_write_first(self, token)) {
             Py_DECREF(token);
+            Py_DECREF(argument);
             return -1;
         }
         Py_DECREF(token);
@@ -830,7 +845,63 @@ Tokenizer_handle_argument_end(Tokenizer* self)
 static int
 Tokenizer_parse_wikilink(Tokenizer* self)
 {
+    self->head += 2;
+    Py_ssize_t reset = self->head - 1;
 
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        self->head = reset;
+        PyObject* text = PyUnicode_FromString("[[");
+        if (!text) return -1;
+        if (Tokenizer_write_text(self, text)) {
+            Py_XDECREF(text);
+            return -1;
+        }
+    }
+
+    else {
+        PyObject *class, *token;
+        PyObject *wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
+        if (!wikilink) return -1;
+
+        class = PyObject_GetAttrString(tokens, "WikilinkOpen");
+        if (!class) {
+            Py_DECREF(wikilink);
+            return -1;
+        }
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) {
+            Py_DECREF(wikilink);
+            return -1;
+        }
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            Py_DECREF(wikilink);
+            return -1;
+        }
+        Py_DECREF(token);
+
+        if (Tokenizer_write_all(self, wikilink)) {
+            Py_DECREF(wikilink);
+            return -1;
+        }
+        Py_DECREF(wikilink);
+
+        class = PyObject_GetAttrString(tokens, "WikilinkClose");
+        if (!class) return -1;
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) return -1;
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            return -1;
+        }
+        Py_DECREF(token);
+    }
+
+    return 0;
 }
 
 /*
