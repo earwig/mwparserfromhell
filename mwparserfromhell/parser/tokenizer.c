@@ -259,6 +259,39 @@ Tokenizer_write_text(Tokenizer* self, PyObject* text)
 static int
 Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
 {
+    if (PySequence_Fast_GET_SIZE(tokenlist) > 0) {
+        PyObject* token = PySequence_Fast_GET_ITEM(tokenlist, 0);
+        PyObject* class = PyObject_GetAttrString(tokens, "Text");
+        if (!class) return -1;
+
+        switch (PyObject_IsInstance(token, class)) {
+            case 0:
+                break;
+            case 1:
+                PyObject* text = PyObject_GetAttrString(token, "text");
+                if (!text) {
+                    Py_DECREF(class);
+                    return -1;
+                }
+                if (PySequence_DelItem(tokenlist, 0)) {
+                    Py_DECREF(text);
+                    Py_DECREF(class);
+                    return -1;
+                }
+                if (Tokenizer_write_text(self, text)) {
+                    Py_DECREF(text);
+                    Py_DECREF(class);
+                    return -1;
+                }
+                Py_DECREF(text);
+                break
+            case -1:
+                Py_DECREF(class);
+                return -1;
+        }
+        Py_DECREF(class);
+    }
+
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
@@ -711,6 +744,7 @@ Tokenizer_handle_template_param_value(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
+    return 0;
 }
 
 /*
@@ -719,7 +753,27 @@ Tokenizer_handle_template_param_value(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_template_end(Tokenizer* self)
 {
+    PyObject* stack;
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
 
+    if (context & LC_TEMPLATE_NAME) {
+        const char* unsafes[] = {"\n", "{", "}", "[", "]"};
+        if (Tokenizer_verify_safe(self, unsafes))
+            return NULL;
+    }
+    else if (context & LC_TEMPLATE_PARAM_KEY) {
+        stack = Tokenizer_pop_keeping_context(self);
+        if (!stack) return NULL;
+        if (Tokenizer_write_all(self, stack)) {
+            Py_DECREF(stack);
+            return NULL;
+        }
+        Py_DECREF(stack);
+    }
+
+    self->head++;
+    stack = Tokenizer_pop(self);
+    return stack;
 }
 
 /*
@@ -728,7 +782,28 @@ Tokenizer_handle_template_end(Tokenizer* self)
 static int
 Tokenizer_handle_argument_separator(Tokenizer* self)
 {
+    const char* unsafes[] = {"\n", "{{", "}}"};
+    if (Tokenizer_verify_safe(self, unsafes))
+        return -1;
 
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
+    context ^= LC_ARGUMENT_NAME;
+    context |= LC_ARGUMENT_DEFAULT;
+    if (Tokenizer_set_context(self, context))
+        return -1;
+
+    PyObject* class = PyObject_GetAttrString(tokens, "ArgumentSeparator");
+    if (!class) return -1;
+    PyObject* token = PyInstance_New(class, NOARGS, NOKWARGS);
+    Py_DECREF(class);
+    if (!token) return -1;
+
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    return 0;
 }
 
 /*
@@ -737,7 +812,16 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
+    if (context & LC_ARGUMENT_NAME) {
+        const char* unsafes[] = {"\n", "{{", "}}"};
+        if (Tokenizer_verify_safe(self, unsafes))
+            return NULL;
+    }
 
+    self->head += 2;
+    PyObject* stack = Tokenizer_pop(self);
+    return stack;
 }
 
 /*
