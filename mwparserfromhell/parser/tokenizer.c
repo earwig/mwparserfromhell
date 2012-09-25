@@ -856,7 +856,6 @@ Tokenizer_parse_wikilink(Tokenizer* self)
             return -1;
         }
     }
-
     else {
         PyObject *class, *token;
         PyObject *wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
@@ -899,7 +898,6 @@ Tokenizer_parse_wikilink(Tokenizer* self)
         }
         Py_DECREF(token);
     }
-
     return 0;
 }
 
@@ -983,7 +981,29 @@ Tokenizer_really_parse_entity(Tokenizer* self)
 static int
 Tokenizer_parse_entity(Tokenizer* self)
 {
+    Py_ssize_t reset = self->head;
+    if (Tokenizer_push(self, 0))
+        return -1;
 
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        self->head = reset;
+        if (Tokenizer_write_text(self, Tokenizer_read(self, 0)))
+            return -1;
+    }
+    else {
+        if (Tokenizer_really_parse_entity(self))
+            return -1;
+
+        PyObject* tokenlist = Tokenizer_pop(self);
+        if (!tokenlist) return -1;
+        if (Tokenizer_write_all(self, tokenlist)) {
+            Py_DECREF(tokenlist);
+            return -1;
+        }
+
+        Py_DECREF(tokenlist);
+    }
+    return 0;
 }
 
 /*
@@ -992,7 +1012,62 @@ Tokenizer_parse_entity(Tokenizer* self)
 static int
 Tokenizer_parse_comment(Tokenizer* self)
 {
+    self->head += 4;
+    Py_ssize_t reset = self->head - 1;
 
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        self->head = reset;
+        PyObject* text = PyUnicode_FromString("<!--");
+        if (!text) return -1;
+        if (Tokenizer_write_text(self, text)) {
+            Py_XDECREF(text);
+            return -1;
+        }
+    }
+    else {
+        PyObject *class, *token;
+        PyObject *comment = Tokenizer_parse(self, LC_WIKILINK_TITLE);
+        if (!comment) return -1;
+
+        class = PyObject_GetAttrString(tokens, "CommentStart");
+        if (!class) {
+            Py_DECREF(comment);
+            return -1;
+        }
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) {
+            Py_DECREF(comment);
+            return -1;
+        }
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            Py_DECREF(comment);
+            return -1;
+        }
+        Py_DECREF(token);
+
+        if (Tokenizer_write_all(self, comment)) {
+            Py_DECREF(comment);
+            return -1;
+        }
+        Py_DECREF(comment);
+
+        class = PyObject_GetAttrString(tokens, "CommentEnd");
+        if (!class) return -1;
+        token = PyInstance_New(class, NOARGS, NOKWARGS);
+        Py_DECREF(class);
+        if (!token) return -1;
+
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            return -1;
+        }
+        Py_DECREF(token);
+        self->head += 2;
+    }
+    return 0;
 }
 
 /*
