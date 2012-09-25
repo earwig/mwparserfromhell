@@ -206,7 +206,8 @@ Tokenizer_pop_keeping_context(Tokenizer* self)
 static void
 Tokenizer_fail_route(Tokenizer* self)
 {
-    Tokenizer_pop(self);
+    PyObject* stack = Tokenizer_pop(self);
+    Py_XDECREF(stack);
     longjmp(exception_env, BAD_ROUTE);
 }
 
@@ -400,6 +401,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
     }
 
     PyObject* tokenlist = Tokenizer_pop(self);
+    if (!tokenlist) return -1;
     if (Tokenizer_write_all(self, tokenlist)) {
         Py_DECREF(tokenlist);
         return -1;
@@ -543,10 +545,6 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
         for (i = 0; i < length; i++) {
             token = PySequence_Fast_GET_ITEM(stack, i);
             switch (PyObject_IsInstance(token, class)) {
-                case -1:
-                    Py_DECREF(textlist);
-                    Py_DECREF(class);
-                    return -1;
                 case 0:
                     break;
                 case 1:
@@ -563,6 +561,11 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
                         return -1;
                     }
                     Py_DECREF(textdata);
+                    break;
+                case -1:
+                    Py_DECREF(textlist);
+                    Py_DECREF(class);
+                    return -1;
             }
         }
         Py_DECREF(class);
@@ -596,16 +599,17 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
             }
 
             switch (PyUnicode_Contains(stripped, unsafe)) {
-                case -1:
-                    Py_DECREF(stripped);
-                    Py_DECREF(unsafe);
-                    return -1;
                 case 0:
                     break;
                 case 1:
                     Py_DECREF(stripped);
                     Py_DECREF(unsafe);
                     Tokenizer_fail_route(self);
+                    break;
+                case -1:
+                    Py_DECREF(stripped);
+                    Py_DECREF(unsafe);
+                    return -1;
             }
             i++;
         }
@@ -620,7 +624,47 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
 static int
 Tokenizer_handle_template_param(Tokenizer* self)
 {
+    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
 
+    if (context & LC_TEMPLATE_NAME) {
+        if (Tokenizer_verify_safe(self, {"\n", "{", "}", "[", "]"}))
+            return -1;
+        if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_NAME))
+            return -1;
+    }
+    else if (context & LC_TEMPLATE_PARAM_VALUE) {
+        if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_PARAM_VALUE))
+            return -1;
+    }
+
+    if (context & LC_TEMPLATE_PARAM_KEY) {
+        PyObject* stack = Tokenizer_pop_keeping_context(self);
+        if (!stack) return -1;
+        if (Tokenizer_write_all(stack)) {
+            Py_DECREF(stack);
+            return -1;
+        }
+        Py_DECREF(stack);
+    }
+    else {
+        if (Tokenizer_set_context(self, context | LC_TEMPLATE_PARAM_KEY))
+            return -1;
+    }
+
+    class = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
+    if (!class) return -1;
+    token = PyInstance_New(class, NOARGS, NOKWARGS);
+    Py_DECREF(class);
+    if (!token) return -1;
+
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+
+    Tokenizer_push(self, Tokenizer_CONTEXT_VAL(self));
+    return 0;
 }
 
 /*
