@@ -962,8 +962,9 @@ Tokenizer_parse_heading(Tokenizer* self)
     self->global |= GL_HEADING;
     Py_ssize_t reset = self->head;
     self->head += 1;
-    Py_ssize_t best = 1, i;
+    Py_ssize_t best = 1;
     PyObject* text;
+    int i;
 
     while (Tokenizer_READ(self, 0) == PU "=") {
         best++;
@@ -988,11 +989,11 @@ Tokenizer_parse_heading(Tokenizer* self)
     }
     else {
         HeadingData* heading = (HeadingData*) Tokenizer_parse(self, context);
-        if (!heading) return -1;
 
         PyObject* level = PyInt_FromSsize_t(heading->level);
         if (!level) {
             Py_DECREF(heading->title);
+            free(heading);
             return -1;
         }
 
@@ -1000,6 +1001,7 @@ Tokenizer_parse_heading(Tokenizer* self)
         if (!class) {
             Py_DECREF(level);
             Py_DECREF(heading->title);
+            free(heading);
             return -1;
         }
         PyObject* kwargs = PyDict_New();
@@ -1007,6 +1009,7 @@ Tokenizer_parse_heading(Tokenizer* self)
             Py_DECREF(class);
             Py_DECREF(level);
             Py_DECREF(heading->title);
+            free(heading);
             return -1;
         }
         PyDict_SetItemString(kwargs, "level", level);
@@ -1015,11 +1018,16 @@ Tokenizer_parse_heading(Tokenizer* self)
         PyObject* token = PyInstance_New(class, NOARGS, kwargs);
         Py_DECREF(class);
         Py_DECREF(kwargs);
-        if (!token) return -1;
+        if (!token) {
+            Py_DECREF(heading->title);
+            free(heading);
+            return -1;
+        }
 
         if (Tokenizer_write(self, token)) {
             Py_DECREF(token);
             Py_DECREF(heading->title);
+            free(heading);
             return -1;
         }
         Py_DECREF(token);
@@ -1027,16 +1035,18 @@ Tokenizer_parse_heading(Tokenizer* self)
         if (heading->level < best) {
             Py_ssize_t diff = best - heading->level;
             char diffblocks[diff];
-            for (i = 0; i < diff; i++) diffblocks[i] = *"{";
+            for (i = 0; i < diff; i++) diffblocks[i] = *"=";
             PyObject* text = PyUnicode_FromString(diffblocks);
             if (!text) {
                 Py_DECREF(heading->title);
+                free(heading);
                 return -1;
             }
 
             if (Tokenizer_write_text_then_stack(self, text)) {
                 Py_DECREF(text);
                 Py_DECREF(heading->title);
+                free(heading);
                 return -1;
             }
             Py_DECREF(text);
@@ -1044,9 +1054,11 @@ Tokenizer_parse_heading(Tokenizer* self)
 
         if (Tokenizer_write_all(self, heading->title)) {
             Py_DECREF(heading->title);
+            free(heading);
             return -1;
         }
         Py_DECREF(heading->title);
+        free(heading);
 
         class = PyObject_GetAttrString(tokens, "HeadingEnd");
         if (!class) return -1;
@@ -1071,7 +1083,79 @@ Tokenizer_parse_heading(Tokenizer* self)
 static HeadingData*
 Tokenizer_handle_heading_end(Tokenizer* self)
 {
+    Py_ssize_t reset = self->head;
+    self->head += 1;
+    Py_ssize_t best = 1;
+    PyObject* text;
+    int i;
 
+    while (Tokenizer_READ(self, 0) == PU "=") {
+        best++;
+        self->head++;
+    }
+
+    Py_ssize_t current = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);       // FIXME
+    Py_ssize_t level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
+
+    if (setjmp(exception_env) == BAD_ROUTE) {
+        if (level < best) {
+            Py_ssize_t diff = best - level;
+            char diffblocks[diff];
+            for (i = 0; i < diff; i++) diffblocks[i] = *"=";
+            text = PyUnicode_FromString(diffblocks);
+            if (!text) return NULL;
+
+            if (Tokenizer_write_text_then_stack(self, text)) {
+                Py_DECREF(text);
+                return NULL;
+            }
+            Py_DECREF(text);
+        }
+
+        self->head = reset + best - 1;
+    }
+    else {
+        Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
+        HeadingData* after = (HeadingData*) Tokenizer_parse(self, context);
+
+        char blocks[best];
+        for (i = 0; i < best; i++) blocks[i] = *"=";
+        text = PyUnicode_FromString(blocks);
+        if (!text) {
+            Py_DECREF(after->title);
+            free(after);
+            return NULL;
+        }
+
+        if (Tokenizer_write_text_then_stack(self, text)) {
+            Py_DECREF(text);
+            Py_DECREF(after->title);
+            free(after);
+            return NULL;
+        }
+        Py_DECREF(text);
+
+        if (Tokenizer_write_all(self, after->title)) {
+            Py_DECREF(after->title);
+            free(after);
+            return NULL;
+        }
+        Py_DECREF(after->title);
+        level = after->level;
+        free(after);
+    }
+
+    PyObject* stack = Tokenizer_pop(self);
+    if (!stack) return NULL;
+
+    HeadingData* heading = malloc(sizeof(HeadingData));
+    if (!heading) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    heading->title = stack;
+    heading->level = level;
+    return heading;
 }
 
 /*
@@ -1184,11 +1268,10 @@ Tokenizer_parse_comment(Tokenizer* self)
 static PyObject*
 Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 {
-    Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
-
     PyObject *this;
     Py_UNICODE *this_data, *next, *next_next, *last;
     Py_ssize_t this_context;
+    Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
     int is_marker, i;
 
     Tokenizer_push(self, context);
