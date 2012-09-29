@@ -26,6 +26,7 @@ SOFTWARE.
 #endif
 
 #include <Python.h>
+#include <math.h>
 #include <setjmp.h>
 #include <structmember.h>
 
@@ -108,43 +109,43 @@ typedef struct {
 
 /* Tokenizer function prototypes: */
 
-static PyObject* Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds);
-static void Tokenizer_dealloc(Tokenizer* self);
-static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds);
-static int Tokenizer_set_context(Tokenizer* self, Py_ssize_t value);
-static int Tokenizer_set_textbuffer(Tokenizer* self, PyObject* value);
-static int Tokenizer_push(Tokenizer* self, Py_ssize_t context);
-static int Tokenizer_push_textbuffer(Tokenizer* self);
-static int Tokenizer_delete_top_of_stack(Tokenizer* self);
-static PyObject* Tokenizer_pop(Tokenizer* self);
-static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self);
-static void Tokenizer_fail_route(Tokenizer* self);
-static int Tokenizer_write(Tokenizer* self, PyObject* token);
-static int Tokenizer_write_first(Tokenizer* self, PyObject* token);
-static int Tokenizer_write_text(Tokenizer* self, PyObject* text);
-static int Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist);
-static int Tokenizer_write_text_then_stack(Tokenizer* self, PyObject* text);
-static PyObject* Tokenizer_read(Tokenizer* self, Py_ssize_t delta);
-static PyObject* Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta);
-static int Tokenizer_parse_template_or_argument(Tokenizer* self);
-static int Tokenizer_parse_template(Tokenizer* self);
-static int Tokenizer_parse_argument(Tokenizer* self);
-static int Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[]);
-static int Tokenizer_handle_template_param(Tokenizer* self);
-static int Tokenizer_handle_template_param_value(Tokenizer* self);
-static PyObject* Tokenizer_handle_template_end(Tokenizer* self);
-static int Tokenizer_handle_argument_separator(Tokenizer* self);
-static PyObject* Tokenizer_handle_argument_end(Tokenizer* self);
-static int Tokenizer_parse_wikilink(Tokenizer* self);
-static int Tokenizer_handle_wikilink_separator(Tokenizer* self);
-static PyObject* Tokenizer_handle_wikilink_end(Tokenizer* self);
-static int Tokenizer_parse_heading(Tokenizer* self);
-static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self);
-static int Tokenizer_really_parse_entity(Tokenizer* self);
-static int Tokenizer_parse_entity(Tokenizer* self);
-static int Tokenizer_parse_comment(Tokenizer* self);
-static PyObject* Tokenizer_parse(Tokenizer* self, Py_ssize_t context);
-static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject *args);
+static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
+static void Tokenizer_dealloc(Tokenizer*);
+static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
+static int Tokenizer_set_context(Tokenizer*, Py_ssize_t);
+static int Tokenizer_set_textbuffer(Tokenizer*, PyObject*);
+static int Tokenizer_push(Tokenizer*, Py_ssize_t);
+static int Tokenizer_push_textbuffer(Tokenizer*);
+static int Tokenizer_delete_top_of_stack(Tokenizer*);
+static PyObject* Tokenizer_pop(Tokenizer*);
+static PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
+static void Tokenizer_fail_route(Tokenizer*);
+static int Tokenizer_write(Tokenizer*, PyObject*);
+static int Tokenizer_write_first(Tokenizer*, PyObject*);
+static int Tokenizer_write_text(Tokenizer*, PyObject*);
+static int Tokenizer_write_all(Tokenizer*, PyObject*);
+static int Tokenizer_write_text_then_stack(Tokenizer*, PyObject*);
+static PyObject* Tokenizer_read(Tokenizer*, Py_ssize_t);
+static PyObject* Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
+static int Tokenizer_parse_template_or_argument(Tokenizer*);
+static int Tokenizer_parse_template(Tokenizer*);
+static int Tokenizer_parse_argument(Tokenizer*);
+static int Tokenizer_verify_safe(Tokenizer*, const char* []);
+static int Tokenizer_handle_template_param(Tokenizer*);
+static int Tokenizer_handle_template_param_value(Tokenizer*);
+static PyObject* Tokenizer_handle_template_end(Tokenizer*);
+static int Tokenizer_handle_argument_separator(Tokenizer*);
+static PyObject* Tokenizer_handle_argument_end(Tokenizer*);
+static int Tokenizer_parse_wikilink(Tokenizer*);
+static int Tokenizer_handle_wikilink_separator(Tokenizer*);
+static PyObject* Tokenizer_handle_wikilink_end(Tokenizer*);
+static int Tokenizer_parse_heading(Tokenizer*);
+static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
+static int Tokenizer_really_parse_entity(Tokenizer*);
+static int Tokenizer_parse_entity(Tokenizer*);
+static int Tokenizer_parse_comment(Tokenizer*);
+static PyObject* Tokenizer_parse(Tokenizer*, Py_ssize_t);
+static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 
 /* More structs for creating the Tokenizer type: */

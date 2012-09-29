@@ -26,25 +26,7 @@ SOFTWARE.
 static PyObject*
 Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
-    Tokenizer *self;
-
-    self = (Tokenizer*) type->tp_alloc(type, 0);
-    if (self != NULL) {
-
-        self->text = Py_None;
-        Py_INCREF(Py_None);
-
-        self->stacks = PyList_New(0);
-        if (!self->stacks) {
-            Py_DECREF(self);
-            return NULL;
-        }
-
-        self->head = 0;
-        self->length = 0;
-        self->global = 0;
-    }
-
+    Tokenizer* self = (Tokenizer*) type->tp_alloc(type, 0);
     return (PyObject*) self;
 }
 
@@ -63,6 +45,22 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
     static char* kwlist[] = {NULL};
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return -1;
+
+    self->text = Py_None;
+    self->topstack = Py_None;
+    Py_INCREF(Py_None);
+    Py_INCREF(Py_None);
+
+    self->stacks = PyList_New(0);
+    if (!self->stacks) {
+        Py_DECREF(self);
+        return -1;
+    }
+
+    self->head = 0;
+    self->length = 0;
+    self->global = 0;
+
     return 0;
 }
 
@@ -89,6 +87,7 @@ static int
 Tokenizer_push(Tokenizer* self, Py_ssize_t context)
 {
     PyObject* top = PyList_New(3);
+    if (!top) return -1;
     PyList_SET_ITEM(top, 0, PyList_New(0));
     PyList_SET_ITEM(top, 1, PyInt_FromSsize_t(context));
     PyList_SET_ITEM(top, 2, PyList_New(0));
@@ -1094,7 +1093,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         self->head++;
     }
 
-    Py_ssize_t current = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);       // FIXME
+    Py_ssize_t current = log2(Tokenizer_CONTEXT_VAL(self) / LC_HEADING_LEVEL_1) + 1;
     Py_ssize_t level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
 
     if (setjmp(exception_env) == BAD_ROUTE) {
@@ -1387,7 +1386,7 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
     Build a list of tokens from a string of wikicode and return it.
 */
 static PyObject*
-Tokenizer_tokenize(Tokenizer* self, PyObject *args)
+Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject* text;
 
@@ -1439,10 +1438,24 @@ init_tokenizer(void)
     NOARGS = PyTuple_New(0);
     NOKWARGS = PyDict_New();
 
+    char* name = "mwparserfromhell.parser";
     PyObject* globals = PyEval_GetGlobals();
     PyObject* locals = PyEval_GetLocals();
-    PyObject* fromlist = PyList_New(0);
+    PyObject* fromlist = PyList_New(1);
+    if (!fromlist) return;
+    PyObject* submodname = PyBytes_FromString("tokens");
+    if (!submodname) {
+        Py_DECREF(fromlist);
+        return;
+    }
+    PyList_SET_ITEM(fromlist, 0, submodname);
 
-    tokens = PyImport_ImportModuleLevel("tokens", globals, locals, fromlist, 1);
+    PyObject* tokmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
+    if (!tokmodule) {
+        return;
+    }
+
+    tokens = PyObject_GetAttrString(tokmodule, "tokens");
+    Py_DECREF(tokmodule);
 }
