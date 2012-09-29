@@ -30,12 +30,10 @@ SOFTWARE.
 #include <setjmp.h>
 #include <structmember.h>
 
-#define PU (Py_UNICODE*)
-
-static const Py_UNICODE* MARKERS[] = {
-    PU "{", PU "}", PU "[", PU "]", PU "<", PU ">", PU "|", PU "=", PU "&",
-    PU "#", PU "*", PU ";", PU ":", PU "/", PU "-", PU "!", PU "\n", PU ""};
-static const int NUM_MARKERS = 17;
+static const char* MARKERS[] = {
+    "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
+    "!", "\n", ""};
+static const int NUM_MARKERS = 18;
 
 static jmp_buf exception_env;
 static const int BAD_ROUTE = 1;

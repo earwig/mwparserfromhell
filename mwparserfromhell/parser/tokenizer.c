@@ -373,7 +373,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
     self->head += 2;
     unsigned int braces = 2, i;
 
-    while (Tokenizer_READ(self, 0) == PU "{") {
+    while (*Tokenizer_READ(self, 0) == *"{") {
         self->head++;
         braces++;
     }
@@ -965,7 +965,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     PyObject* text;
     int i;
 
-    while (Tokenizer_READ(self, 0) == PU "=") {
+    while (*Tokenizer_READ(self, 0) == *"=") {
         best++;
         self->head++;
     }
@@ -1088,7 +1088,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
     PyObject* text;
     int i;
 
-    while (Tokenizer_READ(self, 0) == PU "=") {
+    while (*Tokenizer_READ(self, 0) == *"=") {
         best++;
         self->head++;
     }
@@ -1268,7 +1268,7 @@ static PyObject*
 Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 {
     PyObject *this;
-    Py_UNICODE *this_data, *next, *next_next, *last;
+    Py_UNICODE this_data, next, next_next, last;
     Py_ssize_t this_context;
     Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
     int is_marker, i;
@@ -1277,11 +1277,11 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 
     while (1) {
         this = Tokenizer_read(self, 0);
-        this_data = PyUnicode_AS_UNICODE(this);
+        this_data = *PyUnicode_AS_UNICODE(this);
 
         is_marker = 0;
         for (i = 0; i < NUM_MARKERS; i++) {
-            if (MARKERS[i] == this_data) {
+            if (*MARKERS[i] == this_data) {
                 is_marker = 1;
                 break;
             }
@@ -1295,45 +1295,45 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
 
         this_context = Tokenizer_CONTEXT_VAL(self);
 
-        if (this == EMPTY) {
+        if (this_data == *"") {
             if (this_context & fail_contexts) {
                 Tokenizer_fail_route(self);
             }
             return Tokenizer_pop(self);
         }
 
-        next = Tokenizer_READ(self, 1);
+        next = *Tokenizer_READ(self, 1);
 
         if (this_context & LC_COMMENT) {
-            if (this_data == next && next == PU "-") {
-                if (Tokenizer_READ(self, 2) == PU ">") {
+            if (this_data == next && next == *"-") {
+                if (*Tokenizer_READ(self, 2) == *">") {
                     return Tokenizer_pop(self);
                 }
             }
             Tokenizer_write_text(self, this);
         }
-        else if (this_data == next && next == PU "{") {
+        else if (this_data == next && next == *"{") {
             Tokenizer_parse_template_or_argument(self);
         }
-        else if (this_data == PU "|" && this_context & LC_TEMPLATE) {
+        else if (this_data == *"|" && this_context & LC_TEMPLATE) {
             Tokenizer_handle_template_param(self);
         }
-        else if (this_data == PU "=" && this_context & LC_TEMPLATE_PARAM_KEY) {
+        else if (this_data == *"=" && this_context & LC_TEMPLATE_PARAM_KEY) {
             Tokenizer_handle_template_param_value(self);
         }
-        else if (this_data == next && next == PU "}" && this_context & LC_TEMPLATE) {
+        else if (this_data == next && next == *"}" && this_context & LC_TEMPLATE) {
             Tokenizer_handle_template_end(self);
         }
-        else if (this_data == PU "|" && this_context & LC_ARGUMENT_NAME) {
+        else if (this_data == *"|" && this_context & LC_ARGUMENT_NAME) {
             Tokenizer_handle_argument_separator(self);
         }
-        else if (this_data == next && next == PU "}" && this_context & LC_ARGUMENT) {
-            if (Tokenizer_READ(self, 2) == PU "}") {
+        else if (this_data == next && next == *"}" && this_context & LC_ARGUMENT) {
+            if (*Tokenizer_READ(self, 2) == *"}") {
                 return Tokenizer_handle_argument_end(self);
             }
             Tokenizer_write_text(self, this);
         }
-        else if (this_data == next && next == PU "[") {
+        else if (this_data == next && next == *"[") {
             if (!(this_context & LC_WIKILINK_TITLE)) {
                 Tokenizer_parse_wikilink(self);
             }
@@ -1341,33 +1341,33 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
                 Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == PU "|" && this_context & LC_WIKILINK_TITLE) {
+        else if (this_data == *"|" && this_context & LC_WIKILINK_TITLE) {
             Tokenizer_handle_wikilink_separator(self);
         }
-        else if (this_data == next && next == PU "]" && this_context & LC_WIKILINK) {
+        else if (this_data == next && next == *"]" && this_context & LC_WIKILINK) {
             return Tokenizer_handle_wikilink_end(self);
         }
-        else if (this_data == PU "=" && !(self->global & GL_HEADING)) {
-            last = PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
-            if (last == PU "\n" || last == PU "") {
+        else if (this_data == *"=" && !(self->global & GL_HEADING)) {
+            last = *PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
+            if (last == *"\n" || last == *"") {
                 Tokenizer_parse_heading(self);
             }
             else {
                 Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == PU "=" && this_context & LC_HEADING) {
+        else if (this_data == *"=" && this_context & LC_HEADING) {
             return (PyObject*) Tokenizer_handle_heading_end(self);
         }
-        else if (this_data == PU "\n" && this_context & LC_HEADING) {
+        else if (this_data == *"\n" && this_context & LC_HEADING) {
             Tokenizer_fail_route(self);
         }
-        else if (this_data == PU "&") {
+        else if (this_data == *"&") {
             Tokenizer_parse_entity(self);
         }
-        else if (this_data == PU "<" && next == PU "!") {
-            next_next = Tokenizer_READ(self, 2);
-            if (next_next == Tokenizer_READ(self, 3) && next_next == PU "-") {
+        else if (this_data == *"<" && next == *"!") {
+            next_next = *Tokenizer_READ(self, 2);
+            if (next_next == *Tokenizer_READ(self, 3) && next_next == *"-") {
                 Tokenizer_parse_comment(self);
             }
             else {
