@@ -40,7 +40,6 @@ static const int BAD_ROUTE = 1;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;
-static PyObject* NOKWARGS;
 static PyObject* tokens;
 
 
