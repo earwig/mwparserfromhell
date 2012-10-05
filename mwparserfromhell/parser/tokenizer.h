@@ -27,7 +27,6 @@ SOFTWARE.
 
 #include <Python.h>
 #include <math.h>
-#include <setjmp.h>
 #include <structmember.h>
 
 static const char* MARKERS[] = {
@@ -35,11 +34,9 @@ static const char* MARKERS[] = {
     "!", "\n", ""};
 static const int NUM_MARKERS = 18;
 
-static jmp_buf exception_env;
-static const int BAD_ROUTE = 1;
-
 static PyObject* EMPTY;
 static PyObject* NOARGS;
+static PyObject* BadRoute;
 static PyObject* tokens;
 
 
@@ -116,7 +113,7 @@ static int Tokenizer_push_textbuffer(Tokenizer*);
 static int Tokenizer_delete_top_of_stack(Tokenizer*);
 static PyObject* Tokenizer_pop(Tokenizer*);
 static PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
-static void Tokenizer_fail_route(Tokenizer*);
+static void* Tokenizer_fail_route(Tokenizer*);
 static int Tokenizer_write(Tokenizer*, PyObject*);
 static int Tokenizer_write_first(Tokenizer*, PyObject*);
 static int Tokenizer_write_text(Tokenizer*, PyObject*);
