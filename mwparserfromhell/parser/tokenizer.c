@@ -1273,7 +1273,8 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
     PyObject *this;
     Py_UNICODE this_data, next, next_next, last;
     Py_ssize_t this_context;
-    Py_ssize_t fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_HEADING | LC_COMMENT;
+    Py_ssize_t fail_contexts = (
+        LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT);
     int is_marker, i;
 
     Tokenizer_push(self, context);
