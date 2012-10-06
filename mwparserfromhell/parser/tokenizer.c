@@ -421,7 +421,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
                 RESET_ROUTE();
                 char bracestr[braces];
                 for (i = 0; i < braces; i++) bracestr[i] = *"{";
-                PyObject* text = PyUnicode_FromString(bracestr);
+                PyObject* text = PyUnicode_FromStringAndSize(bracestr, braces);
 
                 if (Tokenizer_write_text_then_stack(self, text)) {
                     Py_XDECREF(text);
@@ -977,7 +977,7 @@ Tokenizer_parse_heading(Tokenizer* self)
         self->head = reset + best - 1;
         char blocks[best];
         for (i = 0; i < best; i++) blocks[i] = *"=";
-        text = PyUnicode_FromString(blocks);
+        text = PyUnicode_FromStringAndSize(blocks, best);
         if (!text) return -1;
 
         if (Tokenizer_write_text_then_stack(self, text)) {
@@ -1035,7 +1035,7 @@ Tokenizer_parse_heading(Tokenizer* self)
         Py_ssize_t diff = best - heading->level;
         char diffblocks[diff];
         for (i = 0; i < diff; i++) diffblocks[i] = *"=";
-        PyObject* text = PyUnicode_FromString(diffblocks);
+        PyObject* text = PyUnicode_FromStringAndSize(diffblocks, diff);
         if (!text) {
             Py_DECREF(heading->title);
             free(heading);
@@ -1104,7 +1104,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
             Py_ssize_t diff = best - level;
             char diffblocks[diff];
             for (i = 0; i < diff; i++) diffblocks[i] = *"=";
-            text = PyUnicode_FromString(diffblocks);
+            text = PyUnicode_FromStringAndSize(diffblocks, diff);
             if (!text) return NULL;
 
             if (Tokenizer_write_text_then_stack(self, text)) {
@@ -1120,7 +1120,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
     else {
         char blocks[best];
         for (i = 0; i < best; i++) blocks[i] = *"=";
-        text = PyUnicode_FromString(blocks);
+        text = PyUnicode_FromStringAndSize(blocks, best);
         if (!text) {
             Py_DECREF(after->title);
             free(after);
