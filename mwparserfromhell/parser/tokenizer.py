@@ -432,6 +432,8 @@ class Tokenizer(object):
             if this is self.END:
                 fail = (contexts.TEMPLATE | contexts.ARGUMENT |
                         contexts.HEADING | contexts.COMMENT)
+                if self._context & contexts.TEMPLATE_PARAM_KEY:
+                    self._pop()
                 if self._context & fail:
                     self._fail_route()
                 return self._pop()

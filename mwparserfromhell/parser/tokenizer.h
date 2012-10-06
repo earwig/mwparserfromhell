@@ -34,9 +34,13 @@ static const char* MARKERS[] = {
     "!", "\n", ""};
 static const int NUM_MARKERS = 18;
 
+static int route_state = 0;
+#define BAD_ROUTE     (route_state)
+#define FAIL_ROUTE()  (route_state = 1)
+#define RESET_ROUTE() (route_state = 0)
+
 static PyObject* EMPTY;
 static PyObject* NOARGS;
-static PyObject* BadRoute;
 static PyObject* tokens;
 
 

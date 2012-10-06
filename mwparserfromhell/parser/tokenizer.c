@@ -213,7 +213,7 @@ Tokenizer_fail_route(Tokenizer* self)
 {
     PyObject* stack = Tokenizer_pop(self);
     Py_XDECREF(stack);
-    PyErr_SetNone(BadRoute);
+    FAIL_ROUTE();
     return NULL;
 }
 
@@ -382,7 +382,6 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
     while (braces) {
         if (braces == 1) {
             PyObject* text = PyUnicode_FromString("{");
-
             if (Tokenizer_write_text_then_stack(self, text)) {
                 Py_XDECREF(text);
                 return -1;
@@ -393,10 +392,11 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
         }
 
         if (braces == 2) {
-            if (Tokenizer_parse_template(self)) return -1;
+            if (Tokenizer_parse_template(self))
+                return -1;
 
-            if (PyErr_Occurred()) {
-                PyErr_Clear();
+            if (BAD_ROUTE) {
+                RESET_ROUTE();
                 PyObject* text = PyUnicode_FromString("{{");
                 if (Tokenizer_write_text_then_stack(self, text)) {
                     Py_XDECREF(text);
@@ -409,16 +409,16 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
             break;
         }
 
-        if (Tokenizer_parse_argument(self)) return -1;
-        braces -= 3;
+        if (Tokenizer_parse_argument(self))
+            return -1;
 
-        if (PyErr_Occurred()) {
-            PyErr_Clear();
-            if (Tokenizer_parse_template(self)) return -1;
-            braces -= 2;
+        if (BAD_ROUTE) {
+            RESET_ROUTE();
+            if (Tokenizer_parse_template(self))
+                return -1;
 
-            if (PyErr_Occurred()) {
-                PyErr_Clear();
+            if (BAD_ROUTE) {
+                RESET_ROUTE();
                 char bracestr[braces];
                 for (i = 0; i < braces; i++) bracestr[i] = *"{";
                 PyObject* text = PyUnicode_FromString(bracestr);
@@ -431,6 +431,12 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
                 Py_XDECREF(text);
                 return 0;
             }
+            else {
+                braces -= 2;
+            }
+        }
+        else {
+            braces -= 3;
         }
 
         if (braces) {
@@ -459,7 +465,7 @@ Tokenizer_parse_template(Tokenizer* self)
     Py_ssize_t reset = self->head;
 
     template = Tokenizer_parse(self, LC_TEMPLATE_NAME);
-    if (PyErr_Occurred()) {
+    if (BAD_ROUTE) {
         self->head = reset;
         return 0;
     }
@@ -515,7 +521,7 @@ Tokenizer_parse_argument(Tokenizer* self)
     Py_ssize_t reset = self->head;
 
     argument = Tokenizer_parse(self, LC_ARGUMENT_NAME);
-    if (PyErr_Occurred()) {
+    if (BAD_ROUTE) {
         self->head = reset;
         return 0;
     }
@@ -724,7 +730,7 @@ Tokenizer_handle_template_param_value(Tokenizer* self)
     if (Tokenizer_verify_safe(self, unsafes))
         return -1;
 
-    if (PyErr_Occurred()) {
+    if (BAD_ROUTE) {
         PyObject* stack = Tokenizer_pop(self);
         Py_XDECREF(stack);
         return 0;
@@ -847,8 +853,8 @@ Tokenizer_parse_wikilink(Tokenizer* self)
     PyObject *wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
     if (!wikilink) return -1;
 
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         PyObject* text = PyUnicode_FromString("[[");
         if (!text) return -1;
@@ -966,8 +972,8 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_ssize_t context = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);
     HeadingData* heading = (HeadingData*) Tokenizer_parse(self, context);
 
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset + best - 1;
         char blocks[best];
         for (i = 0; i < best; i++) blocks[i] = *"=";
@@ -1092,8 +1098,8 @@ Tokenizer_handle_heading_end(Tokenizer* self)
     Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
     HeadingData* after = (HeadingData*) Tokenizer_parse(self, context);
 
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
         if (level < best) {
             Py_ssize_t diff = best - level;
             char diffblocks[diff];
@@ -1174,8 +1180,8 @@ Tokenizer_parse_entity(Tokenizer* self)
     if (Tokenizer_really_parse_entity(self))
             return -1;
 
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         if (Tokenizer_write_text(self, Tokenizer_read(self, 0)))
             return -1;
@@ -1206,8 +1212,8 @@ Tokenizer_parse_comment(Tokenizer* self)
     PyObject *comment = Tokenizer_parse(self, LC_WIKILINK_TITLE);
     if (!comment) return -1;
 
-    if (PyErr_Occurred()) {
-        PyErr_Clear();
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         PyObject* text = PyUnicode_FromString("<!--");
         if (!text) return -1;
@@ -1293,6 +1299,10 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         this_context = Tokenizer_CONTEXT_VAL(self);
 
         if (this_data == *"") {
+            if (this_context & LC_TEMPLATE_PARAM_KEY) {
+                PyObject* trash = Tokenizer_pop(self);
+                Py_XDECREF(trash);
+            }
             if (this_context & fail_contexts) {
                 return Tokenizer_fail_route(self);
             }
@@ -1430,10 +1440,6 @@ init_tokenizer(void)
 
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
-
-    BadRoute = PyErr_NewException("_tokenizer.BadRoute", NULL, NULL);
-    Py_INCREF(BadRoute);
-    PyModule_AddObject(module, "BadRoute", BadRoute);
 
     EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
