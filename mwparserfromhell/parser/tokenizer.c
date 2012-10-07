@@ -654,10 +654,7 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
                 case 0:
                     break;
                 case 1:
-                    Py_DECREF(stripped);
-                    Py_DECREF(unsafe);
                     Tokenizer_fail_route(self);
-                    break;
                 case -1:
                     Py_DECREF(stripped);
                     Py_DECREF(unsafe);
@@ -682,6 +679,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
         const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
         if (Tokenizer_verify_safe(self, unsafes))
             return -1;
+        if (BAD_ROUTE) return -1;
         if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_NAME))
             return -1;
     }
@@ -727,13 +725,12 @@ static int
 Tokenizer_handle_template_param_value(Tokenizer* self)
 {
     const char* unsafes[] = {"\n", "{{", "}}", NULL};
-    if (Tokenizer_verify_safe(self, unsafes))
+    if (Tokenizer_verify_safe(self, unsafes)) {
+        if (BAD_ROUTE) {
+            PyObject* stack = Tokenizer_pop(self);
+            Py_XDECREF(stack);
+        }
         return -1;
-
-    if (BAD_ROUTE) {
-        PyObject* stack = Tokenizer_pop(self);
-        Py_XDECREF(stack);
-        return 0;
     }
 
     PyObject* stack = Tokenizer_pop_keeping_context(self);
@@ -1164,7 +1161,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
 static int
 Tokenizer_really_parse_entity(Tokenizer* self)
 {
-
+    return 0;
 }
 
 /*
@@ -1321,19 +1318,23 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
             Tokenizer_write_text(self, this);
         }
         else if (this_data == next && next == *"{") {
-            Tokenizer_parse_template_or_argument(self);
+            if (Tokenizer_parse_template_or_argument(self))
+                return NULL;
         }
         else if (this_data == *"|" && this_context & LC_TEMPLATE) {
-            Tokenizer_handle_template_param(self);
+            if (Tokenizer_handle_template_param(self))
+                return NULL;
         }
         else if (this_data == *"=" && this_context & LC_TEMPLATE_PARAM_KEY) {
-            Tokenizer_handle_template_param_value(self);
+            if (Tokenizer_handle_template_param_value(self))
+                return NULL;
         }
         else if (this_data == next && next == *"}" && this_context & LC_TEMPLATE) {
             return Tokenizer_handle_template_end(self);
         }
         else if (this_data == *"|" && this_context & LC_ARGUMENT_NAME) {
-            Tokenizer_handle_argument_separator(self);
+            if (Tokenizer_handle_argument_separator(self))
+                return NULL;
         }
         else if (this_data == next && next == *"}" && this_context & LC_ARGUMENT) {
             if (*Tokenizer_READ(self, 2) == *"}") {
@@ -1343,14 +1344,16 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         }
         else if (this_data == next && next == *"[") {
             if (!(this_context & LC_WIKILINK_TITLE)) {
-                Tokenizer_parse_wikilink(self);
+                if (Tokenizer_parse_wikilink(self))
+                    return NULL;
             }
             else {
                 Tokenizer_write_text(self, this);
             }
         }
         else if (this_data == *"|" && this_context & LC_WIKILINK_TITLE) {
-            Tokenizer_handle_wikilink_separator(self);
+            if (Tokenizer_handle_wikilink_separator(self))
+                return NULL;
         }
         else if (this_data == next && next == *"]" && this_context & LC_WIKILINK) {
             return Tokenizer_handle_wikilink_end(self);
@@ -1358,7 +1361,8 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
         else if (this_data == *"=" && !(self->global & GL_HEADING)) {
             last = *PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
             if (last == *"\n" || last == *"") {
-                Tokenizer_parse_heading(self);
+                if (Tokenizer_parse_heading(self))
+                    return NULL;
             }
             else {
                 Tokenizer_write_text(self, this);
@@ -1371,12 +1375,14 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
             return Tokenizer_fail_route(self);
         }
         else if (this_data == *"&") {
-            Tokenizer_parse_entity(self);
+            if (Tokenizer_parse_entity(self))
+                return NULL;
         }
         else if (this_data == *"<" && next == *"!") {
             next_next = *Tokenizer_READ(self, 2);
             if (next_next == *Tokenizer_READ(self, 3) && next_next == *"-") {
-                Tokenizer_parse_comment(self);
+                if (Tokenizer_parse_comment(self))
+                    return NULL;
             }
             else {
                 Tokenizer_write_text(self, this);
