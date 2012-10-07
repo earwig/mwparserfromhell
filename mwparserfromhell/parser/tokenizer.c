@@ -680,11 +680,13 @@ Tokenizer_handle_template_param(Tokenizer* self)
         if (Tokenizer_verify_safe(self, unsafes))
             return -1;
         if (BAD_ROUTE) return -1;
-        if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_NAME))
+        context ^= LC_TEMPLATE_NAME;
+        if (Tokenizer_set_context(self, context))
             return -1;
     }
     else if (context & LC_TEMPLATE_PARAM_VALUE) {
-        if (Tokenizer_set_context(self, context ^ LC_TEMPLATE_PARAM_VALUE))
+        context ^= LC_TEMPLATE_PARAM_VALUE;
+        if (Tokenizer_set_context(self, context))
             return -1;
     }
 
@@ -698,7 +700,8 @@ Tokenizer_handle_template_param(Tokenizer* self)
         Py_DECREF(stack);
     }
     else {
-        if (Tokenizer_set_context(self, context | LC_TEMPLATE_PARAM_KEY))
+        context |= LC_TEMPLATE_PARAM_KEY;
+        if (Tokenizer_set_context(self, context))
             return -1;
     }
 
@@ -714,7 +717,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
     }
     Py_DECREF(token);
 
-    Tokenizer_push(self, Tokenizer_CONTEXT_VAL(self));
+    Tokenizer_push(self, context);
     return 0;
 }
 
