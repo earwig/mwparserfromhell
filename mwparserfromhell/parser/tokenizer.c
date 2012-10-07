@@ -34,8 +34,14 @@ static void
 Tokenizer_dealloc(Tokenizer* self)
 {
     Py_XDECREF(self->text);
-    Py_XDECREF(self->stacks);
-    Py_XDECREF(self->topstack);
+    struct Stack *this = self->topstack, *next;
+    while (this) {
+        Py_DECREF(this->stack);
+        Py_DECREF(this->textbuffer);
+        next = this->next;
+        free(this);
+        this = next;
+    }
     self->ob_type->tp_free((PyObject*) self);
 }
 
@@ -47,57 +53,26 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
         return -1;
 
     self->text = Py_None;
-    self->topstack = Py_None;
     Py_INCREF(Py_None);
-    Py_INCREF(Py_None);
-
-    self->stacks = PyList_New(0);
-    if (!self->stacks) {
-        Py_DECREF(self);
-        return -1;
-    }
-
+    self->topstack = NULL;
     self->head = 0;
     self->length = 0;
     self->global = 0;
-
-    return 0;
-}
-
-static int
-Tokenizer_set_context(Tokenizer* self, Py_ssize_t value)
-{
-    if (PyList_SetItem(self->topstack, 1, PyInt_FromSsize_t(value)))
-        return -1;
-    return 0;
-}
-
-static int
-Tokenizer_set_textbuffer(Tokenizer* self, PyObject* value)
-{
-    if (PyList_SetItem(self->topstack, 2, value))
-        return -1;
     return 0;
 }
 
 /*
     Add a new token stack, context, and textbuffer to the list.
 */
-static int
-Tokenizer_push(Tokenizer* self, Py_ssize_t context)
+static void
+Tokenizer_push(Tokenizer* self, int context)
 {
-    PyObject* top = PyList_New(3);
-    if (!top) return -1;
-    PyList_SET_ITEM(top, 0, PyList_New(0));
-    PyList_SET_ITEM(top, 1, PyInt_FromSsize_t(context));
-    PyList_SET_ITEM(top, 2, PyList_New(0));
-
-    Py_XDECREF(self->topstack);
+    struct Stack* top = malloc(sizeof(struct Stack));
+    top->stack = PyList_New(0);
+    top->context = context;
+    top->textbuffer = PyList_New(0);
+    top->next = self->topstack;
     self->topstack = top;
-
-    if (PyList_Append(self->stacks, top))
-        return -1;
-    return 0;
 }
 
 /*
@@ -106,8 +81,8 @@ Tokenizer_push(Tokenizer* self, Py_ssize_t context)
 static int
 Tokenizer_push_textbuffer(Tokenizer* self)
 {
-    if (PyList_GET_SIZE(Tokenizer_TEXTBUFFER(self)) > 0) {
-        PyObject* text = PyUnicode_Join(EMPTY, Tokenizer_TEXTBUFFER(self));
+    if (PyList_GET_SIZE(self->topstack->textbuffer) > 0) {
+        PyObject* text = PyUnicode_Join(EMPTY, self->topstack->textbuffer);
         if (!text) return -1;
 
         PyObject* class = PyObject_GetAttrString(tokens, "Text");
@@ -129,37 +104,28 @@ Tokenizer_push_textbuffer(Tokenizer* self)
         Py_DECREF(kwargs);
         if (!token) return -1;
 
-        if (PyList_Append(Tokenizer_STACK(self), token)) {
+        if (PyList_Append(self->topstack->stack, token)) {
             Py_DECREF(token);
             return -1;
         }
 
         Py_DECREF(token);
 
-        if (Tokenizer_set_textbuffer(self, PyList_New(0)))
+        self->topstack->textbuffer = PyList_New(0);
+        if (!self->topstack->textbuffer)
             return -1;
     }
     return 0;
 }
 
-static int
+static void
 Tokenizer_delete_top_of_stack(Tokenizer* self)
 {
-    if (PySequence_DelItem(self->stacks, -1))
-        return -1;
-    Py_DECREF(self->topstack);
-
-    Py_ssize_t size = PyList_GET_SIZE(self->stacks);
-    if (size > 0) {
-        PyObject* top = PyList_GET_ITEM(self->stacks, size - 1);
-        self->topstack = top;
-        Py_INCREF(top);
-    }
-    else {
-        self->topstack = NULL;
-    }
-
-    return 0;
+    struct Stack* top = self->topstack;
+    Py_DECREF(top->stack);
+    Py_DECREF(top->textbuffer);
+    self->topstack = top->next;
+    free(top);
 }
 
 /*
@@ -171,12 +137,10 @@ Tokenizer_pop(Tokenizer* self)
     if (Tokenizer_push_textbuffer(self))
         return NULL;
 
-    PyObject* stack = Tokenizer_STACK(self);
+    PyObject* stack = self->topstack->stack;
     Py_INCREF(stack);
 
-    if (Tokenizer_delete_top_of_stack(self))
-        return NULL;
-
+    Tokenizer_delete_top_of_stack(self);
     return stack;
 }
 
@@ -190,17 +154,12 @@ Tokenizer_pop_keeping_context(Tokenizer* self)
     if (Tokenizer_push_textbuffer(self))
         return NULL;
 
-    PyObject* stack = Tokenizer_STACK(self);
-    PyObject* context = Tokenizer_CONTEXT(self);
+    PyObject* stack = self->topstack->stack;
     Py_INCREF(stack);
-    Py_INCREF(context);
+    int context = self->topstack->context;
 
-    if (Tokenizer_delete_top_of_stack(self))
-        return NULL;
-
-    if (PyList_SetItem(self->topstack, 1, context))
-        return NULL;
-
+    Tokenizer_delete_top_of_stack(self);
+    self->topstack->context = context;
     return stack;
 }
 
@@ -226,7 +185,7 @@ Tokenizer_write(Tokenizer* self, PyObject* token)
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    if (PyList_Append(Tokenizer_STACK(self), token))
+    if (PyList_Append(self->topstack->stack, token))
         return -1;
 
     return 0;
@@ -241,7 +200,7 @@ Tokenizer_write_first(Tokenizer* self, PyObject* token)
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    if (PyList_Insert(Tokenizer_STACK(self), 0, token))
+    if (PyList_Insert(self->topstack->stack, 0, token))
         return -1;
 
     return 0;
@@ -253,7 +212,7 @@ Tokenizer_write_first(Tokenizer* self, PyObject* token)
 static int
 Tokenizer_write_text(Tokenizer* self, PyObject* text)
 {
-    if (PyList_Append(Tokenizer_TEXTBUFFER(self), text))
+    if (PyList_Append(self->topstack->textbuffer, text))
         return -1;
 
     return 0;
@@ -302,7 +261,7 @@ Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    PyObject* stack = Tokenizer_STACK(self);
+    PyObject* stack = self->topstack->stack;
     Py_ssize_t size = PyList_GET_SIZE(stack);
 
     if (PyList_SetSlice(stack, size, size, tokenlist))
@@ -579,7 +538,7 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
     if (Tokenizer_push_textbuffer(self))
         return -1;
 
-    PyObject* stack = Tokenizer_STACK(self);
+    PyObject* stack = self->topstack->stack;
     if (stack) {
         PyObject* textlist = PyList_New(0);
         if (!textlist) return -1;
@@ -673,24 +632,18 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
 static int
 Tokenizer_handle_template_param(Tokenizer* self)
 {
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-
-    if (context & LC_TEMPLATE_NAME) {
+    if (self->topstack->context & LC_TEMPLATE_NAME) {
         const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
         if (Tokenizer_verify_safe(self, unsafes))
             return -1;
         if (BAD_ROUTE) return -1;
-        context ^= LC_TEMPLATE_NAME;
-        if (Tokenizer_set_context(self, context))
-            return -1;
+        self->topstack->context ^= LC_TEMPLATE_NAME;
     }
-    else if (context & LC_TEMPLATE_PARAM_VALUE) {
-        context ^= LC_TEMPLATE_PARAM_VALUE;
-        if (Tokenizer_set_context(self, context))
-            return -1;
+    else if (self->topstack->context & LC_TEMPLATE_PARAM_VALUE) {
+        self->topstack->context ^= LC_TEMPLATE_PARAM_VALUE;
     }
 
-    if (context & LC_TEMPLATE_PARAM_KEY) {
+    if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
         PyObject* stack = Tokenizer_pop_keeping_context(self);
         if (!stack) return -1;
         if (Tokenizer_write_all(self, stack)) {
@@ -700,9 +653,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
         Py_DECREF(stack);
     }
     else {
-        context |= LC_TEMPLATE_PARAM_KEY;
-        if (Tokenizer_set_context(self, context))
-            return -1;
+        self->topstack->context |= LC_TEMPLATE_PARAM_KEY;
     }
 
     PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
@@ -717,7 +668,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
     }
     Py_DECREF(token);
 
-    Tokenizer_push(self, context);
+    Tokenizer_push(self, self->topstack->context);
     return 0;
 }
 
@@ -744,11 +695,8 @@ Tokenizer_handle_template_param_value(Tokenizer* self)
     }
     Py_DECREF(stack);
 
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-    context ^= LC_TEMPLATE_PARAM_KEY;
-    context |= LC_TEMPLATE_PARAM_VALUE;
-    if (Tokenizer_set_context(self, context))
-        return -1;
+    self->topstack->context ^= LC_TEMPLATE_PARAM_KEY;
+    self->topstack->context |= LC_TEMPLATE_PARAM_VALUE;
 
     PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamEquals");
     if (!class) return -1;
@@ -771,14 +719,12 @@ static PyObject*
 Tokenizer_handle_template_end(Tokenizer* self)
 {
     PyObject* stack;
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-
-    if (context & LC_TEMPLATE_NAME) {
+    if (self->topstack->context & LC_TEMPLATE_NAME) {
         const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
         if (Tokenizer_verify_safe(self, unsafes))
             return NULL;
     }
-    else if (context & LC_TEMPLATE_PARAM_KEY) {
+    else if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
         stack = Tokenizer_pop_keeping_context(self);
         if (!stack) return NULL;
         if (Tokenizer_write_all(self, stack)) {
@@ -803,11 +749,8 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
     if (Tokenizer_verify_safe(self, unsafes))
         return -1;
 
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-    context ^= LC_ARGUMENT_NAME;
-    context |= LC_ARGUMENT_DEFAULT;
-    if (Tokenizer_set_context(self, context))
-        return -1;
+    self->topstack->context ^= LC_ARGUMENT_NAME;
+    self->topstack->context |= LC_ARGUMENT_DEFAULT;
 
     PyObject* class = PyObject_GetAttrString(tokens, "ArgumentSeparator");
     if (!class) return -1;
@@ -829,7 +772,7 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
-    if (Tokenizer_CONTEXT_VAL(self) & LC_ARGUMENT_NAME) {
+    if (self->topstack->context & LC_ARGUMENT_NAME) {
         const char* unsafes[] = {"\n", "{{", "}}", NULL};
         if (Tokenizer_verify_safe(self, unsafes))
             return NULL;
@@ -914,11 +857,8 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
     if (Tokenizer_verify_safe(self, unsafes))
         return -1;
 
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-    context ^= LC_WIKILINK_TITLE;
-    context |= LC_WIKILINK_TEXT;
-    if (Tokenizer_set_context(self, context))
-        return -1;
+    self->topstack->context ^= LC_WIKILINK_TITLE;
+    self->topstack->context |= LC_WIKILINK_TEXT;
 
     PyObject* class = PyObject_GetAttrString(tokens, "WikilinkSeparator");
     if (!class) return -1;
@@ -940,7 +880,7 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_wikilink_end(Tokenizer* self)
 {
-    if (Tokenizer_CONTEXT_VAL(self) & LC_WIKILINK_TITLE) {
+    if (self->topstack->context & LC_WIKILINK_TITLE) {
         const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
         if (Tokenizer_verify_safe(self, unsafes))
             return NULL;
@@ -960,7 +900,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     self->global |= GL_HEADING;
     Py_ssize_t reset = self->head;
     self->head += 1;
-    Py_ssize_t best = 1;
+    int best = 1;
     PyObject* text;
     int i;
 
@@ -969,7 +909,7 @@ Tokenizer_parse_heading(Tokenizer* self)
         self->head++;
     }
 
-    Py_ssize_t context = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);
+    int context = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);
     HeadingData* heading = (HeadingData*) Tokenizer_parse(self, context);
 
     if (BAD_ROUTE) {
@@ -1032,7 +972,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_DECREF(token);
 
     if (heading->level < best) {
-        Py_ssize_t diff = best - heading->level;
+        int diff = best - heading->level;
         char diffblocks[diff];
         for (i = 0; i < diff; i++) diffblocks[i] = *"=";
         PyObject* text = PyUnicode_FromStringAndSize(diffblocks, diff);
@@ -1092,16 +1032,14 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         self->head++;
     }
 
-    Py_ssize_t current = log2(Tokenizer_CONTEXT_VAL(self) / LC_HEADING_LEVEL_1) + 1;
-    Py_ssize_t level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
-
-    Py_ssize_t context = Tokenizer_CONTEXT_VAL(self);
-    HeadingData* after = (HeadingData*) Tokenizer_parse(self, context);
+    int current = log2(self->topstack->context / LC_HEADING_LEVEL_1) + 1;
+    int level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
+    HeadingData* after = (HeadingData*) Tokenizer_parse(self, self->topstack->context);
 
     if (BAD_ROUTE) {
         RESET_ROUTE();
         if (level < best) {
-            Py_ssize_t diff = best - level;
+            int diff = best - level;
             char diffblocks[diff];
             for (i = 0; i < diff; i++) diffblocks[i] = *"=";
             text = PyUnicode_FromStringAndSize(diffblocks, diff);
@@ -1174,8 +1112,7 @@ static int
 Tokenizer_parse_entity(Tokenizer* self)
 {
     Py_ssize_t reset = self->head;
-    if (Tokenizer_push(self, 0))
-        return -1;
+    Tokenizer_push(self, 0);
 
     if (Tokenizer_really_parse_entity(self))
             return -1;
@@ -1268,13 +1205,12 @@ Tokenizer_parse_comment(Tokenizer* self)
     Parse the wikicode string, using context for when to stop.
 */
 static PyObject*
-Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
+Tokenizer_parse(Tokenizer* self, int context)
 {
     PyObject *this;
     Py_UNICODE this_data, next, next_next, last;
-    Py_ssize_t this_context;
-    Py_ssize_t fail_contexts = (
-        LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT);
+    int this_context;
+    int fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT;
     int is_marker, i;
 
     Tokenizer_push(self, context);
@@ -1297,7 +1233,7 @@ Tokenizer_parse(Tokenizer* self, Py_ssize_t context)
             continue;
         }
 
-        this_context = Tokenizer_CONTEXT_VAL(self);
+        this_context = self->topstack->context;
 
         if (this_data == *"") {
             if (this_context & LC_TEMPLATE_PARAM_KEY) {

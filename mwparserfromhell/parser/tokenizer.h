@@ -46,40 +46,47 @@ static PyObject* tokens;
 
 /* Local contexts: */
 
-static const Py_ssize_t LC_TEMPLATE =             0x0007;
-static const Py_ssize_t LC_TEMPLATE_NAME =        0x0001;
-static const Py_ssize_t LC_TEMPLATE_PARAM_KEY =   0x0002;
-static const Py_ssize_t LC_TEMPLATE_PARAM_VALUE = 0x0004;
+static const int LC_TEMPLATE =             0x0007;
+static const int LC_TEMPLATE_NAME =        0x0001;
+static const int LC_TEMPLATE_PARAM_KEY =   0x0002;
+static const int LC_TEMPLATE_PARAM_VALUE = 0x0004;
 
-static const Py_ssize_t LC_ARGUMENT =             0x0018;
-static const Py_ssize_t LC_ARGUMENT_NAME =        0x0008;
-static const Py_ssize_t LC_ARGUMENT_DEFAULT =     0x0010;
+static const int LC_ARGUMENT =             0x0018;
+static const int LC_ARGUMENT_NAME =        0x0008;
+static const int LC_ARGUMENT_DEFAULT =     0x0010;
 
-static const Py_ssize_t LC_WIKILINK =             0x0060;
-static const Py_ssize_t LC_WIKILINK_TITLE =       0x0020;
-static const Py_ssize_t LC_WIKILINK_TEXT =        0x0040;
+static const int LC_WIKILINK =             0x0060;
+static const int LC_WIKILINK_TITLE =       0x0020;
+static const int LC_WIKILINK_TEXT =        0x0040;
 
-static const Py_ssize_t LC_HEADING =              0x1f80;
-static const Py_ssize_t LC_HEADING_LEVEL_1 =      0x0080;
-static const Py_ssize_t LC_HEADING_LEVEL_2 =      0x0100;
-static const Py_ssize_t LC_HEADING_LEVEL_3 =      0x0200;
-static const Py_ssize_t LC_HEADING_LEVEL_4 =      0x0400;
-static const Py_ssize_t LC_HEADING_LEVEL_5 =      0x0800;
-static const Py_ssize_t LC_HEADING_LEVEL_6 =      0x1000;
+static const int LC_HEADING =              0x1f80;
+static const int LC_HEADING_LEVEL_1 =      0x0080;
+static const int LC_HEADING_LEVEL_2 =      0x0100;
+static const int LC_HEADING_LEVEL_3 =      0x0200;
+static const int LC_HEADING_LEVEL_4 =      0x0400;
+static const int LC_HEADING_LEVEL_5 =      0x0800;
+static const int LC_HEADING_LEVEL_6 =      0x1000;
 
-static const Py_ssize_t LC_COMMENT =              0x2000;
+static const int LC_COMMENT =              0x2000;
 
 
 /* Global contexts: */
 
-static const Py_ssize_t GL_HEADING = 0x1;
+static const int GL_HEADING = 0x1;
 
 
 /* Miscellaneous structs: */
 
+struct Stack {
+    PyObject* stack;
+    int context;
+    PyObject* textbuffer;
+    struct Stack* next;
+};
+
 typedef struct {
     PyObject* title;
-    Py_ssize_t level;
+    int level;
 } HeadingData;
 
 
@@ -87,22 +94,17 @@ typedef struct {
 
 typedef struct {
     PyObject_HEAD
-    PyObject* text;        /* text to tokenize */
-    PyObject* stacks;      /* token stacks */
-    PyObject* topstack;    /* topmost stack */
-    Py_ssize_t head;       /* current position in text */
-    Py_ssize_t length;     /* length of text */
-    Py_ssize_t global;     /* global context */
+    PyObject* text;         /* text to tokenize */
+    struct Stack* topstack; /* topmost stack */
+    Py_ssize_t head;        /* current position in text */
+    Py_ssize_t length;      /* length of text */
+    int global;             /* global context */
 } Tokenizer;
 
 
 /* Macros for accessing Tokenizer data: */
 
-#define Tokenizer_STACK(self) PySequence_Fast_GET_ITEM(self->topstack, 0)
-#define Tokenizer_CONTEXT(self) PySequence_Fast_GET_ITEM(self->topstack, 1)
-#define Tokenizer_CONTEXT_VAL(self) PyInt_AsSsize_t(Tokenizer_CONTEXT(self))
-#define Tokenizer_TEXTBUFFER(self) PySequence_Fast_GET_ITEM(self->topstack, 2)
-#define Tokenizer_READ(self, num) PyUnicode_AS_UNICODE(Tokenizer_read(self, num))
+#define Tokenizer_READ(self, delta) PyUnicode_AS_UNICODE(Tokenizer_read(self, delta))
 
 
 /* Tokenizer function prototypes: */
@@ -110,11 +112,9 @@ typedef struct {
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static void Tokenizer_dealloc(Tokenizer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
-static int Tokenizer_set_context(Tokenizer*, Py_ssize_t);
-static int Tokenizer_set_textbuffer(Tokenizer*, PyObject*);
-static int Tokenizer_push(Tokenizer*, Py_ssize_t);
+static void Tokenizer_push(Tokenizer*, int);
 static int Tokenizer_push_textbuffer(Tokenizer*);
-static int Tokenizer_delete_top_of_stack(Tokenizer*);
+static void Tokenizer_delete_top_of_stack(Tokenizer*);
 static PyObject* Tokenizer_pop(Tokenizer*);
 static PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
 static void* Tokenizer_fail_route(Tokenizer*);
@@ -142,7 +142,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
 static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
-static PyObject* Tokenizer_parse(Tokenizer*, Py_ssize_t);
+static PyObject* Tokenizer_parse(Tokenizer*, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 
