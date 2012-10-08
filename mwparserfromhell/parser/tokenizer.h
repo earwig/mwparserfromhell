@@ -44,6 +44,43 @@ static PyObject* NOARGS;
 static PyObject* tokens;
 
 
+/* Tokens */
+
+static PyObject* Text;
+
+static PyObject* TemplateOpen;
+static PyObject* TemplateParamSeparator;
+static PyObject* TemplateParamEquals;
+static PyObject* TemplateClose;
+
+static PyObject* ArgumentOpen;
+static PyObject* ArgumentSeparator;
+static PyObject* ArgumentClose;
+
+static PyObject* WikilinkOpen;
+static PyObject* WikilinkSeparator;
+static PyObject* WikilinkClose;
+
+static PyObject* HTMLEntityStart;
+static PyObject* HTMLEntityNumeric;
+static PyObject* HTMLEntityHex;
+static PyObject* HTMLEntityEnd;
+static PyObject* HeadingStart;
+static PyObject* HeadingEnd;
+
+static PyObject* CommentStart;
+static PyObject* CommentEnd;
+
+static PyObject* TagOpenOpen;
+static PyObject* TagAttrStart;
+static PyObject* TagAttrEquals;
+static PyObject* TagAttrQuote;
+static PyObject* TagCloseOpen;
+static PyObject* TagCloseSelfclose;
+static PyObject* TagOpenClose;
+static PyObject* TagCloseClose;
+
+
 /* Local contexts: */
 
 static const int LC_TEMPLATE =             0x0007;

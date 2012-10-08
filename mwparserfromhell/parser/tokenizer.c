@@ -85,22 +85,15 @@ Tokenizer_push_textbuffer(Tokenizer* self)
         PyObject* text = PyUnicode_Join(EMPTY, self->topstack->textbuffer);
         if (!text) return -1;
 
-        PyObject* class = PyObject_GetAttrString(tokens, "Text");
-        if (!class) {
-            Py_DECREF(text);
-            return -1;
-        }
         PyObject* kwargs = PyDict_New();
         if (!kwargs) {
-            Py_DECREF(class);
             Py_DECREF(text);
             return -1;
         }
         PyDict_SetItemString(kwargs, "text", text);
         Py_DECREF(text);
 
-        PyObject* token = PyObject_Call(class, NOARGS, kwargs);
-        Py_DECREF(class);
+        PyObject* token = PyObject_Call(Text, NOARGS, kwargs);
         Py_DECREF(kwargs);
         if (!token) return -1;
 
@@ -226,36 +219,29 @@ Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
 {
     if (PyList_GET_SIZE(tokenlist) > 0) {
         PyObject* token = PyList_GET_ITEM(tokenlist, 0);
-        PyObject* class = PyObject_GetAttrString(tokens, "Text");
-        if (!class) return -1;
 
         PyObject* text;
-        switch (PyObject_IsInstance(token, class)) {
+        switch (PyObject_IsInstance(token, Text)) {
             case 0:
                 break;
             case 1:
                 text = PyObject_GetAttrString(token, "text");
                 if (!text) {
-                    Py_DECREF(class);
                     return -1;
                 }
                 if (PySequence_DelItem(tokenlist, 0)) {
                     Py_DECREF(text);
-                    Py_DECREF(class);
                     return -1;
                 }
                 if (Tokenizer_write_text(self, text)) {
                     Py_DECREF(text);
-                    Py_DECREF(class);
                     return -1;
                 }
                 Py_DECREF(text);
                 break;
             case -1:
-                Py_DECREF(class);
                 return -1;
         }
-        Py_DECREF(class);
     }
 
     if (Tokenizer_push_textbuffer(self))
@@ -420,7 +406,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
 static int
 Tokenizer_parse_template(Tokenizer* self)
 {
-    PyObject *template, *class, *token;
+    PyObject *template, *token;
     Py_ssize_t reset = self->head;
 
     template = Tokenizer_parse(self, LC_TEMPLATE_NAME);
@@ -430,13 +416,7 @@ Tokenizer_parse_template(Tokenizer* self)
     }
     if (!template) return -1;
 
-    class = PyObject_GetAttrString(tokens, "TemplateOpen");
-    if (!class) {
-        Py_DECREF(template);
-        return -1;
-    }
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(TemplateOpen, NULL);
     if (!token) {
         Py_DECREF(template);
         return -1;
@@ -455,10 +435,7 @@ Tokenizer_parse_template(Tokenizer* self)
     }
     Py_DECREF(template);
 
-    class = PyObject_GetAttrString(tokens, "TemplateClose");
-    if (!class) return -1;
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(TemplateClose, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -476,7 +453,7 @@ Tokenizer_parse_template(Tokenizer* self)
 static int
 Tokenizer_parse_argument(Tokenizer* self)
 {
-    PyObject *argument, *class, *token;
+    PyObject *argument, *token;
     Py_ssize_t reset = self->head;
 
     argument = Tokenizer_parse(self, LC_ARGUMENT_NAME);
@@ -486,13 +463,7 @@ Tokenizer_parse_argument(Tokenizer* self)
     }
     if (!argument) return -1;
 
-    class = PyObject_GetAttrString(tokens, "ArgumentOpen");
-    if (!class) {
-        Py_DECREF(argument);
-        return -1;
-    }
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(ArgumentOpen, NULL);
     if (!token) {
         Py_DECREF(argument);
         return -1;
@@ -511,10 +482,7 @@ Tokenizer_parse_argument(Tokenizer* self)
     }
     Py_DECREF(argument);
 
-    class = PyObject_GetAttrString(tokens, "ArgumentClose");
-    if (!class) return -1;
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(ArgumentClose, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -543,31 +511,23 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
         PyObject* textlist = PyList_New(0);
         if (!textlist) return -1;
 
-        PyObject* class = PyObject_GetAttrString(tokens, "Text");
-        if (!class) {
-            Py_DECREF(textlist);
-            return -1;
-        }
-
         int i;
         Py_ssize_t length = PyList_GET_SIZE(stack);
         PyObject *token, *textdata;
 
         for (i = 0; i < length; i++) {
             token = PyList_GET_ITEM(stack, i);
-            switch (PyObject_IsInstance(token, class)) {
+            switch (PyObject_IsInstance(token, Text)) {
                 case 0:
                     break;
                 case 1:
                     textdata = PyObject_GetAttrString(token, "text");
                     if (!textdata) {
                         Py_DECREF(textlist);
-                        Py_DECREF(class);
                         return -1;
                     }
                     if (PyList_Append(textlist, textdata)) {
                         Py_DECREF(textlist);
-                        Py_DECREF(class);
                         Py_DECREF(textdata);
                         return -1;
                     }
@@ -575,11 +535,9 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
                     break;
                 case -1:
                     Py_DECREF(textlist);
-                    Py_DECREF(class);
                     return -1;
             }
         }
-        Py_DECREF(class);
 
         PyObject* text = PyUnicode_Join(EMPTY, textlist);
         if (!text) {
@@ -656,10 +614,7 @@ Tokenizer_handle_template_param(Tokenizer* self)
         self->topstack->context |= LC_TEMPLATE_PARAM_KEY;
     }
 
-    PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
-    if (!class) return -1;
-    PyObject* token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    PyObject* token = PyObject_CallObject(TemplateParamSeparator, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -698,10 +653,7 @@ Tokenizer_handle_template_param_value(Tokenizer* self)
     self->topstack->context ^= LC_TEMPLATE_PARAM_KEY;
     self->topstack->context |= LC_TEMPLATE_PARAM_VALUE;
 
-    PyObject* class = PyObject_GetAttrString(tokens, "TemplateParamEquals");
-    if (!class) return -1;
-    PyObject* token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    PyObject* token = PyObject_CallObject(TemplateParamEquals, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -752,10 +704,7 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
     self->topstack->context ^= LC_ARGUMENT_NAME;
     self->topstack->context |= LC_ARGUMENT_DEFAULT;
 
-    PyObject* class = PyObject_GetAttrString(tokens, "ArgumentSeparator");
-    if (!class) return -1;
-    PyObject* token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    PyObject* token = PyObject_CallObject(ArgumentSeparator, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -792,7 +741,7 @@ Tokenizer_parse_wikilink(Tokenizer* self)
     self->head += 2;
     Py_ssize_t reset = self->head - 1;
 
-    PyObject *class, *token;
+    PyObject *token;
     PyObject *wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
     if (!wikilink) return -1;
 
@@ -808,13 +757,7 @@ Tokenizer_parse_wikilink(Tokenizer* self)
         return 0;
     }
 
-    class = PyObject_GetAttrString(tokens, "WikilinkOpen");
-    if (!class) {
-        Py_DECREF(wikilink);
-        return -1;
-    }
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(WikilinkOpen, NULL);
     if (!token) {
         Py_DECREF(wikilink);
         return -1;
@@ -833,10 +776,7 @@ Tokenizer_parse_wikilink(Tokenizer* self)
     }
     Py_DECREF(wikilink);
 
-    class = PyObject_GetAttrString(tokens, "WikilinkClose");
-    if (!class) return -1;
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(WikilinkClose, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -860,10 +800,7 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
     self->topstack->context ^= LC_WIKILINK_TITLE;
     self->topstack->context |= LC_WIKILINK_TEXT;
 
-    PyObject* class = PyObject_GetAttrString(tokens, "WikilinkSeparator");
-    if (!class) return -1;
-    PyObject* token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    PyObject* token = PyObject_CallObject(WikilinkSeparator, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -936,16 +873,8 @@ Tokenizer_parse_heading(Tokenizer* self)
         return -1;
     }
 
-    PyObject* class = PyObject_GetAttrString(tokens, "HeadingStart");
-    if (!class) {
-        Py_DECREF(level);
-        Py_DECREF(heading->title);
-        free(heading);
-        return -1;
-    }
     PyObject* kwargs = PyDict_New();
     if (!kwargs) {
-        Py_DECREF(class);
         Py_DECREF(level);
         Py_DECREF(heading->title);
         free(heading);
@@ -954,8 +883,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     PyDict_SetItemString(kwargs, "level", level);
     Py_DECREF(level);
 
-    PyObject* token = PyObject_Call(class, NOARGS, kwargs);
-    Py_DECREF(class);
+    PyObject* token = PyObject_Call(HeadingStart, NOARGS, kwargs);
     Py_DECREF(kwargs);
     if (!token) {
         Py_DECREF(heading->title);
@@ -999,10 +927,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_DECREF(heading->title);
     free(heading);
 
-    class = PyObject_GetAttrString(tokens, "HeadingEnd");
-    if (!class) return -1;
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(HeadingEnd, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -1145,7 +1070,7 @@ Tokenizer_parse_comment(Tokenizer* self)
     self->head += 4;
     Py_ssize_t reset = self->head - 1;
 
-    PyObject *class, *token;
+    PyObject *token;
     PyObject *comment = Tokenizer_parse(self, LC_WIKILINK_TITLE);
     if (!comment) return -1;
 
@@ -1161,13 +1086,7 @@ Tokenizer_parse_comment(Tokenizer* self)
         return 0;
     }
 
-    class = PyObject_GetAttrString(tokens, "CommentStart");
-    if (!class) {
-        Py_DECREF(comment);
-        return -1;
-    }
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(CommentStart, NULL);
     if (!token) {
         Py_DECREF(comment);
         return -1;
@@ -1186,10 +1105,7 @@ Tokenizer_parse_comment(Tokenizer* self)
     }
     Py_DECREF(comment);
 
-    class = PyObject_GetAttrString(tokens, "CommentEnd");
-    if (!class) return -1;
-    token = PyObject_CallObject(class, NULL);
-    Py_DECREF(class);
+    token = PyObject_CallObject(CommentEnd, NULL);
     if (!token) return -1;
 
     if (Tokenizer_write(self, token)) {
@@ -1410,4 +1326,39 @@ init_tokenizer(void)
 
     tokens = PyObject_GetAttrString(tokmodule, "tokens");
     Py_DECREF(tokmodule);
+
+    Text = PyObject_GetAttrString(tokens, "Text");
+
+    TemplateOpen = PyObject_GetAttrString(tokens, "TemplateOpen");
+    TemplateParamSeparator = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
+    TemplateParamEquals = PyObject_GetAttrString(tokens, "TemplateParamEquals");
+    TemplateClose = PyObject_GetAttrString(tokens, "TemplateClose");
+
+    ArgumentOpen = PyObject_GetAttrString(tokens, "ArgumentOpen");
+    ArgumentSeparator = PyObject_GetAttrString(tokens, "ArgumentSeparator");
+    ArgumentClose = PyObject_GetAttrString(tokens, "ArgumentClose");
+
+    WikilinkOpen = PyObject_GetAttrString(tokens, "WikilinkOpen");
+    WikilinkSeparator = PyObject_GetAttrString(tokens, "WikilinkSeparator");
+    WikilinkClose = PyObject_GetAttrString(tokens, "WikilinkClose");
+
+    HTMLEntityStart = PyObject_GetAttrString(tokens, "HTMLEntityStart");
+    HTMLEntityNumeric = PyObject_GetAttrString(tokens, "HTMLEntityNumeric");
+    HTMLEntityHex = PyObject_GetAttrString(tokens, "HTMLEntityHex");
+    HTMLEntityEnd = PyObject_GetAttrString(tokens, "HTMLEntityEnd");
+
+    HeadingStart = PyObject_GetAttrString(tokens, "HeadingStart");
+    HeadingEnd = PyObject_GetAttrString(tokens, "HeadingEnd");
+
+    CommentStart = PyObject_GetAttrString(tokens, "CommentStart");
+    CommentEnd = PyObject_GetAttrString(tokens, "CommentEnd");
+
+    TagOpenOpen = PyObject_GetAttrString(tokens, "TagOpenOpen");
+    TagAttrStart = PyObject_GetAttrString(tokens, "TagAttrStart");
+    TagAttrEquals = PyObject_GetAttrString(tokens, "TagAttrEquals");
+    TagAttrQuote = PyObject_GetAttrString(tokens, "TagAttrQuote");
+    TagCloseOpen = PyObject_GetAttrString(tokens, "TagCloseOpen");
+    TagCloseSelfclose = PyObject_GetAttrString(tokens, "TagCloseSelfclose");
+    TagOpenClose = PyObject_GetAttrString(tokens, "TagOpenClose");
+    TagCloseClose = PyObject_GetAttrString(tokens, "TagCloseClose");
 }
