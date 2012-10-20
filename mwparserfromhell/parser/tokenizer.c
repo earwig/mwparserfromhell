@@ -120,7 +120,17 @@ Tokenizer_push(Tokenizer* self, int context)
 static PyObject*
 Textbuffer_render(struct Textbuffer* self)
 {
-    return PyUnicode_FromUnicode(self->data, self->size);
+    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
+    PyObject *left, *concat;
+    while (self->next) {
+        self = self->next;
+        left = PyUnicode_FromUnicode(self->data, self->size);
+        concat = PyUnicode_Concat(left, result);
+        Py_DECREF(left);
+        Py_DECREF(result);
+        result = concat;
+    }
+    return result;
 }
 
 /*
@@ -155,6 +165,7 @@ Tokenizer_push_textbuffer(Tokenizer* self)
 
     Py_DECREF(token);
 
+    Textbuffer_dealloc(buffer);
     self->topstack->textbuffer = Textbuffer_new();
     if (!self->topstack->textbuffer) {
         return -1;
@@ -305,6 +316,7 @@ Tokenizer_write_all(Tokenizer* self, PyObject* tokenlist)
                 }
                 Py_DECREF(text);
 
+                Textbuffer_dealloc(buffer);
                 self->topstack->textbuffer = Textbuffer_new();
                 if (!self->topstack->textbuffer) {
                     return -1;
