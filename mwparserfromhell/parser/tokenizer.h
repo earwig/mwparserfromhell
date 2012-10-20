@@ -32,7 +32,9 @@ SOFTWARE.
 static const char* MARKERS[] = {
     "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
     "!", "\n", ""};
-static const int NUM_MARKERS = 18;
+
+#define NUM_MARKERS 18
+#define TEXTBUFFER_BLOCKSIZE 1024
 
 static int route_state = 0;
 #define BAD_ROUTE     (route_state)
@@ -83,41 +85,47 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-static const int LC_TEMPLATE =             0x0007;
-static const int LC_TEMPLATE_NAME =        0x0001;
-static const int LC_TEMPLATE_PARAM_KEY =   0x0002;
-static const int LC_TEMPLATE_PARAM_VALUE = 0x0004;
+#define LC_TEMPLATE             0x0007
+#define LC_TEMPLATE_NAME        0x0001
+#define LC_TEMPLATE_PARAM_KEY   0x0002
+#define LC_TEMPLATE_PARAM_VALUE 0x0004
 
-static const int LC_ARGUMENT =             0x0018;
-static const int LC_ARGUMENT_NAME =        0x0008;
-static const int LC_ARGUMENT_DEFAULT =     0x0010;
+#define LC_ARGUMENT             0x0018
+#define LC_ARGUMENT_NAME        0x0008
+#define LC_ARGUMENT_DEFAULT     0x0010
 
-static const int LC_WIKILINK =             0x0060;
-static const int LC_WIKILINK_TITLE =       0x0020;
-static const int LC_WIKILINK_TEXT =        0x0040;
+#define LC_WIKILINK             0x0060
+#define LC_WIKILINK_TITLE       0x0020
+#define LC_WIKILINK_TEXT        0x0040
 
-static const int LC_HEADING =              0x1f80;
-static const int LC_HEADING_LEVEL_1 =      0x0080;
-static const int LC_HEADING_LEVEL_2 =      0x0100;
-static const int LC_HEADING_LEVEL_3 =      0x0200;
-static const int LC_HEADING_LEVEL_4 =      0x0400;
-static const int LC_HEADING_LEVEL_5 =      0x0800;
-static const int LC_HEADING_LEVEL_6 =      0x1000;
+#define LC_HEADING              0x1f80
+#define LC_HEADING_LEVEL_1      0x0080
+#define LC_HEADING_LEVEL_2      0x0100
+#define LC_HEADING_LEVEL_3      0x0200
+#define LC_HEADING_LEVEL_4      0x0400
+#define LC_HEADING_LEVEL_5      0x0800
+#define LC_HEADING_LEVEL_6      0x1000
 
-static const int LC_COMMENT =              0x2000;
+#define LC_COMMENT              0x2000
 
 
 /* Global contexts: */
 
-static const int GL_HEADING = 0x1;
+#define GL_HEADING 0x1
 
 
 /* Miscellaneous structs: */
 
+struct Textbuffer {
+    Py_ssize_t size;
+    Py_UNICODE* data;
+    struct Textbuffer* next;
+};
+
 struct Stack {
     PyObject* stack;
     int context;
-    PyObject* textbuffer;
+    struct Textbuffer* textbuffer;
     struct Stack* next;
 };
 
@@ -144,12 +152,15 @@ typedef struct {
 #define Tokenizer_READ(self, delta) PyUnicode_AS_UNICODE(Tokenizer_read(self, delta))
 
 
-/* Tokenizer function prototypes: */
+/* Function prototypes: */
 
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
+static struct Textbuffer* Textbuffer_new(void);
 static void Tokenizer_dealloc(Tokenizer*);
+static void Textbuffer_dealloc(struct Textbuffer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
-static void Tokenizer_push(Tokenizer*, int);
+static int Tokenizer_push(Tokenizer*, int);
+static PyObject* Textbuffer_render(struct Textbuffer*);
 static int Tokenizer_push_textbuffer(Tokenizer*);
 static void Tokenizer_delete_top_of_stack(Tokenizer*);
 static PyObject* Tokenizer_pop(Tokenizer*);
@@ -157,9 +168,9 @@ static PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
 static void* Tokenizer_fail_route(Tokenizer*);
 static int Tokenizer_write(Tokenizer*, PyObject*);
 static int Tokenizer_write_first(Tokenizer*, PyObject*);
-static int Tokenizer_write_text(Tokenizer*, PyObject*);
+static int Tokenizer_write_text(Tokenizer*, Py_UNICODE);
 static int Tokenizer_write_all(Tokenizer*, PyObject*);
-static int Tokenizer_write_text_then_stack(Tokenizer*, PyObject*);
+static int Tokenizer_write_text_then_stack(Tokenizer*, const char*);
 static PyObject* Tokenizer_read(Tokenizer*, Py_ssize_t);
 static PyObject* Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
 static int Tokenizer_parse_template_or_argument(Tokenizer*);
