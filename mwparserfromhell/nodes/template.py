@@ -249,11 +249,11 @@ class Template(Node):
         if not force_nonconformity:
             before_n, after_n = self._get_spacing_conventions(use_names=True)
             if before_n and after_n:
-                name = parse_anything([before_n, value, after_n])
+                name = parse_anything([before_n, name, after_n])
             elif before_n:
-                name = parse_anything([before_n, value])
+                name = parse_anything([before_n, name])
             elif after_n:
-                name = parse_anything([value, after_n])
+                name = parse_anything([name, after_n])
 
             before_v, after_v = self._get_spacing_conventions(use_names=False)
             if before_v and after_v:
