@@ -33,15 +33,15 @@ Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 static struct Textbuffer*
 Textbuffer_new(void)
 {
-    struct Textbuffer* buffer = malloc(sizeof(struct Textbuffer));
+    struct Textbuffer* buffer = PyObject_Malloc(sizeof(struct Textbuffer));
     if (!buffer) {
         PyErr_NoMemory();
         return NULL;
     }
     buffer->size = 0;
-    buffer->data = malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
+    buffer->data = PyObject_Malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
     if (!buffer->data) {
-        free(buffer);
+        PyObject_Free(buffer);
         PyErr_NoMemory();
         return NULL;
     }
@@ -58,7 +58,7 @@ Tokenizer_dealloc(Tokenizer* self)
         Py_DECREF(this->stack);
         Textbuffer_dealloc(this->textbuffer);
         next = this->next;
-        free(this);
+        PyObject_Free(this);
         this = next;
     }
     self->ob_type->tp_free((PyObject*) self);
@@ -69,9 +69,9 @@ Textbuffer_dealloc(struct Textbuffer* this)
 {
     struct Textbuffer* next;
     while (this) {
-        free(this->data);
+        PyObject_Free(this->data);
         next = this->next;
-        free(this);
+        PyObject_Free(this);
         this = next;
     }
 }
@@ -98,7 +98,7 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 static int
 Tokenizer_push(Tokenizer* self, int context)
 {
-    struct Stack* top = malloc(sizeof(struct Stack));
+    struct Stack* top = PyObject_Malloc(sizeof(struct Stack));
     if (!top) {
         PyErr_NoMemory();
         return -1;
@@ -180,7 +180,7 @@ Tokenizer_delete_top_of_stack(Tokenizer* self)
     Py_DECREF(top->stack);
     Textbuffer_dealloc(top->textbuffer);
     self->topstack = top->next;
-    free(top);
+    PyObject_Free(top);
 }
 
 /*
@@ -607,6 +607,7 @@ Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
                         Py_DECREF(textlist);
                         return -1;
                     }
+                    Py_DECREF(textdata);
                     if (PyList_Append(textlist, textdata)) {
                         Py_DECREF(textlist);
                         Py_DECREF(textdata);
@@ -943,7 +944,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     PyObject* level = PyInt_FromSsize_t(heading->level);
     if (!level) {
         Py_DECREF(heading->title);
-        free(heading);
+        PyObject_Free(heading);
         return -1;
     }
 
@@ -951,7 +952,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     if (!kwargs) {
         Py_DECREF(level);
         Py_DECREF(heading->title);
-        free(heading);
+        PyObject_Free(heading);
         return -1;
     }
     PyDict_SetItemString(kwargs, "level", level);
@@ -961,14 +962,14 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_DECREF(kwargs);
     if (!token) {
         Py_DECREF(heading->title);
-        free(heading);
+        PyObject_Free(heading);
         return -1;
     }
 
     if (Tokenizer_write(self, token)) {
         Py_DECREF(token);
         Py_DECREF(heading->title);
-        free(heading);
+        PyObject_Free(heading);
         return -1;
     }
     Py_DECREF(token);
@@ -980,18 +981,18 @@ Tokenizer_parse_heading(Tokenizer* self)
         difftext[diff] = *"";
         if (Tokenizer_write_text_then_stack(self, difftext)) {
             Py_DECREF(heading->title);
-            free(heading);
+            PyObject_Free(heading);
             return -1;
         }
     }
 
     if (Tokenizer_write_all(self, heading->title)) {
         Py_DECREF(heading->title);
-        free(heading);
+        PyObject_Free(heading);
         return -1;
     }
     Py_DECREF(heading->title);
-    free(heading);
+    PyObject_Free(heading);
 
     token = PyObject_CallObject(HeadingEnd, NULL);
     if (!token) return -1;
@@ -1045,23 +1046,23 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         text[best] = *"";
         if (Tokenizer_write_text_then_stack(self, text)) {
             Py_DECREF(after->title);
-            free(after);
+            PyObject_Free(after);
             return NULL;
         }
         if (Tokenizer_write_all(self, after->title)) {
             Py_DECREF(after->title);
-            free(after);
+            PyObject_Free(after);
             return NULL;
         }
         Py_DECREF(after->title);
         level = after->level;
-        free(after);
+        PyObject_Free(after);
     }
 
     PyObject* stack = Tokenizer_pop(self);
     if (!stack) return NULL;
 
-    HeadingData* heading = malloc(sizeof(HeadingData));
+    HeadingData* heading = PyObject_Malloc(sizeof(HeadingData));
     if (!heading) {
         PyErr_NoMemory();
         return NULL;
