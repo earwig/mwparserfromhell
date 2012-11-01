@@ -576,107 +576,12 @@ Tokenizer_parse_argument(Tokenizer* self)
 }
 
 /*
-    Verify that there are no unsafe characters in the current stack. The route
-    will be failed if the name contains any element of unsafes in it (not
-    merely at the beginning or end). This is used when parsing a template name
-    or parameter key, which cannot contain newlines.
-*/
-static int
-Tokenizer_verify_safe(Tokenizer* self, const char* unsafes[])
-{
-    if (Tokenizer_push_textbuffer(self))
-        return -1;
-
-    PyObject* stack = self->topstack->stack;
-    if (stack) {
-        PyObject* textlist = PyList_New(0);
-        if (!textlist) return -1;
-
-        int i;
-        Py_ssize_t length = PyList_GET_SIZE(stack);
-        PyObject *token, *textdata;
-
-        for (i = 0; i < length; i++) {
-            token = PyList_GET_ITEM(stack, i);
-            switch (PyObject_IsInstance(token, Text)) {
-                case 0:
-                    break;
-                case 1:
-                    textdata = PyObject_GetAttrString(token, "text");
-                    if (!textdata) {
-                        Py_DECREF(textlist);
-                        return -1;
-                    }
-                    Py_DECREF(textdata);
-                    if (PyList_Append(textlist, textdata)) {
-                        Py_DECREF(textlist);
-                        Py_DECREF(textdata);
-                        return -1;
-                    }
-                    Py_DECREF(textdata);
-                    break;
-                case -1:
-                    Py_DECREF(textlist);
-                    return -1;
-            }
-        }
-
-        PyObject* text = PyUnicode_Join(EMPTY, textlist);
-        if (!text) {
-            Py_DECREF(textlist);
-            return -1;
-        }
-        Py_DECREF(textlist);
-
-        PyObject* stripped = PyObject_CallMethod(text, "strip", NULL);
-        if (!stripped) {
-            Py_DECREF(text);
-            return -1;
-        }
-        Py_DECREF(text);
-
-        const char* unsafe_char;
-        PyObject* unsafe;
-        i = 0;
-        while (1) {
-            unsafe_char = unsafes[i];
-            if (!unsafe_char) break;
-
-            unsafe = PyUnicode_FromString(unsafe_char);
-
-            if (!unsafe) {
-                Py_DECREF(stripped);
-                return -1;
-            }
-
-            switch (PyUnicode_Contains(stripped, unsafe)) {
-                case 0:
-                    break;
-                case 1:
-                    Tokenizer_fail_route(self);
-                case -1:
-                    Py_DECREF(stripped);
-                    Py_DECREF(unsafe);
-                    return -1;
-            }
-            i++;
-        }
-    }
-
-    return 0;
-}
-
-/*
     Handle a template parameter at the head of the string.
 */
 static int
 Tokenizer_handle_template_param(Tokenizer* self)
 {
     if (self->topstack->context & LC_TEMPLATE_NAME) {
-        const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
-        if (Tokenizer_verify_safe(self, unsafes))
-            return -1;
-        if (BAD_ROUTE) return -1;
         self->topstack->context ^= LC_TEMPLATE_NAME;
     }
     else if (self->topstack->context & LC_TEMPLATE_PARAM_VALUE) {
@@ -716,15 +621,6 @@ Tokenizer_handle_template_param(Tokenizer* self)
 static int
 Tokenizer_handle_template_param_value(Tokenizer* self)
 {
-    const char* unsafes[] = {"\n", "{{", "}}", NULL};
-    if (Tokenizer_verify_safe(self, unsafes)) {
-        if (BAD_ROUTE) {
-            PyObject* stack = Tokenizer_pop(self);
-            Py_XDECREF(stack);
-        }
-        return -1;
-    }
-
     PyObject* stack = Tokenizer_pop_keeping_context(self);
     if (!stack) return -1;
     if (Tokenizer_write_all(self, stack)) {
@@ -754,12 +650,7 @@ static PyObject*
 Tokenizer_handle_template_end(Tokenizer* self)
 {
     PyObject* stack;
-    if (self->topstack->context & LC_TEMPLATE_NAME) {
-        const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
-        if (Tokenizer_verify_safe(self, unsafes))
-            return NULL;
-    }
-    else if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
+    if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
         stack = Tokenizer_pop_keeping_context(self);
         if (!stack) return NULL;
         if (Tokenizer_write_all(self, stack)) {
@@ -780,10 +671,6 @@ Tokenizer_handle_template_end(Tokenizer* self)
 static int
 Tokenizer_handle_argument_separator(Tokenizer* self)
 {
-    const char* unsafes[] = {"\n", "{{", "}}", NULL};
-    if (Tokenizer_verify_safe(self, unsafes))
-        return -1;
-
     self->topstack->context ^= LC_ARGUMENT_NAME;
     self->topstack->context |= LC_ARGUMENT_DEFAULT;
 
@@ -804,12 +691,6 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
-    if (self->topstack->context & LC_ARGUMENT_NAME) {
-        const char* unsafes[] = {"\n", "{{", "}}", NULL};
-        if (Tokenizer_verify_safe(self, unsafes))
-            return NULL;
-    }
-
     self->head += 2;
     PyObject* stack = Tokenizer_pop(self);
     return stack;
@@ -826,7 +707,6 @@ Tokenizer_parse_wikilink(Tokenizer* self)
 
     PyObject *token;
     PyObject *wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
-    if (!wikilink) return -1;
 
     if (BAD_ROUTE) {
         RESET_ROUTE();
@@ -838,6 +718,7 @@ Tokenizer_parse_wikilink(Tokenizer* self)
         }
         return 0;
     }
+    if (!wikilink) return -1;
 
     token = PyObject_CallObject(WikilinkOpen, NULL);
     if (!token) {
@@ -875,10 +756,6 @@ Tokenizer_parse_wikilink(Tokenizer* self)
 static int
 Tokenizer_handle_wikilink_separator(Tokenizer* self)
 {
-    const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
-    if (Tokenizer_verify_safe(self, unsafes))
-        return -1;
-
     self->topstack->context ^= LC_WIKILINK_TITLE;
     self->topstack->context |= LC_WIKILINK_TEXT;
 
@@ -899,12 +776,6 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_wikilink_end(Tokenizer* self)
 {
-    if (self->topstack->context & LC_WIKILINK_TITLE) {
-        const char* unsafes[] = {"\n", "{", "}", "[", "]", NULL};
-        if (Tokenizer_verify_safe(self, unsafes))
-            return NULL;
-    }
-
     self->head += 1;
     PyObject* stack = Tokenizer_pop(self);
     return stack;
@@ -1124,7 +995,6 @@ Tokenizer_parse_comment(Tokenizer* self)
 
     PyObject *token;
     PyObject *comment = Tokenizer_parse(self, LC_WIKILINK_TITLE);
-    if (!comment) return -1;
 
     if (BAD_ROUTE) {
         RESET_ROUTE();
@@ -1139,7 +1009,9 @@ Tokenizer_parse_comment(Tokenizer* self)
             }
             i++;
         }
+        return 0;
     }
+    if (!comment) return -1;
 
     token = PyObject_CallObject(CommentStart, NULL);
     if (!token) {
@@ -1173,16 +1045,74 @@ Tokenizer_parse_comment(Tokenizer* self)
 }
 
 /*
+    Make sure we are not trying to write an invalid character.
+*/
+static void
+Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
+{
+    if (context & LC_FAIL_NEXT) {
+        Tokenizer_fail_route(self);
+        return;
+    }
+
+    if (context & (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE)) {
+        if (data == *"{" || data == *"}" || data == *"[" || data == *"]") {
+            self->topstack->context |= LC_FAIL_NEXT;
+            return;
+        }
+    }
+    else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
+        if (context & LC_FAIL_ON_LBRACE) {
+            if (data == *"{") {
+                self->topstack->context |= LC_FAIL_NEXT;
+                return;
+            }
+            self->topstack->context ^= LC_FAIL_ON_LBRACE;
+        }
+        else if (context & LC_FAIL_ON_RBRACE) {
+            if (data == *"}") {
+                self->topstack->context |= LC_FAIL_NEXT;
+                return;
+            }
+            self->topstack->context ^= LC_FAIL_ON_RBRACE;
+        }
+        else if (data == *"{") {
+            self->topstack->context |= LC_FAIL_ON_LBRACE;
+        }
+        else if (data == *"}") {
+            self->topstack->context |= LC_FAIL_ON_RBRACE;
+        }
+    }
+
+    if (context & LC_HAS_TEXT) {
+        if (context & LC_FAIL_ON_TEXT) {
+            if (!Py_UNICODE_ISSPACE(data)) {
+                Tokenizer_fail_route(self);
+                return;
+            }
+        }
+        else {
+            if (data == *"\n") {
+                self->topstack->context |= LC_FAIL_ON_TEXT;
+            }
+        }
+    }
+    else if (!Py_UNICODE_ISSPACE(data)) {
+        self->topstack->context |= LC_HAS_TEXT;
+    }
+}
+
+/*
     Parse the wikicode string, using context for when to stop.
 */
 static PyObject*
 Tokenizer_parse(Tokenizer* self, int context)
 {
-    PyObject *this;
+    static int fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT;
+    static int unsafe_contexts = LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME;
+    int this_context, is_marker, i;
     Py_UNICODE this_data, next, next_next, last;
-    int this_context;
-    int fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT;
-    int is_marker, i;
+    PyObject *this;
 
     if (Tokenizer_push(self, context))
         return NULL;
@@ -1190,6 +1120,12 @@ Tokenizer_parse(Tokenizer* self, int context)
     while (1) {
         this = Tokenizer_read(self, 0);
         this_data = *PyUnicode_AS_UNICODE(this);
+        this_context = self->topstack->context;
+
+        if (this_context & unsafe_contexts) {
+            Tokenizer_verify_safe(self, this_context, this_data);
+            if (BAD_ROUTE) return NULL;
+        }
 
         is_marker = 0;
         for (i = 0; i < NUM_MARKERS; i++) {
@@ -1204,8 +1140,6 @@ Tokenizer_parse(Tokenizer* self, int context)
             self->head++;
             continue;
         }
-
-        this_context = self->topstack->context;
 
         if (this_data == *"") {
             if (this_context & LC_TEMPLATE_PARAM_KEY) {

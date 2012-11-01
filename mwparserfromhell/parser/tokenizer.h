@@ -98,7 +98,7 @@ static PyObject* TagCloseClose;
 #define LC_WIKILINK_TITLE       0x0020
 #define LC_WIKILINK_TEXT        0x0040
 
-#define LC_HEADING              0x1f80
+#define LC_HEADING              0x1F80
 #define LC_HEADING_LEVEL_1      0x0080
 #define LC_HEADING_LEVEL_2      0x0100
 #define LC_HEADING_LEVEL_3      0x0200
@@ -108,6 +108,11 @@ static PyObject* TagCloseClose;
 
 #define LC_COMMENT              0x2000
 
+#define LC_HAS_TEXT             0x010000
+#define LC_FAIL_ON_TEXT         0x020000
+#define LC_FAIL_NEXT            0x040000
+#define LC_FAIL_ON_LBRACE       0x080000
+#define LC_FAIL_ON_RBRACE       0x100000
 
 /* Global contexts: */
 
@@ -176,7 +181,6 @@ static PyObject* Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
 static int Tokenizer_parse_template_or_argument(Tokenizer*);
 static int Tokenizer_parse_template(Tokenizer*);
 static int Tokenizer_parse_argument(Tokenizer*);
-static int Tokenizer_verify_safe(Tokenizer*, const char* []);
 static int Tokenizer_handle_template_param(Tokenizer*);
 static int Tokenizer_handle_template_param_value(Tokenizer*);
 static PyObject* Tokenizer_handle_template_end(Tokenizer*);
@@ -190,6 +194,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
 static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
+static void Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
 static PyObject* Tokenizer_parse(Tokenizer*, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
