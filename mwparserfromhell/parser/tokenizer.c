@@ -1124,7 +1124,8 @@ Tokenizer_parse(Tokenizer* self, int context)
 
         if (this_context & unsafe_contexts) {
             Tokenizer_verify_safe(self, this_context, this_data);
-            if (BAD_ROUTE) return NULL;
+            if (BAD_ROUTE)
+                return NULL;
         }
 
         is_marker = 0;
@@ -1165,6 +1166,8 @@ Tokenizer_parse(Tokenizer* self, int context)
         else if (this_data == next && next == *"{") {
             if (Tokenizer_parse_template_or_argument(self))
                 return NULL;
+            if (self->topstack->context & LC_FAIL_NEXT)
+                self->topstack->context ^= LC_FAIL_NEXT;
         }
         else if (this_data == *"|" && this_context & LC_TEMPLATE) {
             if (Tokenizer_handle_template_param(self))
@@ -1191,6 +1194,8 @@ Tokenizer_parse(Tokenizer* self, int context)
             if (!(this_context & LC_WIKILINK_TITLE)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
+                if (self->topstack->context & LC_FAIL_NEXT)
+                    self->topstack->context ^= LC_FAIL_NEXT;
             }
             else {
                 Tokenizer_write_text(self, this_data);
