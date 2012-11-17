@@ -1421,7 +1421,9 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 PyMODINIT_FUNC
 init_tokenizer(void)
 {
-    PyObject* module;
+    PyObject *module, *tempmodule, *defmap, *deflist, *globals, *locals, *fromlist, *modname;
+    unsigned numdefs, i;
+    char* name;
 
     TokenizerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&TokenizerType) < 0)
@@ -1432,51 +1434,43 @@ init_tokenizer(void)
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
 
-    PyObject* htmlentitydefs = PyImport_ImportModule("htmlentitydefs");
-    if (!htmlentitydefs)
+    tempmodule = PyImport_ImportModule("htmlentitydefs");
+    if (!tempmodule)
         return;
-
-    PyObject* defmap = PyObject_GetAttrString(htmlentitydefs, "entitydefs");
+    defmap = PyObject_GetAttrString(tempmodule, "entitydefs");
     if (!defmap)
         return;
-    Py_DECREF(htmlentitydefs);
-
-    unsigned numdefs = (unsigned) PyDict_Size(defmap);
-    entitydefs = calloc(numdefs + 1, sizeof(char*));
-    PyObject* deflist = PyDict_Keys(defmap);
+    Py_DECREF(tempmodule);
+    deflist = PyDict_Keys(defmap);
     if (!deflist)
         return;
     Py_DECREF(defmap);
 
-    unsigned i;
-    for (i = 0; i < numdefs; i++) {
+    numdefs = (unsigned) PyList_GET_SIZE(defmap);
+    entitydefs = calloc(numdefs + 1, sizeof(char*));
+    for (i = 0; i < numdefs; i++)
         entitydefs[i] = PyString_AsString(PyList_GET_ITEM(deflist, i));
-    }
     Py_DECREF(deflist);
 
     EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
 
-    char* name = "mwparserfromhell.parser";
-    PyObject* globals = PyEval_GetGlobals();
-    PyObject* locals = PyEval_GetLocals();
-    PyObject* fromlist = PyList_New(1);
+    name = "mwparserfromhell.parser";
+    globals = PyEval_GetGlobals();
+    locals = PyEval_GetLocals();
+    fromlist = PyList_New(1);
     if (!fromlist)
         return;
-    PyObject* submodname = PyBytes_FromString("tokens");
-    if (!submodname) {
-        Py_DECREF(fromlist);
+    modname = PyBytes_FromString("tokens");
+    if (!modname)
         return;
-    }
-    PyList_SET_ITEM(fromlist, 0, submodname);
-
-    PyObject* tokmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
+    PyList_SET_ITEM(fromlist, 0, modname);
+    tempmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tokmodule)
+    if (!tempmodule)
         return;
-
-    tokens = PyObject_GetAttrString(tokmodule, "tokens");
-    Py_DECREF(tokmodule);
+    tokens = PyObject_GetAttrString(tempmodule, "tokens");
+    Py_DECREF(tempmodule);
 
     Text = PyObject_GetAttrString(tokens, "Text");
 
