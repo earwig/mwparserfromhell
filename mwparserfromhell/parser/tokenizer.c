@@ -1045,6 +1045,14 @@ Tokenizer_really_parse_entity(Tokenizer* self)
             if (this == *MARKERS[j])
                 FAIL_ROUTE_AND_EXIT()
         }
+        j = 0;
+        while (1) {
+            if (!valid[j])
+                FAIL_ROUTE_AND_EXIT()
+            if (this == valid[j])
+                break;
+            j++;
+        }
         text[i] = this;
         self->head++;
         i++;
