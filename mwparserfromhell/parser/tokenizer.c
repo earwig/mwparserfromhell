@@ -1452,7 +1452,7 @@ init_tokenizer(void)
     Py_DECREF(htmlentitydefs);
 
     unsigned numdefs = (unsigned) PyDict_Size(defmap);
-    entitydefs = malloc(numdefs * sizeof(char));
+    entitydefs = malloc(numdefs * sizeof(char*));
     PyObject* deflist = PyDict_Keys(defmap);
     if (!deflist) return;
     Py_DECREF(defmap);
