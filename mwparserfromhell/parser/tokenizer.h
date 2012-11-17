@@ -29,19 +29,23 @@ SOFTWARE.
 #include <math.h>
 #include <structmember.h>
 
+#define malloc PyObject_Malloc
+#define free   PyObject_Free
+
 static const char* MARKERS[] = {
     "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
     "!", "\n", ""};
 
 #define NUM_MARKERS 18
 #define TEXTBUFFER_BLOCKSIZE 1024
+#define MAX_ENTITY_SIZE 8
 
 static int route_state = 0;
 #define BAD_ROUTE     (route_state)
 #define FAIL_ROUTE()  (route_state = 1)
 #define RESET_ROUTE() (route_state = 0)
 
-static char* entitydefs[];
+static char** entitydefs;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;

@@ -33,15 +33,15 @@ Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 static struct Textbuffer*
 Textbuffer_new(void)
 {
-    struct Textbuffer* buffer = PyObject_Malloc(sizeof(struct Textbuffer));
+    struct Textbuffer* buffer = malloc(sizeof(struct Textbuffer));
     if (!buffer) {
         PyErr_NoMemory();
         return NULL;
     }
     buffer->size = 0;
-    buffer->data = PyObject_Malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
+    buffer->data = malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
     if (!buffer->data) {
-        PyObject_Free(buffer);
+        free(buffer);
         PyErr_NoMemory();
         return NULL;
     }
@@ -58,7 +58,7 @@ Tokenizer_dealloc(Tokenizer* self)
         Py_DECREF(this->stack);
         Textbuffer_dealloc(this->textbuffer);
         next = this->next;
-        PyObject_Free(this);
+        free(this);
         this = next;
     }
     self->ob_type->tp_free((PyObject*) self);
@@ -69,9 +69,9 @@ Textbuffer_dealloc(struct Textbuffer* this)
 {
     struct Textbuffer* next;
     while (this) {
-        PyObject_Free(this->data);
+        free(this->data);
         next = this->next;
-        PyObject_Free(this);
+        free(this);
         this = next;
     }
 }
@@ -98,7 +98,7 @@ Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 static int
 Tokenizer_push(Tokenizer* self, int context)
 {
-    struct Stack* top = PyObject_Malloc(sizeof(struct Stack));
+    struct Stack* top = malloc(sizeof(struct Stack));
     if (!top) {
         PyErr_NoMemory();
         return -1;
@@ -180,7 +180,7 @@ Tokenizer_delete_top_of_stack(Tokenizer* self)
     Py_DECREF(top->stack);
     Textbuffer_dealloc(top->textbuffer);
     self->topstack = top->next;
-    PyObject_Free(top);
+    free(top);
 }
 
 /*
@@ -815,7 +815,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     PyObject* level = PyInt_FromSsize_t(heading->level);
     if (!level) {
         Py_DECREF(heading->title);
-        PyObject_Free(heading);
+        free(heading);
         return -1;
     }
 
@@ -823,7 +823,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     if (!kwargs) {
         Py_DECREF(level);
         Py_DECREF(heading->title);
-        PyObject_Free(heading);
+        free(heading);
         return -1;
     }
     PyDict_SetItemString(kwargs, "level", level);
@@ -833,14 +833,14 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_DECREF(kwargs);
     if (!token) {
         Py_DECREF(heading->title);
-        PyObject_Free(heading);
+        free(heading);
         return -1;
     }
 
     if (Tokenizer_write(self, token)) {
         Py_DECREF(token);
         Py_DECREF(heading->title);
-        PyObject_Free(heading);
+        free(heading);
         return -1;
     }
     Py_DECREF(token);
@@ -852,18 +852,18 @@ Tokenizer_parse_heading(Tokenizer* self)
         difftext[diff] = *"";
         if (Tokenizer_write_text_then_stack(self, difftext)) {
             Py_DECREF(heading->title);
-            PyObject_Free(heading);
+            free(heading);
             return -1;
         }
     }
 
     if (Tokenizer_write_all(self, heading->title)) {
         Py_DECREF(heading->title);
-        PyObject_Free(heading);
+        free(heading);
         return -1;
     }
     Py_DECREF(heading->title);
-    PyObject_Free(heading);
+    free(heading);
 
     token = PyObject_CallObject(HeadingEnd, NULL);
     if (!token) return -1;
@@ -917,23 +917,23 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         text[best] = *"";
         if (Tokenizer_write_text_then_stack(self, text)) {
             Py_DECREF(after->title);
-            PyObject_Free(after);
+            free(after);
             return NULL;
         }
         if (Tokenizer_write_all(self, after->title)) {
             Py_DECREF(after->title);
-            PyObject_Free(after);
+            free(after);
             return NULL;
         }
         Py_DECREF(after->title);
         level = after->level;
-        PyObject_Free(after);
+        free(after);
     }
 
     PyObject* stack = Tokenizer_pop(self);
     if (!stack) return NULL;
 
-    HeadingData* heading = PyObject_Malloc(sizeof(HeadingData));
+    HeadingData* heading = malloc(sizeof(HeadingData));
     if (!heading) {
         PyErr_NoMemory();
         return NULL;
@@ -952,8 +952,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
     PyObject *token, *kwargs, *textobj;
     Py_UNICODE this;
     int numeric, hexadecimal, i, j, test;
-    char *valid, *def;
-    char text[];
+    char *valid, *text, *def;
 
     token = PyObject_CallObject(HTMLEntityStart, NULL);
     if (!token) return -1;
@@ -967,7 +966,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
 
     this = Tokenizer_READ(self, 0);
     if (this == *"") {
-        Tokenizer_fail_route();
+        Tokenizer_fail_route(self);
         return 0;
     }
     if (this == *"#") {
@@ -983,7 +982,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         self->head++;
         this = Tokenizer_READ(self, 0);
         if (this == *"") {
-            Tokenizer_fail_route();
+            Tokenizer_fail_route(self);
             return 0;
         }
         if (this == *"x" || this == *"X") {
@@ -1016,15 +1015,15 @@ Tokenizer_really_parse_entity(Tokenizer* self)
     else
         valid = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
 
-    text = PyObject_Malloc(8 * sizeof(char));  // Max theoretical size
+    text = malloc(MAX_ENTITY_SIZE * sizeof(char));
     if (!text) {
         PyErr_NoMemory();
         return -1;
     }
 
     #define FAIL_ROUTE_AND_EXIT() { \
-        Tokenizer_fail_route();     \
-        PyObject_Free(text);        \
+        Tokenizer_fail_route(self); \
+        free(text);                 \
         return 0;                   \
     }
 
@@ -1070,10 +1069,10 @@ Tokenizer_really_parse_entity(Tokenizer* self)
 
     textobj = PyUnicode_FromString(text);
     if (!textobj) {
-        PyObject_Free(text);
+        free(text);
         return -1;
     }
-    PyObject_Free(text);
+    free(text);
 
     kwargs = PyDict_New();
     if (!kwargs) {
@@ -1082,7 +1081,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
     }
     PyDict_SetItemString(kwargs, "text", textobj);
     Py_DECREF(textobj);
-    PyObject* token = PyObject_Call(Text, NOARGS, kwargs);
+    token = PyObject_Call(Text, NOARGS, kwargs);
     Py_DECREF(kwargs);
     if (!token) return -1;
     if (Tokenizer_write(self, token)) {
@@ -1098,6 +1097,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
+    return 0;
 }
 
 /*
@@ -1260,7 +1260,6 @@ Tokenizer_parse(Tokenizer* self, int context)
     static int unsafe_contexts = LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME;
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
-    PyObject *this;
 
     if (Tokenizer_push(self, context))
         return NULL;
@@ -1445,6 +1444,25 @@ init_tokenizer(void)
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
 
+    PyObject* htmlentitydefs = PyImport_ImportModule("htmlentitydefs");
+    if (!htmlentitydefs) return;
+
+    PyObject* defmap = PyObject_GetAttrString(htmlentitydefs, "entitydefs");
+    if (!defmap) return;
+    Py_DECREF(htmlentitydefs);
+
+    unsigned numdefs = (unsigned) PyDict_Size(defmap);
+    entitydefs = malloc(numdefs * sizeof(char));
+    PyObject* deflist = PyDict_Keys(defmap);
+    if (!deflist) return;
+    Py_DECREF(defmap);
+
+    unsigned i;
+    for (i = 0; i < numdefs; i++) {
+        entitydefs[i] = PyString_AsString(PyList_GET_ITEM(deflist, i));
+    }
+    Py_DECREF(deflist);
+
     EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
 
@@ -1462,9 +1480,7 @@ init_tokenizer(void)
 
     PyObject* tokmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tokmodule) {
-        return;
-    }
+    if (!tokmodule) return;
 
     tokens = PyObject_GetAttrString(tokmodule, "tokens");
     Py_DECREF(tokmodule);
