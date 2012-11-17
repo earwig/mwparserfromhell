@@ -41,6 +41,8 @@ static int route_state = 0;
 #define FAIL_ROUTE()  (route_state = 1)
 #define RESET_ROUTE() (route_state = 0)
 
+static char* entitydefs[];
+
 static PyObject* EMPTY;
 static PyObject* NOARGS;
 static PyObject* tokens;
@@ -85,34 +87,34 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x0007
-#define LC_TEMPLATE_NAME        0x0001
-#define LC_TEMPLATE_PARAM_KEY   0x0002
-#define LC_TEMPLATE_PARAM_VALUE 0x0004
+#define LC_TEMPLATE             0x00007
+#define LC_TEMPLATE_NAME        0x00001
+#define LC_TEMPLATE_PARAM_KEY   0x00002
+#define LC_TEMPLATE_PARAM_VALUE 0x00004
 
-#define LC_ARGUMENT             0x0018
-#define LC_ARGUMENT_NAME        0x0008
-#define LC_ARGUMENT_DEFAULT     0x0010
+#define LC_ARGUMENT             0x00018
+#define LC_ARGUMENT_NAME        0x00008
+#define LC_ARGUMENT_DEFAULT     0x00010
 
-#define LC_WIKILINK             0x0060
-#define LC_WIKILINK_TITLE       0x0020
-#define LC_WIKILINK_TEXT        0x0040
+#define LC_WIKILINK             0x00060
+#define LC_WIKILINK_TITLE       0x00020
+#define LC_WIKILINK_TEXT        0x00040
 
-#define LC_HEADING              0x1F80
-#define LC_HEADING_LEVEL_1      0x0080
-#define LC_HEADING_LEVEL_2      0x0100
-#define LC_HEADING_LEVEL_3      0x0200
-#define LC_HEADING_LEVEL_4      0x0400
-#define LC_HEADING_LEVEL_5      0x0800
-#define LC_HEADING_LEVEL_6      0x1000
+#define LC_HEADING              0x01F80
+#define LC_HEADING_LEVEL_1      0x00080
+#define LC_HEADING_LEVEL_2      0x00100
+#define LC_HEADING_LEVEL_3      0x00200
+#define LC_HEADING_LEVEL_4      0x00400
+#define LC_HEADING_LEVEL_5      0x00800
+#define LC_HEADING_LEVEL_6      0x01000
 
-#define LC_COMMENT              0x2000
+#define LC_COMMENT              0x02000
 
-#define LC_HAS_TEXT             0x010000
-#define LC_FAIL_ON_TEXT         0x020000
-#define LC_FAIL_NEXT            0x040000
-#define LC_FAIL_ON_LBRACE       0x080000
-#define LC_FAIL_ON_RBRACE       0x100000
+#define LC_HAS_TEXT             0x04000
+#define LC_FAIL_ON_TEXT         0x08000
+#define LC_FAIL_NEXT            0x10000
+#define LC_FAIL_ON_LBRACE       0x20000
+#define LC_FAIL_ON_RBRACE       0x40000
 
 /* Global contexts: */
 
@@ -154,7 +156,7 @@ typedef struct {
 
 /* Macros for accessing Tokenizer data: */
 
-#define Tokenizer_READ(self, delta) PyUnicode_AS_UNICODE(Tokenizer_read(self, delta))
+#define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
 
 
 /* Function prototypes: */

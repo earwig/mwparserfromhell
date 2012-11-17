@@ -409,7 +409,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
     self->head += 2;
     unsigned int braces = 2, i;
 
-    while (*Tokenizer_READ(self, 0) == *"{") {
+    while (Tokenizer_READ(self, 0) == *"{") {
         self->head++;
         braces++;
     }
@@ -792,7 +792,7 @@ Tokenizer_parse_heading(Tokenizer* self)
     self->head += 1;
     int best = 1, i;
 
-    while (*Tokenizer_READ(self, 0) == *"=") {
+    while (Tokenizer_READ(self, 0) == *"=") {
         best++;
         self->head++;
     }
@@ -889,7 +889,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
     Py_ssize_t best = 1;
     int i;
 
-    while (*Tokenizer_READ(self, 0) == *"=") {
+    while (Tokenizer_READ(self, 0) == *"=") {
         best++;
         self->head++;
     }
@@ -949,7 +949,155 @@ Tokenizer_handle_heading_end(Tokenizer* self)
 static int
 Tokenizer_really_parse_entity(Tokenizer* self)
 {
-    return 0;
+    PyObject *token, *kwargs, *textobj;
+    Py_UNICODE this;
+    int numeric, hexadecimal, i, j, test;
+    char *valid, *def;
+    char text[];
+
+    token = PyObject_CallObject(HTMLEntityStart, NULL);
+    if (!token) return -1;
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+
+    self->head++;
+
+    this = Tokenizer_READ(self, 0);
+    if (this == *"") {
+        Tokenizer_fail_route();
+        return 0;
+    }
+    if (this == *"#") {
+        numeric = 1;
+        token = PyObject_CallObject(HTMLEntityNumeric, NULL);
+        if (!token) return -1;
+        if (Tokenizer_write(self, token)) {
+            Py_DECREF(token);
+            return -1;
+        }
+        Py_DECREF(token);
+
+        self->head++;
+        this = Tokenizer_READ(self, 0);
+        if (this == *"") {
+            Tokenizer_fail_route();
+            return 0;
+        }
+        if (this == *"x" || this == *"X") {
+            hexadecimal = 1;
+            kwargs = PyDict_New();
+            if (!kwargs) return -1;
+            PyDict_SetItemString(kwargs, "char", Tokenizer_read(self, 0));
+            PyObject* token = PyObject_Call(HTMLEntityHex, NOARGS, kwargs);
+            Py_DECREF(kwargs);
+            if (!token) return -1;
+            if (Tokenizer_write(self, token)) {
+                Py_DECREF(token);
+                return -1;
+            }
+            Py_DECREF(token);
+            self->head++;
+        }
+        else {
+            hexadecimal = 0;
+        }
+    }
+    else {
+        numeric = hexadecimal = 0;
+    }
+
+    if (hexadecimal)
+        valid = "0123456789abcdefABCDEF";
+    else if (numeric)
+        valid = "0123456789";
+    else
+        valid = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+
+    text = PyObject_Malloc(8 * sizeof(char));  // Max theoretical size
+    if (!text) {
+        PyErr_NoMemory();
+        return -1;
+    }
+
+    #define FAIL_ROUTE_AND_EXIT() { \
+        Tokenizer_fail_route();     \
+        PyObject_Free(text);        \
+        return 0;                   \
+    }
+
+    i = 0;
+    while (1) {
+        this = Tokenizer_READ(self, 0);
+        if (this == *";") {
+            if (i == 0)
+                FAIL_ROUTE_AND_EXIT()
+            break;
+        }
+        if (i == 0 && this == *"0") {
+            self->head++;
+            continue;
+        }
+        if (i >= 8)
+            FAIL_ROUTE_AND_EXIT()
+        for (j = 0; j < NUM_MARKERS; j++) {
+            if (this == *MARKERS[j])
+                FAIL_ROUTE_AND_EXIT()
+        }
+        text[i] = this;
+        self->head++;
+        i++;
+    }
+
+    if (numeric) {
+        sscanf(text, (hexadecimal ? "%x" : "%d"), &test);
+        if (test < 1 || test > 0x10FFFF)
+            FAIL_ROUTE_AND_EXIT()
+    }
+    else {
+        i = 0;
+        while (1) {
+            def = entitydefs[i];
+            if (!def)  // We've reached the end of the def list without finding it
+                FAIL_ROUTE_AND_EXIT()
+            if (strcmp(text, def) == 0)
+                break;
+            i++;
+        }
+    }
+
+    textobj = PyUnicode_FromString(text);
+    if (!textobj) {
+        PyObject_Free(text);
+        return -1;
+    }
+    PyObject_Free(text);
+
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Py_DECREF(textobj);
+        return -1;
+    }
+    PyDict_SetItemString(kwargs, "text", textobj);
+    Py_DECREF(textobj);
+    PyObject* token = PyObject_Call(Text, NOARGS, kwargs);
+    Py_DECREF(kwargs);
+    if (!token) return -1;
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+
+    token = PyObject_CallObject(HTMLEntityEnd, NULL);
+    if (!token) return -1;
+    if (Tokenizer_write(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
 }
 
 /*
@@ -968,7 +1116,7 @@ Tokenizer_parse_entity(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
-        if (Tokenizer_write_text(self, *PyUnicode_AS_UNICODE(Tokenizer_read(self, 0))))
+        if (Tokenizer_write_text(self, *"&"))
             return -1;
         return 0;
     }
@@ -1111,38 +1259,37 @@ Tokenizer_parse(Tokenizer* self, int context)
     static int fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT;
     static int unsafe_contexts = LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME;
     int this_context, is_marker, i;
-    Py_UNICODE this_data, next, next_next, last;
+    Py_UNICODE this, next, next_next, last;
     PyObject *this;
 
     if (Tokenizer_push(self, context))
         return NULL;
 
     while (1) {
-        this = Tokenizer_read(self, 0);
-        this_data = *PyUnicode_AS_UNICODE(this);
+        this = Tokenizer_READ(self, 0);
         this_context = self->topstack->context;
 
         if (this_context & unsafe_contexts) {
-            Tokenizer_verify_safe(self, this_context, this_data);
+            Tokenizer_verify_safe(self, this_context, this);
             if (BAD_ROUTE)
                 return NULL;
         }
 
         is_marker = 0;
         for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == this_data) {
+            if (*MARKERS[i] == this) {
                 is_marker = 1;
                 break;
             }
         }
 
         if (!is_marker) {
-            Tokenizer_write_text(self, this_data);
+            Tokenizer_write_text(self, this);
             self->head++;
             continue;
         }
 
-        if (this_data == *"") {
+        if (this == *"") {
             if (this_context & LC_TEMPLATE_PARAM_KEY) {
                 PyObject* trash = Tokenizer_pop(self);
                 Py_XDECREF(trash);
@@ -1153,44 +1300,44 @@ Tokenizer_parse(Tokenizer* self, int context)
             return Tokenizer_pop(self);
         }
 
-        next = *Tokenizer_READ(self, 1);
+        next = Tokenizer_READ(self, 1);
 
         if (this_context & LC_COMMENT) {
-            if (this_data == next && next == *"-") {
-                if (*Tokenizer_READ(self, 2) == *">") {
+            if (this == next && next == *"-") {
+                if (Tokenizer_READ(self, 2) == *">") {
                     return Tokenizer_pop(self);
                 }
             }
-            Tokenizer_write_text(self, this_data);
+            Tokenizer_write_text(self, this);
         }
-        else if (this_data == next && next == *"{") {
+        else if (this == next && next == *"{") {
             if (Tokenizer_parse_template_or_argument(self))
                 return NULL;
             if (self->topstack->context & LC_FAIL_NEXT)
                 self->topstack->context ^= LC_FAIL_NEXT;
         }
-        else if (this_data == *"|" && this_context & LC_TEMPLATE) {
+        else if (this == *"|" && this_context & LC_TEMPLATE) {
             if (Tokenizer_handle_template_param(self))
                 return NULL;
         }
-        else if (this_data == *"=" && this_context & LC_TEMPLATE_PARAM_KEY) {
+        else if (this == *"=" && this_context & LC_TEMPLATE_PARAM_KEY) {
             if (Tokenizer_handle_template_param_value(self))
                 return NULL;
         }
-        else if (this_data == next && next == *"}" && this_context & LC_TEMPLATE) {
+        else if (this == next && next == *"}" && this_context & LC_TEMPLATE) {
             return Tokenizer_handle_template_end(self);
         }
-        else if (this_data == *"|" && this_context & LC_ARGUMENT_NAME) {
+        else if (this == *"|" && this_context & LC_ARGUMENT_NAME) {
             if (Tokenizer_handle_argument_separator(self))
                 return NULL;
         }
-        else if (this_data == next && next == *"}" && this_context & LC_ARGUMENT) {
-            if (*Tokenizer_READ(self, 2) == *"}") {
+        else if (this == next && next == *"}" && this_context & LC_ARGUMENT) {
+            if (Tokenizer_READ(self, 2) == *"}") {
                 return Tokenizer_handle_argument_end(self);
             }
-            Tokenizer_write_text(self, this_data);
+            Tokenizer_write_text(self, this);
         }
-        else if (this_data == next && next == *"[") {
+        else if (this == next && next == *"[") {
             if (!(this_context & LC_WIKILINK_TITLE)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
@@ -1198,48 +1345,48 @@ Tokenizer_parse(Tokenizer* self, int context)
                     self->topstack->context ^= LC_FAIL_NEXT;
             }
             else {
-                Tokenizer_write_text(self, this_data);
+                Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == *"|" && this_context & LC_WIKILINK_TITLE) {
+        else if (this == *"|" && this_context & LC_WIKILINK_TITLE) {
             if (Tokenizer_handle_wikilink_separator(self))
                 return NULL;
         }
-        else if (this_data == next && next == *"]" && this_context & LC_WIKILINK) {
+        else if (this == next && next == *"]" && this_context & LC_WIKILINK) {
             return Tokenizer_handle_wikilink_end(self);
         }
-        else if (this_data == *"=" && !(self->global & GL_HEADING)) {
+        else if (this == *"=" && !(self->global & GL_HEADING)) {
             last = *PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
             if (last == *"\n" || last == *"") {
                 if (Tokenizer_parse_heading(self))
                     return NULL;
             }
             else {
-                Tokenizer_write_text(self, this_data);
+                Tokenizer_write_text(self, this);
             }
         }
-        else if (this_data == *"=" && this_context & LC_HEADING) {
+        else if (this == *"=" && this_context & LC_HEADING) {
             return (PyObject*) Tokenizer_handle_heading_end(self);
         }
-        else if (this_data == *"\n" && this_context & LC_HEADING) {
+        else if (this == *"\n" && this_context & LC_HEADING) {
             return Tokenizer_fail_route(self);
         }
-        else if (this_data == *"&") {
+        else if (this == *"&") {
             if (Tokenizer_parse_entity(self))
                 return NULL;
         }
-        else if (this_data == *"<" && next == *"!") {
-            next_next = *Tokenizer_READ(self, 2);
-            if (next_next == *Tokenizer_READ(self, 3) && next_next == *"-") {
+        else if (this == *"<" && next == *"!") {
+            next_next = Tokenizer_READ(self, 2);
+            if (next_next == Tokenizer_READ(self, 3) && next_next == *"-") {
                 if (Tokenizer_parse_comment(self))
                     return NULL;
             }
             else {
-                Tokenizer_write_text(self, this_data);
+                Tokenizer_write_text(self, this);
             }
         }
         else {
-            Tokenizer_write_text(self, this_data);
+            Tokenizer_write_text(self, this);
         }
 
         self->head++;
