@@ -119,6 +119,7 @@ static PyObject* TagCloseClose;
 #define LC_FAIL_NEXT            0x10000
 #define LC_FAIL_ON_LBRACE       0x20000
 #define LC_FAIL_ON_RBRACE       0x40000
+#define LC_FAIL_ON_EQUALS       0x80000
 
 /* Global contexts: */
 

@@ -1153,18 +1153,30 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
             self->topstack->context |= LC_FAIL_NEXT;
             return;
         }
+        if (data == *"|") {
+            if (context & LC_FAIL_ON_TEXT) {
+                self->topstack->context ^= LC_FAIL_ON_TEXT;
+                return;
+            }
+        }
     }
     else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
-        if (context & LC_FAIL_ON_LBRACE) {
-            if (data == *"{") {
+        if (context & LC_FAIL_ON_EQUALS) {
+            if (data == *"=") {
                 self->topstack->context |= LC_FAIL_NEXT;
+                return;
+            }
+        }
+        else if (context & LC_FAIL_ON_LBRACE) {
+            if (data == *"{") {
+                self->topstack->context |= (context & LC_TEMPLATE) ? LC_FAIL_ON_EQUALS : LC_FAIL_NEXT;
                 return;
             }
             self->topstack->context ^= LC_FAIL_ON_LBRACE;
         }
         else if (context & LC_FAIL_ON_RBRACE) {
             if (data == *"}") {
-                self->topstack->context |= LC_FAIL_NEXT;
+                self->topstack->context |= (context & LC_TEMPLATE) ? LC_FAIL_ON_EQUALS : LC_FAIL_NEXT;
                 return;
             }
             self->topstack->context ^= LC_FAIL_ON_RBRACE;
