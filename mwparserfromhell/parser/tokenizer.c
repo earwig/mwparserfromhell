@@ -1394,7 +1394,7 @@ init_tokenizer(void)
     numdefs = (unsigned) PyList_GET_SIZE(defmap);
     entitydefs = calloc(numdefs + 1, sizeof(char*));
     for (i = 0; i < numdefs; i++)
-        entitydefs[i] = PyString_AsString(PyList_GET_ITEM(deflist, i));
+        entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
     Py_DECREF(deflist);
 
     EMPTY = PyUnicode_FromString("");

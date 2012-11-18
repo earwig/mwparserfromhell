@@ -28,8 +28,8 @@ from mwparserfromhell import __version__
 with open("README.rst") as fp:
     long_docs = fp.read()
 
-builder = Extension("mwparserfromhell.parser._builder",
-                    sources = ["mwparserfromhell/parser/builder.c"])
+# builder = Extension("mwparserfromhell.parser._builder",
+#                     sources = ["mwparserfromhell/parser/builder.c"])
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources = ["mwparserfromhell/parser/tokenizer.c"])
@@ -37,7 +37,7 @@ tokenizer = Extension("mwparserfromhell.parser._tokenizer",
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
-    ext_modules = [builder, tokenizer],
+    ext_modules = [tokenizer],
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",

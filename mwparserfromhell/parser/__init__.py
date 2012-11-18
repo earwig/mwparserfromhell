@@ -28,9 +28,11 @@ joins them together under one interface.
 
 try:
     from ._builder import CBuilder as Builder
-    from ._tokenizer import CTokenizer as Tokenizer
 except ImportError:
     from .builder import Builder
+try:
+    from ._tokenizer import CTokenizer as Tokenizer
+except ImportError:
     from .tokenizer import Tokenizer
 
 __all__ = ["Parser"]

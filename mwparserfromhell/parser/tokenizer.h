@@ -29,6 +29,10 @@ SOFTWARE.
 #include <math.h>
 #include <structmember.h>
 
+#if PY_MAJOR_VERSION >= 3
+#define IS_PY3K
+#endif
+
 #define malloc PyObject_Malloc
 #define free   PyObject_Free
 
