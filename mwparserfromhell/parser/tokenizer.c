@@ -965,7 +965,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         valid = "0123456789";
     else
         valid = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
-    text = malloc(MAX_ENTITY_SIZE * sizeof(char));
+    text = calloc(MAX_ENTITY_SIZE, sizeof(char));
     if (!text) {
         PyErr_NoMemory();
         return -1;
@@ -1091,7 +1091,7 @@ Tokenizer_parse_comment(Tokenizer* self)
     int i;
 
     self->head += 4;
-    comment = Tokenizer_parse(self, LC_WIKILINK_TITLE);
+    comment = Tokenizer_parse(self, LC_COMMENT);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
@@ -1351,7 +1351,7 @@ init_tokenizer(void)
 {
     PyObject *module, *tempmodule, *defmap, *deflist, *globals, *locals, *fromlist, *modname;
     unsigned numdefs, i;
-    char* name;
+    char *name;
 
     TokenizerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&TokenizerType) < 0)
