@@ -386,12 +386,12 @@ class Wikicode(StringMixIn):
         With *flat* as ``True``, each returned section contains all of its
         subsections within the :py:class:`~.Wikicode`; otherwise, the returned
         sections contain only the section up to the next heading, regardless of
-        its size. If *matches* is given, it should be a regex to matched
+        its size. If *matches* is given, it should be a regex to be matched
         against the titles of section headings; only sections whose headings
-        match the regex will be included. If *levels* is given, it should be a =
-        list of integers; only sections whose heading levels are within the
-        list will be returned. If *include_headings* is ``True``, the section's
-        literal :py:class:`~.Heading` object will be included in returned
+        match the regex will be included. If *levels* is given, it should be a
+        iterable of integers; only sections whose heading levels are within it
+        will be returned. If *include_headings* is ``True``, the section's
+        beginning :py:class:`~.Heading` object will be included in returned
         :py:class:`~.Wikicode` objects; otherwise, this is skipped.
         """
         if matches:
@@ -402,16 +402,16 @@ class Wikicode(StringMixIn):
             headings = [head for head in headings if head.level in levels]
 
         sections = []
-        buffers = [[maxsize, 0]]
+        buffers = [(maxsize, 0)]
         i = 0
         while i < len(self.nodes):
             if self.nodes[i] in headings:
                 this = self.nodes[i].level
                 for (level, start) in buffers:
                     if not flat or this <= level:
-                        buffers.remove([level, start])
+                        buffers.remove((level, start))
                         sections.append(Wikicode(self.nodes[start:i]))
-                buffers.append([this, i])
+                buffers.append((this, i))
                 if not include_headings:
                     i += 1
             i += 1
