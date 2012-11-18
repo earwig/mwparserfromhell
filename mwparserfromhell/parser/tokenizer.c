@@ -1169,14 +1169,20 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         }
         else if (context & LC_FAIL_ON_LBRACE) {
             if (data == *"{") {
-                self->topstack->context |= (context & LC_TEMPLATE) ? LC_FAIL_ON_EQUALS : LC_FAIL_NEXT;
+                if (context & LC_TEMPLATE)
+                    self->topstack->context |= LC_FAIL_ON_EQUALS;
+                else
+                    self->topstack->context |= LC_FAIL_NEXT;
                 return;
             }
             self->topstack->context ^= LC_FAIL_ON_LBRACE;
         }
         else if (context & LC_FAIL_ON_RBRACE) {
             if (data == *"}") {
-                self->topstack->context |= (context & LC_TEMPLATE) ? LC_FAIL_ON_EQUALS : LC_FAIL_NEXT;
+                if (context & LC_TEMPLATE)
+                    self->topstack->context |= LC_FAIL_ON_EQUALS;
+                else
+                    self->topstack->context |= LC_FAIL_NEXT;
                 return;
             }
             self->topstack->context ^= LC_FAIL_ON_RBRACE;
@@ -1208,8 +1214,10 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 static PyObject*
 Tokenizer_parse(Tokenizer* self, int context)
 {
-    static int fail_contexts = LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_COMMENT;
-    static int unsafe_contexts = LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME;
+    static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
+                                LC_HEADING | LC_COMMENT);
+    static int unsafe_contexts = (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE |
+                                  LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME);
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
 
