@@ -1163,7 +1163,7 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
     else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
         if (context & LC_FAIL_ON_EQUALS) {
             if (data == *"=") {
-                self->topstack->context |= LC_FAIL_NEXT;
+                Tokenizer_fail_route(self);
                 return;
             }
         }
@@ -1195,7 +1195,12 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
     if (context & LC_HAS_TEXT) {
         if (context & LC_FAIL_ON_TEXT) {
             if (!Py_UNICODE_ISSPACE(data)) {
-                Tokenizer_fail_route(self);
+                if (context & LC_TEMPLATE_PARAM_KEY) {
+                    self->topstack->context ^= LC_FAIL_ON_TEXT;
+                    self->topstack->context |= LC_FAIL_ON_EQUALS;
+                }
+                else
+                    Tokenizer_fail_route(self);
                 return;
             }
         }
@@ -1220,6 +1225,7 @@ Tokenizer_parse(Tokenizer* self, int context)
                                   LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME);
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
+    PyObject *trash;
 
     if (Tokenizer_push(self, context))
         return NULL;
@@ -1228,8 +1234,13 @@ Tokenizer_parse(Tokenizer* self, int context)
         this_context = self->topstack->context;
         if (this_context & unsafe_contexts) {
             Tokenizer_verify_safe(self, this_context, this);
-            if (BAD_ROUTE)
+            if (BAD_ROUTE) {
+                if (this_context & LC_TEMPLATE_PARAM_KEY) {
+                    trash = Tokenizer_pop(self);
+                    Py_XDECREF(trash);
+                }
                 return NULL;
+            }
         }
         is_marker = 0;
         for (i = 0; i < NUM_MARKERS; i++) {
@@ -1245,7 +1256,7 @@ Tokenizer_parse(Tokenizer* self, int context)
         }
         if (this == *"") {
             if (this_context & LC_TEMPLATE_PARAM_KEY) {
-                PyObject* trash = Tokenizer_pop(self);
+                trash = Tokenizer_pop(self);
                 Py_XDECREF(trash);
             }
             if (this_context & fail_contexts)
