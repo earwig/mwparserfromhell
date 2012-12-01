@@ -73,6 +73,42 @@ class Tag(Node):
     TAGS_INVISIBLE = set((TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE))
     TAGS_VISIBLE = set(range(300)) - TAGS_INVISIBLE
 
+    TRANSLATIONS = {
+        "i": TAG_ITALIC,
+        "em": TAG_ITALIC,
+        "b": TAG_BOLD,
+        "strong": TAG_BOLD,
+        "u": TAG_UNDERLINE,
+        "s": TAG_STRIKETHROUGH,
+        "ul": TAG_UNORDERED_LIST,
+        "ol": TAG_ORDERED_LIST,
+        "dt": TAG_DEF_TERM,
+        "dd": TAG_DEF_ITEM,
+        "blockquote": TAG_BLOCKQUOTE,
+        "hl": TAG_RULE,
+        "br": TAG_BREAK,
+        "abbr": TAG_ABBR,
+        "pre": TAG_PRE,
+        "tt": TAG_MONOSPACE,
+        "code": TAG_CODE,
+        "span": TAG_SPAN,
+        "div": TAG_DIV,
+        "font": TAG_FONT,
+        "small": TAG_SMALL,
+        "big": TAG_BIG,
+        "center": TAG_CENTER,
+        "ref": TAG_REF,
+        "gallery": TAG_GALLERY,
+        "math": TAG_MATH,
+        "nowiki": TAG_NOWIKI,
+        "noinclude": TAG_NOINCLUDE,
+        "includeonly": TAG_INCLUDEONLY,
+        "onlyinclude": TAG_ONLYINCLUDE,
+        "syntaxhighlight": TAG_SYNTAXHIGHLIGHT,
+        "source": TAG_SYNTAXHIGHLIGHT,
+        "poem": TAG_POEM,
+    }
+
     def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
                  self_closing=False, open_padding=0, close_padding=0):
         super(Tag, self).__init__()

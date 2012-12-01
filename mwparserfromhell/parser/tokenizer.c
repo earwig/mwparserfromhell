@@ -767,7 +767,6 @@ Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
-
     level = PyInt_FromSsize_t(heading->level);
     if (!level) {
         Py_DECREF(heading->title);

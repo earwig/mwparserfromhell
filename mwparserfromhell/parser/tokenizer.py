@@ -27,6 +27,7 @@ import string
 
 from . import contexts
 from . import tokens
+from ..nodes.tag import Tag
 from ..compat import htmlentities
 
 __all__ = ["Tokenizer"]
@@ -420,6 +421,57 @@ class Tokenizer(object):
             self._write(tokens.CommentEnd())
             self._head += 2
 
+    def _parse_tag(self):
+        """Parse an HTML tag at the head of the wikicode string."""
+        self._head += 1
+        reset = self._head
+        self._push()
+        try:
+            t_open, type_, self_close, o_pad = self._parse(contexts.TAG_OPEN)
+            if not self_close:
+                t_body = self._parse(contexts.TAG_BODY)
+                t_close, c_pad = self._parse(contexts.TAG_CLOSE)
+        except BadRoute:
+            self._head = reset
+            self._pop()
+            self._write_text("<")
+        else:
+            self._pop()
+            self._write(tokens.TagOpenOpen(type=type_, showtag=False))
+            self._write_all(t_open)
+            if self_close:
+                self._write(tokens.TagCloseSelfclose(padding=o_pad))
+            else:
+                self._write(tokens.TagCloseOpen(padding=o_pad))
+                self._write_all(t_body)
+                self._write(tokens.TagOpenClose())
+                self._write_all(t_close)
+                self._write(tokens.TagCloseClose(padding=c_pad))
+
+    def _handle_attribute(self):
+        if not self._context & contexts.TAG_ATTR:
+            ## check name is valid
+
+    def _handle_attribute_name(self):
+        ## check if next character is a ", if so, set TAG_ATTR_BODY_QUOTED
+        pass
+
+    def _handle_quoted_attribute_close(self):
+        pass
+
+    def _handle_tag_close_open(self):
+        pass  ## .padding
+
+    def _handle_tag_selfclose(self):
+        pass  ## .padding
+
+    def _handle_tag_close_open(self):
+        pass
+
+    def _handle_tag_close_close(self):
+        ## check that the closing name is the same as the opening name
+        pass  ## .padding
+
     def _parse(self, context=0):
         """Parse the wikicode string, using *context* for when to stop."""
         self._push(context)
@@ -432,7 +484,7 @@ class Tokenizer(object):
             if this is self.END:
                 fail = (contexts.TEMPLATE | contexts.ARGUMENT |
                         contexts.WIKILINK | contexts.HEADING |
-                        contexts.COMMENT)
+                        contexts.COMMENT | contexts.TAG)
                 if self._context & contexts.TEMPLATE_PARAM_KEY:
                     self._pop()
                 if self._context & fail:
@@ -484,6 +536,29 @@ class Tokenizer(object):
                     self._parse_comment()
                 else:
                     self._write_text(this)
+            elif this == "<" and not self._context & (contexts.TAG ^ contexts.TAG_BODY):
+                self._parse_tag()
+            elif this == " " and (self._context & contexts.TAG_OPEN and not
+                                  self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                self._handle_attribute()
+            elif this == "=" and self._context & contexts.TAG_ATTR_NAME:
+                self._handle_attribute_name()
+            elif this == '"' and self._context & contexts.TAG_ATTR_BODY_QUOTED:
+                self._handle_quoted_attribute_close()
+            elif this == "\n" and (self._context & contexts.TAG_OPEN and not
+                                  self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                self._fail_route()
+            elif this == ">" and (self._context & contexts.TAG_ATTR_OPEN and not
+                                  self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                return self._handle_tag_close_open()
+            elif this == "/" and next == ">" and (
+                            self._context & contexts.TAG_ATTR_OPEN and not
+                            self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                return self._handle_tag_selfclose()
+            elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
+                self._handle_tag_close_open()
+            elif this == ">" and self._context & contexts.TAG_CLOSE:
+                self._handle_tag_close_close()
             else:
                 self._write_text(this)
             self._head += 1
