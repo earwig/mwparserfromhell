@@ -56,8 +56,9 @@ class Wikicode(StringMixIn):
         This is implemented by the ``__iternodes__()`` generator of ``Node``
         classes, which by default yields itself and nothing more.
         """
-        for context, child in node.__iternodes__(self._get_all_nodes):
-            yield child
+        if node: #fixes bug on malformed wikitext from wikipedia dump
+            for context, child in node.__iternodes__(self._get_all_nodes):
+                yield child
 
     def _get_context(self, node, obj):
         """Return a ``Wikicode`` that contains *obj* in its descendants.
