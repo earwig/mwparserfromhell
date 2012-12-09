@@ -110,7 +110,7 @@ class Tag(Node):
     }
 
     def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
-                 self_closing=False, open_padding=0, close_padding=0):
+                 self_closing=False, open_padding="", close_padding=""):
         super(Tag, self).__init__()
         self._type = type_
         self._tag = tag
@@ -136,10 +136,10 @@ class Tag(Node):
         if self.attrs:
             result += " " + " ".join([str(attr) for attr in self.attrs])
         if self.self_closing:
-            result += " " * self.open_padding + "/>"
+            result += self.open_padding + "/>"
         else:
-            result += " " * self.open_padding + ">" + str(self.contents)
-            result += "</" + str(self.tag) + " " * self.close_padding + ">"
+            result += self.open_padding + ">" + str(self.contents)
+            result += "</" + str(self.tag) + self.close_padding + ">"
         return result
 
     def __iternodes__(self, getter):
@@ -232,17 +232,17 @@ class Tag(Node):
 
     @property
     def self_closing(self):
-        """Whether the tag is self-closing with no content."""
+        """Whether the tag is self-closing with no content (like ``<br/>``)."""
         return self._self_closing
 
     @property
     def open_padding(self):
-        """How much spacing to insert before the first closing >."""
+        """Spacing to insert before the first closing >."""
         return self._open_padding
 
     @property
     def close_padding(self):
-        """How much spacing to insert before the last closing >."""
+        """Spacing to insert before the last closing > (excl. self-closing)."""
         return self._close_padding
 
     @type.setter
@@ -270,8 +270,8 @@ class Tag(Node):
 
     @open_padding.setter
     def open_padding(self, value):
-        self._open_padding = int(value)
+        self._open_padding = str(value)
 
     @close_padding.setter
     def close_padding(self, value):
-        self._close_padding = int(value)
+        self._close_padding = str(value)

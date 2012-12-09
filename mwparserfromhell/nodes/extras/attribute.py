@@ -36,18 +36,20 @@ class Attribute(StringMixIn):
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quoted=True):
+    def __init__(self, name, value=None, quoted=True, padding=""):
         super(Attribute, self).__init__()
         self._name = name
         self._value = value
         self._quoted = quoted
+        self._padding = padding
 
     def __unicode__(self):
+        base = self.padding + str(self.name)
         if self.value:
             if self.quoted:
-                return str(self.name) + '="' + str(self.value) + '"'
-            return str(self.name) + "=" + str(self.value)
-        return str(self.name)
+                return base + '="' + str(self.value) + '"'
+            return base + "=" + str(self.value)
+        return base
 
     @property
     def name(self):
@@ -64,14 +66,23 @@ class Attribute(StringMixIn):
         """Whether the attribute's value is quoted with double quotes."""
         return self._quoted
 
+    @property
+    def padding(self):
+        """Spacing to insert right before the attribute."""
+        return self._padding
+
     @name.setter
-    def name(self, newval):
-        self._name = parse_anything(newval)
+    def name(self, value):
+        self._name = parse_anything(value)
 
     @value.setter
     def value(self, newval):
         self._value = parse_anything(newval)
 
     @quoted.setter
-    def quoted(self, newval):
-        self._quoted = bool(newval)
+    def quoted(self, value):
+        self._quoted = bool(value)
+
+    @padding.setter
+    def padding(self, value):
+        self._padding = str(value)
