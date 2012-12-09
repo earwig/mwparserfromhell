@@ -496,8 +496,7 @@ class Tokenizer(object):
             # Closing and opening tags are not the same, so fail this route:
             self._fail_route()
         self._write_all(closing)
-        padding = ""                                                                # TODO
-        self._write(tokens.TagCloseClose(padding=padding))
+        self._write(tokens.TagCloseClose())
         return self._pop()
 
     def _parse(self, context=0):
@@ -589,7 +588,8 @@ class Tokenizer(object):
                                 self._context & contexts.TAG_OPEN and not
                                 self._context & contexts.TAG_ATTR_BODY_QUOTED):
                 return self._handle_tag_selfclose()
-            elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
+            elif this == "<" and next == "/" and (
+                                        self._context & contexts.TAG_BODY):
                 self._handle_tag_open_close()
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()

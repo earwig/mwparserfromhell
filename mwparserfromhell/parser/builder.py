@@ -221,9 +221,8 @@ class Builder(object):
                 contents = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagCloseClose):
-                self._pop()
                 return Tag(type_, tag, contents, attrs, showtag, False,
-                           open_pad, token.padding)
+                           open_pad, self._pop())
             else:
                 self._write(self._handle_token(token))
 

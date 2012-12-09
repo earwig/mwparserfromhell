@@ -111,7 +111,7 @@ class Tag(Node):
     }
 
     def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
-                 self_closing=False, open_padding="", close_padding=""):
+                 self_closing=False, open_padding="", closing_tag=None):
         super(Tag, self).__init__()
         self._type = type_
         self._tag = tag
@@ -123,7 +123,10 @@ class Tag(Node):
         self._showtag = showtag
         self._self_closing = self_closing
         self._open_padding = open_padding
-        self._close_padding = close_padding
+        if closing_tag:
+            self._closing_tag = closing_tag
+        else:
+            self._closing_tag = tag
 
     def __unicode__(self):
         if not self.showtag:
@@ -140,7 +143,7 @@ class Tag(Node):
             result += self.open_padding + "/>"
         else:
             result += self.open_padding + ">" + str(self.contents)
-            result += "</" + str(self.tag) + self.close_padding + ">"
+            result += "</" + self.closing_tag + ">"
         return result
 
     def __iternodes__(self, getter):
@@ -242,9 +245,13 @@ class Tag(Node):
         return self._open_padding
 
     @property
-    def close_padding(self):
-        """Spacing to insert before the last closing > (excl. self-closing)."""
-        return self._close_padding
+    def closing_tag(self):
+        """The closing tag, as a :py:class:`~.Wikicode` object.
+
+        This will usually equal :py:attr:`tag`, unless there is additional
+        spacing, comments, or the like.
+        """
+        return self._closing_tag
 
     @type.setter
     def type(self, value):
@@ -254,11 +261,11 @@ class Tag(Node):
         self._type = value
         for key in self.TRANSLATIONS:
             if self.TRANSLATIONS[key] == value:
-                self._tag = parse_anything(key)
+                self._tag = self._closing_tag = parse_anything(key)
 
     @tag.setter
     def tag(self, value):
-        self._tag = parse_anything(value)
+        self._tag = self._closing_tag = parse_anything(value)
         try:
             self._type = self.TRANSLATIONS[text]
         except KeyError:
@@ -280,6 +287,6 @@ class Tag(Node):
     def open_padding(self, value):
         self._open_padding = str(value)
 
-    @close_padding.setter
-    def close_padding(self, value):
-        self._close_padding = str(value)
+    @closing_tag.setter
+    def closing_tag(self, value):
+        self._closing_tag = parse_anything(value)
