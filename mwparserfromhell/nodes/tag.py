@@ -24,91 +24,13 @@ from __future__ import unicode_literals
 
 from . import Node, Text
 from ..compat import str
+from ..tag_defs import TagDefinitions
 from ..utils import parse_anything
 
 __all__ = ["Tag"]
 
-class Tag(Node):
+class Tag(TagDefinitions, Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
-
-    TAG_UNKNOWN = 0
-
-    # Basic HTML:
-    TAG_ITALIC = 1
-    TAG_BOLD = 2
-    TAG_UNDERLINE = 3
-    TAG_STRIKETHROUGH = 4
-    TAG_UNORDERED_LIST = 5
-    TAG_ORDERED_LIST = 6
-    TAG_DEF_TERM = 7
-    TAG_DEF_ITEM = 8
-    TAG_BLOCKQUOTE = 9
-    TAG_RULE = 10
-    TAG_BREAK = 11
-    TAG_ABBR = 12
-    TAG_PRE = 13
-    TAG_MONOSPACE = 14
-    TAG_CODE = 15
-    TAG_SPAN = 16
-    TAG_DIV = 17
-    TAG_FONT = 18
-    TAG_SMALL = 19
-    TAG_BIG = 20
-    TAG_CENTER = 21
-
-    # MediaWiki parser hooks:
-    TAG_REF = 101
-    TAG_GALLERY = 102
-    TAG_MATH = 103
-    TAG_NOWIKI = 104
-    TAG_NOINCLUDE = 105
-    TAG_INCLUDEONLY = 106
-    TAG_ONLYINCLUDE = 107
-
-    # Additional parser hooks:
-    TAG_SYNTAXHIGHLIGHT = 201
-    TAG_POEM = 202
-
-    # Lists of tags:
-    TAGS_ALL = set(range(300))
-    TAGS_INVISIBLE = set((TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE))
-    TAGS_VISIBLE = TAGS_ALL - TAGS_INVISIBLE
-
-    TRANSLATIONS = {
-        "i": TAG_ITALIC,
-        "em": TAG_ITALIC,
-        "b": TAG_BOLD,
-        "strong": TAG_BOLD,
-        "u": TAG_UNDERLINE,
-        "s": TAG_STRIKETHROUGH,
-        "ul": TAG_UNORDERED_LIST,
-        "ol": TAG_ORDERED_LIST,
-        "dt": TAG_DEF_TERM,
-        "dd": TAG_DEF_ITEM,
-        "blockquote": TAG_BLOCKQUOTE,
-        "hl": TAG_RULE,
-        "br": TAG_BREAK,
-        "abbr": TAG_ABBR,
-        "pre": TAG_PRE,
-        "tt": TAG_MONOSPACE,
-        "code": TAG_CODE,
-        "span": TAG_SPAN,
-        "div": TAG_DIV,
-        "font": TAG_FONT,
-        "small": TAG_SMALL,
-        "big": TAG_BIG,
-        "center": TAG_CENTER,
-        "ref": TAG_REF,
-        "gallery": TAG_GALLERY,
-        "math": TAG_MATH,
-        "nowiki": TAG_NOWIKI,
-        "noinclude": TAG_NOINCLUDE,
-        "includeonly": TAG_INCLUDEONLY,
-        "onlyinclude": TAG_ONLYINCLUDE,
-        "syntaxhighlight": TAG_SYNTAXHIGHLIGHT,
-        "source": TAG_SYNTAXHIGHLIGHT,
-        "poem": TAG_POEM,
-    }
 
     def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
                  self_closing=False, open_padding="", closing_tag=None):
@@ -130,7 +52,7 @@ class Tag(Node):
 
     def __unicode__(self):
         if not self.showtag:
-            open_, close = self._translate()
+            open_, close = self.WIKICODE[self.type]
             if self.self_closing:
                 return open_
             else:
@@ -188,24 +110,6 @@ class Tag(Node):
             get(self.tag)
             write(">")
 
-    def _translate(self):
-        """If the HTML-style tag has a wikicode representation, return that.
-
-        For example, ``<b>Foo</b>`` can be represented as ``'''Foo'''``. This
-        returns a tuple of the character starting the sequence and the
-        character ending it.
-        """
-        translations = {
-            self.TAG_ITALIC: ("''", "''"),
-            self.TAG_BOLD: ("'''", "'''"),
-            self.TAG_UNORDERED_LIST: ("*", ""),
-            self.TAG_ORDERED_LIST: ("#", ""),
-            self.TAG_DEF_TERM: (";", ""),
-            self.TAG_DEF_ITEM: (":", ""),
-            self.TAG_RULE: ("----", ""),
-        }
-        return translations[self.type]
-
     @property
     def type(self):
         """The tag type."""
@@ -241,7 +145,7 @@ class Tag(Node):
 
     @property
     def open_padding(self):
-        """Spacing to insert before the first closing >."""
+        """Spacing to insert before the first closing ``>``."""
         return self._open_padding
 
     @property
