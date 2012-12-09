@@ -252,10 +252,17 @@ class Tag(Node):
         if value not in self.TAGS_ALL:
             raise ValueError(value)
         self._type = value
+        for key in self.TRANSLATIONS:
+            if self.TRANSLATIONS[key] == value:
+                self._tag = parse_anything(key)
 
     @tag.setter
     def tag(self, value):
         self._tag = parse_anything(value)
+        try:
+            self._type = self.TRANSLATIONS[text]
+        except KeyError:
+            self._type = self.TAG_UNKNOWN
 
     @contents.setter
     def contents(self, value):
