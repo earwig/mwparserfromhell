@@ -574,20 +574,18 @@ class Tokenizer(object):
             #     self._handle_attribute_name()
             # elif this == '"' and self._context & contexts.TAG_ATTR_BODY_QUOTED:
             #     self._handle_quoted_attribute_close()
-            elif this == "\n" and (
-                                self._context & contexts.TAG_OPEN and not
-                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
-                if self._context & contexts.TAG_CLOSE:
-                    self._pop()
-                self._fail_route()
-            elif this == ">" and (
-                                self._context & contexts.TAG_OPEN and not
-                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
-                self._handle_tag_close_open()
-            elif this == "/" and next == ">" and (
-                                self._context & contexts.TAG_OPEN and not
-                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
-                return self._handle_tag_selfclose()
+            elif self._context & contexts.TAG_OPEN and (
+                            not self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                if this == "\n":
+                    if self._context & contexts.TAG_CLOSE:
+                        self._pop()
+                    self._fail_route()
+                elif this == ">":
+                    self._handle_tag_close_open()
+                elif this == "/":
+                    return self._handle_tag_selfclose()
+                else:
+                    self._write_text(this)
             elif this == "<" and next == "/" and (
                                         self._context & contexts.TAG_BODY):
                 self._handle_tag_open_close()
