@@ -70,8 +70,9 @@ class Tag(Node):
     TAG_POEM = 202
 
     # Lists of tags:
+    TAGS_ALL = set(range(300))
     TAGS_INVISIBLE = set((TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE))
-    TAGS_VISIBLE = set(range(300)) - TAGS_INVISIBLE
+    TAGS_VISIBLE = TAGS_ALL - TAGS_INVISIBLE
 
     TRANSLATIONS = {
         "i": TAG_ITALIC,
@@ -248,7 +249,7 @@ class Tag(Node):
     @type.setter
     def type(self, value):
         value = int(value)
-        if value not in self.TAGS_INVISIBLE | self.TAGS_VISIBLE:
+        if value not in self.TAGS_ALL:
             raise ValueError(value)
         self._type = value
 

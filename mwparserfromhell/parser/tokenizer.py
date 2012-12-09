@@ -423,8 +423,8 @@ class Tokenizer(object):
 
     def _parse_tag(self):
         """Parse an HTML tag at the head of the wikicode string."""
-        self._head += 1
         reset = self._head
+        self._head += 1
         try:
             tokens = self._parse(contexts.TAG_OPEN)
         except BadRoute:
@@ -444,11 +444,24 @@ class Tokenizer(object):
         except KeyError:
             return Tag.TAG_UNKNOWN
 
-    def _handle_tag_close_name(self):
-        tag = self._get_tag_type_from_stack()
-        if tag is None:
-            self._fail_route()
-        self._write(tokens.TagOpenOpen(type=tag, showtag=False))
+    def _actually_close_tag_opening(self):
+        if self._context & contexts.TAG_ATTR:
+            if self._context & contexts.TAG_ATTR_BODY:
+                self._context ^= contexts.TAG_ATTR_BODY
+                if self._context & contexts.TAG_ATTR_BODY_QUOTED:
+                    self._context ^= contexts.TAG_ATTR_BODY_QUOTED
+            else:
+                self._context ^= contexts.TAG_ATTR_NAME
+        else:
+            tag = self._get_tag_type_from_stack()
+            if tag is None:
+                self._fail_route()
+            self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
+
+        self._context ^= contexts.TAG_OPEN
+        self._context |= contexts.TAG_BODY
+        padding = ""                                                                # TODO
+        return padding
 
     # def _handle_attribute(self):
     #     if not self._context & contexts.TAG_ATTR:
@@ -462,28 +475,18 @@ class Tokenizer(object):
     #     pass
 
     def _handle_tag_close_open(self):
-        if not self._context & contexts.TAG_ATTR:
-            self._handle_tag_close_name()
-
-        self._context ^= contexts.TAG_OPEN  # also TAG_ATTR_*
-        self._context |= contexts.TAG_BODY
-
-        padding = ""                                                                # TODO
+        padding = self._actually_close_tag_opening()
         self._write(tokens.TagCloseOpen(padding=padding))
 
     def _handle_tag_selfclose(self):
-        self._context ^= contexts.TAG_OPEN  # also TAG_ATTR_*
-        self._context |= contexts.TAG_BODY
-
-        padding = ""                                                                # TODO
+        padding = self._actually_close_tag_opening()
         self._write(tokens.TagCloseSelfclose(padding=padding))
-        self._pop()
+        self._head += 1
+        return self._pop()
 
     def _handle_tag_open_close(self):
-        self._context ^= contexts.TAG_BODY
-        self._context |= contexts.TAG_CLOSE
         self._write(tokens.TagOpenClose())
-        self._push()
+        self._push(contexts.TAG_CLOSE)
         self._head += 1
 
     def _handle_tag_close_close(self):
@@ -562,7 +565,8 @@ class Tokenizer(object):
                     self._parse_comment()
                 else:
                     self._write_text(this)
-            elif this == "<" and not self._context & (contexts.TAG ^ contexts.TAG_BODY):
+            elif this == "<" and next != "/" and (
+                    not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
             # elif this == " " and (self._context & contexts.TAG_OPEN and not
             #                       self._context & contexts.TAG_ATTR_BODY_QUOTED):
@@ -571,17 +575,19 @@ class Tokenizer(object):
             #     self._handle_attribute_name()
             # elif this == '"' and self._context & contexts.TAG_ATTR_BODY_QUOTED:
             #     self._handle_quoted_attribute_close()
-            elif this == "\n" and (self._context & contexts.TAG_OPEN and not
-                                  self._context & contexts.TAG_ATTR_BODY_QUOTED):
+            elif this == "\n" and (
+                                self._context & contexts.TAG_OPEN and not
+                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
                 if self._context & contexts.TAG_CLOSE:
                     self._pop()
                 self._fail_route()
-            elif this == ">" and (self._context & contexts.TAG_OPEN and not
-                                  self._context & contexts.TAG_ATTR_BODY_QUOTED):
+            elif this == ">" and (
+                                self._context & contexts.TAG_OPEN and not
+                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
                 self._handle_tag_close_open()
             elif this == "/" and next == ">" and (
-                            self._context & contexts.TAG_OPEN and not
-                            self._context & contexts.TAG_ATTR_BODY_QUOTED):
+                                self._context & contexts.TAG_OPEN and not
+                                self._context & contexts.TAG_ATTR_BODY_QUOTED):
                 return self._handle_tag_selfclose()
             elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
                 self._handle_tag_open_close()
