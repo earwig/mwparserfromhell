@@ -76,7 +76,7 @@ class SmartList(list):
     def __getitem__(self, key):
         if not isinstance(key, slice):
             return super(SmartList, self).__getitem__(key)
-        sliceinfo = [key.start, key.stop, 1 if not key.step else key.step]
+        sliceinfo = [key.start or 0, key.stop or 0, key.step or 1]
         child = _ListProxy(self, sliceinfo)
         self._children[id(child)] = (child, sliceinfo)
         return child
