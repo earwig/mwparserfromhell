@@ -426,7 +426,7 @@ class Tokenizer(object):
         reset = self._head
         self._head += 1
         try:
-            tokens = self._parse(contexts.TAG_OPEN)
+            tokens = self._parse(contexts.TAG_OPEN_NAME)
         except BadRoute:
             self._head = reset
             self._write_text("<")
@@ -438,34 +438,48 @@ class Tokenizer(object):
         if not self._stack:
             return None  # Tag has an empty name?
         text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
-        text = "".join([token.text for token in text]).strip().lower()
+        text = "".join([token.text for token in text]).rstrip().lower()
         try:
             return Tag.TRANSLATIONS[text]
         except KeyError:
             return Tag.TAG_UNKNOWN
 
     def _actually_close_tag_opening(self):
-        if self._context & contexts.TAG_ATTR:
-            if self._context & contexts.TAG_ATTR_BODY:
-                self._context ^= contexts.TAG_ATTR_BODY
-                if self._context & contexts.TAG_ATTR_BODY_QUOTED:
-                    self._context ^= contexts.TAG_ATTR_BODY_QUOTED
-            else:
-                self._context ^= contexts.TAG_ATTR_NAME
+        if self._context & contexts.TAG_OPEN_ATTR:
+            if self._context & contexts.TAG_OPEN_ATTR_NAME:
+                self._context ^= contexts.TAG_OPEN_ATTR_NAME
+            if self._context & contexts.TAG_OPEN_ATTR_BODY:
+                self._context ^= contexts.TAG_OPEN_ATTR_BODY
+                if self._context & contexts.TAG_OPEN_ATTR_BODY_QUOTED:
+                    self._context ^= contexts.TAG_OPEN_ATTR_BODY_QUOTED
         else:
             tag = self._get_tag_type_from_stack()
-            if tag is None:
+            if not tag:
                 self._fail_route()
             self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
-
-        self._context ^= contexts.TAG_OPEN
+            self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
         padding = ""                                                                # TODO
         return padding
 
-    # def _handle_attribute(self):
-    #     if not self._context & contexts.TAG_ATTR:
-    #         self._handle_tag_close_name()
+    def _handle_tag_chunk(self, text):
+        if " " not in text:
+            self._write_text(text)
+            return
+        chunks = text.split(" ")
+        if self._context & contexts.TAG_OPEN_NAME:
+            self._write_text(chunks.pop(0))
+            tag = self._get_tag_type_from_stack()
+            if not tag:
+                self._fail_route()
+            self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
+            self._context ^= contexts.TAG_OPEN_NAME
+            self._context |= contexts.TAG_OPEN_ATTR_NAME
+            self._write(tokens.TagAttrStart())
+        for i, chunk in enumerate(chunks):
+            if i > 0:
+                self._write(tokens.TagAttrStart())
+            self._write_text(chunk)
 
     # def _handle_attribute_name(self):
     #     ## check if next character is a ", if so, set TAG_ATTR_BODY_QUOTED
@@ -505,7 +519,10 @@ class Tokenizer(object):
         while True:
             this = self._read()
             if this not in self.MARKERS:
-                self._write_text(this)
+                if self._context & contexts.TAG_OPEN:
+                    self._handle_tag_chunk(this)
+                else:
+                    self._write_text(this)
                 self._head += 1
                 continue
             if this is self.END:
@@ -567,25 +584,17 @@ class Tokenizer(object):
             elif this == "<" and next != "/" and (
                     not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
-            # elif this == " " and (self._context & contexts.TAG_OPEN and not
-            #                       self._context & contexts.TAG_ATTR_BODY_QUOTED):
-            #     self._handle_attribute()
-            # elif this == "=" and self._context & contexts.TAG_ATTR_NAME:
-            #     self._handle_attribute_name()
-            # elif this == '"' and self._context & contexts.TAG_ATTR_BODY_QUOTED:
-            #     self._handle_quoted_attribute_close()
-            elif self._context & contexts.TAG_OPEN and (
-                            not self._context & contexts.TAG_ATTR_BODY_QUOTED):
+            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_BODY_QUOTED):
                 if this == "\n":
                     if self._context & contexts.TAG_CLOSE:
                         self._pop()
                     self._fail_route()
                 elif this == ">":
                     self._handle_tag_close_open()
-                elif this == "/":
+                elif this == "/" and next == ">":
                     return self._handle_tag_selfclose()
-                else:
-                    self._write_text(this)
+                # elif this == "=":
+                #     self._handle_tag_attr_body()
             elif this == "<" and next == "/" and (
                                         self._context & contexts.TAG_BODY):
                 self._handle_tag_open_close()
