@@ -65,7 +65,7 @@ class Tag(TagDefinitions, Node):
             result += self.open_padding + "/>"
         else:
             result += self.open_padding + ">" + str(self.contents)
-            result += "</" + self.closing_tag + ">"
+            result += "</" + str(self.closing_tag) + ">"
         return result
 
     def __iternodes__(self, getter):
@@ -126,7 +126,7 @@ class Tag(TagDefinitions, Node):
         return self._contents
 
     @property
-    def attrs(self):
+    def attributes(self):
         """The list of attributes affecting the tag.
 
         Each attribute is an instance of :py:class:`~.Attribute`.
