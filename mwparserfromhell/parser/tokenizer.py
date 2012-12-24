@@ -457,11 +457,13 @@ class Tokenizer(object):
             self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
             self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
-        padding = ""                                                                # TODO
+
+        ## If the last element was TagAttrStart, remove it, add " " to its padding, then return that
+        padding = ""
         return padding
 
     def _actually_handle_chunk(self, chunks, is_new):
-        if is_new and not self._context & contexts.TAG_OPEN_ATTR_BODY_QUOTED:
+        if is_new and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
             padding = 0
             while chunks:
                 if chunks[0] == "":
@@ -470,18 +472,24 @@ class Tokenizer(object):
                 else:
                     break
             self._write(tokens.TagAttrStart(padding=" " * padding))
+        elif self._context & contexts.TAG_OPEN_ATTR_IGNORE:
+            self._context ^= contexts.TAG_OPEN_ATTR_IGNORE
+            chunks.pop(0)
+            return
+        elif self._context & contexts.TAG_OPEN_ATTR_QUOTED:
+            self._write_text(" ")  # Quoted chunks don't lose their spaces
 
         if chunks:
             chunk = chunks.pop(0)
             if self._context & contexts.TAG_OPEN_ATTR_BODY:
                 self._context ^= contexts.TAG_OPEN_ATTR_BODY
                 self._context |= contexts.TAG_OPEN_ATTR_NAME
-            if self._context & contexts.TAG_OPEN_ATTR_BODY_QUOTED:
+            if self._context & contexts.TAG_OPEN_ATTR_QUOTED:
                 if re.search(r'[^\\]"', chunk[:-1]):
                     self._fail_route()
                 if re.search(r'[^\\]"$', chunk):
                     self._write_text(chunk[:-1])
-                    self._context ^= contexts.TAG_OPEN_ATTR_BODY_QUOTED
+                    self._context ^= contexts.TAG_OPEN_ATTR_QUOTED
                     self._context |= contexts.TAG_OPEN_ATTR_NAME
                     return True  # Back to _handle_tag_attribute_body()
             self._write_text(chunk)
@@ -491,6 +499,8 @@ class Tokenizer(object):
             self._write_text(text)
             return
         chunks = text.split(" ")
+        is_new = False
+        is_quoted = False
         if self._context & contexts.TAG_OPEN_NAME:
             self._write_text(chunks.pop(0))
             tag = self._get_tag_type_from_stack()
@@ -500,9 +510,7 @@ class Tokenizer(object):
             self._context ^= contexts.TAG_OPEN_NAME
             self._context |= contexts.TAG_OPEN_ATTR_NAME
             self._actually_handle_chunk(chunks, True)
-
-        is_new = False
-        is_quoted = False
+            is_new = True
         while chunks:
             result = self._actually_handle_chunk(chunks, is_new)
             is_quoted = result or is_quoted
@@ -530,7 +538,7 @@ class Tokenizer(object):
                     self._head += 1
                     reset = self._head
                     try:
-                        attr = self._parse(contexts.TAG_OPEN_ATTR_BODY_QUOTED)
+                        attr = self._parse(contexts.TAG_OPEN_ATTR_QUOTED | contexts.TAG_OPEN_ATTR_IGNORE)
                     except BadRoute:
                         self._head = reset
                         self._write_text(next)
@@ -538,6 +546,7 @@ class Tokenizer(object):
                         self._write(tokens.TagAttrQuote())
                         self._write_text(next[1:])
                         self._write_all(attr)
+                        return
             self._context ^= contexts.TAG_OPEN_ATTR_BODY
             self._context |= contexts.TAG_OPEN_ATTR_NAME
             while chunks:
@@ -588,7 +597,7 @@ class Tokenizer(object):
                     contexts.HEADING | contexts.COMMENT | contexts.TAG)
                 double_fail = (
                     contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE |
-                    contexts.TAG_OPEN_ATTR_BODY_QUOTED)
+                    contexts.TAG_OPEN_ATTR_QUOTED)
                 if self._context & double_fail:
                     self._pop()
                 if self._context & fail:
@@ -645,7 +654,7 @@ class Tokenizer(object):
             elif this == "<" and next != "/" and (
                     not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
-            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_BODY_QUOTED):
+            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
                 if this == "\n":
                     if self._context & contexts.TAG_CLOSE:
                         self._pop()

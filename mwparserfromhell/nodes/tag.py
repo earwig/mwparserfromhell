@@ -59,8 +59,8 @@ class Tag(TagDefinitions, Node):
                 return open_ + str(self.contents) + close
 
         result = "<" + str(self.tag)
-        if self.attrs:
-            result += " " + " ".join([str(attr) for attr in self.attrs])
+        if self.attributes:
+            result += " " + " ".join([str(attr) for attr in self.attributes])
         if self.self_closing:
             result += self.open_padding + "/>"
         else:
@@ -73,7 +73,7 @@ class Tag(TagDefinitions, Node):
         if self.showtag:
             for child in getter(self.tag):
                 yield self.tag, child
-            for attr in self.attrs:
+            for attr in self.attributes:
                 for child in getter(attr.name):
                     yield attr.name, child
                 if attr.value:
@@ -89,12 +89,13 @@ class Tag(TagDefinitions, Node):
 
     def __showtree__(self, write, get, mark):
         tagnodes = self.tag.nodes
-        if (not self.attrs and len(tagnodes) == 1 and isinstance(tagnodes[0], Text)):
+        if not self.attributes and (len(tagnodes) == 1 and
+                                    isinstance(tagnodes[0], Text)):
             write("<" + str(tagnodes[0]) + ">")
         else:
             write("<")
             get(self.tag)
-            for attr in self.attrs:
+            for attr in self.attributes:
                 get(attr.name)
                 if not attr.value:
                     continue
