@@ -470,6 +470,7 @@ class Tokenizer(object):
                 else:
                     break
             self._write(tokens.TagAttrStart(padding=" " * padding))
+
         if chunks:
             chunk = chunks.pop(0)
             if self._context & contexts.TAG_OPEN_ATTR_BODY:
@@ -480,7 +481,9 @@ class Tokenizer(object):
                     self._fail_route()
                 if re.search(r'[^\\]"$', chunk):
                     self._write_text(chunk[:-1])
-                    return self._pop()  # Back to _handle_tag_attribute_body()
+                    self._context ^= contexts.TAG_OPEN_ATTR_BODY_QUOTED
+                    self._context |= contexts.TAG_OPEN_ATTR_NAME
+                    return True  # Back to _handle_tag_attribute_body()
             self._write_text(chunk)
 
     def _handle_tag_chunk(self, text):
@@ -497,12 +500,15 @@ class Tokenizer(object):
             self._context ^= contexts.TAG_OPEN_NAME
             self._context |= contexts.TAG_OPEN_ATTR_NAME
             self._actually_handle_chunk(chunks, True)
+
         is_new = False
+        is_quoted = False
         while chunks:
-            should_exit = self._actually_handle_chunk(chunks, is_new)
-            if should_exit:
-                return should_exit
+            result = self._actually_handle_chunk(chunks, is_new)
+            is_quoted = result or is_quoted
             is_new = True
+        if is_quoted:
+            return self._pop()
 
     def _handle_tag_attribute_body(self):
         self._context ^= contexts.TAG_OPEN_ATTR_NAME
@@ -510,6 +516,10 @@ class Tokenizer(object):
         self._write(tokens.TagAttrEquals())
         next = self._read(1)
         if next not in self.MARKERS and next.startswith('"'):
+            chunks = None
+            if " " in next:
+                chunks = next.split(" ")
+                next = chunks.pop(0)
             if re.search(r'[^\\]"$', next[1:]):
                 if not re.search(r'[^\\]"', next[1:-1]):
                     self._write(tokens.TagAttrQuote())
@@ -528,6 +538,10 @@ class Tokenizer(object):
                         self._write(tokens.TagAttrQuote())
                         self._write_text(next[1:])
                         self._write_all(attr)
+            self._context ^= contexts.TAG_OPEN_ATTR_BODY
+            self._context |= contexts.TAG_OPEN_ATTR_NAME
+            while chunks:
+                self._actually_handle_chunk(chunks, True)
 
     def _handle_tag_close_open(self):
         padding = self._actually_close_tag_opening()
