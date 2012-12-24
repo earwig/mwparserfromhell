@@ -210,19 +210,19 @@ class Builder(object):
             if isinstance(token, tokens.TagAttrStart):
                 attrs.append(self._handle_attribute(token))
             elif isinstance(token, tokens.TagCloseOpen):
-                open_pad = token.padding
+                padding = token.padding
                 tag = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagCloseSelfclose):
                 tag = self._pop()
                 return Tag(type_, tag, attrs=attrs, showtag=showtag,
-                           self_closing=True, open_padding=token.padding)
+                           self_closing=True, padding=token.padding)
             elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagCloseClose):
                 return Tag(type_, tag, contents, attrs, showtag, False,
-                           open_pad, self._pop())
+                           padding, self._pop())
             else:
                 self._write(self._handle_token(token))
 

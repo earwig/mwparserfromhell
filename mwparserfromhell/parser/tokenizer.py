@@ -458,9 +458,9 @@ class Tokenizer(object):
             self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
 
-        ## If the last element was TagAttrStart, remove it, add " " to its padding, then return that
-        padding = ""
-        return padding
+        if isinstance(self._stack[-1], tokens.TagAttrStart):
+            return self._stack.pop().padding
+        return ""
 
     def _actually_handle_chunk(self, chunks, is_new):
         if is_new and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
@@ -538,7 +538,8 @@ class Tokenizer(object):
                     self._head += 1
                     reset = self._head
                     try:
-                        attr = self._parse(contexts.TAG_OPEN_ATTR_QUOTED | contexts.TAG_OPEN_ATTR_IGNORE)
+                        attr = self._parse(contexts.TAG_OPEN_ATTR_QUOTED |
+                                           contexts.TAG_OPEN_ATTR_IGNORE)
                     except BadRoute:
                         self._head = reset
                         self._write_text(next)
@@ -654,7 +655,8 @@ class Tokenizer(object):
             elif this == "<" and next != "/" and (
                     not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
-            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
+            elif self._context & (
+                            contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
                 if this == "\n":
                     if self._context & contexts.TAG_CLOSE:
                         self._pop()
@@ -663,7 +665,8 @@ class Tokenizer(object):
                     self._handle_tag_close_open()
                 elif this == "/" and next == ">":
                     return self._handle_tag_selfclose()
-                elif this == "=" and self._context & contexts.TAG_OPEN_ATTR_NAME:
+                elif this == "=" and (
+                                self._context & contexts.TAG_OPEN_ATTR_NAME):
                     self._handle_tag_attribute_body()
             elif this == "<" and next == "/" and (
                                         self._context & contexts.TAG_BODY):

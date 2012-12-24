@@ -33,7 +33,7 @@ class Tag(TagDefinitions, Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
 
     def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
-                 self_closing=False, open_padding="", closing_tag=None):
+                 self_closing=False, padding="", closing_tag=None):
         super(Tag, self).__init__()
         self._type = type_
         self._tag = tag
@@ -44,7 +44,7 @@ class Tag(TagDefinitions, Node):
             self._attrs = []
         self._showtag = showtag
         self._self_closing = self_closing
-        self._open_padding = open_padding
+        self._padding = padding
         if closing_tag:
             self._closing_tag = closing_tag
         else:
@@ -62,9 +62,9 @@ class Tag(TagDefinitions, Node):
         if self.attributes:
             result += " " + " ".join([str(attr) for attr in self.attributes])
         if self.self_closing:
-            result += self.open_padding + "/>"
+            result += self.padding + "/>"
         else:
-            result += self.open_padding + ">" + str(self.contents)
+            result += self.padding + ">" + str(self.contents)
             result += "</" + str(self.closing_tag) + ">"
         return result
 
@@ -145,9 +145,9 @@ class Tag(TagDefinitions, Node):
         return self._self_closing
 
     @property
-    def open_padding(self):
+    def padding(self):
         """Spacing to insert before the first closing ``>``."""
-        return self._open_padding
+        return self._padding
 
     @property
     def closing_tag(self):
@@ -188,9 +188,9 @@ class Tag(TagDefinitions, Node):
     def self_closing(self, value):
         self._self_closing = bool(value)
 
-    @open_padding.setter
-    def open_padding(self, value):
-        self._open_padding = str(value)
+    @padding.setter
+    def padding(self, value):
+        self._padding = str(value)
 
     @closing_tag.setter
     def closing_tag(self, value):
