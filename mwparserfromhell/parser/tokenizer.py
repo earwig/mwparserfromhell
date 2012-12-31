@@ -433,16 +433,18 @@ class Tokenizer(object):
         else:
             self._write_all(tokens)
 
-    def _get_tag_type_from_stack(self):
-        self._push_textbuffer()
-        if not self._stack:
-            return None  # Tag has an empty name?
-        text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
+    def _get_tag_type_from_stack(self, stack=None):
+        if stack is None:
+            stack = self._stack
+            self._push_textbuffer()
+        if not stack:
+            self._fail_route()  # Tag has an empty name?
+        text = [tok for tok in stack if isinstance(tok, tokens.Text)]
         text = "".join([token.text for token in text]).rstrip().lower()
         try:
             return Tag.TRANSLATIONS[text]
         except KeyError:
-            return Tag.TAG_UNKNOWN
+            self._fail_route()
 
     def _actually_close_tag_opening(self):
         if self._context & contexts.TAG_OPEN_ATTR:
@@ -452,8 +454,6 @@ class Tokenizer(object):
                 self._context ^= contexts.TAG_OPEN_ATTR_BODY
         else:
             tag = self._get_tag_type_from_stack()
-            if not tag:
-                self._fail_route()
             self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
             self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
@@ -504,8 +504,6 @@ class Tokenizer(object):
         if self._context & contexts.TAG_OPEN_NAME:
             self._write_text(chunks.pop(0))
             tag = self._get_tag_type_from_stack()
-            if not tag:
-                self._fail_route()
             self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
             self._context ^= contexts.TAG_OPEN_NAME
             self._context |= contexts.TAG_OPEN_ATTR_NAME
@@ -569,8 +567,8 @@ class Tokenizer(object):
         self._head += 1
 
     def _handle_tag_close_close(self):
-        tag = self._get_tag_type_from_stack()
         closing = self._pop()
+        tag = self._get_tag_type_from_stack(closing)
         if tag != self._stack[0].type:
             # Closing and opening tags are not the same, so fail this route:
             self._fail_route()
