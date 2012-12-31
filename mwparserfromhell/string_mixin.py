@@ -125,19 +125,29 @@ class StringMixIn(object):
 
     @inheritdoc
     def center(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().center(width)
         return self.__unicode__().center(width, fillchar)
 
     @inheritdoc
-    def count(self, sub=None, start=None, end=None):
+    def count(self, sub, start=None, end=None):
         return self.__unicode__().count(sub, start, end)
 
     if not py3k:
         @inheritdoc
         def decode(self, encoding=None, errors=None):
+            if errors is None:
+                if encoding is None:
+                    return self.__unicode__().decode()
+                return self.__unicode__().decode(encoding)
             return self.__unicode__().decode(encoding, errors)
 
     @inheritdoc
     def encode(self, encoding=None, errors=None):
+        if errors is None:
+            if encoding is None:
+                return self.__unicode__().encode()
+            return self.__unicode__().encode(encoding)
         return self.__unicode__().encode(encoding, errors)
 
     @inheritdoc
@@ -146,10 +156,12 @@ class StringMixIn(object):
 
     @inheritdoc
     def expandtabs(self, tabsize=None):
+        if tabsize is None:
+            return self.__unicode__().expandtabs()
         return self.__unicode__().expandtabs(tabsize)
 
     @inheritdoc
-    def find(self, sub=None, start=None, end=None):
+    def find(self, sub, start=None, end=None):
         return self.__unicode__().find(sub, start, end)
 
     @inheritdoc
@@ -157,7 +169,7 @@ class StringMixIn(object):
         return self.__unicode__().format(*args, **kwargs)
 
     @inheritdoc
-    def index(self, sub=None, start=None, end=None):
+    def index(self, sub, start=None, end=None):
         return self.__unicode__().index(sub, start, end)
 
     @inheritdoc
@@ -202,6 +214,8 @@ class StringMixIn(object):
 
     @inheritdoc
     def ljust(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().ljust(width)
         return self.__unicode__().ljust(width, fillchar)
 
     @inheritdoc
@@ -221,15 +235,17 @@ class StringMixIn(object):
         return self.__unicode__().replace(old, new, count)
 
     @inheritdoc
-    def rfind(self, sub=None, start=None, end=None):
+    def rfind(self, sub, start=None, end=None):
         return self.__unicode__().rfind(sub, start, end)
 
     @inheritdoc
-    def rindex(self, sub=None, start=None, end=None):
+    def rindex(self, sub, start=None, end=None):
         return self.__unicode__().rindex(sub, start, end)
 
     @inheritdoc
     def rjust(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().rjust(width)
         return self.__unicode__().rjust(width, fillchar)
 
     @inheritdoc
@@ -238,6 +254,10 @@ class StringMixIn(object):
 
     @inheritdoc
     def rsplit(self, sep=None, maxsplit=None):
+        if maxsplit is None:
+            if sep is None:
+                return self.__unicode__().rsplit()
+            return self.__unicode__().rsplit(sep)
         return self.__unicode__().rsplit(sep, maxsplit)
 
     @inheritdoc
@@ -246,10 +266,16 @@ class StringMixIn(object):
 
     @inheritdoc
     def split(self, sep=None, maxsplit=None):
+        if maxsplit is None:
+            if sep is None:
+                return self.__unicode__().split()
+            return self.__unicode__().split(sep)
         return self.__unicode__().split(sep, maxsplit)
 
     @inheritdoc
     def splitlines(self, keepends=None):
+        if keepends is None:
+            return self.__unicode__().splitlines()
         return self.__unicode__().splitlines(keepends)
 
     @inheritdoc
@@ -269,8 +295,8 @@ class StringMixIn(object):
         return self.__unicode__().title()
 
     @inheritdoc
-    def translate(self, table, deletechars=None):
-        return self.__unicode__().translate(table, deletechars)
+    def translate(self, table):
+        return self.__unicode__().translate(table)
 
     @inheritdoc
     def upper(self):
