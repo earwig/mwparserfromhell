@@ -759,11 +759,10 @@ Tokenizer_parse_heading(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset + best - 1;
-        char text[best + 1];
-        for (i = 0; i < best; i++) text[i] = *"=";
-        text[best] = *"";
-        if (Tokenizer_write_text_then_stack(self, text))
-            return -1;
+        for (i = 0; i < best; i++) {
+            if (Tokenizer_write_text(self, *"="))
+                return -1;
+        }
         self->global ^= GL_HEADING;
         return 0;
     }
@@ -799,13 +798,12 @@ Tokenizer_parse_heading(Tokenizer* self)
     Py_DECREF(token);
     if (heading->level < best) {
         diff = best - heading->level;
-        char difftext[diff + 1];
-        for (i = 0; i < diff; i++) difftext[i] = *"=";
-        difftext[diff] = *"";
-        if (Tokenizer_write_text_then_stack(self, difftext)) {
-            Py_DECREF(heading->title);
-            free(heading);
-            return -1;
+        for (i = 0; i < diff; i++) {
+            if (Tokenizer_write_text(self, *"=")) {
+                Py_DECREF(heading->title);
+                free(heading);
+                return -1;
+            }
         }
     }
     if (Tokenizer_write_all(self, heading->title)) {
@@ -851,22 +849,20 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         RESET_ROUTE();
         if (level < best) {
             diff = best - level;
-            char difftext[diff + 1];
-            for (i = 0; i < diff; i++) difftext[i] = *"=";
-            difftext[diff] = *"";
-            if (Tokenizer_write_text_then_stack(self, difftext))
-                return NULL;
+            for (i = 0; i < diff; i++) {
+                if (Tokenizer_write_text(self, *"="))
+                    return NULL;
+            }
         }
         self->head = reset + best - 1;
     }
     else {
-        char text[best + 1];
-        for (i = 0; i < best; i++) text[i] = *"=";
-        text[best] = *"";
-        if (Tokenizer_write_text_then_stack(self, text)) {
-            Py_DECREF(after->title);
-            free(after);
-            return NULL;
+        for (i = 0; i < best; i++) {
+            if (Tokenizer_write_text(self, *"=")) {
+                Py_DECREF(after->title);
+                free(after);
+                return NULL;
+            }
         }
         if (Tokenizer_write_all(self, after->title)) {
             Py_DECREF(after->title);

@@ -339,14 +339,14 @@ class Tokenizer(object):
         current = int(log(self._context / contexts.HEADING_LEVEL_1, 2)) + 1
         level = min(current, min(best, 6))
 
-        try:
+        try:  # Try to check for a heading closure after this one
             after, after_level = self._parse(self._context)
         except BadRoute:
             if level < best:
                 self._write_text("=" * (best - level))
             self._head = reset + best - 1
             return self._pop(), level
-        else:
+        else:  # Found another closure
             self._write_text("=" * best)
             self._write_all(after)
             return self._pop(), after_level
