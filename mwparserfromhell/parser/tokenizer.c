@@ -1144,17 +1144,24 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         Tokenizer_fail_route(self);
         return;
     }
-    if (context & (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE)) {
-        if (data == *"{" || data == *"}" || data == *"[" || data == *"]") {
+    if (context & LC_WIKILINK_TITLE) {
+        if (data == *"]" || data == *"{")
+            self->topstack->context |= LC_FAIL_NEXT;
+        else if (data == *"\n" || data == *"[" || data == *"}")
+            Tokenizer_fail_route(self);
+        return;
+    }
+    if (context & LC_TEMPLATE_NAME) {
+        if (data == *"{" || data == *"}" || data == *"[") {
             self->topstack->context |= LC_FAIL_NEXT;
             return;
         }
-        if (data == *"|") {
-            if (context & LC_FAIL_ON_TEXT) {
-                self->topstack->context ^= LC_FAIL_ON_TEXT;
-                return;
-            }
+        if (data == *"]") {
+            Tokenizer_fail_route(self);
+            return;
         }
+        if (data == *"|")
+            return;
     }
     else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
         if (context & LC_FAIL_ON_EQUALS) {
@@ -1207,6 +1214,28 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
     }
     else if (!Py_UNICODE_ISSPACE(data))
         self->topstack->context |= LC_HAS_TEXT;
+}
+
+/*
+    Unset any safety-checking contexts set by Tokenizer_verify_safe(). Used
+    when we preserve a context but previous data becomes invalid, like when
+    moving between template parameters.
+*/
+static void
+Tokenizer_reset_safety_checks(Tokenizer* self)
+{
+    static int checks[] = {
+        LC_HAS_TEXT, LC_FAIL_ON_TEXT, LC_FAIL_NEXT, LC_FAIL_ON_LBRACE,
+        LC_FAIL_ON_RBRACE, LC_FAIL_ON_EQUALS, 0};
+    int context = self->topstack->context, i = 0, this;
+    while (1) {
+        this = checks[i];
+        if (!this)
+            return;
+        if (context & this)
+            self->topstack->context ^= this;
+        i++;
+    }
 }
 
 /*
@@ -1274,6 +1303,7 @@ Tokenizer_parse(Tokenizer* self, int context)
                 self->topstack->context ^= LC_FAIL_NEXT;
         }
         else if (this == *"|" && this_context & LC_TEMPLATE) {
+            Tokenizer_reset_safety_checks(self);
             if (Tokenizer_handle_template_param(self))
                 return NULL;
         }
@@ -1294,15 +1324,10 @@ Tokenizer_parse(Tokenizer* self, int context)
             Tokenizer_write_text(self, this);
         }
         else if (this == next && next == *"[") {
-            if (!(this_context & LC_WIKILINK_TITLE)) {
-                if (Tokenizer_parse_wikilink(self))
-                    return NULL;
-                if (self->topstack->context & LC_FAIL_NEXT)
-                    self->topstack->context ^= LC_FAIL_NEXT;
-            }
-            else {
-                Tokenizer_write_text(self, this);
-            }
+            if (Tokenizer_parse_wikilink(self))
+                return NULL;
+            if (self->topstack->context & LC_FAIL_NEXT)
+                self->topstack->context ^= LC_FAIL_NEXT;
         }
         else if (this == *"|" && this_context & LC_WIKILINK_TITLE) {
             if (Tokenizer_handle_wikilink_separator(self))

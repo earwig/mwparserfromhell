@@ -213,17 +213,21 @@ class Tokenizer(object):
         self._write_all(argument)
         self._write(tokens.ArgumentClose())
 
-    def _verify_safe(self, unsafes):
+    def _verify_safe(self, unsafes, strip=True):
         """Verify that there are no unsafe characters in the current stack.
 
         The route will be failed if the name contains any element of *unsafes*
-        in it (not merely at the beginning or end). This is used when parsing a
-        template name or parameter key, which cannot contain newlines.
+        in it. This is used when parsing template names, parameter keys, and so
+        on, which cannot contain newlines and some other characters. If *strip*
+        is ``True``, the text will be stripped of whitespace, since this is
+        allowed at the ends of certain elements but not between text.
         """
         self._push_textbuffer()
         if self._stack:
             text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
-            text = "".join([token.text for token in text]).strip()
+            text = "".join([token.text for token in text])
+            if strip:
+                text = text.strip()
             if text and any([unsafe in text for unsafe in unsafes]):
                 self._fail_route()
 
@@ -291,7 +295,7 @@ class Tokenizer(object):
 
     def _handle_wikilink_separator(self):
         """Handle the separator between a wikilink's title and its text."""
-        self._verify_safe(["\n", "{", "}", "[", "]"])
+        self._verify_safe(["\n", "{", "}", "[", "]"], strip=False)
         self._context ^= contexts.WIKILINK_TITLE
         self._context |= contexts.WIKILINK_TEXT
         self._write(tokens.WikilinkSeparator())
@@ -299,7 +303,7 @@ class Tokenizer(object):
     def _handle_wikilink_end(self):
         """Handle the end of a wikilink at the head of the string."""
         if self._context & contexts.WIKILINK_TITLE:
-            self._verify_safe(["\n", "{", "}", "[", "]"])
+            self._verify_safe(["\n", "{", "}", "[", "]"], strip=False)
         self._head += 1
         return self._pop()
 

@@ -206,6 +206,7 @@ static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
 static void Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
+static void Tokenizer_reset_safety_checks(Tokenizer*);
 static PyObject* Tokenizer_parse(Tokenizer*, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
