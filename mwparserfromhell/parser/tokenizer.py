@@ -434,6 +434,10 @@ class Tokenizer(object):
             self._write_all(tokens)
 
     def _get_tag_type_from_stack(self, stack=None):
+        """Return the tag type based on the text in *stack*.
+
+        If *stack* is ``None``, we will use the current, topmost one.
+        """
         if stack is None:
             stack = self._stack
             self._push_textbuffer()
@@ -447,6 +451,13 @@ class Tokenizer(object):
             self._fail_route()
 
     def _actually_close_tag_opening(self):
+        """Handle cleanup at the end of a opening tag.
+
+        The current context will be updated and the
+        :py:class:`~.tokens.TagOpenOpen` token will be written. Returns the
+        opening tag's padding to be used in the
+        :py:class:`~.tokens.TagOpenClose` token.
+        """
         if self._context & contexts.TAG_OPEN_ATTR:
             if self._context & contexts.TAG_OPEN_ATTR_NAME:
                 self._context ^= contexts.TAG_OPEN_ATTR_NAME
@@ -463,6 +474,11 @@ class Tokenizer(object):
         return ""
 
     def _actually_handle_chunk(self, chunks, is_new):
+        """Actually handle a chunk of code within a tag's attributes.
+
+        Called by :py:meth:`_handle_tag_chunk` and
+        :py:meth:`_handle_tag_attribute_body`.
+        """
         if is_new and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
             padding = 0
             while chunks:
@@ -495,6 +511,12 @@ class Tokenizer(object):
             self._write_text(chunk)
 
     def _handle_tag_chunk(self, text):
+        """Handle a chunk of code within a tag's attributes.
+
+        This is called by :py:meth:`_parse`, which intercepts parsing of
+        wikicode when we're inside of an opening tag and no :py:attr:`MARKERS`
+        are present.
+        """
         if " " not in text:
             self._write_text(text)
             return
@@ -517,6 +539,12 @@ class Tokenizer(object):
             return self._pop()
 
     def _handle_tag_attribute_body(self):
+        """Handle the body, or value, of a tag attribute.
+
+        Attribute bodies can usually be handled at once, but sometimes a new
+        stack must be created to keep track of "rich" attribute values that
+        contain, for example, templates.
+        """
         self._context ^= contexts.TAG_OPEN_ATTR_NAME
         self._context |= contexts.TAG_OPEN_ATTR_BODY
         self._write(tokens.TagAttrEquals())
@@ -552,21 +580,25 @@ class Tokenizer(object):
                 self._actually_handle_chunk(chunks, True)
 
     def _handle_tag_close_open(self):
+        """Handle the ending of an open tag (``<foo>``)."""
         padding = self._actually_close_tag_opening()
         self._write(tokens.TagCloseOpen(padding=padding))
 
     def _handle_tag_selfclose(self):
+        """Handle the ending of an tag that closes itself (``<foo />``)."""
         padding = self._actually_close_tag_opening()
         self._write(tokens.TagCloseSelfclose(padding=padding))
         self._head += 1
         return self._pop()
 
     def _handle_tag_open_close(self):
+        """Handle the opening of a closing tag (``</foo>``)."""
         self._write(tokens.TagOpenClose())
         self._push(contexts.TAG_CLOSE)
         self._head += 1
 
     def _handle_tag_close_close(self):
+        """Handle the ending of a closing tag (``</foo>``)."""
         closing = self._pop()
         tag = self._get_tag_type_from_stack(closing)
         if tag != self._stack[0].type:
@@ -653,8 +685,7 @@ class Tokenizer(object):
             elif this == "<" and next != "/" and (
                     not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
-            elif self._context & (
-                            contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
+            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
                 if this == "\n":
                     if self._context & contexts.TAG_CLOSE:
                         self._pop()
@@ -663,11 +694,9 @@ class Tokenizer(object):
                     self._handle_tag_close_open()
                 elif this == "/" and next == ">":
                     return self._handle_tag_selfclose()
-                elif this == "=" and (
-                                self._context & contexts.TAG_OPEN_ATTR_NAME):
+                elif this == "=" and self._context & contexts.TAG_OPEN_ATTR_NAME:
                     self._handle_tag_attribute_body()
-            elif this == "<" and next == "/" and (
-                                        self._context & contexts.TAG_BODY):
+            elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
                 self._handle_tag_open_close()
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
