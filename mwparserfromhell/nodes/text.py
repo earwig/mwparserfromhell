@@ -39,6 +39,9 @@ class Text(Node):
     def __strip__(self, normalize, collapse):
         return self
 
+    def __showtree__(self, write, get, mark):
+        write(str(self).encode("unicode_escape").decode("utf8"))
+
     @property
     def value(self):
         """The actual text itself."""
