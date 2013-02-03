@@ -64,14 +64,15 @@ class TokenizerTestCase(object):
                         raw = line[len("output:"):].strip()
                         try:
                             data["output"] = eval(raw, vars(tokens))
-                        except Exception:
-                            raise _TestParseError()
-            except _TestParseError:
+                        except Exception as err:
+                            raise _TestParseError(err)
+            except _TestParseError as err:
                 if data["name"]:
-                    error = "Could not parse test '{0}' in '{1}'"
-                    print(error.format(data["name"], filename))
+                    error = "Could not parse test '{0}' in '{1}':\n\t{2}"
+                    print(error.format(data["name"], filename, err))
                 else:
-                    print("Could not parse a test in '{0}'".format(filename))
+                    error = "Could not parse a test in '{0}':\n\t{1}"
+                    print(error.format(filename, err))
                 continue
             if not data["name"]:
                 error = "A test in '{0}' was ignored because it lacked a name"

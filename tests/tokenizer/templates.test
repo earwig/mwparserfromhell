@@ -1,0 +1,32 @@
+name:   no_params
+label:  simplest type of template
+input:  "{{template}}"
+output: [TemplateOpen(), Text(text="template"), TemplateClose()]
+
+---
+
+name:   one_param_unnamed
+label:  basic template with one unnamed parameter
+input:  "{{foo|bar}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateClose()]
+
+---
+
+name:   one_param_named
+label:  basic template with one named parameter
+input:  "{{foo|bar=baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   multiple_unnamed_params
+label:  basic template with multiple unnamed parameters
+input:  "{{foo|bar|baz|biz|buzz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamSeparator(), Text(text="buzz"), TemplateClose()]
+
+---
+
+name:   multiple_named_params
+label:  basic template with multiple named parameters
+input:  "{{foo|bar=baz|biz=buzz|buff=baff|usr=bin}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamEquals(), Text(text="buzz"), TemplateParamSeparator(), Text(text="buff"), TemplateParamEquals(), Text(text="baff"), TemplateParamSeparator(), Text(text="usr"), TemplateParamEquals(), Text(text="bin"), TemplateClose()]
