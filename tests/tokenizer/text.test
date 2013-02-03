@@ -5,7 +5,14 @@ output: [Text(text="foobar")]
 
 ---
 
-name:   basic2
+name:   newlines
 label:  slightly more complex text parsing, with newlines
-input:  "This is a line of text.\nThis is another line of text."
-output: [Text(text="This is a line of text.\nThis is another line of text.")]
+input:  "This is a line of text.\nThis is another line of text.\nThis is another."
+output: [Text(text="This is a line of text.\nThis is another line of text.\nThis is another.")]
+
+---
+
+name:   unicode
+label:  ensure unicode data is handled properly
+input:  "Thís ís å sëñtënce with diœcritiçs."
+output: [Text(text="Thís ís å sëñtënce with diœcritiçs.")]

@@ -23,6 +23,7 @@
 from __future__ import print_function, unicode_literals
 from os import listdir, path
 
+from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser import tokens
 
 class _TestParseError(Exception):
@@ -36,12 +37,14 @@ class TokenizerTestCase(object):
         def inner(self):
             actual = self.tokenizer().tokenize(data["input"])
             self.assertEqual(actual, data["output"])
-        inner.__name__ = funcname.encode("utf8")
+        if not py3k:
+            inner.__name__ = funcname.encode("utf8")
         inner.__doc__ = data["label"]
         return inner
 
     @classmethod
     def _load_tests(cls, filename, text):
+        counter = 1
         tests = text.split("\n---\n")
         for test in tests:
             data = {"name": "", "label": "", "input": "", "output": []}
@@ -55,7 +58,7 @@ class TokenizerTestCase(object):
                         raw = line[len("input:"):].strip()
                         if raw[0] == '"' and raw[-1] == '"':
                             raw = raw[1:-1]
-                        data["input"] = raw.decode("unicode_escape")
+                        data["input"] = raw.encode("raw_unicode_escape").decode("unicode_escape")
                     elif line.startswith("output:"):
                         raw = line[len("output:"):].strip()
                         data["output"] = eval(raw, vars(tokens))
@@ -74,9 +77,10 @@ class TokenizerTestCase(object):
                 error = "Test {0} in {1} was ignored because it lacked an input or an output"
                 print(error.format(data["name"], filename))
                 continue
-            funcname = "test_" + filename + "_" + data["name"]
-            meth = cls._build_test_method(funcname, data)
-            setattr(cls, funcname, meth)
+            fname = "test_{0}{1}_{2}".format(filename, counter, data["name"])
+            meth = cls._build_test_method(fname, data)
+            setattr(cls, fname, meth)
+            counter += 1
 
     @classmethod
     def build(cls):
@@ -86,7 +90,9 @@ class TokenizerTestCase(object):
             if not filename.endswith(extension):
                 continue
             with open(path.join(directory, filename), "r") as fp:
-                text = fp.read().decode("utf8")
+                text = fp.read()
+                if not py3k:
+                    text = text.decode("utf8")
                 cls._load_tests(filename[:0-len(extension)], text)
 
 TokenizerTestCase.build()
