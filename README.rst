@@ -18,7 +18,8 @@ so you can install the latest release with ``pip install mwparserfromhell``
     cd mwparserfromhell
     python setup.py install
 
-You can run the comprehensive unit testing suite with ``python setup.py test``.
+You can run the comprehensive unit testing suite with
+``python setup.py test -q``.
 
 Usage
 -----

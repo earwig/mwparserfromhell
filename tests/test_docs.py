@@ -29,6 +29,7 @@ import mwparserfromhell
 from mwparserfromhell.compat import py3k, str, StringIO
 
 class TestDocs(unittest.TestCase):
+    """Integration test cases for mwparserfromhell's documentation."""
     def assertPrint(self, input, output):
         """Assertion check that *input*, when printed, produces *output*."""
         buff = StringIO()
@@ -37,6 +38,7 @@ class TestDocs(unittest.TestCase):
         self.assertEqual(buff.read(), output)
 
     def test_readme_1(self):
+        """test a block of example code in the README"""
         text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
         wikicode = mwparserfromhell.parse(text)
         self.assertPrint(wikicode,
@@ -56,6 +58,7 @@ class TestDocs(unittest.TestCase):
         self.assertPrint(template.get("eggs").value, "spam")
 
     def test_readme_2(self):
+        """test a block of example code in the README"""
         code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
         if py3k:
             self.assertPrint(code.filter_templates(),
@@ -71,6 +74,7 @@ class TestDocs(unittest.TestCase):
                          "template")
 
     def test_readme_3(self):
+        """test a block of example code in the README"""
         text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
         temps = mwparserfromhell.parse(text).filter_templates(recursive=True)
         if py3k:
@@ -80,6 +84,7 @@ class TestDocs(unittest.TestCase):
         self.assertPrint(temps, res)
 
     def test_readme_4(self):
+        """test a block of example code in the README"""
         text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
         code = mwparserfromhell.parse(text)
         for template in code.filter_templates():
@@ -101,6 +106,7 @@ class TestDocs(unittest.TestCase):
         self.assertEqual(text, code)
 
     def test_readme_5(self):
+        """test a block of example code in the README; includes a web call"""
         url1 = "http://en.wikipedia.org/w/api.php"
         url2 = "http://en.wikipedia.org/w/index.php?title={0}&action=raw"
         title = "Test"

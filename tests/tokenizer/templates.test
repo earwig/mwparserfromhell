@@ -30,3 +30,288 @@ name:   multiple_named_params
 label:  basic template with multiple named parameters
 input:  "{{foo|bar=baz|biz=buzz|buff=baff|usr=bin}}"
 output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamEquals(), Text(text="buzz"), TemplateParamSeparator(), Text(text="buff"), TemplateParamEquals(), Text(text="baff"), TemplateParamSeparator(), Text(text="usr"), TemplateParamEquals(), Text(text="bin"), TemplateClose()]
+
+---
+
+name:   multiple_mixed_params
+label:  basic template with multiple unnamed/named parameters
+input:  "{{foo|bar=baz|biz|buzz=buff|usr|bin}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamSeparator(), Text(text="buzz"), TemplateParamEquals(), Text(text="buff"), TemplateParamSeparator(), Text(text="usr"), TemplateParamSeparator(), Text(text="bin"), TemplateClose()]
+
+---
+
+name:   multiple_mixed_params2
+label:  basic template with multiple unnamed/named parameters in another order
+input:  "{{foo|bar|baz|biz=buzz|buff=baff|usr=bin}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamEquals(), Text(text="buzz"), TemplateParamSeparator(), Text(text="buff"), TemplateParamEquals(), Text(text="baff"), TemplateParamSeparator(), Text(text="usr"), TemplateParamEquals(), Text(text="bin"), TemplateClose()]
+
+---
+
+name:   nested_unnamed_param
+label:  nested template as an unnamed parameter
+input:  "{{foo|{{bar}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_named_param_value
+label:  nested template as a parameter value with a named parameter
+input:  "{{foo|bar={{baz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_named_param_name_and_value
+label:  nested templates as a parameter name and value
+input:  "{{foo|{{bar}}={{baz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start
+label:  nested template at the beginning of a template name
+input:  "{{{{foo}}bar}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateClose()]
+
+---
+
+name:   nested_name_start_unnamed_param
+label:  nested template at the beginning of a template name and as an unnamed parameter
+input:  "{{{{foo}}bar|{{baz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_named_param_value
+label:  nested template at the beginning of a template name and as a parameter value with a named parameter
+input:  "{{{{foo}}bar|baz={{biz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_named_param_name_and_value
+label:  nested template at the beginning of a template name and as a parameter name and value
+input:  "{{{{foo}}bar|{{baz}}={{biz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_end
+label:  nested template at the end of a template name
+input:  "{{foo{{bar}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_end_unnamed_param
+label:  nested template at the end of a template name and as an unnamed parameter
+input:  "{{foo{{bar}}|{{baz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_end_named_param_value
+label:  nested template at the end of a template name and as a parameter value with a named parameter
+input:  "{{foo{{bar}}|baz={{biz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), Text(text="baz"), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_end_named_param_name_and_value
+label:  nested template at the end of a template name and as a parameter name and value
+input:  "{{foo{{bar}}|{{baz}}={{biz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_mid
+label:  nested template in the middle of a template name
+input:  "{{foo{{bar}}baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   nested_name_mid_unnamed_param
+label:  nested template in the middle of a template name and as an unnamed parameter
+input:  "{{foo{{bar}}baz|{{biz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateParamSeparator(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_mid_named_param_value
+label:  nested template in the middle of a template name and as a parameter value with a named parameter
+input:  "{{foo{{bar}}baz|biz={{buzz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamEquals(), TemplateOpen(), Text(text="buzz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_mid_named_param_name_and_value
+label:  nested template in the middle of a template name and as a parameter name and value
+input:  "{{foo{{bar}}baz|{{biz}}={{buzz}}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateParamSeparator(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="buzz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_end
+label:  nested template at the beginning and end of a template name
+input:  "{{{{foo}}{{bar}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_end_unnamed_param
+label:  nested template at the beginning and end of a template name and as an unnamed parameter
+input:  "{{{{foo}}{{bar}}|{{baz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_end_named_param_value
+label:  nested template at the beginning and end of a template name and as a parameter value with a named parameter
+input:  "{{{{foo}}{{bar}}|baz={{biz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), Text(text="baz"), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_name_start_end_named_param_name_and_value
+label:  nested template at the beginning and end of a template name and as a parameter name and value
+input:  "{{{{foo}}{{bar}}|{{baz}}={{biz}}}}"
+output: [TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), TemplateOpen(), Text(text="bar"), TemplateClose(), TemplateParamSeparator(), TemplateOpen(), Text(text="baz"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="biz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_names_multiple
+label:  multiple nested templates within nested templates
+input:  "{{{{{{{{foo}}bar}}baz}}biz}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateClose(), Text(text="biz"), TemplateClose()]
+
+---
+
+name:   nested_names_multiple_unnamed_param
+label:  multiple nested templates within nested templates with a nested unnamed parameter
+input:  "{{{{{{{{foo}}bar}}baz}}biz|{{buzz}}}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateClose(), Text(text="biz"), TemplateParamSeparator(), TemplateOpen(), Text(text="buzz"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_names_multiple_named_param_value
+label:  multiple nested templates within nested templates with a nested parameter value in a named parameter
+input:  "{{{{{{{{foo}}bar}}baz}}biz|buzz={{bin}}}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateClose(), Text(text="biz"), TemplateParamSeparator(), Text(text="buzz"), TemplateParamEquals(), TemplateOpen(), Text(text="bin"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   nested_names_multiple_named_param_name_and_value
+label:  multiple nested templates within nested templates with a nested parameter name and value
+input:  "{{{{{{{{foo}}bar}}baz}}biz|{{buzz}}={{bin}}}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateClose(), Text(text="baz"), TemplateClose(), Text(text="biz"), TemplateParamSeparator(), TemplateOpen(), Text(text="buzz"), TemplateClose(), TemplateParamEquals(), TemplateOpen(), Text(text="bin"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   incomplete_tests
+
+"{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
+
+"{{\nfoobar}}"
+"{{foobar\n}}"
+"{{\nfoobar\n}}"
+"{{foo\nbar}}"
+"{{\nfoo\nbar}}"
+"{{foo\nbar\n}}"
+"{{\nfoo\nbar\n}}"
+
+"{{foo|\nbar}}"
+"{{foo|bar\n}}"
+"{{foo|\nbar\n}}"
+"{{foo|\nb\nar}}"
+"{{foo|b\nar\n}}"
+"{{foo|\nb\nar\n}}"
+"{{\nfoo|\nbar}}"
+"{{\nfoo|bar\n}}"
+"{{\nfoo|\nbar\n}}"
+"{{\nfoo|\nb\nar}}"
+"{{\nfoo|b\nar\n}}"
+"{{\nfoo|\nb\nar\n}}"
+"{{foo\n|\nbar}}"
+"{{foo\n|bar\n}}"
+"{{foo\n|\nbar\n}}"
+"{{foo\n|\nb\nar}}"
+"{{foo\n|b\nar\n}}"
+"{{foo\n|\nb\nar\n}}"
+"{{\nfoo\n|\nbar}}"
+"{{\nfoo\n|bar\n}}"
+"{{\nfoo\n|\nbar\n}}"
+"{{\nfoo\n|\nb\nar}}"
+"{{\nfoo\n|b\nar\n}}"
+"{{\nfoo\n|\nb\nar\n}}"
+"{{f\noo|\nbar}}"
+"{{\nf\noo|\nbar}}"
+"{{f\noo\n|\nbar}}"
+"{{\nf\noo\n|\nbar}}"
+
+"{{foo|1=\nbar}}"
+"{{foo|1=bar\n}}"
+"{{foo|1=\nbar\n}}"
+"{{foo|1=\nb\nar}}"
+"{{foo|1=b\nar\n}}"
+"{{foo|1=\nb\nar\n}}"
+"{{foo|\nbar=baz}}"
+"{{foo|bar\n=baz}}"
+"{{foo|\nbar\n=baz}}"
+"{{foo|\nb\nar=baz}}"
+"{{foo|b\nar\n=baz}}"
+"{{foo|\nb\nar\n=baz}}"
+"{{foo|\nbar=baz\n}}"
+"{{foo|bar\n=baz\n}}"
+"{{foo|\nbar\n=baz\n}}"
+"{{foo|\nb\nar=baz\n}}"
+"{{foo|b\nar\n=baz\n}}"
+"{{foo|\nb\nar\n=baz\n}}"
+"{{foo|\nbar=\nbaz}}"
+"{{foo|bar\n=\nbaz}}"
+"{{foo|\nbar\n=\nbaz}}"
+"{{foo|\nb\nar=\nbaz}}"
+"{{foo|b\nar\n=\nbaz}}"
+"{{foo|\nb\nar\n=\nbaz}}"
+"{{foo|\nbar=\nbaz\n}}"
+"{{foo|bar\n=\nbaz\n}}"
+"{{foo|\nbar\n=\nbaz\n}}"
+"{{foo|\nb\nar=\nbaz\n}}"
+"{{foo|b\nar\n=\nbaz\n}}"
+"{{foo|\nb\nar\n=\nbaz\n}}"
+"{{foo|\nbar=ba\nz}}"
+"{{foo|bar\n=ba\nz}}"
+"{{foo|\nbar\n=ba\nz}}"
+"{{foo|\nb\nar=ba\nz}}"
+"{{foo|b\nar\n=ba\nz}}"
+"{{foo|\nb\nar\n=ba\nz}}"
+
+"{{\nfoo\n|\nbar\n=\nb\naz\n|\nb\nuz\n}}"
+"{{\nfoo\n|\nb\nar\n|\nbaz\n=\nb\nuz\n}}"
+
+"{{\nfoo\n|\n{{\nbar\n|\nbaz\n=\nb\niz\n}}\n=\nb\nuzz\n}}"
+
+"{{foo{bar}}"
+"{{foo}bar}}"
+"{{{foobar}}"
+"{{foo{b{ar}}"
+"{{foo[bar}}"
+"{{foo]bar}}"
+"{{[foobar}}"
+"{{foobar]}}"
+
+"{{foobar"
+"{{foobar}"
+"{{foobar|"
+"{{foo|bar"
+"{{foo|bar|"
+"{{foo|bar="
+"{{foo|bar=|"
+"{{foo|bar=baz"
+"{{foo|bar=baz|"
+"{{foo|bar|baz"
+"{{foo|bar|baz="
+"{{foo|bar|baz=biz"
+"{{foo|bar=baz|biz"
+"{{foo|bar=baz|biz="
+"{{foo|bar=baz|biz=buzz"

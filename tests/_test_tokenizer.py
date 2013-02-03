@@ -32,8 +32,20 @@ class _TestParseError(Exception):
 
 
 class TokenizerTestCase(object):
+    """A base test case for tokenizers, whose tests are loaded dynamically.
+
+    Subclassed along with unittest.TestCase to form TestPyTokenizer and
+    TestCTokenizer. Tests are loaded dynamically from files in the 'tokenizer'
+    directory.
+    """
     @classmethod
     def _build_test_method(cls, funcname, data):
+        """Create and return a method to be treated as a test case method.
+
+        *data* is a dict containing multiple keys: the *input* text to be
+        tokenized, the expected list of tokens as *output*, and an optional
+        *label* for the method's docstring.
+        """
         def inner(self):
             actual = self.tokenizer().tokenize(data["input"])
             self.assertEqual(actual, data["output"])
@@ -44,8 +56,10 @@ class TokenizerTestCase(object):
 
     @classmethod
     def _load_tests(cls, filename, text):
-        counter = 1
+        """Load all tests in *text* from the file *filename*."""
         tests = text.split("\n---\n")
+        counter = 1
+        digits = len(str(len(tests)))
         for test in tests:
             data = {"name": "", "label": "", "input": "", "output": []}
             try:
@@ -79,16 +93,18 @@ class TokenizerTestCase(object):
                 print(error.format(filename))
                 continue
             if not data["input"] or not data["output"]:
-                error = "Test '{0}'' in '{1}' was ignored because it lacked an input or an output"
+                error = "Test '{0}' in '{1}' was ignored because it lacked an input or an output"
                 print(error.format(data["name"], filename))
                 continue
-            fname = "test_{0}{1}_{2}".format(filename, counter, data["name"])
+            number = str(counter).zfill(digits)
+            fname = "test_{0}{1}_{2}".format(filename, number, data["name"])
             meth = cls._build_test_method(fname, data)
             setattr(cls, fname, meth)
             counter += 1
 
     @classmethod
     def build(cls):
+        """Load and install all tests from the 'tokenizer' directory."""
         directory = path.join(path.dirname(__file__), "tokenizer")
         extension = ".test"
         for filename in listdir(directory):
