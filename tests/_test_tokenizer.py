@@ -58,23 +58,27 @@ class TokenizerTestCase(object):
                         raw = line[len("input:"):].strip()
                         if raw[0] == '"' and raw[-1] == '"':
                             raw = raw[1:-1]
-                        data["input"] = raw.encode("raw_unicode_escape").decode("unicode_escape")
+                        raw = raw.encode("raw_unicode_escape")
+                        data["input"] = raw.decode("unicode_escape")
                     elif line.startswith("output:"):
                         raw = line[len("output:"):].strip()
-                        data["output"] = eval(raw, vars(tokens))
+                        try:
+                            data["output"] = eval(raw, vars(tokens))
+                        except Exception:
+                            raise _TestParseError()
             except _TestParseError:
                 if data["name"]:
-                    error = "Could not parse test {0} in {1}"
+                    error = "Could not parse test '{0}' in '{1}'"
                     print(error.format(data["name"], filename))
                 else:
-                    print("Could not parse a test in {0}".format(filename))
+                    print("Could not parse a test in '{0}'".format(filename))
                 continue
             if not data["name"]:
-                error = "A test in {0} was ignored because it lacked a name"
+                error = "A test in '{0}' was ignored because it lacked a name"
                 print(error.format(filename))
                 continue
             if not data["input"] or not data["output"]:
-                error = "Test {0} in {1} was ignored because it lacked an input or an output"
+                error = "Test '{0}'' in '{1}' was ignored because it lacked an input or an output"
                 print(error.format(data["name"], filename))
                 continue
             fname = "test_{0}{1}_{2}".format(filename, counter, data["name"])
