@@ -1,0 +1,11 @@
+name:   basic
+label:  sanity check for basic text parsing, no gimmicks
+input:  "foobar"
+output: [Text(text="foobar")]
+
+---
+
+name:   basic2
+label:  slightly more complex text parsing, with newlines
+input:  "This is a line of text.\nThis is another line of text."
+output: [Text(text="This is a line of text.\nThis is another line of text.")]

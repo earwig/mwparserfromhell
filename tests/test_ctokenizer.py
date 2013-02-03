@@ -22,9 +22,9 @@
 
 import unittest
 
-from _test_tokenizer import TestTokenizer
+from _test_tokenizer import TokenizerTestCase
 
-class TestCTokenizer(unittest.TestCase, TestTokenizer):
+class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         from mwparserfromhell.parser._tokenizer import CTokenizer
