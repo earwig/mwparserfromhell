@@ -47,8 +47,9 @@ class TokenizerTestCase(object):
         *label* for the method's docstring.
         """
         def inner(self):
+            expected = data["output"]
             actual = self.tokenizer().tokenize(data["input"])
-            self.assertEqual(actual, data["output"])
+            self.assertEqual(expected, actual)
         if not py3k:
             inner.__name__ = funcname.encode("utf8")
         inner.__doc__ = data["label"]
@@ -61,7 +62,7 @@ class TokenizerTestCase(object):
         counter = 1
         digits = len(str(len(tests)))
         for test in tests:
-            data = {"name": "", "label": "", "input": "", "output": []}
+            data = {"name": None, "label": None, "input": None, "output": None}
             try:
                 for line in test.strip().splitlines():
                     if line.startswith("name:"):
@@ -92,7 +93,7 @@ class TokenizerTestCase(object):
                 error = "A test in '{0}' was ignored because it lacked a name"
                 print(error.format(filename))
                 continue
-            if not data["input"] or not data["output"]:
+            if data["input"] is None or data["output"] is None:
                 error = "Test '{0}' in '{1}' was ignored because it lacked an input or an output"
                 print(error.format(data["name"], filename))
                 continue

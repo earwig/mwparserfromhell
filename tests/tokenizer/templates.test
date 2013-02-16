@@ -208,17 +208,62 @@ output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(te
 
 ---
 
+name:   mixed_nested_templates
+label:  mixed assortment of nested templates within template names, parameter names, and values
+input:  "{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamEquals(), Text(text="biz"), TemplateClose(), Text(text="buzz"), TemplateClose(), Text(text="usr"), TemplateParamSeparator(), TemplateOpen(), Text(text="bin"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   newline_start
+label:  a newline at the start of a template name
+input:  "{{\nfoobar}}"
+output: [TemplateOpen(), Text(text="\nfoobar"), TemplateClose()]
+
+---
+
+name:   newline_end
+label:  a newline at the end of a template name
+input:  "{{foobar\n}}"
+output: [TemplateOpen(), Text(text="foobar\n"), TemplateClose()]
+
+---
+
+name:   newline_start_end
+label:  a newline at the start and end of a template name
+input:  "{{\nfoobar\n}}"
+output: [TemplateOpen(), Text(text="\nfoobar\n"), TemplateClose()]
+
+---
+
+name:   newline_mid
+label:  a newline at the middle of a template name
+input:  "{{foo\nbar}}"
+output: [Text(text="{{foo\nbar}}")]
+
+---
+
+name:   newline_start_mid
+label:  a newline at the start and middle of a template name
+input:  "{{\nfoo\nbar}}"
+output: [Text(text="{{\nfoo\nbar}}")]
+
+---
+
+name:   newline_mid_end
+label:  a newline at the middle and end of a template name
+input:  "{{foo\nbar\n}}"
+output: [Text(text="{{foo\nbar\n}}")]
+
+---
+
+name:   newline_start_mid_end
+label:  a newline at the start, middle, and end of a template name
+input:  "{{\nfoo\nbar\n}}"
+output: [Text(text="{{\nfoo\nbar\n}}")]
+
+---
 name:   incomplete_tests
-
-"{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
-
-"{{\nfoobar}}"
-"{{foobar\n}}"
-"{{\nfoobar\n}}"
-"{{foo\nbar}}"
-"{{\nfoo\nbar}}"
-"{{foo\nbar\n}}"
-"{{\nfoo\nbar\n}}"
 
 "{{foo|\nbar}}"
 "{{foo|bar\n}}"
@@ -299,6 +344,11 @@ name:   incomplete_tests
 "{{foo]bar}}"
 "{{[foobar}}"
 "{{foobar]}}"
+
+"{{foo|ba{r}}"
+"{{foo|ba{r}}}"
+"{{foo|ba{r}=baz}}"
+"{{foo|ba[r]}}"
 
 "{{foobar"
 "{{foobar}"

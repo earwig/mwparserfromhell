@@ -35,7 +35,7 @@ class TestDocs(unittest.TestCase):
         buff = StringIO()
         print(input, end="", file=buff)
         buff.seek(0)
-        self.assertEqual(buff.read(), output)
+        self.assertEqual(output, buff.read())
 
     def test_readme_1(self):
         """test a block of example code in the README"""
@@ -115,9 +115,9 @@ class TestDocs(unittest.TestCase):
         raw = urllib.urlopen(url1, urllib.urlencode(data)).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
-        actual = mwparserfromhell.parse(text)
         expected = urllib.urlopen(url2.format(title)).read().decode("utf8")
-        self.assertEqual(actual, expected)
+        actual = mwparserfromhell.parse(text)
+        self.assertEqual(expected, actual)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
