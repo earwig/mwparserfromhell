@@ -460,44 +460,266 @@ output: [Text(text="{{\nf\noo\n|\nbar}}")]
 
 ---
 
-name:   incomplete_tests
+name:   newline_named_param_value_start
+label:  a newline at the start of a named parameter value
+input:  "{{foo|1=\nbar}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="\nbar"), TemplateClose()]
 
-"{{foo|1=\nbar}}"
-"{{foo|1=bar\n}}"
-"{{foo|1=\nbar\n}}"
-"{{foo|1=\nb\nar}}"
-"{{foo|1=b\nar\n}}"
-"{{foo|1=\nb\nar\n}}"
-"{{foo|\nbar=baz}}"
-"{{foo|bar\n=baz}}"
-"{{foo|\nbar\n=baz}}"
-"{{foo|\nb\nar=baz}}"
-"{{foo|b\nar\n=baz}}"
-"{{foo|\nb\nar\n=baz}}"
-"{{foo|\nbar=baz\n}}"
-"{{foo|bar\n=baz\n}}"
-"{{foo|\nbar\n=baz\n}}"
-"{{foo|\nb\nar=baz\n}}"
-"{{foo|b\nar\n=baz\n}}"
-"{{foo|\nb\nar\n=baz\n}}"
-"{{foo|\nbar=\nbaz}}"
-"{{foo|bar\n=\nbaz}}"
-"{{foo|\nbar\n=\nbaz}}"
-"{{foo|\nb\nar=\nbaz}}"
-"{{foo|b\nar\n=\nbaz}}"
-"{{foo|\nb\nar\n=\nbaz}}"
-"{{foo|\nbar=\nbaz\n}}"
-"{{foo|bar\n=\nbaz\n}}"
-"{{foo|\nbar\n=\nbaz\n}}"
-"{{foo|\nb\nar=\nbaz\n}}"
-"{{foo|b\nar\n=\nbaz\n}}"
-"{{foo|\nb\nar\n=\nbaz\n}}"
-"{{foo|\nbar=ba\nz}}"
-"{{foo|bar\n=ba\nz}}"
-"{{foo|\nbar\n=ba\nz}}"
-"{{foo|\nb\nar=ba\nz}}"
-"{{foo|b\nar\n=ba\nz}}"
-"{{foo|\nb\nar\n=ba\nz}}"
+---
+
+name:   newline_named_param_value_end
+label:  a newline at the end of a named parameter value
+input:  "{{foo|1=bar\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="bar\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_value_start_end
+label:  a newline at the start and end of a named parameter value
+input:  "{{foo|1=\nbar\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="\nbar\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_value_start_mid
+label:  a newline at the start and middle of a named parameter value
+input:  "{{foo|1=\nb\nar}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="\nb\nar"), TemplateClose()]
+
+---
+
+name:   newline_named_param_value_mid_end
+label:  a newline at the middle and end of a named parameter value
+input:  "{{foo|1=b\nar\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="b\nar\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_value_start_mid_end
+label:  a newline at the start, middle, and end of a named parameter value
+input:  "{{foo|1=\nb\nar\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="1"), TemplateParamEquals(), Text(text="\nb\nar\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start
+label:  a newline at the start of a parameter name
+input:  "{{foo|\nbar=baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_end
+label:  a newline at the end of a parameter name
+input:  "{{foo|bar\n=baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_end
+label:  a newline at the start and end of a parameter name
+input:  "{{foo|\nbar\n=baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_mid
+label:  a newline at the middle of a parameter name
+input:  "{{foo|b\nar=baz}}"
+output: [Text(text="{{foo|b\nar=baz}}")]
+
+---
+
+name:   newline_named_param_name_start_mid
+label:  a newline at the start and middle of a parameter name
+input:  "{{foo|\nb\nar=baz}}"
+output: [Text(text="{{foo|\nb\nar=baz}}")]
+
+---
+
+name:   newline_named_param_name_mid_end
+label:  a newline at the middle and end of a parameter name
+input:  "{{foo|b\nar\n=baz}}"
+output: [Text(text="{{foo|b\nar\n=baz}}")]
+
+---
+
+name:   newline_named_param_name_start_mid_end
+label:  a newline at the start, middle, and end of a parameter name
+input:  "{{foo|\nb\nar\n=baz}}"
+output: [Text(text="{{foo|\nb\nar\n=baz}}")]
+
+---
+
+name:   newline_named_param_name_start_param_value_end
+label:  a newline at the start of a parameter name and the end of a parameter value
+input:  "{{foo|\nbar=baz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar"), TemplateParamEquals(), Text(text="baz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_end_param_value_end
+label:  a newline at the end of a parameter name and the end of a parameter value
+input:  "{{foo|bar\n=baz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="baz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_end_param_value_end
+label:  a newline at the start and end of a parameter name and the end of a parameter value
+input:  "{{foo|\nbar\n=baz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="baz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_mid_param_value_end
+label:  a newline at the start and middle of a parameter name and the end of a parameter value
+input:  "{{foo|\nb\nar=baz\n}}"
+output: [Text(text="{{foo|\nb\nar=baz\n}}")]
+
+---
+
+name:   newline_named_param_name_mid_end_param_value_end
+label:  a newline at the middle and end of a parameter name and the end of a parameter value
+input:  "{{foo|b\nar\n=baz\n}}"
+output: [Text(text="{{foo|b\nar\n=baz\n}}")]
+
+---
+
+name:   newline_named_param_name_start_mid_end_param_value_end
+label:  a newline at the start, middle, and end of a parameter name and at the end of a parameter value
+input:  "{{foo|\nb\nar\n=baz\n}}"
+output: [Text(text="{{foo|\nb\nar\n=baz\n}}")]
+
+---
+
+name:   newline_named_param_name_start_param_value_start
+label:  a newline at the start of a parameter name and at the start of a parameter value
+input:  "{{foo|\nbar=\nbaz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar"), TemplateParamEquals(), Text(text="\nbaz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_end_param_value_start
+label:  a newline at the end of a parameter name and at the start of a parameter value
+input:  "{{foo|bar\n=\nbaz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="\nbaz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_end_param_value_start
+label:  a newline at the start and end of a parameter name and at the start of a parameter value
+input:  "{{foo|\nbar\n=\nbaz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="\nbaz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_mid_param_value_start
+label:  a newline at the start and middle of a parameter name and at the start of a parameter value
+input:  "{{foo|\nb\nar=\nbaz}}"
+output: [Text(text="{{foo|\nb\nar=\nbaz}}")]
+
+---
+
+name:   newline_named_param_name_mid_end_param_value_start
+label:  a newline at the middle and end of a parameter name and at the start of a parameter value
+input:  "{{foo|b\nar\n=\nbaz}}"
+output: [Text(text="{{foo|b\nar\n=\nbaz}}")]
+
+---
+
+name:   newline_named_param_name_start_mid_end_param_value_start
+label:  a newline at the start, middle, and end of a parameter name and at the start of a parameter value
+input:  "{{foo|\nb\nar\n=\nbaz}}"
+output: [Text(text="{{foo|\nb\nar\n=\nbaz}}")]
+
+---
+
+name:   newline_named_param_name_start_param_value_start_end
+label:  a newline at the start of a parameter name and at the start and end of a parameter value
+input:  "{{foo|\nbar=\nbaz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar"), TemplateParamEquals(), Text(text="\nbaz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_end_param_value_start_end
+label:  a newline at the end of a parameter name and at the start and end of a parameter value
+input:  "{{foo|bar\n=\nbaz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="\nbaz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_end_param_value_start_end
+label:  a newline at the start and end of a parameter name and at the start and end of a parameter value
+input:  "{{foo|\nbar\n=\nbaz\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="\nbaz\n"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_mid_param_value_start_end
+label:  a newline at the start and middle of a parameter name and at the start and end of a parameter value
+input:  "{{foo|\nb\nar=\nbaz\n}}"
+output: [Text(text="{{foo|\nb\nar=\nbaz\n}}")]
+
+---
+
+name:   newline_named_param_name_mid_end_param_value_start_end
+label:  a newline at the middle and end of a parameter name and at the start and end of a parameter value
+input:  "{{foo|b\nar\n=\nbaz\n}}"
+output: [Text(text="{{foo|b\nar\n=\nbaz\n}}")]
+
+---
+
+name:   newline_named_param_name_start_mid_end_param_value_start_end
+label:  a newline at the start, middle, and end of a parameter name and at the start and end of a parameter value
+input:  "{{foo|\nb\nar\n=\nbaz\n}}"
+output: [Text(text="{{foo|\nb\nar\n=\nbaz\n}}")]
+
+---
+
+name:   newline_named_param_name_start_param_value_mid
+label:  a newline at the start of a parameter name and at the middle of a parameter value
+input:  "{{foo|\nbar=ba\nz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar"), TemplateParamEquals(), Text(text="ba\nz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_end_param_value_mid
+label:  a newline at the end of a parameter name and at the middle of a parameter value
+input:  "{{foo|bar\n=ba\nz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="ba\nz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_end_param_value_mid
+label:  a newline at the start and end of a parameter name and at the middle of a parameter value
+input:  "{{foo|\nbar\n=ba\nz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="ba\nz"), TemplateClose()]
+
+---
+
+name:   newline_named_param_name_start_mid_param_value_mid
+label:  a newline at the start and middle of a parameter name and at the middle of a parameter value
+input:  "{{foo|\nb\nar=ba\nz}}"
+output: [Text(text="{{foo|\nb\nar=ba\nz}}")]
+
+---
+
+name:   newline_named_param_name_mid_end_param_value_mid
+label:  a newline at the middle and end of a parameter name and at the middle of a parameter value
+input:  "{{foo|b\nar\n=ba\nz}}"
+output: [Text(text="{{foo|b\nar\n=ba\nz}}")]
+
+---
+
+name:   newline_named_param_start_mid_end_param_value_mid
+label:  a newline at the start, middle, and end of a parameter name and at the middle of a parameter value
+input:  "{{foo|\nb\nar\n=ba\nz}}"
+output: [Text(text="{{foo|\nb\nar\n=ba\nz}}")]
+
+---
+
+name:   incomplete_tests
 
 "{{\nfoo\n|\nbar\n=\nb\naz\n|\nb\nuz\n}}"
 "{{\nfoo\n|\nb\nar\n|\nbaz\n=\nb\nuz\n}}"
