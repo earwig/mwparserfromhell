@@ -107,7 +107,7 @@ class TokenizerTestCase(object):
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
         directory = path.join(path.dirname(__file__), "tokenizer")
-        extension = ".test"
+        extension = ".mwtest"
         for filename in listdir(directory):
             if not filename.endswith(extension):
                 continue
