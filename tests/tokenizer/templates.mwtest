@@ -719,39 +719,203 @@ output: [Text(text="{{foo|\nb\nar\n=ba\nz}}")]
 
 ---
 
-name:   incomplete_tests
+name:   newline_wildcard
+label:  a random, complex assortment of templates and newlines
+input:  "{{\nfoo\n|\nbar\n=\nb\naz\n|\nb\nuz\n}}"
+output: [TemplateOpen(), Text(text="\nfoo\n"), TemplateParamSeparator(), Text(text="\nbar\n"), TemplateParamEquals(), Text(text="\nb\naz\n"), TemplateParamSeparator(), Text(text="\nb\nuz\n"), TemplateClose()]
 
-"{{\nfoo\n|\nbar\n=\nb\naz\n|\nb\nuz\n}}"
-"{{\nfoo\n|\nb\nar\n|\nbaz\n=\nb\nuz\n}}"
+---
 
-"{{\nfoo\n|\n{{\nbar\n|\nbaz\n=\nb\niz\n}}\n=\nb\nuzz\n}}"
+name:   newline_wildcard_redux
+label:  an even more random and complex assortment of templates and newlines
+input:  "{{\nfoo\n|\n{{\nbar\n|\nbaz\n=\nb\niz\n}}\n=\nb\nuzz\n}}"
+output: [TemplateOpen(), Text(text="\nfoo\n"), TemplateParamSeparator(), Text(text="\n"), TemplateOpen(), Text(text="\nbar\n"), TemplateParamSeparator(), Text(text="\nbaz\n"), TemplateParamEquals(), Text(text="\nb\niz\n"), TemplateClose(), Text(text="\n"), TemplateParamEquals(), Text(text="\nb\nuzz\n"), TemplateClose()]
 
-"{{foo{bar}}"
-"{{foo}bar}}"
-"{{{foobar}}"
-"{{foo{b{ar}}"
-"{{foo[bar}}"
-"{{foo]bar}}"
-"{{[foobar}}"
-"{{foobar]}}"
+---
 
-"{{foo|ba{r}}"
-"{{foo|ba{r}}}"
-"{{foo|ba{r}=baz}}"
-"{{foo|ba[r]}}"
+name:   invalid_name_left_brace_middle
+label:  invalid characters in template name: left brace in middle
+input:  "{{foo{bar}}"
+output: [Text(text="{{foo{bar}}")]
 
-"{{foobar"
-"{{foobar}"
-"{{foobar|"
-"{{foo|bar"
-"{{foo|bar|"
-"{{foo|bar="
-"{{foo|bar=|"
-"{{foo|bar=baz"
-"{{foo|bar=baz|"
-"{{foo|bar|baz"
-"{{foo|bar|baz="
-"{{foo|bar|baz=biz"
-"{{foo|bar=baz|biz"
-"{{foo|bar=baz|biz="
-"{{foo|bar=baz|biz=buzz"
+---
+
+name:   invalid_name_right_brace_middle
+label:  invalid characters in template name: right brace in middle
+input:  "{{foo}bar}}"
+output: [Text(text="{{foo}bar}}")]
+
+---
+
+name:   invalid_name_left_braces
+label:  invalid characters in template name: two left braces in middle
+input:  "{{foo{b{ar}}"
+output: [Text(text="{{foo{b{ar}}")]
+
+---
+
+name:   invalid_name_left_bracket_middle
+label:  invalid characters in template name: left bracket in middle
+input:  "{{foo[bar}}"
+output: [Text(text="{{foo[bar}}")]
+
+---
+
+name:   invalid_name_right_bracket_middle
+label:  invalid characters in template name: right bracket in middle
+input:  "{{foo]bar}}"
+output: [Text(text="{{foo]bar}}")]
+
+---
+
+name:   invalid_name_left_bracket_start
+label:  invalid characters in template name: left bracket at start
+input:  "{{[foobar}}"
+output: [Text(text="{{[foobar}}")]
+
+---
+
+name:   invalid_name_right_bracket_start
+label:  invalid characters in template name: right bracket at end
+input:  "{{foobar]}}"
+output: [Text(text="{{foobar]}}")]
+
+---
+
+name:   valid_name_left_brace_start
+label:  valid characters in template name: left brace at start
+input:  "{{{foobar}}"
+output: [Text(text="{"), TemplateOpen(), Text(text="foobar"), TemplateClose()]
+
+---
+
+name:   valid_unnamed_param_left_brace
+label:  valid characters in unnamed template parameter: left brace
+input:  "{{foo|ba{r}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="ba{r"), TemplateClose()]
+
+---
+
+name:   valid_unnamed_param_braces
+label:  valid characters in unnamed template parameter: left and right braces
+input:  "{{foo|ba{r}}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="ba{r"), TemplateClose(), Text(text="}")]
+
+---
+
+name:   valid_param_name_braces
+label:  valid characters in template parameter name: left and right braces
+input:  "{{foo|ba{r}=baz}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="ba{r}"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   valid_param_name_brackets
+label:  valid characters in unnamed template parameter: left and right brackets
+input:  "{{foo|ba[r]}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="ba[r]"), TemplateClose()]
+
+---
+
+name:   incomplete_plain
+label:  incomplete templates that should fail gracefully: no close whatsoever
+input:  "{{stuff}} {{foobar"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foobar")]
+
+---
+
+name:   incomplete_right_brace
+label:  incomplete templates that should fail gracefully: only one right brace
+input:  "{{stuff}} {{foobar}"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foobar}")]
+
+---
+
+name:   incomplete_pipe
+label:  incomplete templates that should fail gracefully: a pipe
+input:  "{{stuff}} {{foobar|"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foobar|")]
+
+---
+
+name:   incomplete_unnamed_param
+label:  incomplete templates that should fail gracefully: an unnamed parameter
+input:  "{{stuff}} {{foo|bar"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar")]
+
+---
+
+name:   incomplete_unnamed_param_pipe
+label:  incomplete templates that should fail gracefully: an unnamed parameter, then a pipe
+input:  "{{stuff}} {{foo|bar|"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar|")]
+
+---
+
+name:   incomplete_valueless_param
+label:  incomplete templates that should fail gracefully: an a named parameter with no value
+input:  "{{stuff}} {{foo|bar="
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=")]
+
+---
+
+name:   incomplete_valueless_param_pipe
+label:  incomplete templates that should fail gracefully: a named parameter with no value, then a pipe
+input:  "{{stuff}} {{foo|bar=|"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=|")]
+
+---
+
+name:   incomplete_named_param
+label:  incomplete templates that should fail gracefully: a named parameter with a value
+input:  "{{stuff}} {{foo|bar=baz"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=baz")]
+
+---
+
+name:   incomplete_named_param_pipe
+label:  incomplete templates that should fail gracefully: a named parameter with a value, then a paipe
+input:  "{{stuff}} {{foo|bar=baz|"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=baz|")]
+
+---
+
+name:   incomplete_two_unnamed_params
+label:  incomplete templates that should fail gracefully: two unnamed parameters
+input:  "{{stuff}} {{foo|bar|baz"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar|baz")]
+
+---
+
+name:   incomplete_unnamed_param_valueless_param
+label:  incomplete templates that should fail gracefully: an unnamed parameter, then a named parameter with no value
+input:  "{{stuff}} {{foo|bar|baz="
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar|baz=")]
+
+---
+
+name:   incomplete_unnamed_param_named_param
+label:  incomplete templates that should fail gracefully: an unnamed parameter, then a named parameter with a value
+input:  "{{stuff}} {{foo|bar|baz=biz"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar|baz=biz")]
+
+---
+
+name:   incomplete_named_param_unnamed_param
+label:  incomplete templates that should fail gracefully: a named parameter with a value, then an unnamed parameter
+input:  "{{stuff}} {{foo|bar=baz|biz"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=baz|biz")]
+
+---
+
+name:   incomplete_named_param_valueless_param
+label:  incomplete templates that should fail gracefully: a named parameter with a value, then a named parameter with no value
+input:  "{{stuff}} {{foo|bar=baz|biz="
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=baz|biz=")]
+
+---
+
+name:   incomplete_two_named_params
+label:  incomplete templates that should fail gracefully: two named parameters with values
+input:  "{{stuff}} {{foo|bar=baz|biz=buzz"
+output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar=baz|biz=buzz")]
