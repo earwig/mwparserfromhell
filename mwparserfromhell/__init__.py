@@ -34,7 +34,6 @@ __license__ = "MIT License"
 __version__ = "0.2.dev"
 __email__ = "ben.kurtovic@verizon.net"
 
-from . import nodes, parser, smart_list, string_mixin, wikicode
+from . import compat, nodes, parser, smart_list, string_mixin, utils, wikicode
 
-parse = lambda text: parser.Parser(text).parse()
-parse.__doc__ = "Short for :py:meth:`.Parser.parse`."
+parse = utils.parse_anything

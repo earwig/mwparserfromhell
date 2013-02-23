@@ -23,7 +23,6 @@
 from __future__ import unicode_literals
 from math import log
 import re
-import string
 
 from . import contexts
 from . import tokens
@@ -377,9 +376,9 @@ class Tokenizer(object):
         else:
             numeric = hexadecimal = False
 
-        valid = string.hexdigits if hexadecimal else string.digits
+        valid = "0123456789abcdefABCDEF" if hexadecimal else "0123456789"
         if not numeric and not hexadecimal:
-            valid += string.ascii_letters
+            valid += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         if not all([char in valid for char in this]):
             self._fail_route()
 

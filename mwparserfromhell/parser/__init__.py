@@ -26,10 +26,7 @@ modules: the :py:mod:`~.tokenizer` and the :py:mod:`~.builder`. This module
 joins them together under one interface.
 """
 
-try:
-    from ._builder import CBuilder as Builder
-except ImportError:
-    from .builder import Builder
+from .builder import Builder
 try:
     from ._tokenizer import CTokenizer as Tokenizer
 except ImportError:
