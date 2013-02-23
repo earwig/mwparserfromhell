@@ -118,6 +118,7 @@ static PyObject* TagCloseClose;
 
 #define LC_COMMENT              0x02000
 
+#define LC_SAFETY_CHECK         0xFC000
 #define LC_HAS_TEXT             0x04000
 #define LC_FAIL_ON_TEXT         0x08000
 #define LC_FAIL_NEXT            0x10000

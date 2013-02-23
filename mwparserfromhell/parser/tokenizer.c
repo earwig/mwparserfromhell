@@ -1324,10 +1324,14 @@ Tokenizer_parse(Tokenizer* self, int context)
             Tokenizer_write_text(self, this);
         }
         else if (this == next && next == *"[") {
-            if (Tokenizer_parse_wikilink(self))
-                return NULL;
-            if (self->topstack->context & LC_FAIL_NEXT)
-                self->topstack->context ^= LC_FAIL_NEXT;
+            if (!(this_context & LC_WIKILINK_TITLE)) {
+                if (Tokenizer_parse_wikilink(self))
+                    return NULL;
+                if (self->topstack->context & LC_FAIL_NEXT)
+                    self->topstack->context ^= LC_FAIL_NEXT;
+            }
+            else
+                Tokenizer_write_text(self, this);
         }
         else if (this == *"|" && this_context & LC_WIKILINK_TITLE) {
             if (Tokenizer_handle_wikilink_separator(self))
