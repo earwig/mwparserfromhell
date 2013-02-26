@@ -50,7 +50,6 @@ class StringMixIn(object):
     :py:meth:`__unicode__` instead of the immutable ``self`` like the regular
     ``str`` type.
     """
-
     if py3k:
         def __str__(self):
             return self.__unicode__()
