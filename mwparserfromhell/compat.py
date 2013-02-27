@@ -16,6 +16,7 @@ if py3k:
     bytes = bytes
     str = str
     basestring = str
+    range = range
     maxsize = sys.maxsize
     import html.entities as htmlentities
     from io import StringIO
@@ -24,6 +25,7 @@ else:
     bytes = str
     str = unicode
     basestring = basestring
+    range = xrange
     maxsize = sys.maxint
     import htmlentitydefs as htmlentities
     from StringIO import StringIO

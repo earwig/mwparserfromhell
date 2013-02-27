@@ -21,9 +21,10 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from types import GeneratorType
 import unittest
 
-from mwparserfromhell.compat import py3k, str
+from mwparserfromhell.compat import bytes, py3k, range, str
 from mwparserfromhell.string_mixin import StringMixIn
 
 class _FakeString(StringMixIn):
@@ -55,7 +56,20 @@ class TestStringMixIn(unittest.TestCase):
 
     def test_types(self):
         """make sure StringMixIns convert to different types correctly"""
-        pass
+        fstr = _FakeString("fake string")
+        self.assertEquals(str(fstr), "fake string")
+        self.assertEquals(bytes(fstr), b"fake string")
+        if py3k:
+            self.assertEquals(repr(fstr), "'fake string'")
+        else:
+            self.assertEquals(repr(fstr), b"u'fake string'")
+
+        self.assertIsInstance(str(fstr), str)
+        self.assertIsInstance(bytes(fstr), bytes)
+        if py3k:
+            self.assertIsInstance(repr(fstr), str)
+        else:
+            self.assertIsInstance(repr(fstr), bytes)
 
     def test_comparisons(self):
         """make sure comparison operators work"""
@@ -93,13 +107,53 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str1 < str5)
         self.assertFalse(str1 <= str5)
 
-    def test_operators(self):
-        """make sure string addition and multiplication work"""
-        pass
-
     def test_other_magics(self):
         """test other magically implemented features, like len() and iter()"""
-        pass
+        str1 = _FakeString("fake string")
+        str2 = _FakeString("")
+        expected = ["f", "a", "k", "e", " ", "s", "t", "r", "i", "n", "g"]
+
+        self.assertTrue(str1)
+        self.assertFalse(str2)
+        self.assertEquals(11, len(str1))
+        self.assertEquals(0, len(str2))
+
+        out = []
+        for ch in str1:
+            out.append(ch)
+        self.assertEquals(expected, out)
+
+        out = []
+        for ch in str2:
+            out.append(ch)
+        self.assertEquals([], out)
+
+        gen1 = iter(str1)
+        gen2 = iter(str2)
+        self.assertIsInstance(gen1, GeneratorType)
+        self.assertIsInstance(gen2, GeneratorType)
+
+        out = []
+        for i in range(len(str1)):
+            out.append(gen1.next())
+        self.assertRaises(StopIteration, gen1.next)
+        self.assertEquals(expected, out)
+        self.assertRaises(StopIteration, gen2.next)
+
+        self.assertEquals("f", str1[0])
+        self.assertEquals(" ", str1[4])
+        self.assertEquals("g", str1[10])
+        self.assertEquals("n", str1[-2])
+        self.assertRaises(IndexError, lambda: str1[11])
+        self.assertRaises(IndexError, lambda: str2[0])
+
+        self.assertTrue("k" in str1)
+        self.assertTrue("fake" in str1)
+        self.assertTrue("str" in str1)
+        self.assertTrue("" in str1)
+        self.assertTrue("" in str2)
+        self.assertFalse("real" in str1)
+        self.assertFalse("s" in str2)
 
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
