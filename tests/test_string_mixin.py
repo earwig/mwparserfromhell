@@ -157,7 +157,43 @@ class TestStringMixIn(unittest.TestCase):
 
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
-        pass
+        fstr = _FakeString("fake string")
+
+        self.assertEquals("Fake string", fstr.capitalize())
+
+        self.assertEquals("  fake string  ", fstr.center(15))
+        self.assertEquals("  fake string   ", fstr.center(16))
+        self.assertEquals("qqfake stringqq", fstr.center(15, "q"))
+
+        self.assertEquals(1, fstr.count("e"))
+        self.assertEquals(0, fstr.count("z"))
+        self.assertEquals(1, fstr.count("r", 7))
+        self.assertEquals(0, fstr.count("r", 8))
+        self.assertEquals(1, fstr.count("r", 5, 9))
+        self.assertEquals(0, fstr.count("r", 5, 7))
+
+        if not py3k:
+            self.assertEquals(fstr, fstr.decode())
+            self.assertEquals("𐌲𐌿𐍄", '\\U00010332\\U0001033f\\U00010344'.decode("unicode_escape"))
+
+        self.assertEquals(b"fake string", fstr.encode())
+        self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
+                          "𐌲𐌿𐍄".encode("utf8"))
+        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode)
+        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode, "ascii")
+        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode, "ascii", "strict")
+        self.assertEquals("", "𐌲𐌿𐍄".encode("ascii", "ignore"))
+
+        self.assertTrue(fstr.endswith("ing"))
+        self.assertFalse(fstr.endswith("ingh"))
+
+        methods = [
+            "expandtabs", "find", "format", "index", "isalnum", "isalpha",
+            "isdecimal", "isdigit", "islower", "isnumeric", "isspace",
+            "istitle", "isupper", "join", "ljust", "lstrip", "partition",
+            "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
+            "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
+            "title", "translate", "upper", "zfill"]
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
