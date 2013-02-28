@@ -174,7 +174,11 @@ class TestStringMixIn(unittest.TestCase):
 
         if not py3k:
             self.assertEquals(fstr, fstr.decode())
-            self.assertEquals("𐌲𐌿𐍄", '\\U00010332\\U0001033f\\U00010344'.decode("unicode_escape"))
+            actual = '\\U00010332\\U0001033f\\U00010344'
+            self.assertEquals("𐌲𐌿𐍄", actual.decode("unicode_escape"))
+            self.assertEquals("𐌲", '\\U00010332'.decode("unicode_escape"))
+            self.assertRaises(UnicodeError, "fo".decode, "punycode")
+            self.assertEquals("", "fo".decode("punycode", "ignore"))
 
         self.assertEquals(b"fake string", fstr.encode())
         self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
@@ -187,8 +191,40 @@ class TestStringMixIn(unittest.TestCase):
         self.assertTrue(fstr.endswith("ing"))
         self.assertFalse(fstr.endswith("ingh"))
 
+        self.assertEquals("fake string", fstr)
+        self.assertEquals("        foobar", "\tfoobar".expandtabs())
+        self.assertEquals("    foobar", "\tfoobar".expandtabs(4))
+
+        self.assertEquals(3, fstr.find("e"))
+        self.assertEquals(-1, fstr.find("z"))
+        self.assertEquals(7, fstr.find("r", 7))
+        self.assertEquals(-1, fstr.find("r", 8))
+        self.assertEquals(7, fstr.find("r", 5, 9))
+        self.assertEquals(-1, fstr.find("r", 5, 7))
+
+        self.assertEquals("fake string", fstr.format())
+        self.assertEquals("foobarbaz", "foo{0}baz".format("bar"))
+        self.assertEquals("foobarbaz", "foo{abc}baz".format(abc="bar"))
+        self.assertEquals("foobarbazbuzz",
+                          "foo{0}{abc}buzz".format("bar", abc="baz"))
+        self.assertRaises(IndexError, "{0}{1}".format, "abc")
+
+        self.assertEquals(3, fstr.index("e"))
+        self.assertRaises(ValueError, fstr.index, "z")
+        self.assertEquals(7, fstr.index("r", 7))
+        self.assertRaises(ValueError, fstr.index, "r", 8)
+        self.assertEquals(7, fstr.index("r", 5, 9))
+        self.assertRaises(ValueError, fstr.index, "r", 5, 7)
+
+        self.assertTrue("foobar".isalnum())
+        self.assertTrue("foobar123".isalnum())
+        self.assertFalse("foo bar".isalnum())
+
+        self.assertTrue("foobar".isalpha())
+        self.assertFalse("foobar123".isalpha())
+        self.assertFalse("foo bar".isalpha())
+
         methods = [
-            "expandtabs", "find", "format", "index", "isalnum", "isalpha",
             "isdecimal", "isdigit", "islower", "isnumeric", "isspace",
             "istitle", "isupper", "join", "ljust", "lstrip", "partition",
             "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",

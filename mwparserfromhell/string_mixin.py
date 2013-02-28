@@ -179,9 +179,10 @@ class StringMixIn(object):
     def isalpha(self):
         return self.__unicode__().isalpha()
 
-    @inheritdoc
-    def isdecimal(self):
-        return self.__unicode__().isdecimal()
+    if py3k:
+        @inheritdoc
+        def isdecimal(self):
+            return self.__unicode__().isdecimal()
 
     @inheritdoc
     def isdigit(self):
