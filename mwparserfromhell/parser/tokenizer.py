@@ -396,34 +396,42 @@ class Tokenizer(object):
         """Make sure we are not trying to write an invalid character."""
         context = self._context
         if context & contexts.FAIL_NEXT:
-            self._fail_route()
+            return False
         if context & contexts.WIKILINK_TITLE:
             if this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
             elif this == "\n" or this == "[" or this == "}":
-                self._fail_route()
-            return
+                return False
+            return True
         if context & contexts.TEMPLATE_NAME:
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
-                return
+                return True
             if this == "]":
-                self._fail_route()
-                return
+                return False
             if this == "|":
-                return
-        elif context & (contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME):
+                return True
+            if context & contexts.HAS_TEXT:
+                if context & contexts.FAIL_ON_TEXT:
+                    if this is self.END or not this.isspace():
+                        return False
+                else:
+                    if this == "\n":
+                        self._context |= contexts.FAIL_ON_TEXT
+            elif this is not self.END or not this.isspace():
+                self._context |= contexts.HAS_TEXT
+            return True
+        else:
             if context & contexts.FAIL_ON_EQUALS:
                 if this == "=":
-                    self._fail_route()
-                    return
+                    return False
             elif context & contexts.FAIL_ON_LBRACE:
-                if this == "{":
+                if this == "{" or (self._read(-1) == self._read(-2) == "{"):
                     if context & contexts.TEMPLATE:
                         self._context |= contexts.FAIL_ON_EQUALS
                     else:
                         self._context |= contexts.FAIL_NEXT
-                    return
+                    return True
                 self._context ^= contexts.FAIL_ON_LBRACE
             elif context & contexts.FAIL_ON_RBRACE:
                 if this == "}":
@@ -431,40 +439,13 @@ class Tokenizer(object):
                         self._context |= contexts.FAIL_ON_EQUALS
                     else:
                         self._context |= contexts.FAIL_NEXT
-                    return
+                    return True
                 self._context ^= contexts.FAIL_ON_RBRACE
             elif this == "{":
                 self._context |= contexts.FAIL_ON_LBRACE
             elif this == "}":
                 self._context |= contexts.FAIL_ON_RBRACE
-        if context & contexts.HAS_TEXT:
-            if context & contexts.FAIL_ON_TEXT:
-                if this is self.END or not this.isspace():
-                    if context & contexts.TEMPLATE_PARAM_KEY:
-                        self._context ^= contexts.FAIL_ON_TEXT
-                        self._context |= contexts.FAIL_ON_EQUALS
-                    else:
-                        self._fail_route()
-                    return
-            else:
-                if this == "\n":
-                    self._context |= contexts.FAIL_ON_TEXT
-        elif this is self.END or not this.isspace():
-            self._context |= contexts.HAS_TEXT
-
-    def _reset_safety_checks(self):
-        """Unset any safety-checking contexts set by Tokenizer_verify_safe().
-
-        Used when we preserve a context but previous data becomes invalid, like
-        when moving between template parameters.
-        """
-        context = self._context
-        checks = (contexts.HAS_TEXT, contexts.FAIL_ON_TEXT, contexts.FAIL_NEXT,
-                  contexts.FAIL_ON_LBRACE, contexts.FAIL_ON_RBRACE,
-                  contexts.FAIL_ON_EQUALS)
-        for check in checks:
-            if context & check:
-                self._context ^= check;
+            return True
 
     def _parse(self, context=0):
         """Parse the wikicode string, using *context* for when to stop."""
@@ -474,12 +455,10 @@ class Tokenizer(object):
             unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
                       contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME)
             if self._context & unsafe:
-                try:
-                    self._verify_safe(this)
-                except BadRoute:
+                if not self._verify_safe(this):
                     if self._context & contexts.TEMPLATE_PARAM_KEY:
                         self._pop()
-                    raise
+                    self._fail_route()
             if this not in self.MARKERS:
                 self._write_text(this)
                 self._head += 1
@@ -504,7 +483,6 @@ class Tokenizer(object):
                 if self._context & contexts.FAIL_NEXT:
                     self._context ^= contexts.FAIL_NEXT
             elif this == "|" and self._context & contexts.TEMPLATE:
-                self._reset_safety_checks()
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
                 self._handle_template_param_value()

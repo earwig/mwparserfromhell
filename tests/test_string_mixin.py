@@ -42,12 +42,14 @@ class TestStringMixIn(unittest.TestCase):
         methods = [
             "capitalize", "center", "count", "encode", "endswith",
             "expandtabs", "find", "format", "index", "isalnum", "isalpha",
-            "isdecimal", "isdigit", "islower", "isnumeric", "isspace",
-            "istitle", "isupper", "join", "ljust", "lstrip", "partition",
-            "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
-            "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
-            "title", "translate", "upper", "zfill"]
-        if not py3k:
+            "isdigit", "islower", "isnumeric", "isspace", "istitle", "isupper",
+            "join", "ljust", "lstrip", "partition", "replace", "rfind",
+            "rindex", "rjust", "rpartition", "rsplit", "rstrip", "split",
+            "splitlines", "startswith", "strip", "swapcase", "title",
+            "translate", "upper", "zfill"]
+        if py3k:
+            methods.append("isdecimal")
+        else:
             methods.append("decode")
         for meth in methods:
             expected = getattr(str, meth).__doc__
@@ -157,75 +159,107 @@ class TestStringMixIn(unittest.TestCase):
 
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
-        fstr = _FakeString("fake string")
+        str1 = _FakeString("fake string")
+        self.assertEquals("Fake string", str1.capitalize())
 
-        self.assertEquals("Fake string", fstr.capitalize())
+        self.assertEquals("  fake string  ", str1.center(15))
+        self.assertEquals("  fake string   ", str1.center(16))
+        self.assertEquals("qqfake stringqq", str1.center(15, "q"))
 
-        self.assertEquals("  fake string  ", fstr.center(15))
-        self.assertEquals("  fake string   ", fstr.center(16))
-        self.assertEquals("qqfake stringqq", fstr.center(15, "q"))
-
-        self.assertEquals(1, fstr.count("e"))
-        self.assertEquals(0, fstr.count("z"))
-        self.assertEquals(1, fstr.count("r", 7))
-        self.assertEquals(0, fstr.count("r", 8))
-        self.assertEquals(1, fstr.count("r", 5, 9))
-        self.assertEquals(0, fstr.count("r", 5, 7))
+        self.assertEquals(1, str1.count("e"))
+        self.assertEquals(0, str1.count("z"))
+        self.assertEquals(1, str1.count("r", 7))
+        self.assertEquals(0, str1.count("r", 8))
+        self.assertEquals(1, str1.count("r", 5, 9))
+        self.assertEquals(0, str1.count("r", 5, 7))
 
         if not py3k:
-            self.assertEquals(fstr, fstr.decode())
-            actual = '\\U00010332\\U0001033f\\U00010344'
+            str2 = _FakeString("fo")
+            self.assertEquals(str1, str1.decode())
+            actual = _FakeString("\\U00010332\\U0001033f\\U00010344")
             self.assertEquals("𐌲𐌿𐍄", actual.decode("unicode_escape"))
-            self.assertEquals("𐌲", '\\U00010332'.decode("unicode_escape"))
-            self.assertRaises(UnicodeError, "fo".decode, "punycode")
-            self.assertEquals("", "fo".decode("punycode", "ignore"))
+            self.assertRaises(UnicodeError, str2.decode, "punycode")
+            self.assertEquals("", str2.decode("punycode", "ignore"))
 
-        self.assertEquals(b"fake string", fstr.encode())
+        str3 = _FakeString("𐌲𐌿𐍄")
+        self.assertEquals(b"fake string", str1.encode())
         self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
-                          "𐌲𐌿𐍄".encode("utf8"))
-        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode)
-        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode, "ascii")
-        self.assertRaises(UnicodeEncodeError, "𐌲𐌿𐍄".encode, "ascii", "strict")
-        self.assertEquals("", "𐌲𐌿𐍄".encode("ascii", "ignore"))
+                          str3.encode("utf8"))
+        self.assertRaises(UnicodeEncodeError, str3.encode)
+        self.assertRaises(UnicodeEncodeError, str3.encode, "ascii")
+        self.assertRaises(UnicodeEncodeError, str3.encode, "ascii", "strict")
+        self.assertEquals("", str3.encode("ascii", "ignore"))
 
-        self.assertTrue(fstr.endswith("ing"))
-        self.assertFalse(fstr.endswith("ingh"))
+        self.assertTrue(str1.endswith("ing"))
+        self.assertFalse(str1.endswith("ingh"))
 
-        self.assertEquals("fake string", fstr)
-        self.assertEquals("        foobar", "\tfoobar".expandtabs())
-        self.assertEquals("    foobar", "\tfoobar".expandtabs(4))
+        str4 = _FakeString("\tfoobar")
+        self.assertEquals("fake string", str1)
+        self.assertEquals("        foobar", str4.expandtabs())
+        self.assertEquals("    foobar", str4.expandtabs(4))
 
-        self.assertEquals(3, fstr.find("e"))
-        self.assertEquals(-1, fstr.find("z"))
-        self.assertEquals(7, fstr.find("r", 7))
-        self.assertEquals(-1, fstr.find("r", 8))
-        self.assertEquals(7, fstr.find("r", 5, 9))
-        self.assertEquals(-1, fstr.find("r", 5, 7))
+        self.assertEquals(3, str1.find("e"))
+        self.assertEquals(-1, str1.find("z"))
+        self.assertEquals(7, str1.find("r", 7))
+        self.assertEquals(-1, str1.find("r", 8))
+        self.assertEquals(7, str1.find("r", 5, 9))
+        self.assertEquals(-1, str1.find("r", 5, 7))
 
-        self.assertEquals("fake string", fstr.format())
-        self.assertEquals("foobarbaz", "foo{0}baz".format("bar"))
-        self.assertEquals("foobarbaz", "foo{abc}baz".format(abc="bar"))
-        self.assertEquals("foobarbazbuzz",
-                          "foo{0}{abc}buzz".format("bar", abc="baz"))
-        self.assertRaises(IndexError, "{0}{1}".format, "abc")
+        str5 = _FakeString("foo{0}baz")
+        str6 = _FakeString("foo{abc}baz")
+        str7 = _FakeString("foo{0}{abc}buzz")
+        str8 = _FakeString("{0}{1}")
+        self.assertEquals("fake string", str1.format())
+        self.assertEquals("foobarbaz", str5.format("bar"))
+        self.assertEquals("foobarbaz", str6.format(abc="bar"))
+        self.assertEquals("foobarbazbuzz", str7.format("bar", abc="baz"))
+        self.assertRaises(IndexError, str8.format, "abc")
 
-        self.assertEquals(3, fstr.index("e"))
-        self.assertRaises(ValueError, fstr.index, "z")
-        self.assertEquals(7, fstr.index("r", 7))
-        self.assertRaises(ValueError, fstr.index, "r", 8)
-        self.assertEquals(7, fstr.index("r", 5, 9))
-        self.assertRaises(ValueError, fstr.index, "r", 5, 7)
+        self.assertEquals(3, str1.index("e"))
+        self.assertRaises(ValueError, str1.index, "z")
+        self.assertEquals(7, str1.index("r", 7))
+        self.assertRaises(ValueError, str1.index, "r", 8)
+        self.assertEquals(7, str1.index("r", 5, 9))
+        self.assertRaises(ValueError, str1.index, "r", 5, 7)
 
-        self.assertTrue("foobar".isalnum())
-        self.assertTrue("foobar123".isalnum())
-        self.assertFalse("foo bar".isalnum())
+        str9 = _FakeString("foobar")
+        str10 = _FakeString("foobar123")
+        str11 = _FakeString("foo bar")
+        self.assertTrue(str9.isalnum())
+        self.assertTrue(str10.isalnum())
+        self.assertFalse(str11.isalnum())
 
-        self.assertTrue("foobar".isalpha())
-        self.assertFalse("foobar123".isalpha())
-        self.assertFalse("foo bar".isalpha())
+        self.assertTrue(str9.isalpha())
+        self.assertFalse(str10.isalpha())
+        self.assertFalse(str11.isalpha())
+
+        str12 = _FakeString("123")
+        str13 = _FakeString("\u2155")
+        str14 = _FakeString("\u00B2")
+        if py3k:
+            self.assertFalse(str9.isdecimal())
+            self.assertTrue(str12.isdecimal())
+            self.assertFalse(str13.isdecimal())
+            self.assertFalse(str14.isdecimal())
+
+        self.assertFalse(str9.isdigit())
+        self.assertTrue(str12.isdigit())
+        self.assertFalse(str13.isdigit())
+        self.assertTrue(str14.isdigit())
+
+        str15 = _FakeString("")
+        str16 = _FakeString("FooBar")
+        self.assertTrue(str9.islower())
+        self.assertFalse(str15.islower())
+        self.assertFalse(str16.islower())
+
+        self.assertFalse(str9.isnumeric())
+        self.assertTrue(str12.isnumeric())
+        self.assertTrue(str13.isnumeric())
+        self.assertTrue(str14.isnumeric())
 
         methods = [
-            "isdecimal", "isdigit", "islower", "isnumeric", "isspace",
+            "isspace",
             "istitle", "isupper", "join", "ljust", "lstrip", "partition",
             "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
             "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
