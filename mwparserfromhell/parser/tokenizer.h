@@ -36,6 +36,10 @@ SOFTWARE.
 #define malloc PyObject_Malloc
 #define free   PyObject_Free
 
+#define DIGITS    "0123456789"
+#define HEXDIGITS "0123456789abcdefABCDEF"
+#define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 static const char* MARKERS[] = {
     "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
     "!", "\n", ""};

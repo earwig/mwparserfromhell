@@ -843,7 +843,8 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         self->head++;
     }
     current = log2(self->topstack->context / LC_HEADING_LEVEL_1) + 1;
-    level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
+    level = current > best ? (best > 6 ? 6 : best) :
+                             (current > 6 ? 6 : current);
     after = (HeadingData*) Tokenizer_parse(self, self->topstack->context);
     if (BAD_ROUTE) {
         RESET_ROUTE();
@@ -956,11 +957,11 @@ Tokenizer_really_parse_entity(Tokenizer* self)
     else
         numeric = hexadecimal = 0;
     if (hexadecimal)
-        valid = "0123456789abcdefABCDEF";
+        valid = HEXDIGITS;
     else if (numeric)
-        valid = "0123456789";
+        valid = DIGITS;
     else
-        valid = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        valid = ALPHANUM;
     text = calloc(MAX_ENTITY_SIZE, sizeof(char));
     if (!text) {
         PyErr_NoMemory();
@@ -1005,7 +1006,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         i = 0;
         while (1) {
             def = entitydefs[i];
-            if (!def)  // We've reached the end of the def list without finding it
+            if (!def)  // We've reached the end of the defs without finding it
                 FAIL_ROUTE_AND_EXIT()
             if (strcmp(text, def) == 0)
                 break;
@@ -1161,7 +1162,6 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         }
         if (data == *"|")
             return 0;
-
         if (context & LC_HAS_TEXT) {
             if (context & LC_FAIL_ON_TEXT) {
                 if (!Py_UNICODE_ISSPACE(data))
@@ -1182,7 +1182,8 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
             }
         }
         else if (context & LC_FAIL_ON_LBRACE) {
-            if (data == *"{" || (Tokenizer_READ(self, -1) == *"{" && Tokenizer_READ(self, -2) == *"{")) {
+            if (data == *"{" || (Tokenizer_READ(self, -1) == *"{" &&
+                                 Tokenizer_READ(self, -2) == *"{")) {
                 if (context & LC_TEMPLATE)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
@@ -1375,7 +1376,8 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 PyMODINIT_FUNC
 init_tokenizer(void)
 {
-    PyObject *module, *tempmodule, *defmap, *deflist, *globals, *locals, *fromlist, *modname;
+    PyObject *module, *tempmod, *defmap, *deflist, *globals, *locals,
+             *fromlist, *modname;
     unsigned numdefs, i;
     char *name;
 
@@ -1386,13 +1388,13 @@ init_tokenizer(void)
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
 
-    tempmodule = PyImport_ImportModule("htmlentitydefs");
-    if (!tempmodule)
+    tempmod = PyImport_ImportModule("htmlentitydefs");
+    if (!tempmod)
         return;
-    defmap = PyObject_GetAttrString(tempmodule, "entitydefs");
+    defmap = PyObject_GetAttrString(tempmod, "entitydefs");
     if (!defmap)
         return;
-    Py_DECREF(tempmodule);
+    Py_DECREF(tempmod);
     deflist = PyDict_Keys(defmap);
     if (!deflist)
         return;
@@ -1416,18 +1418,20 @@ init_tokenizer(void)
     if (!modname)
         return;
     PyList_SET_ITEM(fromlist, 0, modname);
-    tempmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
+    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tempmodule)
+    if (!tempmod)
         return;
-    tokens = PyObject_GetAttrString(tempmodule, "tokens");
-    Py_DECREF(tempmodule);
+    tokens = PyObject_GetAttrString(tempmod, "tokens");
+    Py_DECREF(tempmod);
 
     Text = PyObject_GetAttrString(tokens, "Text");
 
     TemplateOpen = PyObject_GetAttrString(tokens, "TemplateOpen");
-    TemplateParamSeparator = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
-    TemplateParamEquals = PyObject_GetAttrString(tokens, "TemplateParamEquals");
+    TemplateParamSeparator = PyObject_GetAttrString(tokens,
+                                                    "TemplateParamSeparator");
+    TemplateParamEquals = PyObject_GetAttrString(tokens,
+                                                 "TemplateParamEquals");
     TemplateClose = PyObject_GetAttrString(tokens, "TemplateClose");
 
     ArgumentOpen = PyObject_GetAttrString(tokens, "ArgumentOpen");
