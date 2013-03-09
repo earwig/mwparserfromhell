@@ -1135,48 +1135,59 @@ Tokenizer_parse_comment(Tokenizer* self)
 }
 
 /*
-    Make sure we are not trying to write an invalid character.
+    Make sure we are not trying to write an invalid character. Return 0 if
+    everything is safe, or -1 if the route must be failed.
 */
-static void
+static int
 Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 {
     if (context & LC_FAIL_NEXT) {
-        Tokenizer_fail_route(self);
-        return;
+        return -1;
     }
     if (context & LC_WIKILINK_TITLE) {
         if (data == *"]" || data == *"{")
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == *"\n" || data == *"[" || data == *"}")
-            Tokenizer_fail_route(self);
-        return;
+            return -1;
+        return 0;
     }
     if (context & LC_TEMPLATE_NAME) {
         if (data == *"{" || data == *"}" || data == *"[") {
             self->topstack->context |= LC_FAIL_NEXT;
-            return;
+            return 0;
         }
         if (data == *"]") {
-            Tokenizer_fail_route(self);
-            return;
+            return -1;
         }
         if (data == *"|")
-            return;
+            return 0;
+
+        if (context & LC_HAS_TEXT) {
+            if (context & LC_FAIL_ON_TEXT) {
+                if (!Py_UNICODE_ISSPACE(data))
+                    return -1;
+            }
+            else {
+                if (data == *"\n")
+                    self->topstack->context |= LC_FAIL_ON_TEXT;
+            }
+        }
+        else if (!Py_UNICODE_ISSPACE(data))
+            self->topstack->context |= LC_HAS_TEXT;
     }
-    else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
+    else {
         if (context & LC_FAIL_ON_EQUALS) {
             if (data == *"=") {
-                Tokenizer_fail_route(self);
-                return;
+                return -1;
             }
         }
         else if (context & LC_FAIL_ON_LBRACE) {
-            if (data == *"{") {
+            if (data == *"{" || (Tokenizer_READ(self, -1) == *"{" && Tokenizer_READ(self, -2) == *"{")) {
                 if (context & LC_TEMPLATE)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
                     self->topstack->context |= LC_FAIL_NEXT;
-                return;
+                return 0;
             }
             self->topstack->context ^= LC_FAIL_ON_LBRACE;
         }
@@ -1186,7 +1197,7 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
                     self->topstack->context |= LC_FAIL_NEXT;
-                return;
+                return 0;
             }
             self->topstack->context ^= LC_FAIL_ON_RBRACE;
         }
@@ -1195,47 +1206,7 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         else if (data == *"}")
             self->topstack->context |= LC_FAIL_ON_RBRACE;
     }
-    if (context & LC_HAS_TEXT) {
-        if (context & LC_FAIL_ON_TEXT) {
-            if (!Py_UNICODE_ISSPACE(data)) {
-                if (context & LC_TEMPLATE_PARAM_KEY) {
-                    self->topstack->context ^= LC_FAIL_ON_TEXT;
-                    self->topstack->context |= LC_FAIL_ON_EQUALS;
-                }
-                else
-                    Tokenizer_fail_route(self);
-                return;
-            }
-        }
-        else {
-            if (data == *"\n")
-                self->topstack->context |= LC_FAIL_ON_TEXT;
-        }
-    }
-    else if (!Py_UNICODE_ISSPACE(data))
-        self->topstack->context |= LC_HAS_TEXT;
-}
-
-/*
-    Unset any safety-checking contexts set by Tokenizer_verify_safe(). Used
-    when we preserve a context but previous data becomes invalid, like when
-    moving between template parameters.
-*/
-static void
-Tokenizer_reset_safety_checks(Tokenizer* self)
-{
-    static int checks[] = {
-        LC_HAS_TEXT, LC_FAIL_ON_TEXT, LC_FAIL_NEXT, LC_FAIL_ON_LBRACE,
-        LC_FAIL_ON_RBRACE, LC_FAIL_ON_EQUALS, 0};
-    int context = self->topstack->context, i = 0, this;
-    while (1) {
-        this = checks[i];
-        if (!this)
-            return;
-        if (context & this)
-            self->topstack->context ^= this;
-        i++;
-    }
+    return 0;
 }
 
 /*
@@ -1258,12 +1229,12 @@ Tokenizer_parse(Tokenizer* self, int context)
         this = Tokenizer_READ(self, 0);
         this_context = self->topstack->context;
         if (this_context & unsafe_contexts) {
-            Tokenizer_verify_safe(self, this_context, this);
-            if (BAD_ROUTE) {
+            if (Tokenizer_verify_safe(self, this_context, this) < 0) {
                 if (this_context & LC_TEMPLATE_PARAM_KEY) {
                     trash = Tokenizer_pop(self);
                     Py_XDECREF(trash);
                 }
+                Tokenizer_fail_route(self);
                 return NULL;
             }
         }
@@ -1303,7 +1274,6 @@ Tokenizer_parse(Tokenizer* self, int context)
                 self->topstack->context ^= LC_FAIL_NEXT;
         }
         else if (this == *"|" && this_context & LC_TEMPLATE) {
-            Tokenizer_reset_safety_checks(self);
             if (Tokenizer_handle_template_param(self))
                 return NULL;
         }
