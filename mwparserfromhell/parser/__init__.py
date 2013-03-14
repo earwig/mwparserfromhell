@@ -27,12 +27,15 @@ joins them together under one interface.
 """
 
 from .builder import Builder
+from .tokenizer import Tokenizer
 try:
-    from ._tokenizer import CTokenizer as Tokenizer
+    from ._tokenizer import CTokenizer
+    use_c = True
 except ImportError:
-    from .tokenizer import Tokenizer
+    CTokenizer = None
+    use_c = False
 
-__all__ = ["Parser"]
+__all__ = ["use_c", "Parser"]
 
 class Parser(object):
     """Represents a parser for wikicode.
@@ -45,7 +48,10 @@ class Parser(object):
 
     def __init__(self, text):
         self.text = text
-        self._tokenizer = Tokenizer()
+        if use_c and CTokenizer:
+            self._tokenizer = CTokenizer()
+        else:
+            self._tokenizer = Tokenizer()
         self._builder = Builder()
 
     def parse(self):
