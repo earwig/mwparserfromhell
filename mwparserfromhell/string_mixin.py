@@ -122,6 +122,11 @@ class StringMixIn(object):
     def capitalize(self):
         return self.__unicode__().capitalize()
 
+    if py3k:
+        @inheritdoc
+        def casefold(self):
+            return self.__unicode__().casefold()
+
     @inheritdoc
     def center(self, width, fillchar=None):
         if fillchar is None:
@@ -167,6 +172,11 @@ class StringMixIn(object):
     def format(self, *args, **kwargs):
         return self.__unicode__().format(*args, **kwargs)
 
+    if py3k:
+        @inheritdoc
+        def format_map(self, mapping):
+            return self.__unicode__().format_map(mapping)
+
     @inheritdoc
     def index(self, sub, start=None, end=None):
         return self.__unicode__().index(sub, start, end)
@@ -187,6 +197,11 @@ class StringMixIn(object):
     def isdigit(self):
         return self.__unicode__().isdigit()
 
+    if py3k:
+        @inheritdoc
+        def isidentifier(self):
+            return self.__unicode__().isidentifier()
+
     @inheritdoc
     def islower(self):
         return self.__unicode__().islower()
@@ -194,6 +209,11 @@ class StringMixIn(object):
     @inheritdoc
     def isnumeric(self):
         return self.__unicode__().isnumeric()
+
+    if py3k:
+        @inheritdoc
+        def isprintable(self):
+            return self.__unicode__().isprintable()
 
     @inheritdoc
     def isspace(self):
@@ -224,6 +244,16 @@ class StringMixIn(object):
     @inheritdoc
     def lstrip(self, chars=None):
         return self.__unicode__().lstrip(chars)
+
+    if py3k:
+        @inheritdoc
+        @staticmethod
+        def maketrans(self, x, y=None, z=None):
+            if z is None:
+                if y is None:
+                    return self.__unicode__.maketrans(x)
+                return self.__unicode__.maketrans(x, y)
+            return self.__unicode__.maketrans(x, y, z)
 
     @inheritdoc
     def partition(self, sep):

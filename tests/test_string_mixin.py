@@ -48,7 +48,8 @@ class TestStringMixIn(unittest.TestCase):
             "rsplit", "rstrip", "split", "splitlines", "startswith", "strip",
             "swapcase", "title", "translate", "upper", "zfill"]
         if py3k:
-            methods.extend(["casefold", "format_map", "isidentifier", "isprintable", "maketrans"])
+            methods.extend(["casefold", "format_map", "isidentifier",
+                            "isprintable", "maketrans"])
         else:
             methods.append("decode")
         for meth in methods:
