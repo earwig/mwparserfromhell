@@ -258,12 +258,78 @@ class TestStringMixIn(unittest.TestCase):
         self.assertTrue(str13.isnumeric())
         self.assertTrue(str14.isnumeric())
 
-        methods = [
-            "isspace",
-            "istitle", "isupper", "join", "ljust", "lstrip", "partition",
-            "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
-            "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
-            "title", "translate", "upper", "zfill"]
+        str17 = _FakeString(" ")
+        str18 = _FakeString("\t     \t \r\n")
+        self.assertFalse(str1.isspace())
+        self.assertFalse(str9.isspace())
+        self.assertTrue(str17.isspace())
+        self.assertTrue(str18.isspace())
+
+        str19 = _FakeString("This Sentence Looks Like A Title")
+        str20 = _FakeString("This sentence doesn't LookLikeATitle")
+        self.assertFalse(str15.istitle())
+        self.assertTrue(str19.istitle())
+        self.assertFalse(str20.istitle())
+
+        str21 = _FakeString("FOOBAR")
+        self.assertFalse(str9.isupper())
+        self.assertFalse(str15.isupper())
+        self.assertTrue(str21.isupper())
+
+        self.assertEquals("foobar", str15.join(["foo", "bar"]))
+        self.assertEquals("foo123bar123baz", str12.join(("foo", "bar", "baz")))
+
+        self.assertEquals("fake string    ", str1.ljust(15))
+        self.assertEquals("fake string     ", str1.ljust(16))
+        self.assertEquals("fake stringqqqq", str1.ljust(15, "q"))
+
+        # lstrip
+
+        # partition
+
+        # replace
+
+        self.assertEquals(3, str1.rfind("e"))
+        self.assertEquals(-1, str1.rfind("z"))
+        self.assertEquals(7, str1.rfind("r", 7))
+        self.assertEquals(-1, str1.rfind("r", 8))
+        self.assertEquals(7, str1.rfind("r", 5, 9))
+        self.assertEquals(-1, str1.rfind("r", 5, 7))
+
+        self.assertEquals(3, str1.rindex("e"))
+        self.assertRaises(ValueError, str1.rindex, "z")
+        self.assertEquals(7, str1.rindex("r", 7))
+        self.assertRaises(ValueError, str1.rindex, "r", 8)
+        self.assertEquals(7, str1.rindex("r", 5, 9))
+        self.assertRaises(ValueError, str1.rindex, "r", 5, 7)
+
+        self.assertEquals("    fake string", str1.rjust(15))
+        self.assertEquals("     fake string", str1.rjust(16))
+        self.assertEquals("qqqqfake string", str1.rjust(15, "q"))
+
+        # rpartition
+
+        # rsplit
+
+        # rstrip
+
+        # split
+
+        # splitlines
+
+        # startswith
+
+        # strip
+
+        # swapcase
+
+        # title
+
+        # translate
+
+        # upper
+
+        # zfill
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
