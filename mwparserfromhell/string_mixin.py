@@ -179,10 +179,9 @@ class StringMixIn(object):
     def isalpha(self):
         return self.__unicode__().isalpha()
 
-    if py3k:
-        @inheritdoc
-        def isdecimal(self):
-            return self.__unicode__().isdecimal()
+    @inheritdoc
+    def isdecimal(self):
+        return self.__unicode__().isdecimal()
 
     @inheritdoc
     def isdigit(self):
@@ -231,7 +230,9 @@ class StringMixIn(object):
         return self.__unicode__().partition(sep)
 
     @inheritdoc
-    def replace(self, old, new, count):
+    def replace(self, old, new, count=None):
+        if count is None:
+            return self.__unicode__().replace(old, new)
         return self.__unicode__().replace(old, new, count)
 
     @inheritdoc
