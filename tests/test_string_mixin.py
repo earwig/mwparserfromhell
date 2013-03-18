@@ -216,6 +216,11 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals("foobarbazbuzz", str7.format("bar", abc="baz"))
         self.assertRaises(IndexError, str8.format, "abc")
 
+        if py3k:
+            self.assertEquals("fake string", str1.format_map({}))
+            self.assertEquals("foobarbaz", str6.format_map({"abc": "bar"}))
+            self.assertRaises(ValueError, str5.format_map, {0: "abc"})
+
         self.assertEquals(3, str1.index("e"))
         self.assertRaises(ValueError, str1.index, "z")
         self.assertEquals(7, str1.index("r", 7))
@@ -247,6 +252,12 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str13.isdigit())
         self.assertTrue(str14.isdigit())
 
+        if py3k:
+            self.assertTrue(str9.isidentifier())
+            self.assertTrue(str10.isidentifier())
+            self.assertFalse(str11.isidentifier())
+            self.assertFalse(str12.isidentifier())
+
         str15 = _FakeString("")
         str16 = _FakeString("FooBar")
         self.assertTrue(str9.islower())
@@ -257,6 +268,14 @@ class TestStringMixIn(unittest.TestCase):
         self.assertTrue(str12.isnumeric())
         self.assertTrue(str13.isnumeric())
         self.assertTrue(str14.isnumeric())
+
+        if py3k:
+            str16B = _FakeString("\x01\x02")
+            self.assertTrue(str9.isprintable())
+            self.assertTrue(str13.isprintable())
+            self.assertTrue(str14.isprintable())
+            self.assertTrue(str15.isprintable())
+            self.assertFalse(str16B.isprintable())
 
         str17 = _FakeString(" ")
         str18 = _FakeString("\t     \t \r\n")
@@ -283,20 +302,26 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals("fake string     ", str1.ljust(16))
         self.assertEquals("fake stringqqqq", str1.ljust(15, "q"))
 
+        str22 = _FakeString("ß")
         self.assertEquals("", str15.lower())
         self.assertEquals("foobar", str16.lower())
+        self.assertEquals("ß", str22.lower())
+        if py3k:
+            self.assertEquals("", str15.casefold())
+            self.assertEquals("foobar", str16.casefold())
+            self.assertEquals("ss", str22.casefold())
 
-        str22 = _FakeString("  fake string  ")
+        str23 = _FakeString("  fake string  ")
         self.assertEquals("fake string", str1.lstrip())
-        self.assertEquals("fake string  ", str22.lstrip())
+        self.assertEquals("fake string  ", str23.lstrip())
         self.assertEquals("ke string", str1.lstrip("abcdef"))
 
         self.assertEquals(("fa", "ke", " string"), str1.partition("ke"))
         self.assertEquals(("fake string", "", ""), str1.partition("asdf"))
 
-        str23 = _FakeString("boo foo moo")
+        str24 = _FakeString("boo foo moo")
         self.assertEquals("real string", str1.replace("fake", "real"))
-        self.assertEquals("bu fu moo", str23.replace("oo", "u", 2))
+        self.assertEquals("bu fu moo", str24.replace("oo", "u", 2))
 
         self.assertEquals(3, str1.rfind("e"))
         self.assertEquals(-1, str1.rfind("z"))
@@ -319,44 +344,44 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals(("fa", "ke", " string"), str1.rpartition("ke"))
         self.assertEquals(("", "", "fake string"), str1.rpartition("asdf"))
 
-        str24 = _FakeString("   this is a   sentence with  whitespace ")
+        str25 = _FakeString("   this is a   sentence with  whitespace ")
         actual = ["this", "is", "a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str24.rsplit())
-        self.assertEquals(actual, str24.rsplit(None))
+        self.assertEquals(actual, str25.rsplit())
+        self.assertEquals(actual, str25.rsplit(None))
         actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
                   "", "whitespace", ""]
-        self.assertEquals(actual, str24.rsplit(" "))
+        self.assertEquals(actual, str25.rsplit(" "))
         actual = ["   this is a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str24.rsplit(None, 3))
+        self.assertEquals(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
-        self.assertEquals(actual, str24.rsplit(" ", 3))
+        self.assertEquals(actual, str25.rsplit(" ", 3))
 
         self.assertEquals("fake string", str1.rstrip())
-        self.assertEquals("  fake string", str22.rstrip())
+        self.assertEquals("  fake string", str23.rstrip())
         self.assertEquals("fake stri", str1.rstrip("ngr"))
 
         actual = ["this", "is", "a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str24.split())
-        self.assertEquals(actual, str24.split(None))
+        self.assertEquals(actual, str25.split())
+        self.assertEquals(actual, str25.split(None))
         actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
                   "", "whitespace", ""]
-        self.assertEquals(actual, str24.split(" "))
+        self.assertEquals(actual, str25.split(" "))
         actual = ["this", "is", "a", "sentence with  whitespace "]
-        self.assertEquals(actual, str24.split(None, 3))
+        self.assertEquals(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
-        self.assertEquals(actual, str24.split(" ", 3))
+        self.assertEquals(actual, str25.split(" ", 3))
 
-        str25 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
+        str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
         self.assertEquals(["lines", "of", "text", "are", "presented", "here"],
-                          str25.splitlines())
+                          str26.splitlines())
         self.assertEquals(["lines\n", "of\n", "text\r\n", "are\r\n",
-                           "presented\n", "here"], str25.splitlines(True))
+                           "presented\n", "here"], str26.splitlines(True))
 
         self.assertTrue(str1.startswith("fake"))
         self.assertFalse(str1.startswith("faker"))
 
         self.assertEquals("fake string", str1.strip())
-        self.assertEquals("fake string", str22.strip())
+        self.assertEquals("fake string", str23.strip())
         self.assertEquals("ke stri", str1.strip("abcdefngr"))
 
         self.assertEquals("fOObAR", str16.swapcase())
