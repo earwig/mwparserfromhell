@@ -361,3 +361,6 @@ class _ListProxy(list):
         else:
             item.sort()
         self._parent[self._start:self._stop:self._step] = item
+
+
+del inheritdoc
