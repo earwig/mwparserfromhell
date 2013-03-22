@@ -38,5 +38,15 @@ class TestSmartList(unittest.TestCase):
             self.assertEquals(expected, smartlist_doc)
             self.assertEquals(expected, listproxy_doc)
 
+    def test_doctest(self):
+        """make sure a test embedded in SmartList's docstring passes"""
+        parent = SmartList([0, 1, 2, 3])
+        self.assertEquals([0, 1, 2, 3], parent)
+        child = parent[2:]
+        self.assertEquals([2, 3], child)
+        child.append(4)
+        self.assertEquals([2, 3, 4], child)
+        self.assertEquals([0, 1, 2, 3, 4], parent)
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)
