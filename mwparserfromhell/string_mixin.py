@@ -113,6 +113,9 @@ class StringMixIn(object):
     def __getitem__(self, key):
         return self.__unicode__()[key]
 
+    def __reversed__(self):
+        return reversed(self.__unicode__())
+
     def __contains__(self, item):
         if isinstance(item, StringMixIn):
             return str(item) in self.__unicode__()

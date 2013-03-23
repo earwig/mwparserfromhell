@@ -143,6 +143,9 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals(expected, out)
         self.assertRaises(StopIteration, gen2.next)
 
+        self.assertEquals("gnirts ekaf", "".join(list(reversed(str1))))
+        self.assertEquals([], list(reversed(str2)))
+
         self.assertEquals("f", str1[0])
         self.assertEquals(" ", str1[4])
         self.assertEquals("g", str1[10])
