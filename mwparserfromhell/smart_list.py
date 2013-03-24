@@ -76,7 +76,8 @@ class SmartList(list):
     def __getitem__(self, key):
         if not isinstance(key, slice):
             return super(SmartList, self).__getitem__(key)
-        sliceinfo = [key.start or 0, key.stop or maxsize, key.step or 1]
+        sliceinfo = [key.start or 0, maxsize if key.stop is None else key.stop,
+                     key.step or 1]
         child = _ListProxy(self, sliceinfo)
         self._children[id(child)] = (child, sliceinfo)
         return child
@@ -86,12 +87,12 @@ class SmartList(list):
             return super(SmartList, self).__setitem__(key, item)
         item = list(item)
         super(SmartList, self).__setitem__(key, item)
-        key = slice(key.start or 0, key.stop or maxsize)
+        key = slice(key.start or 0, maxsize if key.stop is None else key.stop)
         diff = len(item) - key.stop + key.start
         values = self._children.values if py3k else self._children.itervalues
         if diff:
             for child, (start, stop, step) in values():
-                if start >= key.stop:
+                if start > key.stop:
                     self._children[id(child)][1][0] += diff
                 if stop >= key.stop and stop != maxsize:
                     self._children[id(child)][1][1] += diff
@@ -99,7 +100,8 @@ class SmartList(list):
     def __delitem__(self, key):
         super(SmartList, self).__delitem__(key)
         if isinstance(key, slice):
-            key = slice(key.start or 0, key.stop or maxsize)
+            key = slice(key.start or 0,
+                        maxsize if key.stop is None else key.stop)
         else:
             key = slice(key, key + 1)
         diff = key.stop - key.start
@@ -107,7 +109,7 @@ class SmartList(list):
         for child, (start, stop, step) in values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
-            if stop >= key.stop:
+            if stop >= key.stop and stop != maxsize:
                 self._children[id(child)][1][1] -= diff
 
     if not py3k:
@@ -296,6 +298,8 @@ class _ListProxy(list):
     @property
     def _stop(self):
         """The ending index of this list, exclusive."""
+        if self._sliceinfo[1] == maxsize:
+            return len(self._parent)
         return self._sliceinfo[1]
 
     @property
@@ -329,18 +333,25 @@ class _ListProxy(list):
 
     @inheritdoc
     def insert(self, index, item):
+        if index < 0:
+            index = len(self) + index
         self._parent.insert(self._start + index, item)
 
     @inheritdoc
     def pop(self, index=None):
+        length = len(self)
         if index is None:
-            index = len(self) - 1
+            index = length - 1
+        elif index < 0:
+            index = length + index
+        if index < 0 or index >= length:
+            raise IndexError("pop index out of range")
         return self._parent.pop(self._start + index)
 
     @inheritdoc
     def remove(self, item):
         index = self.index(item)
-        del self._parent[index]
+        del self._parent[self._start + index]
 
     @inheritdoc
     def reverse(self):
@@ -351,16 +362,14 @@ class _ListProxy(list):
     @inheritdoc
     def sort(self, cmp=None, key=None, reverse=None):
         item = self._render()
+        kwargs = {}
         if cmp is not None:
-            if key is not None:
-                if reverse is not None:
-                    item.sort(cmp, key, reverse)
-                else:
-                    item.sort(cmp, key)
-            else:
-                item.sort(cmp)
-        else:
-            item.sort()
+            kwargs["cmp"] = cmp
+        if key is not None:
+            kwargs["key"] = key
+        if reverse is not None:
+            kwargs["reverse"] = reverse
+        item.sort(**kwargs)
         self._parent[self._start:self._stop:self._step] = item
 
 
