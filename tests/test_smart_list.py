@@ -49,15 +49,79 @@ class TestSmartList(unittest.TestCase):
         self.assertEquals([2, 3, 4], child)
         self.assertEquals([0, 1, 2, 3, 4], parent)
 
-    def test_parent_magics(self):
-        """make sure magically implemented SmartList features work"""
-        # __getitem__
-        # __setitem__
-        # __delitem__
-        # if not py3k:
-        #     __getslice__
-        #     __setslice__
-        #     __delslice__
+    def test_parent_get_set_del(self):
+        """make sure SmartList's getitem/setitem/delitem work"""
+        def assign(L, s1, s2, s3, val):
+            L[s1:s2:s3] = val
+        def delete(L, s1):
+            del L[s1]
+
+        list1 = SmartList([0, 1, 2, 3, "one", "two"])
+        list2 = SmartList(list(range(10)))
+
+        self.assertEquals(1, list1[1])
+        self.assertEquals("one", list1[-2])
+        self.assertEquals([2, 3], list1[2:4])
+        self.assertRaises(IndexError, lambda: list1[6])
+        self.assertRaises(IndexError, lambda: list1[-7])
+
+        self.assertEquals([0, 1, 2], list1[:3])
+        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[:])
+        self.assertEquals([3, "one", "two"], list1[3:])
+        self.assertEquals(["one", "two"], list1[-2:])
+        self.assertEquals([0, 1], list1[:-4])
+        self.assertEquals([], list1[6:])
+        self.assertEquals([], list1[4:2])
+
+        self.assertEquals([0, 2, "one"], list1[0:5:2])
+        self.assertEquals([0, 2], list1[0:-3:2])
+        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[::])
+        self.assertEquals([2, 3, "one", "two"], list1[2::])
+        self.assertEquals([0, 1, 2, 3], list1[:4:])
+        self.assertEquals([2, 3], list1[2:4:])
+        self.assertEquals([0, 2, 4, 6, 8], list2[::2])
+        self.assertEquals([2, 5, 8], list2[2::3])
+        self.assertEquals([0, 3], list2[:6:3])
+        self.assertEquals([2, 5, 8], list2[-8:9:3])
+        self.assertEquals([], list2[100000:1000:-100])
+
+        list1[3] = 100
+        self.assertEquals(100, list1[3])
+        list1[5:] = [6, 7, 8]
+        self.assertEquals([6, 7, 8], list1[5:])
+        self.assertEquals([0, 1, 2, 100, "one", 6, 7, 8], list1)
+        list1[2:4] = [-1, -2, -3, -4, -5]
+        self.assertEquals([0, 1, -1, -2, -3, -4, -5, "one", 6, 7, 8], list1)
+        list1[0:-3] = [99]
+        self.assertEquals([99, 6, 7, 8], list1)
+        list2[0:6:2] = [100, 102, 104]
+        self.assertEquals([100, 1, 102, 3, 104, 5, 6, 7, 8, 9], list2)
+        list2[::3] = [200, 203, 206, 209]
+        self.assertEquals([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
+        list2[::] = range(7)
+        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list2)
+        self.assertRaises(ValueError,
+                          lambda: assign(list2, 0, 5, 2, [100, 102, 104, 106]))
+
+        del list2[2]
+        self.assertEquals([0, 1, 3, 4, 5, 6], list2)
+        del list2[-3]
+        self.assertEquals([0, 1, 3, 5, 6], list2)
+        self.assertRaises(IndexError, lambda: delete(list2, 100))
+        self.assertRaises(IndexError, lambda: delete(list2, -6))
+        list2[:] = range(10)
+        del list2[3:6]
+        self.assertEquals([0, 1, 2, 6, 7, 8, 9], list2)
+        del list2[-2:]
+        self.assertEquals([0, 1, 2, 6, 7], list2)
+        del list2[:2]
+        self.assertEquals([2, 6, 7], list2)
+        list2[:] = range(10)
+        del list2[2:8:2]
+        self.assertEquals([0, 1, 3, 5, 7, 8, 9], list2)
+
+    def test_parent_add(self):
+        """make sure SmartList's add/radd/iadd work"""
         # __add__
         # __radd__
         # __iadd__
@@ -150,6 +214,7 @@ class TestSmartList(unittest.TestCase):
         self.assertEquals([0, 1, 2, 0, 1, 2], list4)
 
     def test_parent_methods(self):
+        pass
         # append
         # count
         # extend
@@ -161,6 +226,7 @@ class TestSmartList(unittest.TestCase):
         # sort
 
     def test_child_magics(self):
+        pass
         # if py3k:
         #     __str__
         #     __bytes__
@@ -197,6 +263,7 @@ class TestSmartList(unittest.TestCase):
         # __imul__
 
     def test_child_methods(self):
+        pass
         # append
         # count
         # extend
@@ -209,6 +276,8 @@ class TestSmartList(unittest.TestCase):
 
     def test_influence(self):
         pass
+        # test whether changes are propogated correctly
+        # also test whether children that exit scope are removed from parent's map
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
