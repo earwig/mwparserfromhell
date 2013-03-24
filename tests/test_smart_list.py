@@ -100,15 +100,15 @@ class TestSmartList(unittest.TestCase):
         self.assertEquals([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
         list2[::] = range(7)
         self.assertEquals([0, 1, 2, 3, 4, 5, 6], list2)
-        self.assertRaises(ValueError,
-                          lambda: assign(list2, 0, 5, 2, [100, 102, 104, 106]))
+        self.assertRaises(ValueError, assign, list2, 0, 5, 2,
+                          [100, 102, 104, 106])
 
         del list2[2]
         self.assertEquals([0, 1, 3, 4, 5, 6], list2)
         del list2[-3]
         self.assertEquals([0, 1, 3, 5, 6], list2)
-        self.assertRaises(IndexError, lambda: delete(list2, 100))
-        self.assertRaises(IndexError, lambda: delete(list2, -6))
+        self.assertRaises(IndexError, delete, list2, 100)
+        self.assertRaises(IndexError, delete, list2, -6)
         list2[:] = range(10)
         del list2[3:6]
         self.assertEquals([0, 1, 2, 6, 7, 8, 9], list2)
@@ -220,16 +220,67 @@ class TestSmartList(unittest.TestCase):
         self.assertEquals([0, 1, 2, 0, 1, 2], list4)
 
     def test_parent_methods(self):
-        pass
-        # append
-        # count
-        # extend
-        # index
-        # insert
-        # pop
-        # remove
-        # reverse
-        # sort
+        """make sure SmartList's non-magic methods work, like append()"""
+        list1 = SmartList(range(5))
+        list2 = SmartList(["foo"])
+        list3 = SmartList([("a", 5), ("d", 2), ("b", 8), ("c", 3)])
+
+        list1.append(5)
+        list1.append(1)
+        list1.append(2)
+        self.assertEquals([0, 1, 2, 3, 4, 5, 1, 2], list1)
+
+        self.assertEquals(0, list1.count(6))
+        self.assertEquals(2, list1.count(1))
+
+        list1.extend(range(5, 8))
+        self.assertEquals([0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
+
+        self.assertEquals(1, list1.index(1))
+        self.assertEquals(6, list1.index(1, 3))
+        self.assertEquals(6, list1.index(1, 3, 7))
+        self.assertRaises(ValueError, list1.index, 1, 3, 5)
+
+        list1.insert(0, -1)
+        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
+        list1.insert(-1, 6.5)
+        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7], list1)
+        list1.insert(100, 8)
+        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7, 8], list1)
+
+        self.assertEquals(8, list1.pop())
+        self.assertEquals(7, list1.pop())
+        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5], list1)
+        self.assertEquals(-1, list1.pop(0))
+        self.assertEquals(5, list1.pop(5))
+        self.assertEquals([0, 1, 2, 3, 4, 1, 2, 5, 6, 6.5], list1)
+        self.assertEquals("foo", list2.pop())
+        self.assertRaises(IndexError, list2.pop)
+        self.assertEquals([], list2)
+
+        list1.remove(6.5)
+        self.assertEquals([0, 1, 2, 3, 4, 1, 2, 5, 6], list1)
+        list1.remove(1)
+        self.assertEquals([0, 2, 3, 4, 1, 2, 5, 6], list1)
+        list1.remove(1)
+        self.assertEquals([0, 2, 3, 4, 2, 5, 6], list1)
+        self.assertRaises(ValueError, list1.remove, 1)
+
+        list1.reverse()
+        self.assertEquals([6, 5, 2, 4, 3, 2, 0], list1)
+
+        list1.sort()
+        self.assertEquals([0, 2, 2, 3, 4, 5, 6], list1)
+        list1.sort(reverse=True)
+        self.assertEquals([6, 5, 4, 3, 2, 2, 0], list1)
+        list1.sort(cmp=lambda x, y: abs(3 - x) - abs(3 - y))  # Distance from 3
+        self.assertEquals([3, 4, 2, 2, 5, 6, 0], list1)
+        list1.sort(cmp=lambda x, y: abs(3 - x) - abs(3 - y), reverse=True)
+        self.assertEquals([6, 0, 5, 4, 2, 2, 3], list1)
+        list3.sort(key=lambda i: i[1])
+        self.assertEquals([("d", 2), ("c", 3), ("a", 5), ("b", 8)], list3)
+        list3.sort(key=lambda i: i[1], reverse=True)
+        self.assertEquals([("b", 8), ("a", 5), ("c", 3), ("d", 2)], list3)
 
     def test_child_magics(self):
         pass
