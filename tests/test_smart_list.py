@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import py3k
+from mwparserfromhell.compat import py3k, range
 from mwparserfromhell.smart_list import SmartList, _ListProxy
 
 class TestSmartList(unittest.TestCase):
@@ -122,9 +122,15 @@ class TestSmartList(unittest.TestCase):
 
     def test_parent_add(self):
         """make sure SmartList's add/radd/iadd work"""
-        # __add__
-        # __radd__
-        # __iadd__
+        list1 = SmartList(range(5))
+        list2 = SmartList(range(5, 10))
+        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list1 + [5, 6])
+        self.assertEquals([0, 1, 2, 3, 4], list1)
+        self.assertEquals(list(range(10)), list1 + list2)
+        self.assertEquals([-2, -1, 0, 1, 2, 3, 4], [-2, -1] + list1)
+        self.assertEquals([0, 1, 2, 3, 4], list1)
+        list1 += ["foo", "bar", "baz"]
+        self.assertEquals([0, 1, 2, 3, 4, "foo", "bar", "baz"], list1)
 
     def test_parent_unaffected_magics(self):
         """sanity checks against SmartList features that were not modified"""
