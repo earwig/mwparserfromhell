@@ -168,16 +168,14 @@ class SmartList(list):
         copy = list(self)
         for child in self._children:
             child._parent = copy
+        kwargs = {}
         if cmp is not None:
-            if key is not None:
-                if reverse is not None:
-                    super(SmartList, self).sort(cmp, key, reverse)
-                else:
-                    super(SmartList, self).sort(cmp, key)
-            else:
-                super(SmartList, self).sort(cmp)
-        else:
-            super(SmartList, self).sort()
+            kwargs["cmp"] = cmp
+        if key is not None:
+            kwargs["key"] = key
+        if reverse is not None:
+            kwargs["reverse"] = reverse
+        super(SmartList, self).sort(**kwargs)
 
 
 class _ListProxy(list):
