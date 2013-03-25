@@ -87,8 +87,9 @@ class SmartList(list):
             return super(SmartList, self).__setitem__(key, item)
         item = list(item)
         super(SmartList, self).__setitem__(key, item)
-        key = slice(key.start or 0, maxsize if key.stop is None else key.stop)
-        diff = len(item) - key.stop + key.start
+        keystop = maxsize if key.stop is None else key.stop
+        key = slice(key.start or 0, keystop, key.step or 1)
+        diff = len(item) + (key.start - key.stop) / key.step
         values = self._children.values if py3k else self._children.itervalues
         if diff:
             for child, (start, stop, step) in values():
@@ -101,10 +102,10 @@ class SmartList(list):
         super(SmartList, self).__delitem__(key)
         if isinstance(key, slice):
             keystop = maxsize if key.stop is None else key.stop
-            key = slice(key.start or 0, keystop)
+            key = slice(key.start or 0, keystop, key.step or 1)
         else:
-            key = slice(key, key + 1)
-        diff = key.stop - key.start
+            key = slice(key, key + 1, 1)
+        diff = (key.stop - key.start) / key.step
         values = self._children.values if py3k else self._children.itervalues
         for child, (start, stop, step) in values():
             if start > key.start:

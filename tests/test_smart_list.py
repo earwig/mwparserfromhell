@@ -306,9 +306,9 @@ class TestSmartList(unittest.TestCase):
         """make sure _ListProxy's getitem/setitem/delitem work"""
         self._test_get_set_del_item(lambda L: SmartList(list(L))[:])
         self._test_get_set_del_item(lambda L: SmartList([999] + list(L))[1:])
-        # self._test_get_set_del_item(lambda L: SmartList(list(L) + [999])[:-1])
-        # builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
-        # self._test_get_set_del_item(builder)
+        self._test_get_set_del_item(lambda L: SmartList(list(L) + [999])[:-1])
+        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
+        self._test_get_set_del_item(builder)
 
     def test_child_add(self):
         """make sure _ListProxy's add/radd/iadd work"""
