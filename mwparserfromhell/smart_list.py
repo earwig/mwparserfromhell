@@ -76,8 +76,8 @@ class SmartList(list):
     def __getitem__(self, key):
         if not isinstance(key, slice):
             return super(SmartList, self).__getitem__(key)
-        sliceinfo = [key.start or 0, maxsize if key.stop is None else key.stop,
-                     key.step or 1]
+        keystop = maxsize if key.stop is None else key.stop
+        sliceinfo = [key.start or 0, keystop, key.step or 1]
         child = _ListProxy(self, sliceinfo)
         self._children[id(child)] = (child, sliceinfo)
         return child
@@ -100,8 +100,8 @@ class SmartList(list):
     def __delitem__(self, key):
         super(SmartList, self).__delitem__(key)
         if isinstance(key, slice):
-            key = slice(key.start or 0,
-                        maxsize if key.stop is None else key.stop)
+            keystop = maxsize if key.stop is None else key.stop
+            key = slice(key.start or 0, keystop)
         else:
             key = slice(key, key + 1)
         diff = key.stop - key.start
@@ -241,18 +241,36 @@ class _ListProxy(list):
 
     def __setitem__(self, key, item):
         if isinstance(key, slice):
-            adjusted = slice(key.start + self._start, key.stop + self._stop,
-                             key.step)
+            keystart = (key.start or 0) + self._start
+            if key.stop is None or key.stop == maxsize:
+                keystop = self._stop
+            else:
+                keystop = key.stop + self._start
+            adjusted = slice(keystart, keystop, key.step)
             self._parent[adjusted] = item
         else:
+            length = len(self)
+            if key < 0:
+                key = length + key
+            if key < 0 or key >= length:
+                raise IndexError("list assignment index out of range")
             self._parent[self._start + key] = item
 
     def __delitem__(self, key):
         if isinstance(key, slice):
-            adjusted = slice(key.start + self._start, key.stop + self._stop,
-                             key.step)
+            keystart = (key.start or 0) + self._start
+            if key.stop is None or key.stop == maxsize:
+                keystop = self._stop
+            else:
+                keystop = key.stop + self._start
+            adjusted = slice(keystart, keystop, key.step)
             del self._parent[adjusted]
         else:
+            length = len(self)
+            if key < 0:
+                key = length + key
+            if key < 0 or key >= length:
+                raise IndexError("list assignment index out of range")
             del self._parent[self._start + key]
 
     def __iter__(self):
@@ -288,6 +306,16 @@ class _ListProxy(list):
 
     def __iadd__(self, other):
         self.extend(other)
+        return self
+
+    def __mul__(self, other):
+        return SmartList(list(self) * other)
+
+    def __rmul__(self, other):
+        return SmartList(other * list(self))
+
+    def __imul__(self, other):
+        self.extend(list(self) * (other - 1))
         return self
 
     @property

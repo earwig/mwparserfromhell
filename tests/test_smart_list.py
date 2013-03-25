@@ -29,6 +29,178 @@ from mwparserfromhell.smart_list import SmartList, _ListProxy
 class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
 
+    def _test_get_set_del_item(self, builder):
+        """Run tests on __get/set/delitem__ of a list built with *builder*."""
+        def assign(L, s1, s2, s3, val):
+            L[s1:s2:s3] = val
+        def delete(L, s1):
+            del L[s1]
+
+        list1 = builder([0, 1, 2, 3, "one", "two"])
+        list2 = builder(list(range(10)))
+
+        self.assertEquals(1, list1[1])
+        self.assertEquals("one", list1[-2])
+        self.assertEquals([2, 3], list1[2:4])
+        self.assertRaises(IndexError, lambda: list1[6])
+        self.assertRaises(IndexError, lambda: list1[-7])
+
+        self.assertEquals([0, 1, 2], list1[:3])
+        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[:])
+        self.assertEquals([3, "one", "two"], list1[3:])
+        self.assertEquals(["one", "two"], list1[-2:])
+        self.assertEquals([0, 1], list1[:-4])
+        self.assertEquals([], list1[6:])
+        self.assertEquals([], list1[4:2])
+
+        self.assertEquals([0, 2, "one"], list1[0:5:2])
+        self.assertEquals([0, 2], list1[0:-3:2])
+        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[::])
+        self.assertEquals([2, 3, "one", "two"], list1[2::])
+        self.assertEquals([0, 1, 2, 3], list1[:4:])
+        self.assertEquals([2, 3], list1[2:4:])
+        self.assertEquals([0, 2, 4, 6, 8], list2[::2])
+        self.assertEquals([2, 5, 8], list2[2::3])
+        self.assertEquals([0, 3], list2[:6:3])
+        self.assertEquals([2, 5, 8], list2[-8:9:3])
+        self.assertEquals([], list2[100000:1000:-100])
+
+        list1[3] = 100
+        self.assertEquals(100, list1[3])
+        list1[-3] = 101
+        self.assertEquals([0, 1, 2, 101, "one", "two"], list1)
+        list1[5:] = [6, 7, 8]
+        self.assertEquals([6, 7, 8], list1[5:])
+        self.assertEquals([0, 1, 2, 101, "one", 6, 7, 8], list1)
+        list1[2:4] = [-1, -2, -3, -4, -5]
+        self.assertEquals([0, 1, -1, -2, -3, -4, -5, "one", 6, 7, 8], list1)
+        list1[0:-3] = [99]
+        self.assertEquals([99, 6, 7, 8], list1)
+        list2[0:6:2] = [100, 102, 104]
+        self.assertEquals([100, 1, 102, 3, 104, 5, 6, 7, 8, 9], list2)
+        list2[::3] = [200, 203, 206, 209]
+        self.assertEquals([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
+        list2[::] = range(7)
+        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list2)
+        self.assertRaises(ValueError, assign, list2, 0, 5, 2,
+                          [100, 102, 104, 106])
+
+        del list2[2]
+        self.assertEquals([0, 1, 3, 4, 5, 6], list2)
+        del list2[-3]
+        self.assertEquals([0, 1, 3, 5, 6], list2)
+        self.assertRaises(IndexError, delete, list2, 100)
+        self.assertRaises(IndexError, delete, list2, -6)
+        list2[:] = range(10)
+        del list2[3:6]
+        self.assertEquals([0, 1, 2, 6, 7, 8, 9], list2)
+        del list2[-2:]
+        self.assertEquals([0, 1, 2, 6, 7], list2)
+        del list2[:2]
+        self.assertEquals([2, 6, 7], list2)
+        list2[:] = range(10)
+        del list2[2:8:2]
+        self.assertEquals([0, 1, 3, 5, 7, 8, 9], list2)
+
+    def _test_add_radd_iadd(self, builder):
+        """Run tests on __r/i/add__ of a list built with *builder*."""
+        list1 = builder(range(5))
+        list2 = builder(range(5, 10))
+        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list1 + [5, 6])
+        self.assertEquals([0, 1, 2, 3, 4], list1)
+        self.assertEquals(list(range(10)), list1 + list2)
+        self.assertEquals([-2, -1, 0, 1, 2, 3, 4], [-2, -1] + list1)
+        self.assertEquals([0, 1, 2, 3, 4], list1)
+        list1 += ["foo", "bar", "baz"]
+        self.assertEquals([0, 1, 2, 3, 4, "foo", "bar", "baz"], list1)
+
+    def _test_other_magic_methods(self, builder):
+        """Run tests on other magic methods of a list built with *builder*."""
+        list1 = builder([0, 1, 2, 3, "one", "two"])
+        list2 = builder([])
+        list3 = builder([0, 2, 3, 4])
+        list4 = builder([0, 1, 2])
+
+        if py3k:
+            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", str(list1))
+            self.assertEquals(b"[0, 1, 2, 3, 'one', 'two']", bytes(list1))
+            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", repr(list1))
+        else:
+            self.assertEquals("[0, 1, 2, 3, u'one', u'two']", unicode(list1))
+            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
+            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
+
+        self.assertTrue(list1 < list3)
+        self.assertTrue(list1 <= list3)
+        self.assertFalse(list1 == list3)
+        self.assertTrue(list1 != list3)
+        self.assertFalse(list1 > list3)
+        self.assertFalse(list1 >= list3)
+
+        other1 = [0, 2, 3, 4]
+        self.assertTrue(list1 < other1)
+        self.assertTrue(list1 <= other1)
+        self.assertFalse(list1 == other1)
+        self.assertTrue(list1 != other1)
+        self.assertFalse(list1 > other1)
+        self.assertFalse(list1 >= other1)
+
+        other2 = [0, 0, 1, 2]
+        self.assertFalse(list1 < other2)
+        self.assertFalse(list1 <= other2)
+        self.assertFalse(list1 == other2)
+        self.assertTrue(list1 != other2)
+        self.assertTrue(list1 > other2)
+        self.assertTrue(list1 >= other2)
+
+        other3 = [0, 1, 2, 3, "one", "two"]
+        self.assertFalse(list1 < other3)
+        self.assertTrue(list1 <= other3)
+        self.assertTrue(list1 == other3)
+        self.assertFalse(list1 != other3)
+        self.assertFalse(list1 > other3)
+        self.assertTrue(list1 >= other3)
+
+        self.assertTrue(bool(list1))
+        self.assertFalse(bool(list2))
+
+        self.assertEquals(6, len(list1))
+        self.assertEquals(0, len(list2))
+
+        out = []
+        for obj in list1:
+            out.append(obj)
+        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
+
+        out = []
+        for ch in list2:
+            out.append(ch)
+        self.assertEquals([], out)
+
+        gen1 = iter(list1)
+        out = []
+        for i in range(len(list1)):
+            out.append(gen1.next())
+        self.assertRaises(StopIteration, gen1.next)
+        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
+        gen2 = iter(list2)
+        self.assertRaises(StopIteration, gen2.next)
+
+        self.assertEquals(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
+        self.assertEquals([], list(reversed(list2)))
+
+        self.assertTrue("one" in list1)
+        self.assertTrue(3 in list1)
+        self.assertFalse(10 in list1)
+        self.assertFalse(0 in list2)
+
+        self.assertEquals([], list2 * 5)
+        self.assertEquals([], 5 * list2)
+        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], list4 * 3)
+        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], 3 * list4)
+        list4 *= 2
+        self.assertEquals([0, 1, 2, 0, 1, 2], list4)
+
     def _test_list_methods(self, builder):
         """Run tests on the public methods of a list built with *builder*."""
         list1 = builder(range(5))
@@ -116,215 +288,43 @@ class TestSmartList(unittest.TestCase):
 
     def test_parent_get_set_del(self):
         """make sure SmartList's getitem/setitem/delitem work"""
-        def assign(L, s1, s2, s3, val):
-            L[s1:s2:s3] = val
-        def delete(L, s1):
-            del L[s1]
-
-        list1 = SmartList([0, 1, 2, 3, "one", "two"])
-        list2 = SmartList(list(range(10)))
-
-        self.assertEquals(1, list1[1])
-        self.assertEquals("one", list1[-2])
-        self.assertEquals([2, 3], list1[2:4])
-        self.assertRaises(IndexError, lambda: list1[6])
-        self.assertRaises(IndexError, lambda: list1[-7])
-
-        self.assertEquals([0, 1, 2], list1[:3])
-        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[:])
-        self.assertEquals([3, "one", "two"], list1[3:])
-        self.assertEquals(["one", "two"], list1[-2:])
-        self.assertEquals([0, 1], list1[:-4])
-        self.assertEquals([], list1[6:])
-        self.assertEquals([], list1[4:2])
-
-        self.assertEquals([0, 2, "one"], list1[0:5:2])
-        self.assertEquals([0, 2], list1[0:-3:2])
-        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[::])
-        self.assertEquals([2, 3, "one", "two"], list1[2::])
-        self.assertEquals([0, 1, 2, 3], list1[:4:])
-        self.assertEquals([2, 3], list1[2:4:])
-        self.assertEquals([0, 2, 4, 6, 8], list2[::2])
-        self.assertEquals([2, 5, 8], list2[2::3])
-        self.assertEquals([0, 3], list2[:6:3])
-        self.assertEquals([2, 5, 8], list2[-8:9:3])
-        self.assertEquals([], list2[100000:1000:-100])
-
-        list1[3] = 100
-        self.assertEquals(100, list1[3])
-        list1[5:] = [6, 7, 8]
-        self.assertEquals([6, 7, 8], list1[5:])
-        self.assertEquals([0, 1, 2, 100, "one", 6, 7, 8], list1)
-        list1[2:4] = [-1, -2, -3, -4, -5]
-        self.assertEquals([0, 1, -1, -2, -3, -4, -5, "one", 6, 7, 8], list1)
-        list1[0:-3] = [99]
-        self.assertEquals([99, 6, 7, 8], list1)
-        list2[0:6:2] = [100, 102, 104]
-        self.assertEquals([100, 1, 102, 3, 104, 5, 6, 7, 8, 9], list2)
-        list2[::3] = [200, 203, 206, 209]
-        self.assertEquals([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
-        list2[::] = range(7)
-        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list2)
-        self.assertRaises(ValueError, assign, list2, 0, 5, 2,
-                          [100, 102, 104, 106])
-
-        del list2[2]
-        self.assertEquals([0, 1, 3, 4, 5, 6], list2)
-        del list2[-3]
-        self.assertEquals([0, 1, 3, 5, 6], list2)
-        self.assertRaises(IndexError, delete, list2, 100)
-        self.assertRaises(IndexError, delete, list2, -6)
-        list2[:] = range(10)
-        del list2[3:6]
-        self.assertEquals([0, 1, 2, 6, 7, 8, 9], list2)
-        del list2[-2:]
-        self.assertEquals([0, 1, 2, 6, 7], list2)
-        del list2[:2]
-        self.assertEquals([2, 6, 7], list2)
-        list2[:] = range(10)
-        del list2[2:8:2]
-        self.assertEquals([0, 1, 3, 5, 7, 8, 9], list2)
+        self._test_get_set_del_item(lambda L: SmartList(L))
 
     def test_parent_add(self):
         """make sure SmartList's add/radd/iadd work"""
-        list1 = SmartList(range(5))
-        list2 = SmartList(range(5, 10))
-        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list1 + [5, 6])
-        self.assertEquals([0, 1, 2, 3, 4], list1)
-        self.assertEquals(list(range(10)), list1 + list2)
-        self.assertEquals([-2, -1, 0, 1, 2, 3, 4], [-2, -1] + list1)
-        self.assertEquals([0, 1, 2, 3, 4], list1)
-        list1 += ["foo", "bar", "baz"]
-        self.assertEquals([0, 1, 2, 3, 4, "foo", "bar", "baz"], list1)
+        self._test_add_radd_iadd(lambda L: SmartList(L))
 
     def test_parent_unaffected_magics(self):
         """sanity checks against SmartList features that were not modified"""
-        list1 = SmartList([0, 1, 2, 3, "one", "two"])
-        list2 = SmartList([])
-        list3 = SmartList([0, 2, 3, 4])
-        list4 = SmartList([0, 1, 2])
-
-        if py3k:
-            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", str(list1))
-            self.assertEquals(b"[0, 1, 2, 3, 'one', 'two']", bytes(list1))
-            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", repr(list1))
-        else:
-            self.assertEquals("[0, 1, 2, 3, u'one', u'two']", unicode(list1))
-            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
-            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
-
-        self.assertTrue(list1 < list3)
-        self.assertTrue(list1 <= list3)
-        self.assertFalse(list1 == list3)
-        self.assertTrue(list1 != list3)
-        self.assertFalse(list1 > list3)
-        self.assertFalse(list1 >= list3)
-
-        other1 = [0, 2, 3, 4]
-        self.assertTrue(list1 < other1)
-        self.assertTrue(list1 <= other1)
-        self.assertFalse(list1 == other1)
-        self.assertTrue(list1 != other1)
-        self.assertFalse(list1 > other1)
-        self.assertFalse(list1 >= other1)
-
-        other2 = [0, 0, 1, 2]
-        self.assertFalse(list1 < other2)
-        self.assertFalse(list1 <= other2)
-        self.assertFalse(list1 == other2)
-        self.assertTrue(list1 != other2)
-        self.assertTrue(list1 > other2)
-        self.assertTrue(list1 >= other2)
-
-        other3 = [0, 1, 2, 3, "one", "two"]
-        self.assertFalse(list1 < other3)
-        self.assertTrue(list1 <= other3)
-        self.assertTrue(list1 == other3)
-        self.assertFalse(list1 != other3)
-        self.assertFalse(list1 > other3)
-        self.assertTrue(list1 >= other3)
-
-        self.assertTrue(bool(list1))
-        self.assertFalse(bool(list2))
-
-        self.assertEquals(6, len(list1))
-        self.assertEquals(0, len(list2))
-
-        out = []
-        for obj in list1:
-            out.append(obj)
-        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
-
-        out = []
-        for ch in list2:
-            out.append(ch)
-        self.assertEquals([], out)
-
-        gen1 = iter(list1)
-        out = []
-        for i in range(len(list1)):
-            out.append(gen1.next())
-        self.assertRaises(StopIteration, gen1.next)
-        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
-        gen2 = iter(list2)
-        self.assertRaises(StopIteration, gen2.next)
-
-        self.assertEquals(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
-        self.assertEquals([], list(reversed(list2)))
-
-        self.assertTrue("one" in list1)
-        self.assertTrue(3 in list1)
-        self.assertFalse(10 in list1)
-        self.assertFalse(0 in list2)
-
-        self.assertEquals([], list2 * 5)
-        self.assertEquals([], 5 * list2)
-        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], list4 * 3)
-        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], 3 * list4)
-        list4 *= 2
-        self.assertEquals([0, 1, 2, 0, 1, 2], list4)
+        self._test_other_magic_methods(lambda L: SmartList(L))
 
     def test_parent_methods(self):
         """make sure SmartList's non-magic methods work, like append()"""
         self._test_list_methods(lambda L: SmartList(L))
 
-    def test_child_magics(self):
-        """make sure _ListProxy's magically implemented features work"""
-        pass
-        # if py3k:
-        #     __str__
-        #     __bytes__
-        # else:
-        #     __unicode__
-        #     __str__
-        # __repr__
-        # __lt__
-        # __le__
-        # __eq__
-        # __ne__
-        # __gt__
-        # __ge__
-        # if py3k:
-        #     __bool__
-        # else:
-        #     __nonzero__
-        # __len__
-        # __getitem__
-        # __setitem__
-        # __delitem__
-        # __iter__
-        # __reversed__
-        # __contains__
-        # if not py3k:
-        #     __getslice__
-        #     __setslice__
-        #     __delslice__
-        # __add__
-        # __radd__
-        # __iadd__
-        # __mul__
-        # __rmul__
-        # __imul__
+    def test_child_get_set_del(self):
+        """make sure _ListProxy's getitem/setitem/delitem work"""
+        self._test_get_set_del_item(lambda L: SmartList(list(L))[:])
+        self._test_get_set_del_item(lambda L: SmartList([999] + list(L))[1:])
+        # self._test_get_set_del_item(lambda L: SmartList(list(L) + [999])[:-1])
+        # builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
+        # self._test_get_set_del_item(builder)
+
+    def test_child_add(self):
+        """make sure _ListProxy's add/radd/iadd work"""
+        self._test_add_radd_iadd(lambda L: SmartList(list(L))[:])
+        self._test_add_radd_iadd(lambda L: SmartList([999] + list(L))[1:])
+        self._test_add_radd_iadd(lambda L: SmartList(list(L) + [999])[:-1])
+        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
+        self._test_add_radd_iadd(builder)
+
+    def test_child_other_magics(self):
+        """make sure _ListProxy's other magically implemented features work"""
+        self._test_other_magic_methods(lambda L: SmartList(list(L))[:])
+        self._test_other_magic_methods(lambda L: SmartList([999] + list(L))[1:])
+        self._test_other_magic_methods(lambda L: SmartList(list(L) + [999])[:-1])
+        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
+        self._test_other_magic_methods(builder)
 
     def test_child_methods(self):
         """make sure _ListProxy's non-magic methods work, like append()"""
