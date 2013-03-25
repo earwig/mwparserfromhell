@@ -143,19 +143,21 @@ class StringMixIn(object):
     if not py3k:
         @inheritdoc
         def decode(self, encoding=None, errors=None):
-            if errors is None:
-                if encoding is None:
-                    return self.__unicode__().decode()
-                return self.__unicode__().decode(encoding)
-            return self.__unicode__().decode(encoding, errors)
+            kwargs = {}
+            if encoding is not None:
+                kwargs["encoding"] = encoding
+            if errors is not None:
+                kwargs["errors"] = errors
+            return self.__unicode__().decode(**kwargs)
 
     @inheritdoc
     def encode(self, encoding=None, errors=None):
-        if errors is None:
-            if encoding is None:
-                return self.__unicode__().encode()
-            return self.__unicode__().encode(encoding)
-        return self.__unicode__().encode(encoding, errors)
+        kwargs = {}
+        if encoding is not None:
+            kwargs["encoding"] = encoding
+        if errors is not None:
+            kwargs["errors"] = errors
+        return self.__unicode__().encode(**kwargs)
 
     @inheritdoc
     def endswith(self, prefix, start=None, end=None):
@@ -286,25 +288,45 @@ class StringMixIn(object):
     def rpartition(self, sep):
         return self.__unicode__().rpartition(sep)
 
-    @inheritdoc
-    def rsplit(self, sep=None, maxsplit=None):
-        if maxsplit is None:
-            if sep is None:
-                return self.__unicode__().rsplit()
-            return self.__unicode__().rsplit(sep)
-        return self.__unicode__().rsplit(sep, maxsplit)
+    if py3k:
+        @inheritdoc
+        def rsplit(self, sep=None, maxsplit=None):
+            kwargs = {}
+            if sep is not None:
+                kwargs["sep"] = sep
+            if maxsplit is not None:
+                kwargs["maxsplit"] = maxsplit
+            return self.__unicode__().rsplit(**kwargs)
+    else:
+        @inheritdoc
+        def rsplit(self, sep=None, maxsplit=None):
+            if maxsplit is None:
+                if sep is None:
+                    return self.__unicode__().rsplit()
+                return self.__unicode__().rsplit(sep)
+            return self.__unicode__().rsplit(sep, maxsplit)
 
     @inheritdoc
     def rstrip(self, chars=None):
         return self.__unicode__().rstrip(chars)
 
-    @inheritdoc
-    def split(self, sep=None, maxsplit=None):
-        if maxsplit is None:
-            if sep is None:
-                return self.__unicode__().split()
-            return self.__unicode__().split(sep)
-        return self.__unicode__().split(sep, maxsplit)
+    if py3k:
+        @inheritdoc
+        def split(self, sep=None, maxsplit=None):
+            kwargs = {}
+            if sep is not None:
+                kwargs["sep"] = sep
+            if maxsplit is not None:
+                kwargs["maxsplit"] = maxsplit
+            return self.__unicode__().split(**kwargs)
+    else:
+        @inheritdoc
+        def split(self, sep=None, maxsplit=None):
+            if maxsplit is None:
+                if sep is None:
+                    return self.__unicode__().split()
+                return self.__unicode__().split(sep)
+            return self.__unicode__().split(sep, maxsplit)
 
     @inheritdoc
     def splitlines(self, keepends=None):

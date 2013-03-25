@@ -189,10 +189,14 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals(b"fake string", str1.encode())
         self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
                           str3.encode("utf8"))
+        self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
+                          str3.encode(encoding="utf8"))
         self.assertRaises(UnicodeEncodeError, str3.encode)
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii")
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii", "strict")
+        self.assertRaises(UnicodeEncodeError, str3.encode, errors="strict")
         self.assertEquals("", str3.encode("ascii", "ignore"))
+        self.assertEquals("", str3.encode(errors="ignore"))
 
         self.assertTrue(str1.endswith("ing"))
         self.assertFalse(str1.endswith("ingh"))
@@ -358,6 +362,8 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEquals(actual, str25.rsplit(" ", 3))
+        if py3k:
+            self.assertEquals(actual, str25.rsplit(maxsplit=3))
 
         self.assertEquals("fake string", str1.rstrip())
         self.assertEquals("  fake string", str23.rstrip())
@@ -373,6 +379,8 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEquals(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEquals(actual, str25.split(" ", 3))
+        if py3k:
+            self.assertEquals(actual, str25.split(maxsplit=3))
 
         str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
         self.assertEquals(["lines", "of", "text", "are", "presented", "here"],
