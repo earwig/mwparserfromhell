@@ -42,8 +42,8 @@ class TestTokens(unittest.TestCase):
         token1 = tokens.Token()
         token2 = tokens.Token(foo="bar", baz=123)
 
-        self.assertEquals("bar", token2.foo)
-        self.assertEquals(123, token2.baz)
+        self.assertEqual("bar", token2.foo)
+        self.assertEqual(123, token2.baz)
         self.assertRaises(KeyError, lambda: token1.foo)
         self.assertRaises(KeyError, lambda: token2.bar)
 
@@ -51,8 +51,8 @@ class TestTokens(unittest.TestCase):
         token2.foo = "ham"
         del token2.baz
 
-        self.assertEquals("eggs", token1.spam)
-        self.assertEquals("ham", token2.foo)
+        self.assertEqual("eggs", token1.spam)
+        self.assertEqual("ham", token2.foo)
         self.assertRaises(KeyError, lambda: token2.baz)
         self.assertRaises(KeyError, delattr, token2, "baz")
 
@@ -63,15 +63,15 @@ class TestTokens(unittest.TestCase):
         token3 = tokens.Text(text="earwig" * 100)
         hundredchars = ("earwig" * 100)[:97] + "..."
 
-        self.assertEquals("Token()", repr(token1))
+        self.assertEqual("Token()", repr(token1))
         if py3k:
             token2repr = "Token(foo='bar', baz=123)"
             token3repr = "Text(text='" + hundredchars + "')"
         else:
             token2repr = "Token(foo=u'bar', baz=123)"
             token3repr = "Text(text=u'" + hundredchars + "')"
-        self.assertEquals(token2repr, repr(token2))
-        self.assertEquals(token3repr, repr(token3))
+        self.assertEqual(token2repr, repr(token2))
+        self.assertEqual(token3repr, repr(token3))
 
     def test_equality(self):
         """check that equivalent tokens are considered equal"""
@@ -82,10 +82,10 @@ class TestTokens(unittest.TestCase):
         token5 = tokens.Text(text="asdf")
         token6 = tokens.TemplateOpen(text="asdf")
 
-        self.assertEquals(token1, token2)
-        self.assertEquals(token2, token1)
-        self.assertEquals(token4, token5)
-        self.assertEquals(token5, token4)
+        self.assertEqual(token1, token2)
+        self.assertEqual(token2, token1)
+        self.assertEqual(token4, token5)
+        self.assertEqual(token5, token4)
         self.assertNotEquals(token1, token3)
         self.assertNotEquals(token2, token3)
         self.assertNotEquals(token4, token6)
@@ -99,7 +99,7 @@ class TestTokens(unittest.TestCase):
             tokens.Text(text="earwig")
         ]
         for token in tests:
-            self.assertEquals(token, eval(repr(token), vars(tokens)))
+            self.assertEqual(token, eval(repr(token), vars(tokens)))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

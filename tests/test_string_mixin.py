@@ -56,17 +56,17 @@ class TestStringMixIn(unittest.TestCase):
         for meth in methods:
             expected = getattr(str, meth).__doc__
             actual = getattr(StringMixIn, meth).__doc__
-            self.assertEquals(expected, actual)
+            self.assertEqual(expected, actual)
 
     def test_types(self):
         """make sure StringMixIns convert to different types correctly"""
         fstr = _FakeString("fake string")
-        self.assertEquals(str(fstr), "fake string")
-        self.assertEquals(bytes(fstr), b"fake string")
+        self.assertEqual(str(fstr), "fake string")
+        self.assertEqual(bytes(fstr), b"fake string")
         if py3k:
-            self.assertEquals(repr(fstr), "'fake string'")
+            self.assertEqual(repr(fstr), "'fake string'")
         else:
-            self.assertEquals(repr(fstr), b"u'fake string'")
+            self.assertEqual(repr(fstr), b"u'fake string'")
 
         self.assertIsInstance(str(fstr), str)
         self.assertIsInstance(bytes(fstr), bytes)
@@ -119,18 +119,18 @@ class TestStringMixIn(unittest.TestCase):
 
         self.assertTrue(str1)
         self.assertFalse(str2)
-        self.assertEquals(11, len(str1))
-        self.assertEquals(0, len(str2))
+        self.assertEqual(11, len(str1))
+        self.assertEqual(0, len(str2))
 
         out = []
         for ch in str1:
             out.append(ch)
-        self.assertEquals(expected, out)
+        self.assertEqual(expected, out)
 
         out = []
         for ch in str2:
             out.append(ch)
-        self.assertEquals([], out)
+        self.assertEqual([], out)
 
         gen1 = iter(str1)
         gen2 = iter(str2)
@@ -141,16 +141,16 @@ class TestStringMixIn(unittest.TestCase):
         for i in range(len(str1)):
             out.append(gen1.next())
         self.assertRaises(StopIteration, gen1.next)
-        self.assertEquals(expected, out)
+        self.assertEqual(expected, out)
         self.assertRaises(StopIteration, gen2.next)
 
-        self.assertEquals("gnirts ekaf", "".join(list(reversed(str1))))
-        self.assertEquals([], list(reversed(str2)))
+        self.assertEqual("gnirts ekaf", "".join(list(reversed(str1))))
+        self.assertEqual([], list(reversed(str2)))
 
-        self.assertEquals("f", str1[0])
-        self.assertEquals(" ", str1[4])
-        self.assertEquals("g", str1[10])
-        self.assertEquals("n", str1[-2])
+        self.assertEqual("f", str1[0])
+        self.assertEqual(" ", str1[4])
+        self.assertEqual("g", str1[10])
+        self.assertEqual("n", str1[-2])
         self.assertRaises(IndexError, lambda: str1[11])
         self.assertRaises(IndexError, lambda: str2[0])
 
@@ -165,75 +165,75 @@ class TestStringMixIn(unittest.TestCase):
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
         str1 = _FakeString("fake string")
-        self.assertEquals("Fake string", str1.capitalize())
+        self.assertEqual("Fake string", str1.capitalize())
 
-        self.assertEquals("  fake string  ", str1.center(15))
-        self.assertEquals("  fake string   ", str1.center(16))
-        self.assertEquals("qqfake stringqq", str1.center(15, "q"))
+        self.assertEqual("  fake string  ", str1.center(15))
+        self.assertEqual("  fake string   ", str1.center(16))
+        self.assertEqual("qqfake stringqq", str1.center(15, "q"))
 
-        self.assertEquals(1, str1.count("e"))
-        self.assertEquals(0, str1.count("z"))
-        self.assertEquals(1, str1.count("r", 7))
-        self.assertEquals(0, str1.count("r", 8))
-        self.assertEquals(1, str1.count("r", 5, 9))
-        self.assertEquals(0, str1.count("r", 5, 7))
+        self.assertEqual(1, str1.count("e"))
+        self.assertEqual(0, str1.count("z"))
+        self.assertEqual(1, str1.count("r", 7))
+        self.assertEqual(0, str1.count("r", 8))
+        self.assertEqual(1, str1.count("r", 5, 9))
+        self.assertEqual(0, str1.count("r", 5, 7))
 
         if not py3k:
             str2 = _FakeString("fo")
-            self.assertEquals(str1, str1.decode())
+            self.assertEqual(str1, str1.decode())
             actual = _FakeString("\\U00010332\\U0001033f\\U00010344")
-            self.assertEquals("𐌲𐌿𐍄", actual.decode("unicode_escape"))
+            self.assertEqual("𐌲𐌿𐍄", actual.decode("unicode_escape"))
             self.assertRaises(UnicodeError, str2.decode, "punycode")
-            self.assertEquals("", str2.decode("punycode", "ignore"))
+            self.assertEqual("", str2.decode("punycode", "ignore"))
 
         str3 = _FakeString("𐌲𐌿𐍄")
-        self.assertEquals(b"fake string", str1.encode())
-        self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
+        self.assertEqual(b"fake string", str1.encode())
+        self.assertEqual(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
                           str3.encode("utf8"))
-        self.assertEquals(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
+        self.assertEqual(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
                           str3.encode(encoding="utf8"))
         self.assertRaises(UnicodeEncodeError, str3.encode)
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii")
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii", "strict")
         self.assertRaises(UnicodeEncodeError, str3.encode, errors="strict")
-        self.assertEquals("", str3.encode("ascii", "ignore"))
-        self.assertEquals("", str3.encode(errors="ignore"))
+        self.assertEqual("", str3.encode("ascii", "ignore"))
+        self.assertEqual("", str3.encode(errors="ignore"))
 
         self.assertTrue(str1.endswith("ing"))
         self.assertFalse(str1.endswith("ingh"))
 
         str4 = _FakeString("\tfoobar")
-        self.assertEquals("fake string", str1)
-        self.assertEquals("        foobar", str4.expandtabs())
-        self.assertEquals("    foobar", str4.expandtabs(4))
+        self.assertEqual("fake string", str1)
+        self.assertEqual("        foobar", str4.expandtabs())
+        self.assertEqual("    foobar", str4.expandtabs(4))
 
-        self.assertEquals(3, str1.find("e"))
-        self.assertEquals(-1, str1.find("z"))
-        self.assertEquals(7, str1.find("r", 7))
-        self.assertEquals(-1, str1.find("r", 8))
-        self.assertEquals(7, str1.find("r", 5, 9))
-        self.assertEquals(-1, str1.find("r", 5, 7))
+        self.assertEqual(3, str1.find("e"))
+        self.assertEqual(-1, str1.find("z"))
+        self.assertEqual(7, str1.find("r", 7))
+        self.assertEqual(-1, str1.find("r", 8))
+        self.assertEqual(7, str1.find("r", 5, 9))
+        self.assertEqual(-1, str1.find("r", 5, 7))
 
         str5 = _FakeString("foo{0}baz")
         str6 = _FakeString("foo{abc}baz")
         str7 = _FakeString("foo{0}{abc}buzz")
         str8 = _FakeString("{0}{1}")
-        self.assertEquals("fake string", str1.format())
-        self.assertEquals("foobarbaz", str5.format("bar"))
-        self.assertEquals("foobarbaz", str6.format(abc="bar"))
-        self.assertEquals("foobarbazbuzz", str7.format("bar", abc="baz"))
+        self.assertEqual("fake string", str1.format())
+        self.assertEqual("foobarbaz", str5.format("bar"))
+        self.assertEqual("foobarbaz", str6.format(abc="bar"))
+        self.assertEqual("foobarbazbuzz", str7.format("bar", abc="baz"))
         self.assertRaises(IndexError, str8.format, "abc")
 
         if py3k:
-            self.assertEquals("fake string", str1.format_map({}))
-            self.assertEquals("foobarbaz", str6.format_map({"abc": "bar"}))
+            self.assertEqual("fake string", str1.format_map({}))
+            self.assertEqual("foobarbaz", str6.format_map({"abc": "bar"}))
             self.assertRaises(ValueError, str5.format_map, {0: "abc"})
 
-        self.assertEquals(3, str1.index("e"))
+        self.assertEqual(3, str1.index("e"))
         self.assertRaises(ValueError, str1.index, "z")
-        self.assertEquals(7, str1.index("r", 7))
+        self.assertEqual(7, str1.index("r", 7))
         self.assertRaises(ValueError, str1.index, "r", 8)
-        self.assertEquals(7, str1.index("r", 5, 9))
+        self.assertEqual(7, str1.index("r", 5, 9))
         self.assertRaises(ValueError, str1.index, "r", 5, 7)
 
         str9 = _FakeString("foobar")
@@ -303,120 +303,120 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str15.isupper())
         self.assertTrue(str21.isupper())
 
-        self.assertEquals("foobar", str15.join(["foo", "bar"]))
-        self.assertEquals("foo123bar123baz", str12.join(("foo", "bar", "baz")))
+        self.assertEqual("foobar", str15.join(["foo", "bar"]))
+        self.assertEqual("foo123bar123baz", str12.join(("foo", "bar", "baz")))
 
-        self.assertEquals("fake string    ", str1.ljust(15))
-        self.assertEquals("fake string     ", str1.ljust(16))
-        self.assertEquals("fake stringqqqq", str1.ljust(15, "q"))
+        self.assertEqual("fake string    ", str1.ljust(15))
+        self.assertEqual("fake string     ", str1.ljust(16))
+        self.assertEqual("fake stringqqqq", str1.ljust(15, "q"))
 
         str22 = _FakeString("ß")
-        self.assertEquals("", str15.lower())
-        self.assertEquals("foobar", str16.lower())
-        self.assertEquals("ß", str22.lower())
+        self.assertEqual("", str15.lower())
+        self.assertEqual("foobar", str16.lower())
+        self.assertEqual("ß", str22.lower())
         if py3k:
-            self.assertEquals("", str15.casefold())
-            self.assertEquals("foobar", str16.casefold())
-            self.assertEquals("ss", str22.casefold())
+            self.assertEqual("", str15.casefold())
+            self.assertEqual("foobar", str16.casefold())
+            self.assertEqual("ss", str22.casefold())
 
         str23 = _FakeString("  fake string  ")
-        self.assertEquals("fake string", str1.lstrip())
-        self.assertEquals("fake string  ", str23.lstrip())
-        self.assertEquals("ke string", str1.lstrip("abcdef"))
+        self.assertEqual("fake string", str1.lstrip())
+        self.assertEqual("fake string  ", str23.lstrip())
+        self.assertEqual("ke string", str1.lstrip("abcdef"))
 
-        self.assertEquals(("fa", "ke", " string"), str1.partition("ke"))
-        self.assertEquals(("fake string", "", ""), str1.partition("asdf"))
+        self.assertEqual(("fa", "ke", " string"), str1.partition("ke"))
+        self.assertEqual(("fake string", "", ""), str1.partition("asdf"))
 
         str24 = _FakeString("boo foo moo")
-        self.assertEquals("real string", str1.replace("fake", "real"))
-        self.assertEquals("bu fu moo", str24.replace("oo", "u", 2))
+        self.assertEqual("real string", str1.replace("fake", "real"))
+        self.assertEqual("bu fu moo", str24.replace("oo", "u", 2))
 
-        self.assertEquals(3, str1.rfind("e"))
-        self.assertEquals(-1, str1.rfind("z"))
-        self.assertEquals(7, str1.rfind("r", 7))
-        self.assertEquals(-1, str1.rfind("r", 8))
-        self.assertEquals(7, str1.rfind("r", 5, 9))
-        self.assertEquals(-1, str1.rfind("r", 5, 7))
+        self.assertEqual(3, str1.rfind("e"))
+        self.assertEqual(-1, str1.rfind("z"))
+        self.assertEqual(7, str1.rfind("r", 7))
+        self.assertEqual(-1, str1.rfind("r", 8))
+        self.assertEqual(7, str1.rfind("r", 5, 9))
+        self.assertEqual(-1, str1.rfind("r", 5, 7))
 
-        self.assertEquals(3, str1.rindex("e"))
+        self.assertEqual(3, str1.rindex("e"))
         self.assertRaises(ValueError, str1.rindex, "z")
-        self.assertEquals(7, str1.rindex("r", 7))
+        self.assertEqual(7, str1.rindex("r", 7))
         self.assertRaises(ValueError, str1.rindex, "r", 8)
-        self.assertEquals(7, str1.rindex("r", 5, 9))
+        self.assertEqual(7, str1.rindex("r", 5, 9))
         self.assertRaises(ValueError, str1.rindex, "r", 5, 7)
 
-        self.assertEquals("    fake string", str1.rjust(15))
-        self.assertEquals("     fake string", str1.rjust(16))
-        self.assertEquals("qqqqfake string", str1.rjust(15, "q"))
+        self.assertEqual("    fake string", str1.rjust(15))
+        self.assertEqual("     fake string", str1.rjust(16))
+        self.assertEqual("qqqqfake string", str1.rjust(15, "q"))
 
-        self.assertEquals(("fa", "ke", " string"), str1.rpartition("ke"))
-        self.assertEquals(("", "", "fake string"), str1.rpartition("asdf"))
+        self.assertEqual(("fa", "ke", " string"), str1.rpartition("ke"))
+        self.assertEqual(("", "", "fake string"), str1.rpartition("asdf"))
 
         str25 = _FakeString("   this is a   sentence with  whitespace ")
         actual = ["this", "is", "a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str25.rsplit())
-        self.assertEquals(actual, str25.rsplit(None))
+        self.assertEqual(actual, str25.rsplit())
+        self.assertEqual(actual, str25.rsplit(None))
         actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
                   "", "whitespace", ""]
-        self.assertEquals(actual, str25.rsplit(" "))
+        self.assertEqual(actual, str25.rsplit(" "))
         actual = ["   this is a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str25.rsplit(None, 3))
+        self.assertEqual(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
-        self.assertEquals(actual, str25.rsplit(" ", 3))
+        self.assertEqual(actual, str25.rsplit(" ", 3))
         if py3k:
-            self.assertEquals(actual, str25.rsplit(maxsplit=3))
+            self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
-        self.assertEquals("fake string", str1.rstrip())
-        self.assertEquals("  fake string", str23.rstrip())
-        self.assertEquals("fake stri", str1.rstrip("ngr"))
+        self.assertEqual("fake string", str1.rstrip())
+        self.assertEqual("  fake string", str23.rstrip())
+        self.assertEqual("fake stri", str1.rstrip("ngr"))
 
         actual = ["this", "is", "a", "sentence", "with", "whitespace"]
-        self.assertEquals(actual, str25.split())
-        self.assertEquals(actual, str25.split(None))
+        self.assertEqual(actual, str25.split())
+        self.assertEqual(actual, str25.split(None))
         actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
                   "", "whitespace", ""]
-        self.assertEquals(actual, str25.split(" "))
+        self.assertEqual(actual, str25.split(" "))
         actual = ["this", "is", "a", "sentence with  whitespace "]
-        self.assertEquals(actual, str25.split(None, 3))
+        self.assertEqual(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
-        self.assertEquals(actual, str25.split(" ", 3))
+        self.assertEqual(actual, str25.split(" ", 3))
         if py3k:
-            self.assertEquals(actual, str25.split(maxsplit=3))
+            self.assertEqual(actual, str25.split(maxsplit=3))
 
         str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
-        self.assertEquals(["lines", "of", "text", "are", "presented", "here"],
+        self.assertEqual(["lines", "of", "text", "are", "presented", "here"],
                           str26.splitlines())
-        self.assertEquals(["lines\n", "of\n", "text\r\n", "are\r\n",
+        self.assertEqual(["lines\n", "of\n", "text\r\n", "are\r\n",
                            "presented\n", "here"], str26.splitlines(True))
 
         self.assertTrue(str1.startswith("fake"))
         self.assertFalse(str1.startswith("faker"))
 
-        self.assertEquals("fake string", str1.strip())
-        self.assertEquals("fake string", str23.strip())
-        self.assertEquals("ke stri", str1.strip("abcdefngr"))
+        self.assertEqual("fake string", str1.strip())
+        self.assertEqual("fake string", str23.strip())
+        self.assertEqual("ke stri", str1.strip("abcdefngr"))
 
-        self.assertEquals("fOObAR", str16.swapcase())
+        self.assertEqual("fOObAR", str16.swapcase())
 
-        self.assertEquals("Fake String", str1.title())
+        self.assertEqual("Fake String", str1.title())
 
         if py3k:
             table1 = str.maketrans({97: "1", 101: "2", 105: "3", 111: "4",
                                     117: "5"})
             table2 = str.maketrans("aeiou", "12345")
             table3 = str.maketrans("aeiou", "12345", "rts")
-            self.assertEquals("f1k2 str3ng", str1.translate(table1))
-            self.assertEquals("f1k2 str3ng", str1.translate(table2))
-            self.assertEquals("f1k2 3ng", str1.translate(table3))
+            self.assertEqual("f1k2 str3ng", str1.translate(table1))
+            self.assertEqual("f1k2 str3ng", str1.translate(table2))
+            self.assertEqual("f1k2 3ng", str1.translate(table3))
         else:
             table = {97: "1", 101: "2", 105: "3", 111: "4", 117: "5"}
-            self.assertEquals("f1k2 str3ng", str1.translate(table))
+            self.assertEqual("f1k2 str3ng", str1.translate(table))
 
-        self.assertEquals("", str15.upper())
-        self.assertEquals("FOOBAR", str16.upper())
+        self.assertEqual("", str15.upper())
+        self.assertEqual("FOOBAR", str16.upper())
 
-        self.assertEquals("123", str12.zfill(3))
-        self.assertEquals("000123", str12.zfill(6))
+        self.assertEqual("123", str12.zfill(3))
+        self.assertEqual("000123", str12.zfill(6))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -39,80 +39,80 @@ class TestSmartList(unittest.TestCase):
         list1 = builder([0, 1, 2, 3, "one", "two"])
         list2 = builder(list(range(10)))
 
-        self.assertEquals(1, list1[1])
-        self.assertEquals("one", list1[-2])
-        self.assertEquals([2, 3], list1[2:4])
+        self.assertEqual(1, list1[1])
+        self.assertEqual("one", list1[-2])
+        self.assertEqual([2, 3], list1[2:4])
         self.assertRaises(IndexError, lambda: list1[6])
         self.assertRaises(IndexError, lambda: list1[-7])
 
-        self.assertEquals([0, 1, 2], list1[:3])
-        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[:])
-        self.assertEquals([3, "one", "two"], list1[3:])
-        self.assertEquals(["one", "two"], list1[-2:])
-        self.assertEquals([0, 1], list1[:-4])
-        self.assertEquals([], list1[6:])
-        self.assertEquals([], list1[4:2])
+        self.assertEqual([0, 1, 2], list1[:3])
+        self.assertEqual([0, 1, 2, 3, "one", "two"], list1[:])
+        self.assertEqual([3, "one", "two"], list1[3:])
+        self.assertEqual(["one", "two"], list1[-2:])
+        self.assertEqual([0, 1], list1[:-4])
+        self.assertEqual([], list1[6:])
+        self.assertEqual([], list1[4:2])
 
-        self.assertEquals([0, 2, "one"], list1[0:5:2])
-        self.assertEquals([0, 2], list1[0:-3:2])
-        self.assertEquals([0, 1, 2, 3, "one", "two"], list1[::])
-        self.assertEquals([2, 3, "one", "two"], list1[2::])
-        self.assertEquals([0, 1, 2, 3], list1[:4:])
-        self.assertEquals([2, 3], list1[2:4:])
-        self.assertEquals([0, 2, 4, 6, 8], list2[::2])
-        self.assertEquals([2, 5, 8], list2[2::3])
-        self.assertEquals([0, 3], list2[:6:3])
-        self.assertEquals([2, 5, 8], list2[-8:9:3])
-        self.assertEquals([], list2[100000:1000:-100])
+        self.assertEqual([0, 2, "one"], list1[0:5:2])
+        self.assertEqual([0, 2], list1[0:-3:2])
+        self.assertEqual([0, 1, 2, 3, "one", "two"], list1[::])
+        self.assertEqual([2, 3, "one", "two"], list1[2::])
+        self.assertEqual([0, 1, 2, 3], list1[:4:])
+        self.assertEqual([2, 3], list1[2:4:])
+        self.assertEqual([0, 2, 4, 6, 8], list2[::2])
+        self.assertEqual([2, 5, 8], list2[2::3])
+        self.assertEqual([0, 3], list2[:6:3])
+        self.assertEqual([2, 5, 8], list2[-8:9:3])
+        self.assertEqual([], list2[100000:1000:-100])
 
         list1[3] = 100
-        self.assertEquals(100, list1[3])
+        self.assertEqual(100, list1[3])
         list1[-3] = 101
-        self.assertEquals([0, 1, 2, 101, "one", "two"], list1)
+        self.assertEqual([0, 1, 2, 101, "one", "two"], list1)
         list1[5:] = [6, 7, 8]
-        self.assertEquals([6, 7, 8], list1[5:])
-        self.assertEquals([0, 1, 2, 101, "one", 6, 7, 8], list1)
+        self.assertEqual([6, 7, 8], list1[5:])
+        self.assertEqual([0, 1, 2, 101, "one", 6, 7, 8], list1)
         list1[2:4] = [-1, -2, -3, -4, -5]
-        self.assertEquals([0, 1, -1, -2, -3, -4, -5, "one", 6, 7, 8], list1)
+        self.assertEqual([0, 1, -1, -2, -3, -4, -5, "one", 6, 7, 8], list1)
         list1[0:-3] = [99]
-        self.assertEquals([99, 6, 7, 8], list1)
+        self.assertEqual([99, 6, 7, 8], list1)
         list2[0:6:2] = [100, 102, 104]
-        self.assertEquals([100, 1, 102, 3, 104, 5, 6, 7, 8, 9], list2)
+        self.assertEqual([100, 1, 102, 3, 104, 5, 6, 7, 8, 9], list2)
         list2[::3] = [200, 203, 206, 209]
-        self.assertEquals([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
+        self.assertEqual([200, 1, 102, 203, 104, 5, 206, 7, 8, 209], list2)
         list2[::] = range(7)
-        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list2)
+        self.assertEqual([0, 1, 2, 3, 4, 5, 6], list2)
         self.assertRaises(ValueError, assign, list2, 0, 5, 2,
                           [100, 102, 104, 106])
 
         del list2[2]
-        self.assertEquals([0, 1, 3, 4, 5, 6], list2)
+        self.assertEqual([0, 1, 3, 4, 5, 6], list2)
         del list2[-3]
-        self.assertEquals([0, 1, 3, 5, 6], list2)
+        self.assertEqual([0, 1, 3, 5, 6], list2)
         self.assertRaises(IndexError, delete, list2, 100)
         self.assertRaises(IndexError, delete, list2, -6)
         list2[:] = range(10)
         del list2[3:6]
-        self.assertEquals([0, 1, 2, 6, 7, 8, 9], list2)
+        self.assertEqual([0, 1, 2, 6, 7, 8, 9], list2)
         del list2[-2:]
-        self.assertEquals([0, 1, 2, 6, 7], list2)
+        self.assertEqual([0, 1, 2, 6, 7], list2)
         del list2[:2]
-        self.assertEquals([2, 6, 7], list2)
+        self.assertEqual([2, 6, 7], list2)
         list2[:] = range(10)
         del list2[2:8:2]
-        self.assertEquals([0, 1, 3, 5, 7, 8, 9], list2)
+        self.assertEqual([0, 1, 3, 5, 7, 8, 9], list2)
 
     def _test_add_radd_iadd(self, builder):
         """Run tests on __r/i/add__ of a list built with *builder*."""
         list1 = builder(range(5))
         list2 = builder(range(5, 10))
-        self.assertEquals([0, 1, 2, 3, 4, 5, 6], list1 + [5, 6])
-        self.assertEquals([0, 1, 2, 3, 4], list1)
-        self.assertEquals(list(range(10)), list1 + list2)
-        self.assertEquals([-2, -1, 0, 1, 2, 3, 4], [-2, -1] + list1)
-        self.assertEquals([0, 1, 2, 3, 4], list1)
+        self.assertEqual([0, 1, 2, 3, 4, 5, 6], list1 + [5, 6])
+        self.assertEqual([0, 1, 2, 3, 4], list1)
+        self.assertEqual(list(range(10)), list1 + list2)
+        self.assertEqual([-2, -1, 0, 1, 2, 3, 4], [-2, -1] + list1)
+        self.assertEqual([0, 1, 2, 3, 4], list1)
         list1 += ["foo", "bar", "baz"]
-        self.assertEquals([0, 1, 2, 3, 4, "foo", "bar", "baz"], list1)
+        self.assertEqual([0, 1, 2, 3, 4, "foo", "bar", "baz"], list1)
 
     def _test_other_magic_methods(self, builder):
         """Run tests on other magic methods of a list built with *builder*."""
@@ -122,13 +122,13 @@ class TestSmartList(unittest.TestCase):
         list4 = builder([0, 1, 2])
 
         if py3k:
-            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", str(list1))
-            self.assertEquals(b"[0, 1, 2, 3, 'one', 'two']", bytes(list1))
-            self.assertEquals("[0, 1, 2, 3, 'one', 'two']", repr(list1))
+            self.assertEqual("[0, 1, 2, 3, 'one', 'two']", str(list1))
+            self.assertEqual(b"[0, 1, 2, 3, 'one', 'two']", bytes(list1))
+            self.assertEqual("[0, 1, 2, 3, 'one', 'two']", repr(list1))
         else:
-            self.assertEquals("[0, 1, 2, 3, u'one', u'two']", unicode(list1))
-            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
-            self.assertEquals(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
+            self.assertEqual("[0, 1, 2, 3, u'one', u'two']", unicode(list1))
+            self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
+            self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
 
         self.assertTrue(list1 < list3)
         self.assertTrue(list1 <= list3)
@@ -164,42 +164,42 @@ class TestSmartList(unittest.TestCase):
         self.assertTrue(bool(list1))
         self.assertFalse(bool(list2))
 
-        self.assertEquals(6, len(list1))
-        self.assertEquals(0, len(list2))
+        self.assertEqual(6, len(list1))
+        self.assertEqual(0, len(list2))
 
         out = []
         for obj in list1:
             out.append(obj)
-        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
+        self.assertEqual([0, 1, 2, 3, "one", "two"], out)
 
         out = []
         for ch in list2:
             out.append(ch)
-        self.assertEquals([], out)
+        self.assertEqual([], out)
 
         gen1 = iter(list1)
         out = []
         for i in range(len(list1)):
             out.append(gen1.next())
         self.assertRaises(StopIteration, gen1.next)
-        self.assertEquals([0, 1, 2, 3, "one", "two"], out)
+        self.assertEqual([0, 1, 2, 3, "one", "two"], out)
         gen2 = iter(list2)
         self.assertRaises(StopIteration, gen2.next)
 
-        self.assertEquals(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
-        self.assertEquals([], list(reversed(list2)))
+        self.assertEqual(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
+        self.assertEqual([], list(reversed(list2)))
 
         self.assertTrue("one" in list1)
         self.assertTrue(3 in list1)
         self.assertFalse(10 in list1)
         self.assertFalse(0 in list2)
 
-        self.assertEquals([], list2 * 5)
-        self.assertEquals([], 5 * list2)
-        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], list4 * 3)
-        self.assertEquals([0, 1, 2, 0, 1, 2, 0, 1, 2], 3 * list4)
+        self.assertEqual([], list2 * 5)
+        self.assertEqual([], 5 * list2)
+        self.assertEqual([0, 1, 2, 0, 1, 2, 0, 1, 2], list4 * 3)
+        self.assertEqual([0, 1, 2, 0, 1, 2, 0, 1, 2], 3 * list4)
         list4 *= 2
-        self.assertEquals([0, 1, 2, 0, 1, 2], list4)
+        self.assertEqual([0, 1, 2, 0, 1, 2], list4)
 
     def _test_list_methods(self, builder):
         """Run tests on the public methods of a list built with *builder*."""
@@ -210,60 +210,60 @@ class TestSmartList(unittest.TestCase):
         list1.append(5)
         list1.append(1)
         list1.append(2)
-        self.assertEquals([0, 1, 2, 3, 4, 5, 1, 2], list1)
+        self.assertEqual([0, 1, 2, 3, 4, 5, 1, 2], list1)
 
-        self.assertEquals(0, list1.count(6))
-        self.assertEquals(2, list1.count(1))
+        self.assertEqual(0, list1.count(6))
+        self.assertEqual(2, list1.count(1))
 
         list1.extend(range(5, 8))
-        self.assertEquals([0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
+        self.assertEqual([0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
 
-        self.assertEquals(1, list1.index(1))
-        self.assertEquals(6, list1.index(1, 3))
-        self.assertEquals(6, list1.index(1, 3, 7))
+        self.assertEqual(1, list1.index(1))
+        self.assertEqual(6, list1.index(1, 3))
+        self.assertEqual(6, list1.index(1, 3, 7))
         self.assertRaises(ValueError, list1.index, 1, 3, 5)
 
         list1.insert(0, -1)
-        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
+        self.assertEqual([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 7], list1)
         list1.insert(-1, 6.5)
-        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7], list1)
+        self.assertEqual([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7], list1)
         list1.insert(13, 8)
-        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7, 8], list1)
+        self.assertEqual([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5, 7, 8], list1)
 
-        self.assertEquals(8, list1.pop())
-        self.assertEquals(7, list1.pop())
-        self.assertEquals([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5], list1)
-        self.assertEquals(-1, list1.pop(0))
-        self.assertEquals(5, list1.pop(5))
-        self.assertEquals(6.5, list1.pop(-1))
-        self.assertEquals([0, 1, 2, 3, 4, 1, 2, 5, 6], list1)
-        self.assertEquals("foo", list2.pop())
+        self.assertEqual(8, list1.pop())
+        self.assertEqual(7, list1.pop())
+        self.assertEqual([-1, 0, 1, 2, 3, 4, 5, 1, 2, 5, 6, 6.5], list1)
+        self.assertEqual(-1, list1.pop(0))
+        self.assertEqual(5, list1.pop(5))
+        self.assertEqual(6.5, list1.pop(-1))
+        self.assertEqual([0, 1, 2, 3, 4, 1, 2, 5, 6], list1)
+        self.assertEqual("foo", list2.pop())
         self.assertRaises(IndexError, list2.pop)
-        self.assertEquals([], list2)
+        self.assertEqual([], list2)
 
         list1.remove(6)
-        self.assertEquals([0, 1, 2, 3, 4, 1, 2, 5], list1)
+        self.assertEqual([0, 1, 2, 3, 4, 1, 2, 5], list1)
         list1.remove(1)
-        self.assertEquals([0, 2, 3, 4, 1, 2, 5], list1)
+        self.assertEqual([0, 2, 3, 4, 1, 2, 5], list1)
         list1.remove(1)
-        self.assertEquals([0, 2, 3, 4, 2, 5], list1)
+        self.assertEqual([0, 2, 3, 4, 2, 5], list1)
         self.assertRaises(ValueError, list1.remove, 1)
 
         list1.reverse()
-        self.assertEquals([5, 2, 4, 3, 2, 0], list1)
+        self.assertEqual([5, 2, 4, 3, 2, 0], list1)
 
         list1.sort()
-        self.assertEquals([0, 2, 2, 3, 4, 5], list1)
+        self.assertEqual([0, 2, 2, 3, 4, 5], list1)
         list1.sort(reverse=True)
-        self.assertEquals([5, 4, 3, 2, 2, 0], list1)
+        self.assertEqual([5, 4, 3, 2, 2, 0], list1)
         list1.sort(cmp=lambda x, y: abs(3 - x) - abs(3 - y))  # Distance from 3
-        self.assertEquals([3, 4, 2, 2, 5, 0], list1)
+        self.assertEqual([3, 4, 2, 2, 5, 0], list1)
         list1.sort(cmp=lambda x, y: abs(3 - x) - abs(3 - y), reverse=True)
-        self.assertEquals([0, 5, 4, 2, 2, 3], list1)
+        self.assertEqual([0, 5, 4, 2, 2, 3], list1)
         list3.sort(key=lambda i: i[1])
-        self.assertEquals([("d", 2), ("c", 3), ("a", 5), ("b", 8)], list3)
+        self.assertEqual([("d", 2), ("c", 3), ("a", 5), ("b", 8)], list3)
         list3.sort(key=lambda i: i[1], reverse=True)
-        self.assertEquals([("b", 8), ("a", 5), ("c", 3), ("d", 2)], list3)
+        self.assertEqual([("b", 8), ("a", 5), ("c", 3), ("d", 2)], list3)
 
     def test_docs(self):
         """make sure the methods of SmartList/_ListProxy have docstrings"""
@@ -273,18 +273,18 @@ class TestSmartList(unittest.TestCase):
             expected = getattr(list, meth).__doc__
             smartlist_doc = getattr(SmartList, meth).__doc__
             listproxy_doc = getattr(_ListProxy, meth).__doc__
-            self.assertEquals(expected, smartlist_doc)
-            self.assertEquals(expected, listproxy_doc)
+            self.assertEqual(expected, smartlist_doc)
+            self.assertEqual(expected, listproxy_doc)
 
     def test_doctest(self):
         """make sure the test embedded in SmartList's docstring passes"""
         parent = SmartList([0, 1, 2, 3])
-        self.assertEquals([0, 1, 2, 3], parent)
+        self.assertEqual([0, 1, 2, 3], parent)
         child = parent[2:]
-        self.assertEquals([2, 3], child)
+        self.assertEqual([2, 3], child)
         child.append(4)
-        self.assertEquals([2, 3, 4], child)
-        self.assertEquals([0, 1, 2, 3, 4], parent)
+        self.assertEqual([2, 3, 4], child)
+        self.assertEqual([0, 1, 2, 3, 4], parent)
 
     def test_parent_get_set_del(self):
         """make sure SmartList's getitem/setitem/delitem work"""
@@ -343,46 +343,46 @@ class TestSmartList(unittest.TestCase):
         parent.append(6)
         child1.append(7)
         child2.append(4.5)
-        self.assertEquals([0, 1, 2, 3, 4, 4.5, 5, 6, 7], parent)
-        self.assertEquals([2, 3, 4, 4.5, 5, 6, 7], child1)
-        self.assertEquals([2, 3, 4, 4.5], child2)
+        self.assertEqual([0, 1, 2, 3, 4, 4.5, 5, 6, 7], parent)
+        self.assertEqual([2, 3, 4, 4.5, 5, 6, 7], child1)
+        self.assertEqual([2, 3, 4, 4.5], child2)
 
         parent.insert(0, -1)
         parent.insert(4, 2.5)
         parent.insert(10, 6.5)
-        self.assertEquals([-1, 0, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], parent)
-        self.assertEquals([2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], child1)
-        self.assertEquals([2, 2.5, 3, 4, 4.5], child2)
+        self.assertEqual([-1, 0, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], parent)
+        self.assertEqual([2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], child1)
+        self.assertEqual([2, 2.5, 3, 4, 4.5], child2)
 
-        self.assertEquals(7, parent.pop())
-        self.assertEquals(6.5, child1.pop())
-        self.assertEquals(4.5, child2.pop())
-        self.assertEquals([-1, 0, 1, 2, 2.5, 3, 4, 5, 6], parent)
-        self.assertEquals([2, 2.5, 3, 4, 5, 6], child1)
-        self.assertEquals([2, 2.5, 3, 4], child2)
+        self.assertEqual(7, parent.pop())
+        self.assertEqual(6.5, child1.pop())
+        self.assertEqual(4.5, child2.pop())
+        self.assertEqual([-1, 0, 1, 2, 2.5, 3, 4, 5, 6], parent)
+        self.assertEqual([2, 2.5, 3, 4, 5, 6], child1)
+        self.assertEqual([2, 2.5, 3, 4], child2)
 
         parent.remove(-1)
         child1.remove(2.5)
-        self.assertEquals([0, 1, 2, 3, 4, 5, 6], parent)
-        self.assertEquals([2, 3, 4, 5, 6], child1)
-        self.assertEquals([2, 3, 4], child2)
+        self.assertEqual([0, 1, 2, 3, 4, 5, 6], parent)
+        self.assertEqual([2, 3, 4, 5, 6], child1)
+        self.assertEqual([2, 3, 4], child2)
 
-        self.assertEquals(0, parent.pop(0))
-        self.assertEquals([1, 2, 3, 4, 5, 6], parent)
-        self.assertEquals([2, 3, 4, 5, 6], child1)
-        self.assertEquals([2, 3, 4], child2)
+        self.assertEqual(0, parent.pop(0))
+        self.assertEqual([1, 2, 3, 4, 5, 6], parent)
+        self.assertEqual([2, 3, 4, 5, 6], child1)
+        self.assertEqual([2, 3, 4], child2)
 
         child2.reverse()
-        self.assertEquals([1, 4, 3, 2, 5, 6], parent)
-        self.assertEquals([4, 3, 2, 5, 6], child1)
-        self.assertEquals([4, 3, 2], child2)
+        self.assertEqual([1, 4, 3, 2, 5, 6], parent)
+        self.assertEqual([4, 3, 2, 5, 6], child1)
+        self.assertEqual([4, 3, 2], child2)
 
         parent.extend([7, 8])
         child1.extend([8.1, 8.2])
         child2.extend([1.9, 1.8])
-        self.assertEquals([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
-        self.assertEquals([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
-        self.assertEquals([4, 3, 2, 1.9, 1.8], child2)
+        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
