@@ -384,7 +384,5 @@ class TestSmartList(unittest.TestCase):
         self.assertEquals([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEquals([4, 3, 2, 1.9, 1.8], child2)
 
-        # also test whether children that exit scope are removed from parent's map
-
 if __name__ == "__main__":
     unittest.main(verbosity=2)

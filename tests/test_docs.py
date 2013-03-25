@@ -30,6 +30,7 @@ from mwparserfromhell.compat import py3k, str, StringIO
 
 class TestDocs(unittest.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""
+
     def assertPrint(self, input, output):
         """Assertion check that *input*, when printed, produces *output*."""
         buff = StringIO()

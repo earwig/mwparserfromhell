@@ -27,6 +27,7 @@ from _test_tokenizer import TokenizerTestCase
 
 class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     """Test cases for the C tokenizer."""
+
     @classmethod
     def setUpClass(cls):
         from mwparserfromhell.parser._tokenizer import CTokenizer

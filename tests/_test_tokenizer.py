@@ -38,6 +38,7 @@ class TokenizerTestCase(object):
     TestCTokenizer. Tests are loaded dynamically from files in the 'tokenizer'
     directory.
     """
+
     @classmethod
     def _build_test_method(cls, funcname, data):
         """Create and return a method to be treated as a test case method.

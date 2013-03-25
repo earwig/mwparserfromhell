@@ -29,6 +29,7 @@ __all__ = ["Text"]
 
 class Text(Node):
     """Represents ordinary, unformatted text with no special properties."""
+
     def __init__(self, value):
         super(Text, self).__init__()
         self._value = value

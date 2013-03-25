@@ -37,6 +37,7 @@ class _FakeString(StringMixIn):
 
 class TestStringMixIn(unittest.TestCase):
     """Test cases for the StringMixIn class."""
+
     def test_docs(self):
         """make sure the various methods of StringMixIn have docstrings"""
         methods = [
