@@ -336,7 +336,54 @@ class TestSmartList(unittest.TestCase):
 
     def test_influence(self):
         """make sure changes are propagated from parents to children"""
-        pass
+        parent = SmartList([0, 1, 2, 3, 4, 5])
+        child1 = parent[2:]
+        child2 = parent[2:5]
+
+        parent.append(6)
+        child1.append(7)
+        child2.append(4.5)
+        self.assertEquals([0, 1, 2, 3, 4, 4.5, 5, 6, 7], parent)
+        self.assertEquals([2, 3, 4, 4.5, 5, 6, 7], child1)
+        self.assertEquals([2, 3, 4, 4.5], child2)
+
+        parent.insert(0, -1)
+        parent.insert(4, 2.5)
+        parent.insert(10, 6.5)
+        self.assertEquals([-1, 0, 1, 2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], parent)
+        self.assertEquals([2, 2.5, 3, 4, 4.5, 5, 6, 6.5, 7], child1)
+        self.assertEquals([2, 2.5, 3, 4, 4.5], child2)
+
+        self.assertEquals(7, parent.pop())
+        self.assertEquals(6.5, child1.pop())
+        self.assertEquals(4.5, child2.pop())
+        self.assertEquals([-1, 0, 1, 2, 2.5, 3, 4, 5, 6], parent)
+        self.assertEquals([2, 2.5, 3, 4, 5, 6], child1)
+        self.assertEquals([2, 2.5, 3, 4], child2)
+
+        parent.remove(-1)
+        child1.remove(2.5)
+        self.assertEquals([0, 1, 2, 3, 4, 5, 6], parent)
+        self.assertEquals([2, 3, 4, 5, 6], child1)
+        self.assertEquals([2, 3, 4], child2)
+
+        self.assertEquals(0, parent.pop(0))
+        self.assertEquals([1, 2, 3, 4, 5, 6], parent)
+        self.assertEquals([2, 3, 4, 5, 6], child1)
+        self.assertEquals([2, 3, 4], child2)
+
+        child2.reverse()
+        self.assertEquals([1, 4, 3, 2, 5, 6], parent)
+        self.assertEquals([4, 3, 2, 5, 6], child1)
+        self.assertEquals([4, 3, 2], child2)
+
+        parent.extend([7, 8])
+        child1.extend([8.1, 8.2])
+        child2.extend([1.9, 1.8])
+        self.assertEquals([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
+        self.assertEquals([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEquals([4, 3, 2, 1.9, 1.8], child2)
+
         # also test whether children that exit scope are removed from parent's map
 
 if __name__ == "__main__":
