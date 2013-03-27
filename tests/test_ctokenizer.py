@@ -23,6 +23,8 @@
 from __future__ import unicode_literals
 import unittest
 
+from mwparserfromhell.parser._tokenizer import CTokenizer
+
 from _test_tokenizer import TokenizerTestCase
 
 class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
@@ -30,8 +32,12 @@ class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
 
     @classmethod
     def setUpClass(cls):
-        from mwparserfromhell.parser._tokenizer import CTokenizer
         cls.tokenizer = CTokenizer
+
+    def test_uses_c(self):
+        """make sure the C tokenizer identifies as using a C extension"""
+        self.assertTrue(CTokenizer.USES_C)
+        self.assertTrue(CTokenizer().USES_C)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
