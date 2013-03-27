@@ -1387,6 +1387,8 @@ init_tokenizer(void)
     module = Py_InitModule("_tokenizer", module_methods);
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+    Py_INCREF(Py_True);
+    PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
 
     tempmod = PyImport_ImportModule("htmlentitydefs");
     if (!tempmod)

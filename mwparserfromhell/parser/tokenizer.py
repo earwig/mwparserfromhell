@@ -38,6 +38,7 @@ class BadRoute(Exception):
 
 class Tokenizer(object):
     """Creates a list of tokens from a string of wikicode."""
+    USES_C = False
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",

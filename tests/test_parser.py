@@ -23,10 +23,10 @@
 from __future__ import unicode_literals
 import unittest
 
+from mwparserfromhell import parser
 from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.parser import Parser
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
@@ -63,7 +63,14 @@ class TestParser(unittest.TestCase):
         for i in range(length):
             self.assertNodesEqual(expected.get(i), actual.get(i))
 
-    def test_parser(self):
+    def test_use_c(self):
+        """make sure the correct tokenizer is used"""
+        if parser.use_c:
+            self.assertTrue(parser.Parser(None)._tokenizer.USES_C)
+            parser.use_c = False
+        self.assertFalse(parser.Parser(None)._tokenizer.USES_C)
+
+    def test_parsing(self):
         """integration test for parsing overall"""
         text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
         wrap = lambda L: Wikicode(SmartList(L))
@@ -83,7 +90,7 @@ class TestParser(unittest.TestCase):
                 ]))
             ])
         ])
-        actual = Parser(text).parse()
+        actual = parser.Parser(text).parse()
         self.assertWikicodeEqual(expected, actual)
 
 if __name__ == "__main__":
