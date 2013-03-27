@@ -65,12 +65,15 @@ class TestTokens(unittest.TestCase):
 
         self.assertEqual("Token()", repr(token1))
         if py3k:
-            token2repr = "Token(foo='bar', baz=123)"
+            token2repr1 = "Token(foo='bar', baz=123)"
+            token2repr2 = "Token(baz=123, foo='bar')"
             token3repr = "Text(text='" + hundredchars + "')"
         else:
-            token2repr = "Token(foo=u'bar', baz=123)"
+            token2repr1 = "Token(foo=u'bar', baz=123)"
+            token2repr2 = "Token(baz=123, foo=u'bar')"
             token3repr = "Text(text=u'" + hundredchars + "')"
-        self.assertEqual(token2repr, repr(token2))
+        token2repr = repr(token2)
+        self.assertTrue(token2repr == token2repr1 or token2repr == token2repr2)
         self.assertEqual(token3repr, repr(token3))
 
     def test_equality(self):
@@ -86,10 +89,10 @@ class TestTokens(unittest.TestCase):
         self.assertEqual(token2, token1)
         self.assertEqual(token4, token5)
         self.assertEqual(token5, token4)
-        self.assertNotEquals(token1, token3)
-        self.assertNotEquals(token2, token3)
-        self.assertNotEquals(token4, token6)
-        self.assertNotEquals(token5, token6)
+        self.assertNotEqual(token1, token3)
+        self.assertNotEqual(token2, token3)
+        self.assertNotEqual(token4, token6)
+        self.assertNotEqual(token5, token6)
 
     def test_repr_equality(self):
         "check that eval(repr(token)) == token"

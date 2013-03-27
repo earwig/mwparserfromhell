@@ -23,10 +23,14 @@
 from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.parser._tokenizer import CTokenizer
+try:
+    from mwparserfromhell.parser._tokenizer import CTokenizer
+except ImportError:
+    CTokenizer = None
 
 from _test_tokenizer import TokenizerTestCase
 
+@unittest.skipUnless(CTokenizer, "C tokenizer not available")
 class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     """Test cases for the C tokenizer."""
 

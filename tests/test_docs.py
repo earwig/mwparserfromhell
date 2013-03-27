@@ -23,10 +23,9 @@
 from __future__ import print_function, unicode_literals
 import json
 import unittest
-import urllib
 
 import mwparserfromhell
-from mwparserfromhell.compat import py3k, str, StringIO
+from mwparserfromhell.compat import py3k, str, StringIO, urlencode, urlopen
 
 class TestDocs(unittest.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""
@@ -114,12 +113,15 @@ class TestDocs(unittest.TestCase):
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
                 "rvprop": "content", "format": "json", "titles": title}
         try:
-            raw = urllib.urlopen(url1, urllib.urlencode(data)).read()
+            raw = urlopen(url1, urlencode(data).encode("utf8")).read()
         except IOError:
             self.skipTest("cannot continue because of unsuccessful web call")
-        res = json.loads(raw)
-        text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
-        expected = urllib.urlopen(url2.format(title)).read().decode("utf8")
+        res = json.loads(raw.decode("utf8"))
+        text = list(res["query"]["pages"].values())[0]["revisions"][0]["*"]
+        try:
+            expected = urlopen(url2.format(title)).read().decode("utf8")
+        except IOError:
+            self.skipTest("cannot continue because of unsuccessful web call")
         actual = mwparserfromhell.parse(text)
         self.assertEqual(expected, actual)
 

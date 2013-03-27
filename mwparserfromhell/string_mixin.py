@@ -252,8 +252,8 @@ class StringMixIn(object):
         return self.__unicode__().lstrip(chars)
 
     if py3k:
-        @inheritdoc
         @staticmethod
+        @inheritdoc
         def maketrans(self, x, y=None, z=None):
             if z is None:
                 if y is None:

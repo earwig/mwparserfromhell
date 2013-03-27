@@ -180,11 +180,11 @@ class TestSmartList(unittest.TestCase):
         gen1 = iter(list1)
         out = []
         for i in range(len(list1)):
-            out.append(gen1.next())
-        self.assertRaises(StopIteration, gen1.next)
+            out.append(next(gen1))
+        self.assertRaises(StopIteration, next, gen1)
         self.assertEqual([0, 1, 2, 3, "one", "two"], out)
         gen2 = iter(list2)
-        self.assertRaises(StopIteration, gen2.next)
+        self.assertRaises(StopIteration, next, gen2)
 
         self.assertEqual(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
         self.assertEqual([], list(reversed(list2)))

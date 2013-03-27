@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from sys import getdefaultencoding
 from types import GeneratorType
 import unittest
 
@@ -139,10 +140,10 @@ class TestStringMixIn(unittest.TestCase):
 
         out = []
         for i in range(len(str1)):
-            out.append(gen1.next())
-        self.assertRaises(StopIteration, gen1.next)
+            out.append(next(gen1))
+        self.assertRaises(StopIteration, next, gen1)
         self.assertEqual(expected, out)
-        self.assertRaises(StopIteration, gen2.next)
+        self.assertRaises(StopIteration, next, gen2)
 
         self.assertEqual("gnirts ekaf", "".join(list(reversed(str1))))
         self.assertEqual([], list(reversed(str2)))
@@ -187,17 +188,25 @@ class TestStringMixIn(unittest.TestCase):
             self.assertEqual("", str2.decode("punycode", "ignore"))
 
         str3 = _FakeString("𐌲𐌿𐍄")
+        actual = b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84"
         self.assertEqual(b"fake string", str1.encode())
-        self.assertEqual(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
-                          str3.encode("utf8"))
-        self.assertEqual(b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84",
-                          str3.encode(encoding="utf8"))
-        self.assertRaises(UnicodeEncodeError, str3.encode)
+        self.assertEqual(actual, str3.encode("utf-8"))
+        self.assertEqual(actual, str3.encode(encoding="utf-8"))
+        if getdefaultencoding() == "ascii":
+            self.assertRaises(UnicodeEncodeError, str3.encode)
+        elif getdefaultencoding() == "utf-8":
+            self.assertEqual(actual, str3.encode())
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii")
         self.assertRaises(UnicodeEncodeError, str3.encode, "ascii", "strict")
-        self.assertRaises(UnicodeEncodeError, str3.encode, errors="strict")
-        self.assertEqual("", str3.encode("ascii", "ignore"))
-        self.assertEqual("", str3.encode(errors="ignore"))
+        if getdefaultencoding() == "ascii":
+            self.assertRaises(UnicodeEncodeError, str3.encode, errors="strict")
+        elif getdefaultencoding() == "utf-8":
+            self.assertEqual(actual, str3.encode(errors="strict"))
+        self.assertEqual(b"", str3.encode("ascii", "ignore"))
+        if getdefaultencoding() == "ascii":
+            self.assertEqual(b"", str3.encode(errors="ignore"))
+        elif getdefaultencoding() == "utf-8":
+            self.assertEqual(actual, str3.encode(errors="ignore"))
 
         self.assertTrue(str1.endswith("ing"))
         self.assertFalse(str1.endswith("ingh"))
@@ -364,6 +373,7 @@ class TestStringMixIn(unittest.TestCase):
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEqual(actual, str25.rsplit(" ", 3))
         if py3k:
+            actual = ["   this is a", "sentence", "with", "whitespace"]
             self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
         self.assertEqual("fake string", str1.rstrip())
@@ -381,6 +391,7 @@ class TestStringMixIn(unittest.TestCase):
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEqual(actual, str25.split(" ", 3))
         if py3k:
+            actual = ["this", "is", "a", "sentence with  whitespace "]
             self.assertEqual(actual, str25.split(maxsplit=3))
 
         str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
