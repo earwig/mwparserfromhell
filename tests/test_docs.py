@@ -113,7 +113,10 @@ class TestDocs(unittest.TestCase):
         title = "Test"
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
                 "rvprop": "content", "format": "json", "titles": title}
-        raw = urllib.urlopen(url1, urllib.urlencode(data)).read()
+        try:
+            raw = urllib.urlopen(url1, urllib.urlencode(data)).read()
+        except IOError:
+            self.skipTest("cannot continue because of unsuccessful web call")
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         expected = urllib.urlopen(url2.format(title)).read().decode("utf8")
