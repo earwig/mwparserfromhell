@@ -288,19 +288,19 @@ class TestSmartList(unittest.TestCase):
 
     def test_parent_get_set_del(self):
         """make sure SmartList's getitem/setitem/delitem work"""
-        self._test_get_set_del_item(lambda L: SmartList(L))
+        self._test_get_set_del_item(SmartList)
 
     def test_parent_add(self):
         """make sure SmartList's add/radd/iadd work"""
-        self._test_add_radd_iadd(lambda L: SmartList(L))
+        self._test_add_radd_iadd(SmartList)
 
     def test_parent_unaffected_magics(self):
         """sanity checks against SmartList features that were not modified"""
-        self._test_other_magic_methods(lambda L: SmartList(L))
+        self._test_other_magic_methods(SmartList)
 
     def test_parent_methods(self):
         """make sure SmartList's non-magic methods work, like append()"""
-        self._test_list_methods(lambda L: SmartList(L))
+        self._test_list_methods(SmartList)
 
     def test_child_get_set_del(self):
         """make sure _ListProxy's getitem/setitem/delitem work"""
