@@ -16,21 +16,14 @@ if py3k:
     bytes = bytes
     str = str
     basestring = str
-    range = range
     maxsize = sys.maxsize
     import html.entities as htmlentities
-    from io import StringIO
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
 
 else:
     bytes = str
     str = unicode
     basestring = basestring
-    range = xrange
     maxsize = sys.maxint
     import htmlentitydefs as htmlentities
-    from StringIO import StringIO
-    from urllib import urlencode, urlopen
 
 del sys

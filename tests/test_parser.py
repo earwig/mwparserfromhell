@@ -24,11 +24,12 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell import parser
-from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
+
+from .compat import range
 
 class TestParser(unittest.TestCase):
     """Tests for the Parser class itself, which tokenizes and builds nodes."""

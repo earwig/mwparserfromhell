@@ -25,7 +25,9 @@ import json
 import unittest
 
 import mwparserfromhell
-from mwparserfromhell.compat import py3k, str, StringIO, urlencode, urlopen
+from mwparserfromhell.compat import py3k, str
+
+from .compat import StringIO, urlencode, urlopen
 
 class TestDocs(unittest.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""

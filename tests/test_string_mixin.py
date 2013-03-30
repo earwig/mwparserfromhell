@@ -25,8 +25,10 @@ from sys import getdefaultencoding
 from types import GeneratorType
 import unittest
 
-from mwparserfromhell.compat import bytes, py3k, range, str
+from mwparserfromhell.compat import bytes, py3k, str
 from mwparserfromhell.string_mixin import StringMixIn
+
+from .compat import range
 
 class _FakeString(StringMixIn):
     def __init__(self, data):

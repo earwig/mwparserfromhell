@@ -23,8 +23,10 @@
 from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import py3k, range
+from mwparserfromhell.compat import py3k
 from mwparserfromhell.smart_list import SmartList, _ListProxy
+
+from .compat import range
 
 class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
