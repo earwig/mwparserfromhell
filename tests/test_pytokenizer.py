@@ -27,7 +27,7 @@ from mwparserfromhell.parser.tokenizer import Tokenizer
 
 from ._test_tokenizer import TokenizerTestCase
 
-class TestPyTokenizer(TokenizerTestCase, unittest.TestCase):
+class TestPyTokenizer(TokenizerTestCase):
     """Test cases for the Python tokenizer."""
 
     @classmethod

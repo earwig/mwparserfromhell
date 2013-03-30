@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import print_function, unicode_literals
+from unittest import TestCase
 from os import listdir, path
 
 from mwparserfromhell.compat import py3k
@@ -31,7 +32,7 @@ class _TestParseError(Exception):
     pass
 
 
-class TokenizerTestCase(object):
+class TokenizerTestCase(TestCase):
     """A base test case for tokenizers, whose tests are loaded dynamically.
 
     Subclassed along with unittest.TestCase to form TestPyTokenizer and
