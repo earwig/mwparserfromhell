@@ -35,6 +35,7 @@ class TreeEqualityTestCase(TestCase):
     """
 
     def assertNodeEqual(self, expected, actual):
+        """Assert that two Nodes have the same type and have the same data."""
         registry = {
             Text: self.assertTextNodeEqual,
             Template: self.assertTemplateNodeEqual,
