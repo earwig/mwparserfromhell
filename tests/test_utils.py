@@ -42,7 +42,7 @@ class TestUtils(TreeEqualityTestCase):
             (Template(wrap([Text("spam")])),
                 wrap([Template(textify(["spam"]))])),
             ("fóóbar", textify(["fóóbar"])),
-            (b"foobár", textify(["foobár"])),
+            (b"foob\xc3\xa1r", textify(["foobár"])),
             (123, textify(["123"])),
             (True, textify(["True"])),
             (None, wrap([])),
