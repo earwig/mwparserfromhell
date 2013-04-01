@@ -31,7 +31,7 @@ except ImportError:
 from ._test_tokenizer import TokenizerTestCase
 
 @unittest.skipUnless(CTokenizer, "C tokenizer not available")
-class TestCTokenizer(TokenizerTestCase):
+class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     """Test cases for the C tokenizer."""
 
     @classmethod
