@@ -135,7 +135,10 @@ class HTMLEntity(Node):
 
     @hex_char.setter
     def hex_char(self, newval):
-        self._hex_char = bool(newval)
+        newval = str(newval)
+        if newval not in ("x", "X"):
+            raise ValueError(newval)
+        self._hex_char = newval
 
     def normalize(self):
         """Return the unicode character represented by the HTML entity."""

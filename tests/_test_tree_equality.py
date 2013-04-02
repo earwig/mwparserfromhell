@@ -54,23 +54,31 @@ class TreeEqualityTestCase(TestCase):
 
     def assertArgumentNodeEqual(self, expected, actual):
         """Assert that two Argument nodes have the same data."""
-        pass
+        self.assertWikicodeEqual(expected.name, actual.name)
+        if expected.default is not None:
+            self.assertWikicodeEqual(expected.default, actual.default)
+        else:
+            self.assertIs(None, actual.default)
 
     def assertCommentNodeEqual(self, expected, actual):
         """Assert that two Comment nodes have the same data."""
-        pass
+        self.assertWikicodeEqual(expected.contents, actual.contents)
 
     def assertHeadingNodeEqual(self, expected, actual):
         """Assert that two Heading nodes have the same data."""
-        pass
+        self.assertWikicodeEqual(expected.title, actual.title)
+        self.assertEqual(expected.level, actual.level)
 
     def assertHTMLEntityNodeEqual(self, expected, actual):
         """Assert that two HTMLEntity nodes have the same data."""
-        pass
+        self.assertEqual(expected.value, actual.value)
+        self.assertIs(expected.named, actual.named)
+        self.assertIs(expected.hexadecimal, actual.hexadecimal)
+        self.assertEquals(expected.hex_char, actual.hex_char)
 
     def assertTagNodeEqual(self, expected, actual):
         """Assert that two Tag nodes have the same data."""
-        pass
+        self.fail("Holding this until feature/html_tags is ready.")
 
     def assertTemplateNodeEqual(self, expected, actual):
         """Assert that two Template nodes have the same data."""

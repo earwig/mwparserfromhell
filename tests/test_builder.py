@@ -64,6 +64,7 @@ class TestBuilder(TreeEqualityTestCase):
         """tests for building Comment nodes"""
         pass
 
+    @unittest.skip("holding this until feature/html_tags is ready")
     def test_tag(self):
         """tests for building Tag nodes"""
         pass
