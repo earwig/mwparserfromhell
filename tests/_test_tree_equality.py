@@ -23,8 +23,9 @@
 from __future__ import unicode_literals
 from unittest import TestCase
 
-from mwparserfromhell.nodes import Template, Text, Wikilink
-from mwparserfromhell.nodes.extras import Parameter
+from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
+                                    Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes.extras import Attribute, Parameter
 from mwparserfromhell.wikicode import Wikicode
 
 class TreeEqualityTestCase(TestCase):
@@ -37,8 +38,13 @@ class TreeEqualityTestCase(TestCase):
     def assertNodeEqual(self, expected, actual):
         """Assert that two Nodes have the same type and have the same data."""
         registry = {
-            Text: self.assertTextNodeEqual,
+            Argument: self.assertArgumentNodeEqual,
+            Comment: self.assertCommentNodeEqual,
+            Heading: self.assertHeadingNodeEqual,
+            HTMLEntity: self.assertHTMLEntityNodeEqual,
+            Tag: self.assertTagNodeEqual,
             Template: self.assertTemplateNodeEqual,
+            Text: self.assertTextNodeEqual,
             Wikilink: self.assertWikilinkNodeEqual
         }
         for nodetype in registry:
@@ -46,9 +52,25 @@ class TreeEqualityTestCase(TestCase):
                 self.assertIsInstance(actual, nodetype)
                 registry[nodetype](expected, actual)
 
-    def assertTextNodeEqual(self, expected, actual):
-        """Assert that two Text nodes have the same data."""
-        self.assertEqual(expected.value, actual.value)
+    def assertArgumentNodeEqual(self, expected, actual):
+        """Assert that two Argument nodes have the same data."""
+        pass
+
+    def assertCommentNodeEqual(self, expected, actual):
+        """Assert that two Comment nodes have the same data."""
+        pass
+
+    def assertHeadingNodeEqual(self, expected, actual):
+        """Assert that two Heading nodes have the same data."""
+        pass
+
+    def assertHTMLEntityNodeEqual(self, expected, actual):
+        """Assert that two HTMLEntity nodes have the same data."""
+        pass
+
+    def assertTagNodeEqual(self, expected, actual):
+        """Assert that two Tag nodes have the same data."""
+        pass
 
     def assertTemplateNodeEqual(self, expected, actual):
         """Assert that two Template nodes have the same data."""
@@ -61,6 +83,10 @@ class TreeEqualityTestCase(TestCase):
             self.assertWikicodeEqual(exp_param.name, act_param.name)
             self.assertWikicodeEqual(exp_param.value, act_param.value)
             self.assertIs(exp_param.showkey, act_param.showkey)
+
+    def assertTextNodeEqual(self, expected, actual):
+        """Assert that two Text nodes have the same data."""
+        self.assertEqual(expected.value, actual.value)
 
     def assertWikilinkNodeEqual(self, expected, actual):
         """Assert that two Wikilink nodes have the same data."""

@@ -23,8 +23,50 @@
 from __future__ import unicode_literals
 import unittest
 
-class TestBuilder(unittest.TestCase):
-    pass
+from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
+                                    Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes.extras import Attribute, Parameter
+from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.wikicode import Wikicode
+
+from ._test_tree_equality import TreeEqualityTestCase
+
+wrap = lambda L: Wikicode(SmartList(L))
+
+class TestBuilder(TreeEqualityTestCase):
+    """Tests for the builder, which turns tokens into Wikicode objects."""
+
+    def test_text(self):
+        """tests for building Text nodes"""
+        pass
+
+    def test_template(self):
+        """tests for building Template nodes"""
+        pass
+
+    def test_argument(self):
+        """tests for building Argument nodes"""
+        pass
+
+    def test_wikilink(self):
+        """tests for building Wikilink nodes"""
+        pass
+
+    def test_html_entity(self):
+        """tests for building HTMLEntity nodes"""
+        pass
+
+    def test_heading(self):
+        """tests for building Heading nodes"""
+        pass
+
+    def test_comment(self):
+        """tests for building Comment nodes"""
+        pass
+
+    def test_tag(self):
+        """tests for building Tag nodes"""
+        pass
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
