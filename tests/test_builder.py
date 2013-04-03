@@ -26,6 +26,8 @@ import unittest
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
+from mwparserfromhell.parser import tokens
+from mwparserfromhell.parser.builder import Builder
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
@@ -36,13 +38,34 @@ wrap = lambda L: Wikicode(SmartList(L))
 class TestBuilder(TreeEqualityTestCase):
     """Tests for the builder, which turns tokens into Wikicode objects."""
 
+    def setUp(self):
+        self.builder = Builder()
+
     def test_text(self):
         """tests for building Text nodes"""
-        pass
+        tests = [
+            ([tokens.Text(text="foobar")], wrap([Text("foobar")])),
+            ([tokens.Text(text="fóóbar")], wrap([Text("fóóbar")])),
+            ([tokens.Text(text="spam"), tokens.Text(text="eggs")],
+                wrap([Text("spam"), Text("eggs")])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_template(self):
         """tests for building Template nodes"""
-        pass
+        tests = [
+            ([tokens.TemplateOpen(), tokens.Text(text="foobar"), tokens.TemplateClose()],
+                wrap([Template(wrap([Text("foobar")]))])),
+            ([tokens.TemplateOpen(), tokens.Text(text="spam"), tokens.Text(text="eggs"), tokens.TemplateClose()],
+                wrap([Template(wrap([Text("spam"), Text("eggs")]))])),
+            ([tokens.TemplateOpen(), tokens.Text(text="foo"), tokens.TemplateParamSeparator(), tokens.Text(text="bar"), tokens.TemplateClose()],
+                wrap([Template(wrap([Text("foo")]), params=[Parameter(wrap([Text("1")]), wrap([Text("bar")]), showkey=False)])])),
+            ([tokens.TemplateOpen(), tokens.Text(text="foo"), tokens.TemplateParamSeparator(), tokens.Text(text="bar"), tokens.TemplateParamEquals(), tokens.Text(text="baz"), tokens.TemplateClose()],
+                wrap([Template(wrap([Text("foo")]), params=[Parameter(wrap([Text("bar")]), wrap([Text("baz")]))])])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_argument(self):
         """tests for building Argument nodes"""
