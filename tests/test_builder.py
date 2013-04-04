@@ -47,7 +47,7 @@ class TestBuilder(TreeEqualityTestCase):
             ([tokens.Text(text="foobar")], wrap([Text("foobar")])),
             ([tokens.Text(text="fóóbar")], wrap([Text("fóóbar")])),
             ([tokens.Text(text="spam"), tokens.Text(text="eggs")],
-                wrap([Text("spam"), Text("eggs")])),
+             wrap([Text("spam"), Text("eggs")])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -55,14 +55,46 @@ class TestBuilder(TreeEqualityTestCase):
     def test_template(self):
         """tests for building Template nodes"""
         tests = [
-            ([tokens.TemplateOpen(), tokens.Text(text="foobar"), tokens.TemplateClose()],
-                wrap([Template(wrap([Text("foobar")]))])),
-            ([tokens.TemplateOpen(), tokens.Text(text="spam"), tokens.Text(text="eggs"), tokens.TemplateClose()],
-                wrap([Template(wrap([Text("spam"), Text("eggs")]))])),
-            ([tokens.TemplateOpen(), tokens.Text(text="foo"), tokens.TemplateParamSeparator(), tokens.Text(text="bar"), tokens.TemplateClose()],
-                wrap([Template(wrap([Text("foo")]), params=[Parameter(wrap([Text("1")]), wrap([Text("bar")]), showkey=False)])])),
-            ([tokens.TemplateOpen(), tokens.Text(text="foo"), tokens.TemplateParamSeparator(), tokens.Text(text="bar"), tokens.TemplateParamEquals(), tokens.Text(text="baz"), tokens.TemplateClose()],
-                wrap([Template(wrap([Text("foo")]), params=[Parameter(wrap([Text("bar")]), wrap([Text("baz")]))])])),
+            ([tokens.TemplateOpen(), tokens.Text(text="foobar"),
+              tokens.TemplateClose()],
+             wrap([Template(wrap([Text("foobar")]))])),
+
+            ([tokens.TemplateOpen(), tokens.Text(text="spam"),
+              tokens.Text(text="eggs"), tokens.TemplateClose()],
+             wrap([Template(wrap([Text("spam"), Text("eggs")]))])),
+
+            ([tokens.TemplateOpen(), tokens.Text(text="foo"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
+              tokens.TemplateClose()],
+             wrap([Template(wrap([Text("foo")]), params=[
+                 Parameter(wrap([Text("1")]), wrap([Text("bar")]),
+                     showkey=False)])])),
+
+            ([tokens.TemplateOpen(), tokens.Text(text="foo"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
+              tokens.TemplateParamEquals(), tokens.Text(text="baz"),
+              tokens.TemplateClose()],
+             wrap([Template(wrap([Text("foo")]), params=[
+                 Parameter(wrap([Text("bar")]), wrap([Text("baz")]))])])),
+
+            ([tokens.TemplateOpen(), tokens.Text(text="foo"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
+              tokens.TemplateParamEquals(), tokens.Text(text="baz"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="biz"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="buzz"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="3"),
+              tokens.TemplateParamEquals(), tokens.Text(text="buff"),
+              tokens.TemplateParamSeparator(), tokens.Text(text="baff"),
+              tokens.TemplateClose()],
+             wrap([Template(wrap([Text("foo")]), params=[
+                 Parameter(wrap([Text("bar")]), wrap([Text("baz")])),
+                 Parameter(wrap([Text("1")]), wrap([Text("biz")]),
+                     showkey=False),
+                 Parameter(wrap([Text("2")]), wrap([Text("buzz")]),
+                     showkey=False),
+                 Parameter(wrap([Text("3")]), wrap([Text("buff")])),
+                 Parameter(wrap([Text("3")]), wrap([Text("baff")]),
+                     showkey=False)])])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
