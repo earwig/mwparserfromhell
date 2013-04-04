@@ -101,7 +101,29 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_argument(self):
         """tests for building Argument nodes"""
-        pass
+        tests = [
+            ([tokens.ArgumentOpen(), tokens.Text(text="foobar"),
+              tokens.ArgumentClose()],
+             wrap([Argument(wrap([Text("foobar")]))])),
+
+            ([tokens.ArgumentOpen(), tokens.Text(text="spam"),
+              tokens.Text(text="eggs"), tokens.ArgumentClose()],
+             wrap([Argument(wrap([Text("spam"), Text("eggs")]))])),
+
+            ([tokens.ArgumentOpen(), tokens.Text(text="foo"),
+              tokens.ArgumentSeparator(), tokens.Text(text="bar"),
+              tokens.ArgumentClose()],
+             wrap([Argument(wrap([Text("foo")]), wrap([Text("bar")]))])),
+
+            ([tokens.ArgumentOpen(), tokens.Text(text="foo"),
+              tokens.Text(text="bar"), tokens.ArgumentSeparator(),
+              tokens.Text(text="baz"), tokens.Text(text="biz"),
+              tokens.ArgumentClose()],
+             wrap([Argument(wrap([Text("foo"), Text("bar")]),
+                            wrap([Text("baz"), Text("biz")]))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_wikilink(self):
         """tests for building Wikilink nodes"""
