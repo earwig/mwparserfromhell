@@ -153,7 +153,23 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_html_entity(self):
         """tests for building HTMLEntity nodes"""
-        pass
+        tests = [
+            ([tokens.HTMLEntityStart(), tokens.Text(text="nbsp"),
+              tokens.HTMLEntityEnd()],
+             wrap([HTMLEntity("nbsp", named=True, hexadecimal=False)])),
+
+            ([tokens.HTMLEntityStart(), tokens.HTMLEntityNumeric(),
+              tokens.Text(text="107"), tokens.HTMLEntityEnd()],
+             wrap([HTMLEntity("107", named=False, hexadecimal=False)])),
+
+            ([tokens.HTMLEntityStart(), tokens.HTMLEntityNumeric(),
+              tokens.HTMLEntityHex(char="X"), tokens.Text(text="6B"),
+              tokens.HTMLEntityEnd()],
+             wrap([HTMLEntity("6B", named=False, hexadecimal=True,
+                              hex_char="X")])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_heading(self):
         """tests for building Heading nodes"""
