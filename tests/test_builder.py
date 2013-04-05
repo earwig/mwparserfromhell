@@ -173,11 +173,31 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_heading(self):
         """tests for building Heading nodes"""
-        pass
+        tests = [
+            ([tokens.HeadingStart(level=2), tokens.Text(text="foobar"),
+              tokens.HeadingEnd()],
+             wrap([Heading(wrap([Text("foobar")]), 2)])),
+
+            ([tokens.HeadingStart(level=4), tokens.Text(text="spam"),
+              tokens.Text(text="eggs"), tokens.HeadingEnd()],
+             wrap([Heading(wrap([Text("spam"), Text("eggs")]), 4)])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_comment(self):
         """tests for building Comment nodes"""
-        pass
+        tests = [
+            ([tokens.CommentStart(), tokens.Text(text="foobar"),
+              tokens.CommentEnd()],
+             wrap([Comment(wrap([Text("foobar")]))])),
+
+            ([tokens.CommentStart(), tokens.Text(text="spam"),
+              tokens.Text(text="eggs"), tokens.CommentEnd()],
+             wrap([Comment(wrap([Text("spam"), Text("eggs")]))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     @unittest.skip("holding this until feature/html_tags is ready")
     def test_tag(self):
