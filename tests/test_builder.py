@@ -68,7 +68,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TemplateClose()],
              wrap([Template(wrap([Text("foo")]), params=[
                  Parameter(wrap([Text("1")]), wrap([Text("bar")]),
-                     showkey=False)])])),
+                           showkey=False)])])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
@@ -89,12 +89,12 @@ class TestBuilder(TreeEqualityTestCase):
              wrap([Template(wrap([Text("foo")]), params=[
                  Parameter(wrap([Text("bar")]), wrap([Text("baz")])),
                  Parameter(wrap([Text("1")]), wrap([Text("biz")]),
-                     showkey=False),
+                           showkey=False),
                  Parameter(wrap([Text("2")]), wrap([Text("buzz")]),
-                     showkey=False),
+                           showkey=False),
                  Parameter(wrap([Text("3")]), wrap([Text("buff")])),
                  Parameter(wrap([Text("3")]), wrap([Text("baff")]),
-                     showkey=False)])])),
+                           showkey=False)])])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -127,7 +127,29 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_wikilink(self):
         """tests for building Wikilink nodes"""
-        pass
+        tests = [
+            ([tokens.WikilinkOpen(), tokens.Text(text="foobar"),
+              tokens.WikilinkClose()],
+             wrap([Wikilink(wrap([Text("foobar")]))])),
+
+            ([tokens.WikilinkOpen(), tokens.Text(text="spam"),
+              tokens.Text(text="eggs"), tokens.WikilinkClose()],
+             wrap([Wikilink(wrap([Text("spam"), Text("eggs")]))])),
+
+            ([tokens.WikilinkOpen(), tokens.Text(text="foo"),
+              tokens.WikilinkSeparator(), tokens.Text(text="bar"),
+              tokens.WikilinkClose()],
+             wrap([Wikilink(wrap([Text("foo")]), wrap([Text("bar")]))])),
+
+            ([tokens.WikilinkOpen(), tokens.Text(text="foo"),
+              tokens.Text(text="bar"), tokens.WikilinkSeparator(),
+              tokens.Text(text="baz"), tokens.Text(text="biz"),
+              tokens.WikilinkClose()],
+             wrap([Wikilink(wrap([Text("foo"), Text("bar")]),
+                            wrap([Text("baz"), Text("biz")]))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
 
     def test_html_entity(self):
         """tests for building HTMLEntity nodes"""
