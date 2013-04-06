@@ -206,6 +206,7 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_integration(self):
         """a test for building a combination of templates together"""
+        # {{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}
         test = [tokens.TemplateOpen(), tokens.TemplateOpen(),
                 tokens.TemplateOpen(), tokens.TemplateOpen(),
                 tokens.Text(text="foo"), tokens.TemplateClose(),
@@ -222,6 +223,38 @@ class TestBuilder(TreeEqualityTestCase):
             wrap([Text("biz")]))]), Text("buzz")])), Text("usr")]), params=[
             Parameter(wrap([Text("1")]), wrap([Template(wrap([Text("bin")]))]),
             showkey=False)])])
+        self.assertWikicodeEqual(valid, self.builder.build(test))
+
+    def test_integration2(self):
+        """an even more audacious test for building a horrible wikicode mess"""
+        # {{a|b|{{c|[[d]]{{{e}}}}}}}[[f|{{{g}}}<!--h-->]]{{i|j=&nbsp;}}
+        test = [tokens.TemplateOpen(), tokens.Text(text="a"),
+                tokens.TemplateParamSeparator(), tokens.Text(text="b"),
+                tokens.TemplateParamSeparator(), tokens.TemplateOpen(),
+                tokens.Text(text="c"), tokens.TemplateParamSeparator(),
+                tokens.WikilinkOpen(), tokens.Text(text="d"),
+                tokens.WikilinkClose(), tokens.ArgumentOpen(),
+                tokens.Text(text="e"), tokens.ArgumentClose(),
+                tokens.TemplateClose(), tokens.TemplateClose(),
+                tokens.WikilinkOpen(), tokens.Text(text="f"),
+                tokens.WikilinkSeparator(), tokens.ArgumentOpen(),
+                tokens.Text(text="g"), tokens.ArgumentClose(),
+                tokens.CommentStart(), tokens.Text(text="h"),
+                tokens.CommentEnd(), tokens.WikilinkClose(),
+                tokens.TemplateOpen(), tokens.Text(text="i"),
+                tokens.TemplateParamSeparator(), tokens.Text(text="j"),
+                tokens.TemplateParamEquals(), tokens.HTMLEntityStart(),
+                tokens.Text(text="nbsp"), tokens.HTMLEntityEnd(),
+                tokens.TemplateClose()]
+        valid = wrap(
+            [Template(wrap([Text("a")]), params=[Parameter(wrap([Text("1")]),
+            wrap([Text("b")]), showkey=False), Parameter(wrap([Text("2")]),
+            wrap([Template(wrap([Text("c")]), params=[Parameter(wrap([Text("1")
+            ]), wrap([Wikilink(wrap([Text("d")])), Argument(wrap([Text("e")]))]
+            ), showkey=False)])]), showkey=False)]), Wikilink(wrap([Text("f")]
+            ), wrap([Argument(wrap([Text("g")])), Comment(wrap([Text("h")]))])
+            ), Template(wrap([Text("i")]), params=[Parameter(wrap([Text("j")]),
+            wrap([HTMLEntity("nbsp", named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
 
 if __name__ == "__main__":
