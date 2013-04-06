@@ -24,6 +24,7 @@
 from setuptools import setup, find_packages, Extension
 
 from mwparserfromhell import __version__
+from mwparserfromhell.compat import py3k
 
 with open("README.rst") as fp:
     long_docs = fp.read()
@@ -37,7 +38,7 @@ tokenizer = Extension("mwparserfromhell.parser._tokenizer",
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
-    ext_modules = [tokenizer],
+    ext_modules = [] if py3k else [tokenizer],
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",

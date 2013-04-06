@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,44 +20,50 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.parameter import Parameter
-from mwparserfromhell.parser import Parser
-from mwparserfromhell.template import Template
+from mwparserfromhell import parser
+from mwparserfromhell.nodes import Template, Text, Wikilink
+from mwparserfromhell.nodes.extras import Parameter
+from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.wikicode import Wikicode
 
-TESTS = [
-    ("", []),
-    ("abcdef ghijhk", []),
-    ("abc{this is not a template}def", []),
-    ("neither is {{this one}nor} {this one {despite}} containing braces", []),
-    ("this is an acceptable {{template}}", [Template("template")]),
-    ("{{multiple}}{{templates}}", [Template("multiple"),
-                                   Template("templates")]),
-    ("multiple {{-}} templates {{+}}!", [Template("-"), Template("+")]),
-    ("{{{no templates here}}}", []),
-    ("{ {{templates here}}}", [Template("templates here")]),
-    ("{{{{I do not exist}}}}", []),
-    ("{{foo|bar|baz|eggs=spam}}",
-     [Template("foo", [Parameter("1", "bar"), Parameter("2", "baz"),
-                       Parameter("eggs", "spam")])]),
-    ("{{abc def|ghi|jk=lmno|pqr|st=uv|wx|yz}}",
-     [Template("abc def", [Parameter("1", "ghi"), Parameter("jk", "lmno"),
-                           Parameter("2", "pqr"), Parameter("st", "uv"),
-                           Parameter("3", "wx"), Parameter("4", "yz")])]),
-    ("{{this has a|{{template}}|inside of it}}",
-     [Template("this has a", [Parameter("1", "{{template}}",
-                                        [Template("template")]),
-                              Parameter("2", "inside of it")])]),
-    ("{{{{I exist}} }}", [Template("I exist", [] )]),
-    ("{{}}")
-]
+from ._test_tree_equality import TreeEqualityTestCase
+from .compat import range
 
-class TestParser(unittest.TestCase):
-    def test_parse(self):
-        parser = Parser()
-        for unparsed, parsed in TESTS:
-            self.assertEqual(parser.parse(unparsed), parsed)
+class TestParser(TreeEqualityTestCase):
+    """Tests for the Parser class itself, which tokenizes and builds nodes."""
+
+    def test_use_c(self):
+        """make sure the correct tokenizer is used"""
+        if parser.use_c:
+            self.assertTrue(parser.Parser(None)._tokenizer.USES_C)
+            parser.use_c = False
+        self.assertFalse(parser.Parser(None)._tokenizer.USES_C)
+
+    def test_parsing(self):
+        """integration test for parsing overall"""
+        text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
+        wrap = lambda L: Wikicode(SmartList(L))
+        expected = wrap([
+            Text("this is text; "),
+            Template(wrap([Text("this")]), [
+                Parameter(wrap([Text("is")]), wrap([Text("a")])),
+                Parameter(wrap([Text("template")]), wrap([
+                    Template(wrap([Text("with")]), [
+                        Parameter(wrap([Text("1")]),
+                                  wrap([Wikilink(wrap([Text("links")]))]),
+                                  showkey=False),
+                        Parameter(wrap([Text("2")]),
+                                  wrap([Text("in")]), showkey=False)
+                    ]),
+                    Text("it")
+                ]))
+            ])
+        ])
+        actual = parser.Parser(text).parse()
+        self.assertWikicodeEqual(expected, actual)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

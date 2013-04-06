@@ -41,8 +41,23 @@ def inheritdoc(method):
     method.__doc__ = getattr(list, method.__name__).__doc__
     return method
 
+class _SliceNormalizerMixIn(object):
+    """MixIn that provides a private method to normalize slices."""
 
-class SmartList(list):
+    def _normalize_slice(self, key):
+        """Return a slice equivalent to the input *key*, standardized."""
+        if key.start is not None:
+            start = (len(self) + key.start) if key.start < 0 else key.start
+        else:
+            start = 0
+        if key.stop is not None:
+            stop = (len(self) + key.stop) if key.stop < 0 else key.stop
+        else:
+            stop = maxsize
+        return slice(start, stop, key.step or 1)
+
+
+class SmartList(_SliceNormalizerMixIn, list):
     """Implements the ``list`` interface with special handling of sublists.
 
     When a sublist is created (by ``list[i:j]``), any changes made to this
@@ -76,7 +91,8 @@ class SmartList(list):
     def __getitem__(self, key):
         if not isinstance(key, slice):
             return super(SmartList, self).__getitem__(key)
-        sliceinfo = [key.start or 0, key.stop or 0, key.step or 1]
+        key = self._normalize_slice(key)
+        sliceinfo = [key.start, key.stop, key.step]
         child = _ListProxy(self, sliceinfo)
         self._children[id(child)] = (child, sliceinfo)
         return child
@@ -86,25 +102,28 @@ class SmartList(list):
             return super(SmartList, self).__setitem__(key, item)
         item = list(item)
         super(SmartList, self).__setitem__(key, item)
-        diff = len(item) - key.stop + key.start
+        key = self._normalize_slice(key)
+        diff = len(item) + (key.start - key.stop) // key.step
         values = self._children.values if py3k else self._children.itervalues
         if diff:
             for child, (start, stop, step) in values():
-                if start >= key.stop:
+                if start > key.stop:
                     self._children[id(child)][1][0] += diff
                 if stop >= key.stop and stop != maxsize:
                     self._children[id(child)][1][1] += diff
 
     def __delitem__(self, key):
         super(SmartList, self).__delitem__(key)
-        if not isinstance(key, slice):
-            key = slice(key, key + 1)
-        diff = key.stop - key.start
+        if isinstance(key, slice):
+            key = self._normalize_slice(key)
+        else:
+            key = slice(key, key + 1, 1)
+        diff = (key.stop - key.start) // key.step
         values = self._children.values if py3k else self._children.itervalues
         for child, (start, stop, step) in values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
-            if stop >= key.stop:
+            if stop >= key.stop and stop != maxsize:
                 self._children[id(child)][1][1] -= diff
 
     if not py3k:
@@ -160,24 +179,35 @@ class SmartList(list):
             child._parent = copy
         super(SmartList, self).reverse()
 
-    @inheritdoc
-    def sort(self, cmp=None, key=None, reverse=None):
-        copy = list(self)
-        for child in self._children:
-            child._parent = copy
-        if cmp is not None:
+    if py3k:
+        @inheritdoc
+        def sort(self, key=None, reverse=None):
+            copy = list(self)
+            for child in self._children:
+                child._parent = copy
+            kwargs = {}
             if key is not None:
-                if reverse is not None:
-                    super(SmartList, self).sort(cmp, key, reverse)
-                else:
-                    super(SmartList, self).sort(cmp, key)
-            else:
-                super(SmartList, self).sort(cmp)
-        else:
-            super(SmartList, self).sort()
+                kwargs["key"] = key
+            if reverse is not None:
+                kwargs["reverse"] = reverse
+            super(SmartList, self).sort(**kwargs)
+    else:
+        @inheritdoc
+        def sort(self, cmp=None, key=None, reverse=None):
+            copy = list(self)
+            for child in self._children:
+                child._parent = copy
+            kwargs = {}
+            if cmp is not None:
+                kwargs["cmp"] = cmp
+            if key is not None:
+                kwargs["key"] = key
+            if reverse is not None:
+                kwargs["reverse"] = reverse
+            super(SmartList, self).sort(**kwargs)
 
 
-class _ListProxy(list):
+class _ListProxy(_SliceNormalizerMixIn, list):
     """Implement the ``list`` interface by getting elements from a parent.
 
     This is created by a :py:class:`~.SmartList` object when slicing. It does
@@ -231,25 +261,52 @@ class _ListProxy(list):
             return bool(self._render())
 
     def __len__(self):
-        return (self._stop - self._start) / self._step
+        return (self._stop - self._start) // self._step
 
     def __getitem__(self, key):
-        return self._render()[key]
+        if isinstance(key, slice):
+            key = self._normalize_slice(key)
+            if key.stop == maxsize:
+                keystop = self._stop
+            else:
+                keystop = key.stop + self._start
+            adjusted = slice(key.start + self._start, keystop, key.step)
+            return self._parent[adjusted]
+        else:
+            return self._render()[key]
 
     def __setitem__(self, key, item):
         if isinstance(key, slice):
-            adjusted = slice(key.start + self._start, key.stop + self._stop,
-                             key.step)
+            key = self._normalize_slice(key)
+            if key.stop == maxsize:
+                keystop = self._stop
+            else:
+                keystop = key.stop + self._start
+            adjusted = slice(key.start + self._start, keystop, key.step)
             self._parent[adjusted] = item
         else:
+            length = len(self)
+            if key < 0:
+                key = length + key
+            if key < 0 or key >= length:
+                raise IndexError("list assignment index out of range")
             self._parent[self._start + key] = item
 
     def __delitem__(self, key):
         if isinstance(key, slice):
-            adjusted = slice(key.start + self._start, key.stop + self._stop,
-                             key.step)
+            key = self._normalize_slice(key)
+            if key.stop == maxsize:
+                keystop = self._stop
+            else:
+                keystop = key.stop + self._start
+            adjusted = slice(key.start + self._start, keystop, key.step)
             del self._parent[adjusted]
         else:
+            length = len(self)
+            if key < 0:
+                key = length + key
+            if key < 0 or key >= length:
+                raise IndexError("list assignment index out of range")
             del self._parent[self._start + key]
 
     def __iter__(self):
@@ -287,6 +344,16 @@ class _ListProxy(list):
         self.extend(other)
         return self
 
+    def __mul__(self, other):
+        return SmartList(list(self) * other)
+
+    def __rmul__(self, other):
+        return SmartList(other * list(self))
+
+    def __imul__(self, other):
+        self.extend(list(self) * (other - 1))
+        return self
+
     @property
     def _start(self):
         """The starting index of this list, inclusive."""
@@ -295,6 +362,8 @@ class _ListProxy(list):
     @property
     def _stop(self):
         """The ending index of this list, exclusive."""
+        if self._sliceinfo[1] == maxsize:
+            return len(self._parent)
         return self._sliceinfo[1]
 
     @property
@@ -328,18 +397,25 @@ class _ListProxy(list):
 
     @inheritdoc
     def insert(self, index, item):
+        if index < 0:
+            index = len(self) + index
         self._parent.insert(self._start + index, item)
 
     @inheritdoc
     def pop(self, index=None):
+        length = len(self)
         if index is None:
-            index = len(self) - 1
+            index = length - 1
+        elif index < 0:
+            index = length + index
+        if index < 0 or index >= length:
+            raise IndexError("pop index out of range")
         return self._parent.pop(self._start + index)
 
     @inheritdoc
     def remove(self, item):
         index = self.index(item)
-        del self._parent[index]
+        del self._parent[self._start + index]
 
     @inheritdoc
     def reverse(self):
@@ -347,17 +423,30 @@ class _ListProxy(list):
         item.reverse()
         self._parent[self._start:self._stop:self._step] = item
 
-    @inheritdoc
-    def sort(self, cmp=None, key=None, reverse=None):
-        item = self._render()
-        if cmp is not None:
+    if py3k:
+        @inheritdoc
+        def sort(self, key=None, reverse=None):
+            item = self._render()
+            kwargs = {}
             if key is not None:
-                if reverse is not None:
-                    item.sort(cmp, key, reverse)
-                else:
-                    item.sort(cmp, key)
-            else:
-                item.sort(cmp)
-        else:
-            item.sort()
-        self._parent[self._start:self._stop:self._step] = item
+                kwargs["key"] = key
+            if reverse is not None:
+                kwargs["reverse"] = reverse
+            item.sort(**kwargs)
+            self._parent[self._start:self._stop:self._step] = item
+    else:
+        @inheritdoc
+        def sort(self, cmp=None, key=None, reverse=None):
+            item = self._render()
+            kwargs = {}
+            if cmp is not None:
+                kwargs["cmp"] = cmp
+            if key is not None:
+                kwargs["key"] = key
+            if reverse is not None:
+                kwargs["reverse"] = reverse
+            item.sort(**kwargs)
+            self._parent[self._start:self._stop:self._step] = item
+
+
+del inheritdoc

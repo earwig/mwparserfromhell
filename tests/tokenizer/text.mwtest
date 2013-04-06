@@ -1,0 +1,25 @@
+name:   basic
+label:  sanity check for basic text parsing, no gimmicks
+input:  "foobar"
+output: [Text(text="foobar")]
+
+---
+
+name:   newlines
+label:  slightly more complex text parsing, with newlines
+input:  "This is a line of text.\nThis is another line of text.\nThis is another."
+output: [Text(text="This is a line of text.\nThis is another line of text.\nThis is another.")]
+
+---
+
+name:   unicode
+label:  ensure unicode data is handled properly
+input:  "Thís ís å sëñtënce with diœcritiçs."
+output: [Text(text="Thís ís å sëñtënce with diœcritiçs.")]
+
+---
+
+name:   unicode2
+label:  additional unicode check for non-BMP codepoints
+input:  "𐌲𐌿𐍄𐌰𐍂𐌰𐌶𐌳𐌰"
+output: [Text(text="𐌲𐌿𐍄𐌰𐍂𐌰𐌶𐌳𐌰")]

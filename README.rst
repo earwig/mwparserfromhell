@@ -18,7 +18,8 @@ so you can install the latest release with ``pip install mwparserfromhell``
     cd mwparserfromhell
     python setup.py install
 
-You can run the comprehensive unit testing suite with ``python setup.py test``.
+You can run the comprehensive unit testing suite with
+``python setup.py test -q``.
 
 Usage
 -----
@@ -124,7 +125,9 @@ following code (via the API_)::
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
     def parse(title):
-        raw = urllib.urlopen(API_URL, data).read()
+        data = {"action": "query", "prop": "revisions", "rvlimit": 1,
+                "rvprop": "content", "format": "json", "titles": title}
+        raw = urllib.urlopen(API_URL, urllib.urlencode(data)).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)

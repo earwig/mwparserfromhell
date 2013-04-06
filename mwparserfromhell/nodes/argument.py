@@ -30,6 +30,7 @@ __all__ = ["Argument"]
 
 class Argument(Node):
     """Represents a template argument substitution, like ``{{{foo}}}``."""
+
     def __init__(self, name, default=None):
         super(Argument, self).__init__()
         self._name = name

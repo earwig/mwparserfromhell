@@ -29,6 +29,7 @@ __all__ = ["Comment"]
 
 class Comment(Node):
     """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
+
     def __init__(self, contents):
         super(Comment, self).__init__()
         self._contents = contents

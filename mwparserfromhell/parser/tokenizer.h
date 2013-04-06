@@ -1,6 +1,6 @@
 /*
 Tokenizer Header File for MWParserFromHell
-Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -35,6 +35,10 @@ SOFTWARE.
 
 #define malloc PyObject_Malloc
 #define free   PyObject_Free
+
+#define DIGITS    "0123456789"
+#define HEXDIGITS "0123456789abcdefABCDEF"
+#define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char* MARKERS[] = {
     "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
@@ -118,6 +122,7 @@ static PyObject* TagCloseClose;
 
 #define LC_COMMENT              0x02000
 
+#define LC_SAFETY_CHECK         0xFC000
 #define LC_HAS_TEXT             0x04000
 #define LC_FAIL_ON_TEXT         0x08000
 #define LC_FAIL_NEXT            0x10000
@@ -205,8 +210,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
 static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
-static void Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
-static void Tokenizer_reset_safety_checks(Tokenizer*);
+static int Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
 static PyObject* Tokenizer_parse(Tokenizer*, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 

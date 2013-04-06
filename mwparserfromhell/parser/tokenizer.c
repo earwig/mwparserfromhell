@@ -1,6 +1,6 @@
 /*
 Tokenizer for MWParserFromHell
-Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -843,7 +843,8 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         self->head++;
     }
     current = log2(self->topstack->context / LC_HEADING_LEVEL_1) + 1;
-    level = current > best ? (best > 6 ? 6 : best) : (current > 6 ? 6 : current);
+    level = current > best ? (best > 6 ? 6 : best) :
+                             (current > 6 ? 6 : current);
     after = (HeadingData*) Tokenizer_parse(self, self->topstack->context);
     if (BAD_ROUTE) {
         RESET_ROUTE();
@@ -956,11 +957,11 @@ Tokenizer_really_parse_entity(Tokenizer* self)
     else
         numeric = hexadecimal = 0;
     if (hexadecimal)
-        valid = "0123456789abcdefABCDEF";
+        valid = HEXDIGITS;
     else if (numeric)
-        valid = "0123456789";
+        valid = DIGITS;
     else
-        valid = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        valid = ALPHANUM;
     text = calloc(MAX_ENTITY_SIZE, sizeof(char));
     if (!text) {
         PyErr_NoMemory();
@@ -1005,7 +1006,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         i = 0;
         while (1) {
             def = entitydefs[i];
-            if (!def)  // We've reached the end of the def list without finding it
+            if (!def)  // We've reached the end of the defs without finding it
                 FAIL_ROUTE_AND_EXIT()
             if (strcmp(text, def) == 0)
                 break;
@@ -1135,48 +1136,59 @@ Tokenizer_parse_comment(Tokenizer* self)
 }
 
 /*
-    Make sure we are not trying to write an invalid character.
+    Make sure we are not trying to write an invalid character. Return 0 if
+    everything is safe, or -1 if the route must be failed.
 */
-static void
+static int
 Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 {
     if (context & LC_FAIL_NEXT) {
-        Tokenizer_fail_route(self);
-        return;
+        return -1;
     }
     if (context & LC_WIKILINK_TITLE) {
         if (data == *"]" || data == *"{")
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == *"\n" || data == *"[" || data == *"}")
-            Tokenizer_fail_route(self);
-        return;
+            return -1;
+        return 0;
     }
     if (context & LC_TEMPLATE_NAME) {
         if (data == *"{" || data == *"}" || data == *"[") {
             self->topstack->context |= LC_FAIL_NEXT;
-            return;
+            return 0;
         }
         if (data == *"]") {
-            Tokenizer_fail_route(self);
-            return;
+            return -1;
         }
         if (data == *"|")
-            return;
+            return 0;
+        if (context & LC_HAS_TEXT) {
+            if (context & LC_FAIL_ON_TEXT) {
+                if (!Py_UNICODE_ISSPACE(data))
+                    return -1;
+            }
+            else {
+                if (data == *"\n")
+                    self->topstack->context |= LC_FAIL_ON_TEXT;
+            }
+        }
+        else if (!Py_UNICODE_ISSPACE(data))
+            self->topstack->context |= LC_HAS_TEXT;
     }
-    else if (context & (LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)) {
+    else {
         if (context & LC_FAIL_ON_EQUALS) {
             if (data == *"=") {
-                Tokenizer_fail_route(self);
-                return;
+                return -1;
             }
         }
         else if (context & LC_FAIL_ON_LBRACE) {
-            if (data == *"{") {
+            if (data == *"{" || (Tokenizer_READ(self, -1) == *"{" &&
+                                 Tokenizer_READ(self, -2) == *"{")) {
                 if (context & LC_TEMPLATE)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
                     self->topstack->context |= LC_FAIL_NEXT;
-                return;
+                return 0;
             }
             self->topstack->context ^= LC_FAIL_ON_LBRACE;
         }
@@ -1186,7 +1198,7 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
                     self->topstack->context |= LC_FAIL_NEXT;
-                return;
+                return 0;
             }
             self->topstack->context ^= LC_FAIL_ON_RBRACE;
         }
@@ -1195,47 +1207,7 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         else if (data == *"}")
             self->topstack->context |= LC_FAIL_ON_RBRACE;
     }
-    if (context & LC_HAS_TEXT) {
-        if (context & LC_FAIL_ON_TEXT) {
-            if (!Py_UNICODE_ISSPACE(data)) {
-                if (context & LC_TEMPLATE_PARAM_KEY) {
-                    self->topstack->context ^= LC_FAIL_ON_TEXT;
-                    self->topstack->context |= LC_FAIL_ON_EQUALS;
-                }
-                else
-                    Tokenizer_fail_route(self);
-                return;
-            }
-        }
-        else {
-            if (data == *"\n")
-                self->topstack->context |= LC_FAIL_ON_TEXT;
-        }
-    }
-    else if (!Py_UNICODE_ISSPACE(data))
-        self->topstack->context |= LC_HAS_TEXT;
-}
-
-/*
-    Unset any safety-checking contexts set by Tokenizer_verify_safe(). Used
-    when we preserve a context but previous data becomes invalid, like when
-    moving between template parameters.
-*/
-static void
-Tokenizer_reset_safety_checks(Tokenizer* self)
-{
-    static int checks[] = {
-        LC_HAS_TEXT, LC_FAIL_ON_TEXT, LC_FAIL_NEXT, LC_FAIL_ON_LBRACE,
-        LC_FAIL_ON_RBRACE, LC_FAIL_ON_EQUALS, 0};
-    int context = self->topstack->context, i = 0, this;
-    while (1) {
-        this = checks[i];
-        if (!this)
-            return;
-        if (context & this)
-            self->topstack->context ^= this;
-        i++;
-    }
+    return 0;
 }
 
 /*
@@ -1258,12 +1230,12 @@ Tokenizer_parse(Tokenizer* self, int context)
         this = Tokenizer_READ(self, 0);
         this_context = self->topstack->context;
         if (this_context & unsafe_contexts) {
-            Tokenizer_verify_safe(self, this_context, this);
-            if (BAD_ROUTE) {
+            if (Tokenizer_verify_safe(self, this_context, this) < 0) {
                 if (this_context & LC_TEMPLATE_PARAM_KEY) {
                     trash = Tokenizer_pop(self);
                     Py_XDECREF(trash);
                 }
+                Tokenizer_fail_route(self);
                 return NULL;
             }
         }
@@ -1303,7 +1275,6 @@ Tokenizer_parse(Tokenizer* self, int context)
                 self->topstack->context ^= LC_FAIL_NEXT;
         }
         else if (this == *"|" && this_context & LC_TEMPLATE) {
-            Tokenizer_reset_safety_checks(self);
             if (Tokenizer_handle_template_param(self))
                 return NULL;
         }
@@ -1324,10 +1295,14 @@ Tokenizer_parse(Tokenizer* self, int context)
             Tokenizer_write_text(self, this);
         }
         else if (this == next && next == *"[") {
-            if (Tokenizer_parse_wikilink(self))
-                return NULL;
-            if (self->topstack->context & LC_FAIL_NEXT)
-                self->topstack->context ^= LC_FAIL_NEXT;
+            if (!(this_context & LC_WIKILINK_TITLE)) {
+                if (Tokenizer_parse_wikilink(self))
+                    return NULL;
+                if (self->topstack->context & LC_FAIL_NEXT)
+                    self->topstack->context ^= LC_FAIL_NEXT;
+            }
+            else
+                Tokenizer_write_text(self, this);
         }
         else if (this == *"|" && this_context & LC_WIKILINK_TITLE) {
             if (Tokenizer_handle_wikilink_separator(self))
@@ -1401,7 +1376,8 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 PyMODINIT_FUNC
 init_tokenizer(void)
 {
-    PyObject *module, *tempmodule, *defmap, *deflist, *globals, *locals, *fromlist, *modname;
+    PyObject *module, *tempmod, *defmap, *deflist, *globals, *locals,
+             *fromlist, *modname;
     unsigned numdefs, i;
     char *name;
 
@@ -1411,14 +1387,16 @@ init_tokenizer(void)
     module = Py_InitModule("_tokenizer", module_methods);
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+    Py_INCREF(Py_True);
+    PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
 
-    tempmodule = PyImport_ImportModule("htmlentitydefs");
-    if (!tempmodule)
+    tempmod = PyImport_ImportModule("htmlentitydefs");
+    if (!tempmod)
         return;
-    defmap = PyObject_GetAttrString(tempmodule, "entitydefs");
+    defmap = PyObject_GetAttrString(tempmod, "entitydefs");
     if (!defmap)
         return;
-    Py_DECREF(tempmodule);
+    Py_DECREF(tempmod);
     deflist = PyDict_Keys(defmap);
     if (!deflist)
         return;
@@ -1442,18 +1420,20 @@ init_tokenizer(void)
     if (!modname)
         return;
     PyList_SET_ITEM(fromlist, 0, modname);
-    tempmodule = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
+    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tempmodule)
+    if (!tempmod)
         return;
-    tokens = PyObject_GetAttrString(tempmodule, "tokens");
-    Py_DECREF(tempmodule);
+    tokens = PyObject_GetAttrString(tempmod, "tokens");
+    Py_DECREF(tempmod);
 
     Text = PyObject_GetAttrString(tokens, "Text");
 
     TemplateOpen = PyObject_GetAttrString(tokens, "TemplateOpen");
-    TemplateParamSeparator = PyObject_GetAttrString(tokens, "TemplateParamSeparator");
-    TemplateParamEquals = PyObject_GetAttrString(tokens, "TemplateParamEquals");
+    TemplateParamSeparator = PyObject_GetAttrString(tokens,
+                                                    "TemplateParamSeparator");
+    TemplateParamEquals = PyObject_GetAttrString(tokens,
+                                                 "TemplateParamEquals");
     TemplateClose = PyObject_GetAttrString(tokens, "TemplateClose");
 
     ArgumentOpen = PyObject_GetAttrString(tokens, "ArgumentOpen");

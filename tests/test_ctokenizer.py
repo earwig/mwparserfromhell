@@ -21,33 +21,27 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+import unittest
 
-from . import Node
-from ..compat import str
+try:
+    from mwparserfromhell.parser._tokenizer import CTokenizer
+except ImportError:
+    CTokenizer = None
 
-__all__ = ["Text"]
+from ._test_tokenizer import TokenizerTestCase
 
-class Text(Node):
-    """Represents ordinary, unformatted text with no special properties."""
+@unittest.skipUnless(CTokenizer, "C tokenizer not available")
+class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
+    """Test cases for the C tokenizer."""
 
-    def __init__(self, value):
-        super(Text, self).__init__()
-        self._value = value
+    @classmethod
+    def setUpClass(cls):
+        cls.tokenizer = CTokenizer
 
-    def __unicode__(self):
-        return self.value
+    def test_uses_c(self):
+        """make sure the C tokenizer identifies as using a C extension"""
+        self.assertTrue(CTokenizer.USES_C)
+        self.assertTrue(CTokenizer().USES_C)
 
-    def __strip__(self, normalize, collapse):
-        return self
-
-    def __showtree__(self, write, get, mark):
-        write(str(self).encode("unicode_escape").decode("utf8"))
-
-    @property
-    def value(self):
-        """The actual text itself."""
-        return self._value
-
-    @value.setter
-    def value(self, newval):
-        self._value = str(newval)
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
