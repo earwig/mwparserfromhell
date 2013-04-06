@@ -204,5 +204,25 @@ class TestBuilder(TreeEqualityTestCase):
         """tests for building Tag nodes"""
         pass
 
+    def test_integration(self):
+        """a test for building a combination of templates together"""
+        test = [tokens.TemplateOpen(), tokens.TemplateOpen(),
+                tokens.TemplateOpen(), tokens.TemplateOpen(),
+                tokens.Text(text="foo"), tokens.TemplateClose(),
+                tokens.Text(text="bar"), tokens.TemplateParamSeparator(),
+                tokens.Text(text="baz"), tokens.TemplateParamEquals(),
+                tokens.Text(text="biz"), tokens.TemplateClose(),
+                tokens.Text(text="buzz"), tokens.TemplateClose(),
+                tokens.Text(text="usr"), tokens.TemplateParamSeparator(),
+                tokens.TemplateOpen(), tokens.Text(text="bin"),
+                tokens.TemplateClose(), tokens.TemplateClose()]
+        valid = wrap(
+            [Template(wrap([Template(wrap([Template(wrap([Template(wrap([Text(
+            "foo")])), Text("bar")]), params=[Parameter(wrap([Text("baz")]),
+            wrap([Text("biz")]))]), Text("buzz")])), Text("usr")]), params=[
+            Parameter(wrap([Text("1")]), wrap([Template(wrap([Text("bin")]))]),
+            showkey=False)])])
+        self.assertWikicodeEqual(valid, self.builder.build(test))
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

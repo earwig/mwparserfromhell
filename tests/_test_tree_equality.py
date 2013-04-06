@@ -74,7 +74,7 @@ class TreeEqualityTestCase(TestCase):
         self.assertEqual(expected.value, actual.value)
         self.assertIs(expected.named, actual.named)
         self.assertIs(expected.hexadecimal, actual.hexadecimal)
-        self.assertEquals(expected.hex_char, actual.hex_char)
+        self.assertEqual(expected.hex_char, actual.hex_char)
 
     def assertTagNodeEqual(self, expected, actual):
         """Assert that two Tag nodes have the same data."""
