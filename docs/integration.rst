@@ -31,5 +31,5 @@ following code (via the API_)::
         return mwparserfromhell.parse(text)
 
 .. _EarwigBot:            https://github.com/earwig/earwigbot
-.. _Pywikipedia:          http://pywikipediabot.sourceforge.net/
+.. _Pywikipedia:          https://www.mediawiki.org/wiki/Manual:Pywikipediabot
 .. _API:                  http://mediawiki.org/wiki/API
