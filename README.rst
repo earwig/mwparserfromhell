@@ -107,12 +107,12 @@ Integration
 ``Page`` objects have a ``parse`` method that essentially calls
 ``mwparserfromhell.parse()`` on ``page.get()``.
 
-If you're using PyWikipedia_, your code might look like this::
+If you're using Pywikipedia_, your code might look like this::
 
     import mwparserfromhell
     import wikipedia as pywikibot
     def parse(title):
-        site = pywikibot.get_site()
+        site = pywikibot.getSite()
         page = pywikibot.Page(site, title)
         text = page.get()
         return mwparserfromhell.parse(text)
@@ -138,5 +138,5 @@ following code (via the API_)::
 .. _Python Package Index: http://pypi.python.org
 .. _get pip:              http://pypi.python.org/pypi/pip
 .. _EarwigBot:            https://github.com/earwig/earwigbot
-.. _PyWikipedia:          http://pywikipediabot.sourceforge.net/
+.. _Pywikipedia:          https://www.mediawiki.org/wiki/Manual:Pywikipediabot
 .. _API:                  http://mediawiki.org/wiki/API
