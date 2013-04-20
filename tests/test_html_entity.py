@@ -82,20 +82,20 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
-        self.assertEquals("nbsp", node1.value)
-        self.assertEquals("107", node2.value)
-        self.assertEquals("e9", node3.value)
+        self.assertEqual("nbsp", node1.value)
+        self.assertEqual("107", node2.value)
+        self.assertEqual("e9", node3.value)
 
         node1.value = "ffa4"
         node2.value = 72
         node3.value = "Sigma"
-        self.assertEquals("ffa4", node1.value)
+        self.assertEqual("ffa4", node1.value)
         self.assertFalse(node1.named)
         self.assertTrue(node1.hexadecimal)
-        self.assertEquals("72", node2.value)
+        self.assertEqual("72", node2.value)
         self.assertFalse(node2.named)
         self.assertFalse(node2.hexadecimal)
-        self.assertEquals("Sigma", node3.value)
+        self.assertEqual("Sigma", node3.value)
         self.assertTrue(node3.named)
         self.assertFalse(node3.hexadecimal)
 
@@ -147,12 +147,12 @@ class TestHTMLEntity(TreeEqualityTestCase):
         """test HTMLEntity.hex_char()"""
         node1 = HTMLEntity("e9")
         node2 = HTMLEntity("e9", hex_char="X")
-        self.assertEquals("x", node1.hex_char)
-        self.assertEquals("X", node2.hex_char)
+        self.assertEqual("x", node1.hex_char)
+        self.assertEqual("X", node2.hex_char)
         node1.hex_char = "X"
         node2.hex_char = "x"
-        self.assertEquals("X", node1.hex_char)
-        self.assertEquals("x", node2.hex_char)
+        self.assertEqual("X", node1.hex_char)
+        self.assertEqual("x", node2.hex_char)
         self.assertRaises(ValueError, setattr, node1, "hex_char", 123)
         self.assertRaises(ValueError, setattr, node1, "hex_char", "foobar")
         self.assertRaises(ValueError, setattr, node1, "hex_char", True)
@@ -163,10 +163,10 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
         node4 = HTMLEntity("1f648")
-        self.assertEquals("\xa0", node1.normalize())
-        self.assertEquals("k", node2.normalize())
-        self.assertEquals("é", node3.normalize())
-        self.assertEquals("\U0001F648", node4.normalize())
+        self.assertEqual("\xa0", node1.normalize())
+        self.assertEqual("k", node2.normalize())
+        self.assertEqual("é", node3.normalize())
+        self.assertEqual("\U0001F648", node4.normalize())
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
