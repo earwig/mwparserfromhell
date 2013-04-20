@@ -63,7 +63,8 @@ class HTMLEntity(Node):
             return self.normalize()
         return self
 
-    def _unichr(self, value):
+    @staticmethod
+    def _unichr(value):
         """Implement the builtin unichr() with support for non-BMP code points.
 
         On wide Python builds, this functions like the normal unichr(). On
@@ -119,19 +120,47 @@ class HTMLEntity(Node):
     @value.setter
     def value(self, newval):
         newval = str(newval)
-        if newval not in htmlentities.entitydefs:
-            test = int(self.value, 16)
-            if test < 0 or (test > 0x10FFFF and int(self.value) > 0x10FFFF):
-                raise ValueError(newval)
+        try:
+            int(newval)
+        except ValueError:
+            try:
+                int(newval, 16)
+            except ValueError:
+                if newval not in htmlentities.entitydefs:
+                    raise ValueError("entity value is not a valid name")
+                self._named = True
+                self._hexadecimal = False
+            else:
+                if int(newval, 16) < 0 or int(newval, 16) > 0x10FFFF:
+                    raise ValueError("entity value is not in range(0x110000)")
+                self._named = False
+                self._hexadecimal = True
+        else:
+            test = int(newval, 16 if self.hexadecimal else 10)
+            if test < 0 or test > 0x10FFFF:
+                raise ValueError("entity value is not in range(0x110000)")
+            self._named = False
         self._value = newval
 
     @named.setter
     def named(self, newval):
-        self._named = bool(newval)
+        newval = bool(newval)
+        if newval and self.value not in htmlentities.entitydefs:
+            raise ValueError("entity value is not a valid name")
+        if not newval:
+            try:
+                int(self.value, 16)
+            except ValueError:
+                err = "current entity value is not a valid Unicode codepoint"
+                raise ValueError(err)
+        self._named = newval
 
     @hexadecimal.setter
     def hexadecimal(self, newval):
-        self._hexadecimal = bool(newval)
+        newval = bool(newval)
+        if newval and self.named:
+            raise ValueError("a named entity cannot be hexadecimal")
+        self._hexadecimal = newval
 
     @hex_char.setter
     def hex_char(self, newval):
@@ -145,5 +174,5 @@ class HTMLEntity(Node):
         if self.named:
             return unichr(htmlentities.name2codepoint[self.value])
         if self.hexadecimal:
-            return self._unichr(int(self.value, 16))
-        return self._unichr(int(self.value))
+            return HTMLEntity._unichr(int(self.value, 16))
+        return HTMLEntity._unichr(int(self.value))

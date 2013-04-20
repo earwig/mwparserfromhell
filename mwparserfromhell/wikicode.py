@@ -88,13 +88,7 @@ class Wikicode(StringMixIn):
         If *obj* is a ``Node``, the function will test whether they are the
         same object, otherwise it will compare them with ``==``.
         """
-        if isinstance(obj, Node):
-            if node is obj:
-                return True
-        else:
-            if node == obj:
-                return True
-        return False
+        return (node is obj) if isinstance(obj, Node) else (node == obj)
 
     def _contains(self, nodes, obj):
         """Return ``True`` if *obj* is inside of *nodes*, else ``False``.
