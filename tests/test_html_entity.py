@@ -78,7 +78,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertEqual(res, output)
 
     def test_value(self):
-        """test HTMLEntity.value()"""
+        """test getter/setter for the value attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
@@ -110,7 +110,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertRaises(ValueError, setattr, node1, "value", "1114112")
 
     def test_named(self):
-        """test HTMLEntity.named()"""
+        """test getter/setter for the named attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
@@ -128,7 +128,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertRaises(ValueError, setattr, node3, "named", True)
 
     def test_hexadecimal(self):
-        """test HTMLEntity.hexadecimal()"""
+        """test getter/setter for the hexadecimal attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
@@ -144,7 +144,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertRaises(ValueError, setattr, node1, "hexadecimal", True)
 
     def test_hex_char(self):
-        """test HTMLEntity.hex_char()"""
+        """test getter/setter for the hex_char attribute"""
         node1 = HTMLEntity("e9")
         node2 = HTMLEntity("e9", hex_char="X")
         self.assertEqual("x", node1.hex_char)
@@ -158,7 +158,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertRaises(ValueError, setattr, node1, "hex_char", True)
 
     def test_normalize(self):
-        """test HTMLEntity.normalize()"""
+        """test getter/setter for the normalize attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")

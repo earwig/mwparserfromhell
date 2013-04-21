@@ -183,11 +183,10 @@ class Template(Node):
     def get(self, name):
         """Get the parameter whose name is *name*.
 
-        The returned object is a
-        :py:class:`~.Parameter` instance. Raises :py:exc:`ValueError` if no
-        parameter has this name. Since multiple parameters can have the same
-        name, we'll return the last match, since the last parameter is the only
-        one read by the MediaWiki parser.
+        The returned object is a :py:class:`~.Parameter` instance. Raises
+        :py:exc:`ValueError` if no parameter has this name. Since multiple
+        parameters can have the same name, we'll return the last match, since
+        the last parameter is the only one read by the MediaWiki parser.
         """
         name = name.strip() if isinstance(name, basestring) else str(name)
         for param in reversed(self.params):
