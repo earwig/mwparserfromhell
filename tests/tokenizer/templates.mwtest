@@ -481,6 +481,13 @@ output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="
 
 ---
 
+name:   incomplete_stub
+label:  incomplete templates that should fail gracefully: just an opening
+input:  "{{"
+output: [Text(text="{{")]
+
+---
+
 name:   incomplete_plain
 label:  incomplete templates that should fail gracefully: no close whatsoever
 input:  "{{stuff}} {{foobar"
@@ -597,3 +604,17 @@ name:   incomplete_nested_template_as_param_value
 label:  incomplete templates that should fail gracefully: a valid nested template as a parameter value
 input:  "{{stuff}} {{foo|bar={{baz}}"
 output: [TemplateOpen(), Text(text="stuff"), TemplateClose(), Text(text=" {{foo|bar="), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   recursion_one_hundred_opens
+label:  test potentially dangerous recursion: one hundred template openings
+input:  "{{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{"
+output: [Text(text="{{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{")]
+
+---
+
+name:   recursion_opens_and_closes
+label:  test potentially dangerous recursion: template openings and closings
+input:  "{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}"
+output: [Text(text="{{|"), TemplateOpen(), TemplateClose(), Text(text="{{|"), TemplateOpen(), TemplateClose(), TemplateOpen(), TemplateParamSeparator(), TemplateOpen(), TemplateClose(), Text(text="{{"), TemplateParamSeparator(), Text(text="{{"), TemplateClose(), Text(text="{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}")]

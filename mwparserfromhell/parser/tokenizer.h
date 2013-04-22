@@ -46,6 +46,8 @@ static const char* MARKERS[] = {
 
 #define NUM_MARKERS 18
 #define TEXTBUFFER_BLOCKSIZE 1024
+#define MAX_DEPTH 40
+#define MAX_CYCLES 100000
 #define MAX_ENTITY_SIZE 8
 
 static int route_state = 0;
@@ -165,12 +167,15 @@ typedef struct {
     Py_ssize_t head;        /* current position in text */
     Py_ssize_t length;      /* length of text */
     int global;             /* global context */
+    int depth;              /* stack recursion depth */
+    int cycles;             /* total number of stack recursions */
 } Tokenizer;
 
 
 /* Macros for accessing Tokenizer data: */
 
 #define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
+#define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
 
 
 /* Function prototypes: */

@@ -42,6 +42,8 @@ class Tokenizer(object):
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
                "/", "-", "!", "\n", END]
+    MAX_DEPTH = 40
+    MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
 
     def __init__(self):
@@ -49,6 +51,8 @@ class Tokenizer(object):
         self._head = 0
         self._stacks = []
         self._global = 0
+        self._depth = 0
+        self._cycles = 0
 
     @property
     def _stack(self):
@@ -76,6 +80,8 @@ class Tokenizer(object):
     def _push(self, context=0):
         """Add a new token stack, context, and textbuffer to the list."""
         self._stacks.append([[], context, []])
+        self._depth += 1
+        self._cycles += 1
 
     def _push_textbuffer(self):
         """Push the textbuffer onto the stack as a Text node and clear it."""
@@ -90,12 +96,17 @@ class Tokenizer(object):
         stack's context with the current stack's.
         """
         self._push_textbuffer()
+        self._depth -= 1
         if keep_context:
             context = self._context
             stack = self._stacks.pop()[0]
             self._context = context
             return stack
         return self._stacks.pop()[0]
+
+    def _can_recurse(self):
+        """Return whether or not our max recursion depth has been exceeded."""
+        return self._depth < self.MAX_DEPTH and self._cycles < self.MAX_CYCLES
 
     def _fail_route(self):
         """Fail the current tokenization route.
@@ -418,7 +429,7 @@ class Tokenizer(object):
                 else:
                     if this == "\n":
                         self._context |= contexts.FAIL_ON_TEXT
-            elif this is not self.END or not this.isspace():
+            elif this is self.END or not this.isspace():
                 self._context |= contexts.HAS_TEXT
             return True
         else:
@@ -479,9 +490,12 @@ class Tokenizer(object):
                 else:
                     self._write_text(this)
             elif this == next == "{":
-                self._parse_template_or_argument()
-                if self._context & contexts.FAIL_NEXT:
-                    self._context ^= contexts.FAIL_NEXT
+                if self._can_recurse():
+                    self._parse_template_or_argument()
+                    if self._context & contexts.FAIL_NEXT:
+                        self._context ^= contexts.FAIL_NEXT
+                else:
+                    self._write_text("{")
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
@@ -496,7 +510,7 @@ class Tokenizer(object):
                 else:
                     self._write_text("}")
             elif this == next == "[":
-                if not self._context & contexts.WIKILINK_TITLE:
+                if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
                     self._parse_wikilink()
                     if self._context & contexts.FAIL_NEXT:
                         self._context ^= contexts.FAIL_NEXT

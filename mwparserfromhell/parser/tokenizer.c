@@ -109,6 +109,8 @@ Tokenizer_push(Tokenizer* self, int context)
         return -1;
     top->next = self->topstack;
     self->topstack = top;
+    self->depth++;
+    self->cycles++;
     return 0;
 }
 
@@ -174,6 +176,7 @@ Tokenizer_delete_top_of_stack(Tokenizer* self)
     Textbuffer_dealloc(top->textbuffer);
     self->topstack = top->next;
     free(top);
+    self->depth--;
 }
 
 /*
@@ -1269,10 +1272,14 @@ Tokenizer_parse(Tokenizer* self, int context)
             Tokenizer_write_text(self, this);
         }
         else if (this == next && next == *"{") {
-            if (Tokenizer_parse_template_or_argument(self))
-                return NULL;
-            if (self->topstack->context & LC_FAIL_NEXT)
-                self->topstack->context ^= LC_FAIL_NEXT;
+            if (Tokenizer_CAN_RECURSE(self)) {
+                if (Tokenizer_parse_template_or_argument(self))
+                    return NULL;
+                if (self->topstack->context & LC_FAIL_NEXT)
+                    self->topstack->context ^= LC_FAIL_NEXT;
+            }
+            else
+                Tokenizer_write_text(self, this);
         }
         else if (this == *"|" && this_context & LC_TEMPLATE) {
             if (Tokenizer_handle_template_param(self))
@@ -1295,7 +1302,8 @@ Tokenizer_parse(Tokenizer* self, int context)
             Tokenizer_write_text(self, this);
         }
         else if (this == next && next == *"[") {
-            if (!(this_context & LC_WIKILINK_TITLE)) {
+            if (!(this_context & LC_WIKILINK_TITLE) &&
+                                                Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
                 if (self->topstack->context & LC_FAIL_NEXT)
