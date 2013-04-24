@@ -142,9 +142,9 @@ class Template(Node):
                 return False
         return True
 
-    def _remove_without_field(self, param, i, force_no_field):
+    def _remove_without_field(self, param, i):
         """Return False if a parameter name should be kept, otherwise True."""
-        if not param.showkey and not force_no_field:
+        if not param.showkey:
             dependents = [not after.showkey for after in self.params[i+1:]]
             if any(dependents):
                 return False
@@ -266,22 +266,23 @@ class Template(Node):
         self.params.append(param)
         return param
 
-    def remove(self, name, keep_field=False, force_no_field=False):
+    def remove(self, name, keep_field=False):
         """Remove a parameter from the template whose name is *name*.
 
         If *keep_field* is ``True``, we will keep the parameter's name, but
         blank its value. Otherwise, we will remove the parameter completely
         *unless* other parameters are dependent on it (e.g. removing ``bar``
         from ``{{foo|bar|baz}}`` is unsafe because ``{{foo|baz}}`` is not what
-        we expected, so ``{{foo||baz}}`` will be produced instead), unless
-        *force_no_field* is also ``True``. If the parameter shows up multiple
-        times in the template, we will remove all instances of it (and keep
-        one if *keep_field* is ``True`` - that being the first instance if
-        none of the instances have dependents, otherwise that instance will be
-        kept).
+        we expected, so ``{{foo||baz}}`` will be produced instead).
+
+        If the parameter shows up multiple times in the template, we will
+        remove all instances of it (and keep one if *keep_field* is ``True`` -
+        the first instance if none have dependents, otherwise the one with
+        dependents will be kept).
         """
         name = name.strip() if isinstance(name, basestring) else str(name)
         removed = False
+        to_remove =[]
         for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:
@@ -289,13 +290,15 @@ class Template(Node):
                         self._blank_param_value(param.value)
                         keep_field = False
                     else:
-                        self.params.remove(param)
+                        to_remove.append(param)
                 else:
-                    if self._remove_without_field(param, i, force_no_field):
-                        self.params.remove(param)
+                    if self._remove_without_field(param, i):
+                        to_remove.append(param)
                     else:
                         self._blank_param_value(param.value)
                 if not removed:
                     removed = True
         if not removed:
             raise ValueError(name)
+        for param in to_remove:
+            self.params.remove(param)

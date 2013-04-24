@@ -98,7 +98,7 @@ class TestTemplate(TreeEqualityTestCase):
         """test Template.has_param()"""
         node1 = Template(wrap([Text("foobar")]))
         node2 = Template(wrap([Text("foo")]),
-                         [pgenh("1", "bar"), pgens("abc", "def")])
+                         [pgenh("1", "bar"), pgens("\nabc ", "def")])
         node3 = Template(wrap([Text("foo")]),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
         node4 = Template(wrap([Text("foo")]),
@@ -108,7 +108,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertTrue(node2.has_param("abc"))
         self.assertFalse(node2.has_param("def"))
         self.assertTrue(node3.has_param("1"))
-        self.assertTrue(node3.has_param("b"))
+        self.assertTrue(node3.has_param(" b "))
         self.assertFalse(node4.has_param("b"))
         self.assertTrue(node3.has_param("b", False))
         self.assertTrue(node4.has_param("b", False))
@@ -123,7 +123,7 @@ class TestTemplate(TreeEqualityTestCase):
         node3p2 = pgens("1", "d")
         node3 = Template(wrap([Text("foo")]),
                          [pgenh("1", "a"), node3p1, node3p2])
-        node4p1 = pgens("b", " ")
+        node4p1 = pgens(" b", " ")
         node4 = Template(wrap([Text("foo")]), [pgenh("1", "a"), node4p1])
         self.assertRaises(ValueError, node1.get, "foobar")
         self.assertIs(node2p1, node2.get(1))
@@ -131,10 +131,56 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertRaises(ValueError, node2.get, "def")
         self.assertIs(node3p1, node3.get("b"))
         self.assertIs(node3p2, node3.get("1"))
-        self.assertIs(node4p1, node4.get("b"))
+        self.assertIs(node4p1, node4.get("b "))
 
     # add
-    # remove
+
+    def test_remove(self):
+        """test Template.remove()"""
+        node1 = Template(wrap([Text("foobar")]))
+        node2 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
+                                               pgens("abc", "def")])
+        node3 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
+                                               pgens("abc", "def")])
+        node4 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
+                                               pgenh("2", "baz")])
+        node5 = Template(wrap([Text("foo")]), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node6 = Template(wrap([Text("foo")]), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node7 = Template(wrap([Text("foo")]), [
+            pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
+        node8 = Template(wrap([Text("foo")]), [
+            pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
+        node9 = Template(wrap([Text("foo")]), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node10 = Template(wrap([Text("foo")]), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+
+        node2.remove("1")
+        node2.remove("abc")
+        node3.remove(1, keep_field=True)
+        node3.remove("abc", keep_field=True)
+        node4.remove("1", keep_field=False)
+        node5.remove("a", keep_field=False)
+        node6.remove("a", keep_field=True)
+        node7.remove(1, keep_field=True)
+        node8.remove(1, keep_field=False)
+        node9.remove(1, keep_field=True)
+        node10.remove(1, keep_field=False)
+
+        self.assertRaises(ValueError, node1.remove, 1)
+        self.assertRaises(ValueError, node1.remove, "a")
+        self.assertRaises(ValueError, node2.remove, "1")
+        self.assertEquals("{{foo}}", node2)
+        self.assertEquals("{{foo||abc=}}", node3)
+        self.assertEquals("{{foo||baz}}", node4)
+        self.assertEquals("{{foo|b=c}}", node5)
+        self.assertEquals("{{foo| a=|b=c}}", node6)
+        self.assertEquals("{{foo|1  =|2=c}}", node7)
+        self.assertEquals("{{foo|2=c}}", node8)
+        self.assertEquals("{{foo||c}}", node9)
+        self.assertEquals("{{foo||c}}", node10)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
