@@ -194,20 +194,30 @@ class Template(Node):
                 return param
         raise ValueError(name)
 
-    def add(self, name, value, showkey=None, force_nonconformity=False):
+    def add(self, name, value, showkey=None, before=None,
+            preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parasable by
-        :py:func:`.utils.parse_anything`; pipes (and equal signs, if
-        appropriate) are automatically escaped from *value* where applicable.
+        :py:func:`.utils.parse_anything`; pipes and equal signs are
+        automatically escaped from *value* when appropriate.
+
         If *showkey* is given, this will determine whether or not to show the
         parameter's name (e.g., ``{{foo|bar}}``'s parameter has a name of
         ``"1"`` but it is hidden); otherwise, we'll make a safe and intelligent
         guess. If *name* is already a parameter, we'll replace its value while
-        keeping the same spacing rules unless *force_nonconformity* is
-        ``True``. We will also try to guess the dominant spacing convention
-        when adding a new parameter using :py:meth:`_get_spacing_conventions`
-        unless *force_nonconformity* is ``True``.
+        keeping the same spacing rules. We will also try to guess the dominant
+        spacing convention when adding a new parameter using
+        :py:meth:`_get_spacing_conventions`.
+
+        If *before* is given (either a :py:class:`~.Parameter` object or a
+        name), then we will place the parameter immediately before this one.
+        Otherwise, it will be added at the end. This is ignored if the
+        parameter already exists.
+
+        If *preserve_spacing* is ``False``, we will avoid preserving spacing
+        conventions when changing the value of an existing parameter or when
+        adding a new one.
         """
         name, value = parse_anything(name), parse_anything(value)
         self._surface_escape(value, "|")
@@ -220,10 +230,10 @@ class Template(Node):
                     self._surface_escape(value, "=")
                 existing.showkey = showkey
             nodes = existing.value.nodes
-            if force_nonconformity:
-                existing.value = value
-            else:
+            if preserve_spacing:
                 existing.value = parse_anything([nodes[0], value, nodes[1]])
+            else:
+                existing.value = value
             return existing
 
         if showkey is None:
@@ -245,22 +255,11 @@ class Template(Node):
         if not showkey:
             self._surface_escape(value, "=")
 
-        if not force_nonconformity:
+        if preserve_spacing:
             before_n, after_n = self._get_spacing_conventions(use_names=True)
-            if before_n and after_n:
-                name = parse_anything([before_n, name, after_n])
-            elif before_n:
-                name = parse_anything([before_n, name])
-            elif after_n:
-                name = parse_anything([name, after_n])
-
             before_v, after_v = self._get_spacing_conventions(use_names=False)
-            if before_v and after_v:
-                value = parse_anything([before_v, value, after_v])
-            elif before_v:
-                value = parse_anything([before_v, value])
-            elif after_v:
-                value = parse_anything([value, after_v])
+            name = parse_anything([before_n, name, after_n])
+            value = parse_anything([before_v, value, after_v])
 
         param = Parameter(name, value, showkey)
         self.params.append(param)
