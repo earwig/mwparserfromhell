@@ -226,9 +226,9 @@ class Template(Node):
             self.remove(name, keep_field=True)
             existing = self.get(name)
             if showkey is not None:
-                if not showkey:
-                    self._surface_escape(value, "=")
                 existing.showkey = showkey
+            if not existing.showkey:
+                self._surface_escape(value, "=")
             nodes = existing.value.nodes
             if preserve_spacing:
                 existing.value = parse_anything([nodes[0], value, nodes[1]])
@@ -262,7 +262,12 @@ class Template(Node):
             value = parse_anything([before_v, value, after_v])
 
         param = Parameter(name, value, showkey)
-        self.params.append(param)
+        if before:
+            if not isinstance(before, Parameter):
+                before = self.get(before)
+            self.params.insert(self.params.index(before), param)
+        else:
+            self.params.append(param)
         return param
 
     def remove(self, name, keep_field=False):

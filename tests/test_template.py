@@ -133,7 +133,27 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertIs(node3p2, node3.get("1"))
         self.assertIs(node4p1, node4.get("b "))
 
-    # add
+    def test_add(self):
+        """test Template.add()"""
+        # add new param with showkey to end
+        # add new param without showkey to end
+        # add new param to end with an escapable |
+        # add new param with showkey to end with an escapable =
+        # add new param without showkey to end with an escapable =
+        # add new param with showkey to end preserving spacing (x3)
+        # add new param without showkey to end not preserving spacing
+        # add new param guessing showkey where key is to be shown
+        # add new param guessing showkey where key is to be shown with an escapable =
+        # add new param guessing showkey where key is not to be shown
+        # add new param guessing showkey where key is not to be shown with an escapable =
+        # add existing parameter without modifying showkey
+        # add existing parameter without modifying showkey with an escapable =
+        # add existing parameter with modifying showkey
+        # add existing parameter with modifying showkey with an escapable =
+        # add existing parameter preserving spacing (x3)
+        # add existing parameter not preserving spacing
+        # add existing parameter when there are multiple params involved
+        # add existing parameter when there are multiple params involved; params with dependencies
 
     def test_remove(self):
         """test Template.remove()"""
