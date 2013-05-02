@@ -24,31 +24,32 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell.compat import str
-from mwparserfromhell.nodes import Template, Text
+from mwparserfromhell.nodes import HTMLEntity, Template, Text
 from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 from ._test_tree_equality import TreeEqualityTestCase
 
 wrap = lambda L: Wikicode(SmartList(L))
-pgens = lambda k, v: Parameter(wrap([Text(k)]), wrap([Text(v)]), True)
-pgenh = lambda k, v: Parameter(wrap([Text(k)]), wrap([Text(v)]), False)
+wraptext = lambda t: wrap([Text(t)])
+pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
+pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
 
 class TestTemplate(TreeEqualityTestCase):
     """Test cases for the Template node."""
 
     def test_unicode(self):
         """test Template.__unicode__()"""
-        node = Template(wrap([Text("foobar")]))
+        node = Template(wraptext("foobar"))
         self.assertEqual("{{foobar}}", str(node))
-        node2 = Template(wrap([Text("foo")]),
+        node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("abc", "def")])
         self.assertEqual("{{foo|bar|abc=def}}", str(node2))
 
     def test_strip(self):
         """test Template.__strip__()"""
-        node1 = Template(wrap([Text("foobar")]))
-        node2 = Template(wrap([Text("foo")]),
+        node1 = Template(wraptext("foobar"))
+        node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("abc", "def")])
         for a in (True, False):
             for b in (True, False):
@@ -61,8 +62,8 @@ class TestTemplate(TreeEqualityTestCase):
         getter, marker = object(), object()
         get = lambda code: output.append((getter, code))
         mark = lambda: output.append(marker)
-        node1 = Template(wrap([Text("foobar")]))
-        node2 = Template(wrap([Text("foo")]),
+        node1 = Template(wraptext("foobar"))
+        node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("abc", "def")])
         node1.__showtree__(output.append, get, mark)
         node2.__showtree__(output.append, get, mark)
@@ -76,33 +77,32 @@ class TestTemplate(TreeEqualityTestCase):
 
     def test_name(self):
         """test getter/setter for the name attribute"""
-        name = wrap([Text("foobar")])
+        name = wraptext("foobar")
         node1 = Template(name)
         node2 = Template(name, [pgenh("1", "bar")])
         self.assertIs(name, node1.name)
         self.assertIs(name, node2.name)
         node1.name = "asdf"
         node2.name = "téstïng"
-        self.assertWikicodeEqual(wrap([Text("asdf")]), node1.name)
-        self.assertWikicodeEqual(wrap([Text("téstïng")]), node2.name)
+        self.assertWikicodeEqual(wraptext("asdf"), node1.name)
+        self.assertWikicodeEqual(wraptext("téstïng"), node2.name)
 
     def test_params(self):
         """test getter for the params attribute"""
-        node1 = Template(wrap([Text("foobar")]))
+        node1 = Template(wraptext("foobar"))
         plist = [pgenh("1", "bar"), pgens("abc", "def")]
-        node2 = Template(wrap([Text("foo")]), plist)
+        node2 = Template(wraptext("foo"), plist)
         self.assertEqual([], node1.params)
         self.assertIs(plist, node2.params)
 
     def test_has_param(self):
         """test Template.has_param()"""
-        node1 = Template(wrap([Text("foobar")]))
-        node2 = Template(wrap([Text("foo")]),
+        node1 = Template(wraptext("foobar"))
+        node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("\nabc ", "def")])
-        node3 = Template(wrap([Text("foo")]),
+        node3 = Template(wraptext("foo"),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
-        node4 = Template(wrap([Text("foo")]),
-                         [pgenh("1", "a"), pgens("b", " ")])
+        node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
         self.assertFalse(node1.has_param("foobar"))
         self.assertTrue(node2.has_param(1))
         self.assertTrue(node2.has_param("abc"))
@@ -115,16 +115,15 @@ class TestTemplate(TreeEqualityTestCase):
 
     def test_get(self):
         """test Template.get()"""
-        node1 = Template(wrap([Text("foobar")]))
+        node1 = Template(wraptext("foobar"))
         node2p1 = pgenh("1", "bar")
         node2p2 = pgens("abc", "def")
-        node2 = Template(wrap([Text("foo")]), [node2p1, node2p2])
+        node2 = Template(wraptext("foo"), [node2p1, node2p2])
         node3p1 = pgens("b", "c")
         node3p2 = pgens("1", "d")
-        node3 = Template(wrap([Text("foo")]),
-                         [pgenh("1", "a"), node3p1, node3p2])
+        node3 = Template(wraptext("foo"), [pgenh("1", "a"), node3p1, node3p2])
         node4p1 = pgens(" b", " ")
-        node4 = Template(wrap([Text("foo")]), [pgenh("1", "a"), node4p1])
+        node4 = Template(wraptext("foo"), [pgenh("1", "a"), node4p1])
         self.assertRaises(ValueError, node1.get, "foobar")
         self.assertIs(node2p1, node2.get(1))
         self.assertIs(node2p2, node2.get("abc"))
@@ -135,46 +134,197 @@ class TestTemplate(TreeEqualityTestCase):
 
     def test_add(self):
         """test Template.add()"""
-        # add new param with showkey to end
-        # add new param without showkey to end
-        # add new param to end with an escapable |
-        # add new param with showkey to end with an escapable =
-        # add new param without showkey to end with an escapable =
-        # add new param with showkey to end preserving spacing (x3)
-        # add new param without showkey to end not preserving spacing
-        # add new param guessing showkey where key is to be shown
-        # add new param guessing showkey where key is to be shown with an escapable =
-        # add new param guessing showkey where key is not to be shown
-        # add new param guessing showkey where key is not to be shown with an escapable =
-        # add existing parameter without modifying showkey
-        # add existing parameter without modifying showkey with an escapable =
-        # add existing parameter with modifying showkey
-        # add existing parameter with modifying showkey with an escapable =
-        # add existing parameter preserving spacing (x3)
-        # add existing parameter not preserving spacing
-        # add existing parameter when there are multiple params involved
-        # add existing parameter when there are multiple params involved; params with dependencies
+        node1 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node2 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node3 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node4 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node5 = Template(wraptext("a"), [pgens("b", "c"),
+                                         pgens("    d ", "e")])
+        node6 = Template(wraptext("a"), [pgens("b", "c"), pgens("b", "d"),
+                                         pgens("b", "e")])
+        node7 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node8p = pgenh("1", "d")
+        node8 = Template(wraptext("a"), [pgens("b", "c"), node8p])
+        node9 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
+        node10 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "e")])
+        node11 = Template(wraptext("a"), [pgens("b", "c")])
+        node12 = Template(wraptext("a"), [pgens("b", "c")])
+        node13 = Template(wraptext("a"), [pgens("\nb ", " c"),
+                                          pgens("\nd ", " e"),
+                                          pgens("\nf ", " g")])
+        node14 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
+                                            pgens("d ", " e"),
+                                            pgens("f ", "g\n"),
+                                            pgens("h ", " i\n")])
+        node15 = Template(wraptext("a"), [pgens("b  ", " c\n"),
+                                          pgens("\nd  ", " e"),
+                                          pgens("\nf  ", "g ")])
+        node16 = Template(wraptext("a"), [pgens("\nb ", " c"),
+                                          pgens("\nd ", " e"),
+                                          pgens("\nf ", " g")])
+        node17 = Template(wraptext("a"), [pgens("\nb ", " c"),
+                                          pgens("\nd ", " e"),
+                                          pgens("\nf ", " g")])
+        node18 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
+                                          pgens("d ", " e"),
+                                          pgens("f ", "g\n"),
+                                          pgens("h ", " i\n")])
+        node19 = Template(wraptext("a"), [pgens("b  ", " c\n"),
+                                          pgens("\nd  ", " e"),
+                                          pgens("\nf  ", "g ")])
+        node20 = Template(wraptext("a"), [pgens("\nb ", " c"),
+                                          pgens("\nd ", " e"),
+                                          pgens("\nf ", " g")])
+        node21 = Template(wraptext("a"), [pgenh("1", "b")])
+        node22 = Template(wraptext("a"), [pgenh("1", "b")])
+        node23 = Template(wraptext("a"), [pgenh("1", "b")])
+        node24 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+                                          pgenh("3", "d"), pgenh("4", "e")])
+        node25 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+                                          pgens("4", "d"), pgens("5", "e")])
+        node26 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+                                          pgens("4", "d"), pgens("5", "e")])
+        node27 = Template(wraptext("a"), [pgenh("1", "b")])
+        node28 = Template(wraptext("a"), [pgenh("1", "b")])
+        node29 = Template(wraptext("a"), [pgens("b", "c")])
+        node30 = Template(wraptext("a"), [pgenh("1", "b")])
+        node31 = Template(wraptext("a"), [pgenh("1", "b")])
+        node32 = Template(wraptext("a"), [pgens("1", "b")])
+        node33 = Template(wraptext("a"), [pgens("\nb ", " c"),
+                                          pgens("\nd ", " e"),
+                                          pgens("\nf ", " g")])
+        node34 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
+                                            pgens("d ", " e"),
+                                            pgens("f ", "g\n"),
+                                            pgens("h ", " i\n")])
+        node35 = Template(wraptext("a"), [pgens("b  ", " c\n"),
+                                          pgens("\nd  ", " e"),
+                                          pgens("\nf  ", "g ")])
+        node36 = Template(wraptext("a"), [pgens("\nb ", " c "),
+                                          pgens("\nd ", " e "),
+                                          pgens("\nf ", " g ")])
+        node37 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
+                                          pgens("b", "f"), pgens("b", "h"),
+                                          pgens("i", "j")])
+        node37 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
+                                          pgens("b", "f"), pgens("b", "h"),
+                                          pgens("i", "j")])
+        node38 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
+                                          pgens("1", "c"), pgens("2", "d")])
+        node39 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
+                                          pgenh("1", "c"), pgenh("2", "d")])
+        node40 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
+                                          pgens("f", "g")])
+
+        node1.add("e", "f", showkey=True)
+        node2.add(2, "g", showkey=False)
+        node3.add("e", "foo|bar", showkey=True)
+        node4.add("e", "f", showkey=True, before="b")
+        node5.add("f", "g", showkey=True, before=" d     ")
+        node6.add("f", "g", showkey=True, before="b")
+        self.assertRaises(ValueError, node7.add, "e", "f", showkey=True,
+                          before="q")
+        node8.add("e", "f", showkey=True, before=node8p)
+        node9.add("e", "f", showkey=True, before=pgenh("1", "d"))
+        self.assertRaises(ValueError, node10.add, "e", "f", showkey=True,
+                          before=pgenh("1", "d"))
+        node11.add("d", "foo=bar", showkey=True)
+        node12.add("1", "foo=bar", showkey=False)
+        node13.add("h", "i", showkey=True)
+        node14.add("j", "k", showkey=True)
+        node15.add("h", "i", showkey=True)
+        node16.add("h", "i", showkey=True, preserve_spacing=False)
+        node17.add("h", "i", showkey=False)
+        node18.add("j", "k", showkey=False)
+        node19.add("h", "i", showkey=False)
+        node20.add("h", "i", showkey=False, preserve_spacing=False)
+        node21.add("2", "c")
+        node22.add("3", "c")
+        node23.add("c", "d")
+        node24.add("5", "f")
+        node25.add("3", "f")
+        node26.add("6", "f")
+        node27.add("c", "foo=bar")
+        node28.add("2", "foo=bar")
+        node29.add("b", "d")
+        node30.add("1", "foo=bar")
+        node31.add("1", "foo=bar", showkey=True)
+        node32.add("1", "foo=bar", showkey=False)
+        node33.add("d", "foo")
+        node34.add("f", "foo")
+        node35.add("f", "foo")
+        node36.add("d", "foo", preserve_spacing=False)
+        node37.add("b", "k")
+        node38.add("1", "e")
+        node39.add("1", "e")
+        node40.add("d", "h", before="b")
+
+        self.assertEquals("{{a|b=c|d|e=f}}", node1)
+        self.assertEquals("{{a|b=c|d|g}}", node2)
+        self.assertEquals("{{a|b=c|d|e=foo&#124;bar}}", node3)
+        self.assertIsInstance(node3.params[2].value.get(1), HTMLEntity)
+        self.assertEquals("{{a|e=f|b=c|d}}", node4)
+        self.assertEquals("{{a|b=c|f=g|    d =e}}", node5)
+        self.assertEquals("{{a|b=c|b=d|f=g|b=e}}", node6)
+        self.assertEquals("{{a|b=c|d}}", node7)
+        self.assertEquals("{{a|b=c|e=f|d}}", node8)
+        self.assertEquals("{{a|b=c|e=f|d}}", node9)
+        self.assertEquals("{{a|b=c|e}}", node10)
+        self.assertEquals("{{a|b=c|d=foo=bar}}", node11)
+        self.assertEquals("{{a|b=c|foo&#61;bar}}", node12)
+        self.assertIsInstance(node12.params[1].value.get(1), HTMLEntity)
+        self.assertEquals("{{a|\nb = c|\nd = e|\nf = g|\nh = i}}", node13)
+        self.assertEquals("{{a\n|b =c\n|d = e|f =g\n|h = i\n|j =k\n}}", node14)
+        self.assertEquals("{{a|b  = c\n|\nd  = e|\nf  =g |h  =i}}", node15)
+        self.assertEquals("{{a|\nb = c|\nd = e|\nf = g|h=i}}", node16)
+        self.assertEquals("{{a|\nb = c|\nd = e|\nf = g| i}}", node17)
+        self.assertEquals("{{a\n|b =c\n|d = e|f =g\n|h = i\n|k\n}}", node18)
+        self.assertEquals("{{a|b  = c\n|\nd  = e|\nf  =g |i}}", node19)
+        self.assertEquals("{{a|\nb = c|\nd = e|\nf = g|i}}", node20)
+        self.assertEquals("{{a|b|c}}", node21)
+        self.assertEquals("{{a|b|3=c}}", node22)
+        self.assertEquals("{{a|b|c=d}}", node23)
+        self.assertEquals("{{a|b|c|d|e|f}}", node24)
+        self.assertEquals("{{a|b|c|4=d|5=e|f}}", node25)
+        self.assertEquals("{{a|b|c|4=d|5=e|6=f}}", node26)
+        self.assertEquals("{{a|b|c=foo=bar}}", node27)
+        self.assertEquals("{{a|b|foo&#61;bar}}", node28)
+        self.assertIsInstance(node28.params[1].value.get(1), HTMLEntity)
+        self.assertEquals("{{a|b=d}}", node29)
+        self.assertEquals("{{a|foo&#61;bar}}", node30)
+        self.assertIsInstance(node30.params[0].value.get(1), HTMLEntity)
+        self.assertEquals("{{a|1=foo=bar}}", node31)
+        self.assertEquals("{{a|foo&#61;bar}}", node32)
+        self.assertIsInstance(node32.params[0].value.get(1), HTMLEntity)
+        self.assertEquals("{{a|\nb = c|\nd = foo|\nf = g}}", node33)
+        self.assertEquals("{{a\n|b =c\n|d = e|f =foo\n|h = i\n}}", node34)
+        self.assertEquals("{{a|b  = c\n|\nd  = e|\nf  =foo }}", node35)
+        self.assertEquals("{{a|\nb = c |\nd =foo|\nf = g }}", node36)
+        self.assertEquals("{{a|b=k|d=e|i=j}}", node37)
+        self.assertEquals("{{a|1=e|x=y|2=d}}", node38)
+        self.assertEquals("{{a|x=y|e|d}}", node39)
+        self.assertEquals("{{a|b=c|d=h|f=g}}", node40)
 
     def test_remove(self):
         """test Template.remove()"""
-        node1 = Template(wrap([Text("foobar")]))
-        node2 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
-                                               pgens("abc", "def")])
-        node3 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
-                                               pgens("abc", "def")])
-        node4 = Template(wrap([Text("foo")]), [pgenh("1", "bar"),
-                                               pgenh("2", "baz")])
-        node5 = Template(wrap([Text("foo")]), [
+        node1 = Template(wraptext("foobar"))
+        node2 = Template(wraptext("foo"), [pgenh("1", "bar"),
+                                           pgens("abc", "def")])
+        node3 = Template(wraptext("foo"), [pgenh("1", "bar"),
+                                           pgens("abc", "def")])
+        node4 = Template(wraptext("foo"), [pgenh("1", "bar"),
+                                           pgenh("2", "baz")])
+        node5 = Template(wraptext("foo"), [
             pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-        node6 = Template(wrap([Text("foo")]), [
+        node6 = Template(wraptext("foo"), [
             pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-        node7 = Template(wrap([Text("foo")]), [
+        node7 = Template(wraptext("foo"), [
             pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
-        node8 = Template(wrap([Text("foo")]), [
+        node8 = Template(wraptext("foo"), [
             pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
-        node9 = Template(wrap([Text("foo")]), [
+        node9 = Template(wraptext("foo"), [
             pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-        node10 = Template(wrap([Text("foo")]), [
+        node10 = Template(wraptext("foo"), [
             pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
 
         node2.remove("1")

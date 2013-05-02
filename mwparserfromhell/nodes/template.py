@@ -81,7 +81,7 @@ class Template(Node):
         in parameter names or values so they are not mistaken for new
         parameters.
         """
-        replacement = HTMLEntity(value=ord(char))
+        replacement = str(HTMLEntity(value=ord(char)))
         for node in code.filter_text(recursive=False):
             if char in node:
                 code.replace(node, node.replace(char, replacement))
@@ -107,7 +107,7 @@ class Template(Node):
             values = tuple(theories.values())
             best = max(values)
             confidence = float(best) / sum(values)
-            if confidence > 0.75:
+            if confidence >= 0.75:
                 return tuple(theories.keys())[values.index(best)]
 
     def _get_spacing_conventions(self, use_names):
@@ -205,15 +205,19 @@ class Template(Node):
         If *showkey* is given, this will determine whether or not to show the
         parameter's name (e.g., ``{{foo|bar}}``'s parameter has a name of
         ``"1"`` but it is hidden); otherwise, we'll make a safe and intelligent
-        guess. If *name* is already a parameter, we'll replace its value while
-        keeping the same spacing rules. We will also try to guess the dominant
-        spacing convention when adding a new parameter using
+        guess.
+
+        If *name* is already a parameter in the template, we'll replace its
+        value while keeping the same whitespace around it. We will also try to
+        guess the dominant spacing convention when adding a new parameter using
         :py:meth:`_get_spacing_conventions`.
 
         If *before* is given (either a :py:class:`~.Parameter` object or a
         name), then we will place the parameter immediately before this one.
-        Otherwise, it will be added at the end. This is ignored if the
-        parameter already exists.
+        Otherwise, it will be added at the end. If *before* is a name and
+        exists multiple times in the template, we will place it before the last
+        occurance. If *before* is not in the template, :py:exc:`ValueError` is
+        raised. The argument is ignored if the new parameter already exists.
 
         If *preserve_spacing* is ``False``, we will avoid preserving spacing
         conventions when changing the value of an existing parameter or when
@@ -231,6 +235,9 @@ class Template(Node):
                 self._surface_escape(value, "=")
             nodes = existing.value.nodes
             if preserve_spacing:
+                for i in range(2):  # Ignore empty text nodes
+                    if not nodes[i]:
+                        nodes[i] = None
                 existing.value = parse_anything([nodes[0], value, nodes[1]])
             else:
                 existing.value = value
