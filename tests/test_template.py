@@ -149,32 +149,24 @@ class TestTemplate(TreeEqualityTestCase):
         node10 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "e")])
         node11 = Template(wraptext("a"), [pgens("b", "c")])
         node12 = Template(wraptext("a"), [pgens("b", "c")])
-        node13 = Template(wraptext("a"), [pgens("\nb ", " c"),
-                                          pgens("\nd ", " e"),
-                                          pgens("\nf ", " g")])
-        node14 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
-                                            pgens("d ", " e"),
-                                            pgens("f ", "g\n"),
-                                            pgens("h ", " i\n")])
-        node15 = Template(wraptext("a"), [pgens("b  ", " c\n"),
-                                          pgens("\nd  ", " e"),
-                                          pgens("\nf  ", "g ")])
-        node16 = Template(wraptext("a"), [pgens("\nb ", " c"),
-                                          pgens("\nd ", " e"),
-                                          pgens("\nf ", " g")])
-        node17 = Template(wraptext("a"), [pgens("\nb ", " c"),
-                                          pgens("\nd ", " e"),
-                                          pgens("\nf ", " g")])
-        node18 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
-                                          pgens("d ", " e"),
-                                          pgens("f ", "g\n"),
-                                          pgens("h ", " i\n")])
-        node19 = Template(wraptext("a"), [pgens("b  ", " c\n"),
-                                          pgens("\nd  ", " e"),
-                                          pgens("\nf  ", "g ")])
-        node20 = Template(wraptext("a"), [pgens("\nb ", " c"),
-                                          pgens("\nd ", " e"),
-                                          pgens("\nf ", " g")])
+        node13 = Template(wraptext("a"), [
+            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
+        node14 = Template(wraptext("a\n"), [
+            pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
+            pgens("h ", " i\n")])
+        node15 = Template(wraptext("a"), [
+            pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
+        node16 = Template(wraptext("a"), [
+            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
+        node17 = Template(wraptext("a"), [
+            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
+        node18 = Template(wraptext("a\n"), [
+            pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
+            pgens("h ", " i\n")])
+        node19 = Template(wraptext("a"), [
+            pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
+        node20 = Template(wraptext("a"), [
+            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
         node21 = Template(wraptext("a"), [pgenh("1", "b")])
         node22 = Template(wraptext("a"), [pgenh("1", "b")])
         node23 = Template(wraptext("a"), [pgenh("1", "b")])
@@ -190,19 +182,15 @@ class TestTemplate(TreeEqualityTestCase):
         node30 = Template(wraptext("a"), [pgenh("1", "b")])
         node31 = Template(wraptext("a"), [pgenh("1", "b")])
         node32 = Template(wraptext("a"), [pgens("1", "b")])
-        node33 = Template(wraptext("a"), [pgens("\nb ", " c"),
-                                          pgens("\nd ", " e"),
-                                          pgens("\nf ", " g")])
-        node34 = Template(wraptext("a\n"), [pgens("b ", "c\n"),
-                                            pgens("d ", " e"),
-                                            pgens("f ", "g\n"),
-                                            pgens("h ", " i\n")])
-        node35 = Template(wraptext("a"), [pgens("b  ", " c\n"),
-                                          pgens("\nd  ", " e"),
-                                          pgens("\nf  ", "g ")])
-        node36 = Template(wraptext("a"), [pgens("\nb ", " c "),
-                                          pgens("\nd ", " e "),
-                                          pgens("\nf ", " g ")])
+        node33 = Template(wraptext("a"), [
+            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
+        node34 = Template(wraptext("a\n"), [
+            pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
+            pgens("h ", " i\n")])
+        node35 = Template(wraptext("a"), [
+            pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
+        node36 = Template(wraptext("a"), [
+            pgens("\nb ", " c "), pgens("\nd ", " e "), pgens("\nf ", " g ")])
         node37 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
                                           pgens("b", "f"), pgens("b", "h"),
                                           pgens("i", "j")])
