@@ -26,16 +26,16 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Heading, Text
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap
+from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 class TestHeading(TreeEqualityTestCase):
     """Test cases for the Heading node."""
 
     def test_unicode(self):
         """test Heading.__unicode__()"""
-        node = Heading(wrap([Text("foobar")]), 2)
+        node = Heading(wraptext("foobar"), 2)
         self.assertEqual("==foobar==", str(node))
-        node2 = Heading(wrap([Text(" zzz ")]), 5)
+        node2 = Heading(wraptext(" zzz "), 5)
         self.assertEqual("===== zzz =====", str(node2))
 
     def test_iternodes(self):
@@ -50,7 +50,7 @@ class TestHeading(TreeEqualityTestCase):
 
     def test_strip(self):
         """test Heading.__strip__()"""
-        node = Heading(wrap([Text("foobar")]), 3)
+        node = Heading(wraptext("foobar"), 3)
         for a in (True, False):
             for b in (True, False):
                 self.assertEqual("foobar", node.__strip__(a, b))
@@ -60,8 +60,8 @@ class TestHeading(TreeEqualityTestCase):
         output = []
         getter = object()
         get = lambda code: output.append((getter, code))
-        node1 = Heading(wrap([Text("foobar")]), 3)
-        node2 = Heading(wrap([Text(" baz ")]), 4)
+        node1 = Heading(wraptext("foobar"), 3)
+        node2 = Heading(wraptext(" baz "), 4)
         node1.__showtree__(output.append, get, None)
         node2.__showtree__(output.append, get, None)
         valid = ["===", (getter, node1.title), "===",
@@ -70,20 +70,18 @@ class TestHeading(TreeEqualityTestCase):
 
     def test_title(self):
         """test getter/setter for the title attribute"""
-        title = wrap([Text("foobar")])
+        title = wraptext("foobar")
         node = Heading(title, 3)
         self.assertIs(title, node.title)
         node.title = "héhehé"
-        self.assertWikicodeEqual(wrap([Text("héhehé")]), node.title)
+        self.assertWikicodeEqual(wraptext("héhehé"), node.title)
 
     def test_level(self):
         """test getter/setter for the level attribute"""
-        node = Heading(wrap([Text("foobar")]), 3)
+        node = Heading(wraptext("foobar"), 3)
         self.assertEqual(3, node.level)
         node.level = 5
         self.assertEqual(5, node.level)
-        node.level = True
-        self.assertEqual(1, node.level)
         self.assertRaises(ValueError, setattr, node, "level", 0)
         self.assertRaises(ValueError, setattr, node, "level", 7)
         self.assertRaises(ValueError, setattr, node, "level", "abc")

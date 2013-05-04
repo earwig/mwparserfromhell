@@ -26,16 +26,16 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Text, Wikilink
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap
+from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 class TestWikilink(TreeEqualityTestCase):
     """Test cases for the Wikilink node."""
 
     def test_unicode(self):
         """test Wikilink.__unicode__()"""
-        node = Wikilink(wrap([Text("foobar")]))
+        node = Wikilink(wraptext("foobar"))
         self.assertEqual("[[foobar]]", str(node))
-        node2 = Wikilink(wrap([Text("foo")]), wrap([Text("bar")]))
+        node2 = Wikilink(wraptext("foo"), wraptext("bar"))
         self.assertEqual("[[foo|bar]]", str(node2))
 
     def test_iternodes(self):
@@ -57,8 +57,8 @@ class TestWikilink(TreeEqualityTestCase):
 
     def test_strip(self):
         """test Wikilink.__strip__()"""
-        node = Wikilink(wrap([Text("foobar")]))
-        node2 = Wikilink(wrap([Text("foo")]), wrap([Text("bar")]))
+        node = Wikilink(wraptext("foobar"))
+        node2 = Wikilink(wraptext("foo"), wraptext("bar"))
         for a in (True, False):
             for b in (True, False):
                 self.assertEqual("foobar", node.__strip__(a, b))
@@ -70,8 +70,8 @@ class TestWikilink(TreeEqualityTestCase):
         getter, marker = object(), object()
         get = lambda code: output.append((getter, code))
         mark = lambda: output.append(marker)
-        node1 = Wikilink(wrap([Text("foobar")]))
-        node2 = Wikilink(wrap([Text("foo")]), wrap([Text("bar")]))
+        node1 = Wikilink(wraptext("foobar"))
+        node2 = Wikilink(wraptext("foo"), wraptext("bar"))
         node1.__showtree__(output.append, get, mark)
         node2.__showtree__(output.append, get, mark)
         valid = [
@@ -81,26 +81,26 @@ class TestWikilink(TreeEqualityTestCase):
 
     def test_title(self):
         """test getter/setter for the title attribute"""
-        title = wrap([Text("foobar")])
+        title = wraptext("foobar")
         node1 = Wikilink(title)
-        node2 = Wikilink(title, wrap([Text("baz")]))
+        node2 = Wikilink(title, wraptext("baz"))
         self.assertIs(title, node1.title)
         self.assertIs(title, node2.title)
         node1.title = "héhehé"
         node2.title = "héhehé"
-        self.assertWikicodeEqual(wrap([Text("héhehé")]), node1.title)
-        self.assertWikicodeEqual(wrap([Text("héhehé")]), node2.title)
+        self.assertWikicodeEqual(wraptext("héhehé"), node1.title)
+        self.assertWikicodeEqual(wraptext("héhehé"), node2.title)
 
     def test_text(self):
         """test getter/setter for the text attribute"""
-        text = wrap([Text("baz")])
-        node1 = Wikilink(wrap([Text("foobar")]))
-        node2 = Wikilink(wrap([Text("foobar")]), text)
+        text = wraptext("baz")
+        node1 = Wikilink(wraptext("foobar"))
+        node2 = Wikilink(wraptext("foobar"), text)
         self.assertIs(None, node1.text)
         self.assertIs(text, node2.text)
         node1.text = "buzz"
         node2.text = None
-        self.assertWikicodeEqual(wrap([Text("buzz")]), node1.text)
+        self.assertWikicodeEqual(wraptext("buzz"), node1.text)
         self.assertIs(None, node2.text)
 
 if __name__ == "__main__":

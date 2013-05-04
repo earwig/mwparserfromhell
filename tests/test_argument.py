@@ -26,16 +26,16 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Argument, Text
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap
+from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 class TestArgument(TreeEqualityTestCase):
     """Test cases for the Argument node."""
 
     def test_unicode(self):
         """test Argument.__unicode__()"""
-        node = Argument(wrap([Text("foobar")]))
+        node = Argument(wraptext("foobar"))
         self.assertEqual("{{{foobar}}}", str(node))
-        node2 = Argument(wrap([Text("foo")]), wrap([Text("bar")]))
+        node2 = Argument(wraptext("foo"), wraptext("bar"))
         self.assertEqual("{{{foo|bar}}}", str(node2))
 
     def test_iternodes(self):
@@ -57,8 +57,8 @@ class TestArgument(TreeEqualityTestCase):
 
     def test_strip(self):
         """test Argument.__strip__()"""
-        node = Argument(wrap([Text("foobar")]))
-        node2 = Argument(wrap([Text("foo")]), wrap([Text("bar")]))
+        node = Argument(wraptext("foobar"))
+        node2 = Argument(wraptext("foo"), wraptext("bar"))
         for a in (True, False):
             for b in (True, False):
                 self.assertIs(None, node.__strip__(a, b))
@@ -70,8 +70,8 @@ class TestArgument(TreeEqualityTestCase):
         getter, marker = object(), object()
         get = lambda code: output.append((getter, code))
         mark = lambda: output.append(marker)
-        node1 = Argument(wrap([Text("foobar")]))
-        node2 = Argument(wrap([Text("foo")]), wrap([Text("bar")]))
+        node1 = Argument(wraptext("foobar"))
+        node2 = Argument(wraptext("foo"), wraptext("bar"))
         node1.__showtree__(output.append, get, mark)
         node2.__showtree__(output.append, get, mark)
         valid = [
@@ -81,26 +81,26 @@ class TestArgument(TreeEqualityTestCase):
 
     def test_name(self):
         """test getter/setter for the name attribute"""
-        name = wrap([Text("foobar")])
+        name = wraptext("foobar")
         node1 = Argument(name)
-        node2 = Argument(name, wrap([Text("baz")]))
+        node2 = Argument(name, wraptext("baz"))
         self.assertIs(name, node1.name)
         self.assertIs(name, node2.name)
         node1.name = "héhehé"
         node2.name = "héhehé"
-        self.assertWikicodeEqual(wrap([Text("héhehé")]), node1.name)
-        self.assertWikicodeEqual(wrap([Text("héhehé")]), node2.name)
+        self.assertWikicodeEqual(wraptext("héhehé"), node1.name)
+        self.assertWikicodeEqual(wraptext("héhehé"), node2.name)
 
     def test_default(self):
         """test getter/setter for the default attribute"""
-        default = wrap([Text("baz")])
-        node1 = Argument(wrap([Text("foobar")]))
-        node2 = Argument(wrap([Text("foobar")]), default)
+        default = wraptext("baz")
+        node1 = Argument(wraptext("foobar"))
+        node2 = Argument(wraptext("foobar"), default)
         self.assertIs(None, node1.default)
         self.assertIs(default, node2.default)
         node1.default = "buzz"
         node2.default = None
-        self.assertWikicodeEqual(wrap([Text("buzz")]), node1.default)
+        self.assertWikicodeEqual(wraptext("buzz"), node1.default)
         self.assertIs(None, node2.default)
 
 if __name__ == "__main__":

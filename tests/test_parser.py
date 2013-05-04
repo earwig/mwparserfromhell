@@ -26,10 +26,8 @@ import unittest
 from mwparserfromhell import parser
 from mwparserfromhell.nodes import Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
 
-from ._test_tree_equality import TreeEqualityTestCase
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 from .compat import range
 
 class TestParser(TreeEqualityTestCase):
@@ -45,18 +43,17 @@ class TestParser(TreeEqualityTestCase):
     def test_parsing(self):
         """integration test for parsing overall"""
         text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
-        wrap = lambda L: Wikicode(SmartList(L))
         expected = wrap([
             Text("this is text; "),
-            Template(wrap([Text("this")]), [
-                Parameter(wrap([Text("is")]), wrap([Text("a")])),
-                Parameter(wrap([Text("template")]), wrap([
-                    Template(wrap([Text("with")]), [
-                        Parameter(wrap([Text("1")]),
-                                  wrap([Wikilink(wrap([Text("links")]))]),
+            Template(wraptext("this"), [
+                Parameter(wraptext("is"), wraptext("a")),
+                Parameter(wraptext("template"), wrap([
+                    Template(wraptext("with"), [
+                        Parameter(wraptext("1"),
+                                  wrap([Wikilink(wraptext("links"))]),
                                   showkey=False),
-                        Parameter(wrap([Text("2")]),
-                                  wrap([Text("in")]), showkey=False)
+                        Parameter(wraptext("2"),
+                                  wraptext("in"), showkey=False)
                     ]),
                     Text("it")
                 ]))

@@ -30,7 +30,7 @@ from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
 wrap = lambda L: Wikicode(SmartList(L))
-wraptext = lambda t: wrap([Text(t)])
+wraptext = lambda *args: wrap([Text(t) for t in args])
 
 def getnodes(code):
     """Iterate over all child nodes of a given parent node.

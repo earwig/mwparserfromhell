@@ -29,7 +29,7 @@ from mwparserfromhell.nodes.extras import Attribute, Parameter
 from mwparserfromhell.parser import tokens
 from mwparserfromhell.parser.builder import Builder
 
-from ._test_tree_equality import TreeEqualityTestCase, wrap
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 class TestBuilder(TreeEqualityTestCase):
     """Tests for the builder, which turns tokens into Wikicode objects."""
@@ -40,10 +40,10 @@ class TestBuilder(TreeEqualityTestCase):
     def test_text(self):
         """tests for building Text nodes"""
         tests = [
-            ([tokens.Text(text="foobar")], wrap([Text("foobar")])),
-            ([tokens.Text(text="fóóbar")], wrap([Text("fóóbar")])),
+            ([tokens.Text(text="foobar")], wraptext("foobar")),
+            ([tokens.Text(text="fóóbar")], wraptext("fóóbar")),
             ([tokens.Text(text="spam"), tokens.Text(text="eggs")],
-             wrap([Text("spam"), Text("eggs")])),
+             wraptext("spam", "eggs")),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -53,25 +53,24 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.TemplateOpen(), tokens.Text(text="foobar"),
               tokens.TemplateClose()],
-             wrap([Template(wrap([Text("foobar")]))])),
+             wrap([Template(wraptext("foobar"))])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.TemplateClose()],
-             wrap([Template(wrap([Text("spam"), Text("eggs")]))])),
+             wrap([Template(wraptext("spam", "eggs"))])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
               tokens.TemplateClose()],
-             wrap([Template(wrap([Text("foo")]), params=[
-                 Parameter(wrap([Text("1")]), wrap([Text("bar")]),
-                           showkey=False)])])),
+             wrap([Template(wraptext("foo"), params=[
+                 Parameter(wraptext("1"), wraptext("bar"), showkey=False)])])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
               tokens.TemplateParamEquals(), tokens.Text(text="baz"),
               tokens.TemplateClose()],
-             wrap([Template(wrap([Text("foo")]), params=[
-                 Parameter(wrap([Text("bar")]), wrap([Text("baz")]))])])),
+             wrap([Template(wraptext("foo"), params=[
+                 Parameter(wraptext("bar"), wraptext("baz"))])])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
@@ -82,14 +81,12 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TemplateParamEquals(), tokens.Text(text="buff"),
               tokens.TemplateParamSeparator(), tokens.Text(text="baff"),
               tokens.TemplateClose()],
-             wrap([Template(wrap([Text("foo")]), params=[
-                 Parameter(wrap([Text("bar")]), wrap([Text("baz")])),
-                 Parameter(wrap([Text("1")]), wrap([Text("biz")]),
-                           showkey=False),
-                 Parameter(wrap([Text("2")]), wrap([Text("buzz")]),
-                           showkey=False),
-                 Parameter(wrap([Text("3")]), wrap([Text("buff")])),
-                 Parameter(wrap([Text("3")]), wrap([Text("baff")]),
+             wrap([Template(wraptext("foo"), params=[
+                 Parameter(wraptext("bar"), wraptext("baz")),
+                 Parameter(wraptext("1"), wraptext("biz"), showkey=False),
+                 Parameter(wraptext("2"), wraptext("buzz"), showkey=False),
+                 Parameter(wraptext("3"), wraptext("buff")),
+                 Parameter(wraptext("3"), wraptext("baff"),
                            showkey=False)])])),
         ]
         for test, valid in tests:
@@ -100,23 +97,22 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.ArgumentOpen(), tokens.Text(text="foobar"),
               tokens.ArgumentClose()],
-             wrap([Argument(wrap([Text("foobar")]))])),
+             wrap([Argument(wraptext("foobar"))])),
 
             ([tokens.ArgumentOpen(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.ArgumentClose()],
-             wrap([Argument(wrap([Text("spam"), Text("eggs")]))])),
+             wrap([Argument(wraptext("spam", "eggs"))])),
 
             ([tokens.ArgumentOpen(), tokens.Text(text="foo"),
               tokens.ArgumentSeparator(), tokens.Text(text="bar"),
               tokens.ArgumentClose()],
-             wrap([Argument(wrap([Text("foo")]), wrap([Text("bar")]))])),
+             wrap([Argument(wraptext("foo"), wraptext("bar"))])),
 
             ([tokens.ArgumentOpen(), tokens.Text(text="foo"),
               tokens.Text(text="bar"), tokens.ArgumentSeparator(),
               tokens.Text(text="baz"), tokens.Text(text="biz"),
               tokens.ArgumentClose()],
-             wrap([Argument(wrap([Text("foo"), Text("bar")]),
-                            wrap([Text("baz"), Text("biz")]))])),
+             wrap([Argument(wraptext("foo", "bar"), wraptext("baz", "biz"))])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -126,23 +122,22 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.WikilinkOpen(), tokens.Text(text="foobar"),
               tokens.WikilinkClose()],
-             wrap([Wikilink(wrap([Text("foobar")]))])),
+             wrap([Wikilink(wraptext("foobar"))])),
 
             ([tokens.WikilinkOpen(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.WikilinkClose()],
-             wrap([Wikilink(wrap([Text("spam"), Text("eggs")]))])),
+             wrap([Wikilink(wraptext("spam", "eggs"))])),
 
             ([tokens.WikilinkOpen(), tokens.Text(text="foo"),
               tokens.WikilinkSeparator(), tokens.Text(text="bar"),
               tokens.WikilinkClose()],
-             wrap([Wikilink(wrap([Text("foo")]), wrap([Text("bar")]))])),
+             wrap([Wikilink(wraptext("foo"), wraptext("bar"))])),
 
             ([tokens.WikilinkOpen(), tokens.Text(text="foo"),
               tokens.Text(text="bar"), tokens.WikilinkSeparator(),
               tokens.Text(text="baz"), tokens.Text(text="biz"),
               tokens.WikilinkClose()],
-             wrap([Wikilink(wrap([Text("foo"), Text("bar")]),
-                            wrap([Text("baz"), Text("biz")]))])),
+             wrap([Wikilink(wraptext("foo", "bar"), wraptext("baz", "biz"))])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -172,11 +167,11 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.HeadingStart(level=2), tokens.Text(text="foobar"),
               tokens.HeadingEnd()],
-             wrap([Heading(wrap([Text("foobar")]), 2)])),
+             wrap([Heading(wraptext("foobar"), 2)])),
 
             ([tokens.HeadingStart(level=4), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.HeadingEnd()],
-             wrap([Heading(wrap([Text("spam"), Text("eggs")]), 4)])),
+             wrap([Heading(wraptext("spam", "eggs"), 4)])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -186,11 +181,11 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.CommentStart(), tokens.Text(text="foobar"),
               tokens.CommentEnd()],
-             wrap([Comment(wrap([Text("foobar")]))])),
+             wrap([Comment(wraptext("foobar"))])),
 
             ([tokens.CommentStart(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.CommentEnd()],
-             wrap([Comment(wrap([Text("spam"), Text("eggs")]))])),
+             wrap([Comment(wraptext("spam", "eggs"))])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -214,10 +209,10 @@ class TestBuilder(TreeEqualityTestCase):
                 tokens.TemplateOpen(), tokens.Text(text="bin"),
                 tokens.TemplateClose(), tokens.TemplateClose()]
         valid = wrap(
-            [Template(wrap([Template(wrap([Template(wrap([Template(wrap([Text(
-            "foo")])), Text("bar")]), params=[Parameter(wrap([Text("baz")]),
-            wrap([Text("biz")]))]), Text("buzz")])), Text("usr")]), params=[
-            Parameter(wrap([Text("1")]), wrap([Template(wrap([Text("bin")]))]),
+            [Template(wrap([Template(wrap([Template(wrap([Template(wraptext(
+            "foo")), Text("bar")]), params=[Parameter(wraptext("baz"),
+            wraptext("biz"))]), Text("buzz")])), Text("usr")]), params=[
+            Parameter(wraptext("1"), wrap([Template(wraptext("bin"))]),
             showkey=False)])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
 
@@ -243,14 +238,14 @@ class TestBuilder(TreeEqualityTestCase):
                 tokens.Text(text="nbsp"), tokens.HTMLEntityEnd(),
                 tokens.TemplateClose()]
         valid = wrap(
-            [Template(wrap([Text("a")]), params=[Parameter(wrap([Text("1")]),
-            wrap([Text("b")]), showkey=False), Parameter(wrap([Text("2")]),
-            wrap([Template(wrap([Text("c")]), params=[Parameter(wrap([Text("1")
-            ]), wrap([Wikilink(wrap([Text("d")])), Argument(wrap([Text("e")]))]
-            ), showkey=False)])]), showkey=False)]), Wikilink(wrap([Text("f")]
-            ), wrap([Argument(wrap([Text("g")])), Comment(wrap([Text("h")]))])
-            ), Template(wrap([Text("i")]), params=[Parameter(wrap([Text("j")]),
-            wrap([HTMLEntity("nbsp", named=True)]))])])
+            [Template(wraptext("a"), params=[Parameter(wraptext("1"), wraptext(
+            "b"), showkey=False), Parameter(wraptext("2"), wrap([Template(
+            wraptext("c"), params=[Parameter(wraptext("1"), wrap([Wikilink(
+            wraptext("d")), Argument(wraptext("e"))]), showkey=False)])]),
+            showkey=False)]), Wikilink(wraptext("f"), wrap([Argument(wraptext(
+            "g")), Comment(wraptext("h"))])), Template(wraptext("i"), params=[
+            Parameter(wraptext("j"), wrap([HTMLEntity("nbsp",
+            named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
 
 if __name__ == "__main__":
