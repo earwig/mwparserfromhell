@@ -36,6 +36,13 @@ class TestComment(TreeEqualityTestCase):
         node = Comment("foobar")
         self.assertEqual("<!--foobar-->", str(node))
 
+    def test_iternodes(self):
+        """test Comment.__iternodes__()"""
+        node = Comment("foobar")
+        gen = node.__iternodes__(None)
+        self.assertEqual((None, node), next(gen))
+        self.assertRaises(StopIteration, next, gen)
+
     def test_strip(self):
         """test Comment.__strip__()"""
         node = Comment("foobar")

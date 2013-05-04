@@ -26,7 +26,7 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
 from mwparserfromhell.nodes.extras import Parameter
-from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
 pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
@@ -41,6 +41,30 @@ class TestTemplate(TreeEqualityTestCase):
         node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("abc", "def")])
         self.assertEqual("{{foo|bar|abc=def}}", str(node2))
+
+    def test_iternodes(self):
+        """test Template.__iternodes__()"""
+        node1n1 = Text("foobar")
+        node2n1, node2n2, node2n3 = Text("foo"), Text("bar"), Text("abc")
+        node2n4, node2n5 = Text("def"), Text("ghi")
+        node2p1 = Parameter(wraptext("1"), wrap([node2n2]), showkey=False)
+        node2p2 = Parameter(wrap([node2n3]), wrap([node2n4, node2n5]),
+                            showkey=True)
+        node1 = Template(wrap([node1n1]))
+        node2 = Template(wrap([node2n1]), [node2p1, node2p2])
+
+        gen1 = node1.__iternodes__(getnodes)
+        gen2 = node2.__iternodes__(getnodes)
+        self.assertEqual((None, node1), next(gen1))
+        self.assertEqual((None, node2), next(gen2))
+        self.assertEqual((node1.name, node1n1), next(gen1))
+        self.assertEqual((node2.name, node2n1), next(gen2))
+        self.assertEqual((node2.params[0].value, node2n2), next(gen2))
+        self.assertEqual((node2.params[1].name, node2n3), next(gen2))
+        self.assertEqual((node2.params[1].value, node2n4), next(gen2))
+        self.assertEqual((node2.params[1].value, node2n5), next(gen2))
+        self.assertRaises(StopIteration, next, gen1)
+        self.assertRaises(StopIteration, next, gen2)
 
     def test_strip(self):
         """test Template.__strip__()"""

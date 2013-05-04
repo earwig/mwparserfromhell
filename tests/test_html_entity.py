@@ -42,6 +42,13 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertEqual("&#x6b;", str(node3))
         self.assertEqual("&#X6C;", str(node4))
 
+    def test_iternodes(self):
+        """test HTMLEntity.__iternodes__()"""
+        node = HTMLEntity("nbsp", named=True, hexadecimal=False)
+        gen = node.__iternodes__(None)
+        self.assertEqual((None, node), next(gen))
+        self.assertRaises(StopIteration, next, gen)
+
     def test_strip(self):
         """test HTMLEntity.__strip__()"""
         node1 = HTMLEntity("nbsp", named=True, hexadecimal=False)
