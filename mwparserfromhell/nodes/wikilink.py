@@ -79,4 +79,7 @@ class Wikilink(Node):
 
     @text.setter
     def text(self, value):
-        self._text = parse_anything(value)
+        if value is None:
+            self._text = None
+        else:
+            self._text = parse_anything(value)

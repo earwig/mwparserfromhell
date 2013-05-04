@@ -24,33 +24,28 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell.nodes import Template, Text
-from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.utils import parse_anything
-from mwparserfromhell.wikicode import Wikicode
 
-from ._test_tree_equality import TreeEqualityTestCase
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 class TestUtils(TreeEqualityTestCase):
     """Tests for the utils module, which provides parse_anything()."""
 
     def test_parse_anything_valid(self):
         """tests for valid input to utils.parse_anything()"""
-        wrap = lambda L: Wikicode(SmartList(L))
-        textify = lambda L: wrap([Text(item) for item in L])
         tests = [
-            (wrap([Text("foobar")]), textify(["foobar"])),
-            (Template(wrap([Text("spam")])),
-                wrap([Template(textify(["spam"]))])),
-            ("fóóbar", textify(["fóóbar"])),
-            (b"foob\xc3\xa1r", textify(["foobár"])),
-            (123, textify(["123"])),
-            (True, textify(["True"])),
+            (wraptext("foobar"), wraptext("foobar")),
+            (Template(wraptext("spam")), wrap([Template(wraptext("spam"))])),
+            ("fóóbar", wraptext("fóóbar")),
+            (b"foob\xc3\xa1r", wraptext("foobár")),
+            (123, wraptext("123")),
+            (True, wraptext("True")),
             (None, wrap([])),
             ([Text("foo"), Text("bar"), Text("baz")],
-                textify(["foo", "bar", "baz"])),
-            ([wrap([Text("foo")]), Text("bar"), "baz", 123, 456],
-                textify(["foo", "bar", "baz", "123", "456"])),
-            ([[[([[((("foo",),),)], "bar"],)]]], textify(["foo", "bar"]))
+             wraptext("foo", "bar", "baz")),
+            ([wraptext("foo"), Text("bar"), "baz", 123, 456],
+             wraptext("foo", "bar", "baz", "123", "456")),
+            ([[[([[((("foo",),),)], "bar"],)]]], wraptext("foo", "bar"))
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, parse_anything(test))
