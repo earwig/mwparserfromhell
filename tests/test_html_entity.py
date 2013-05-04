@@ -47,19 +47,13 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node1 = HTMLEntity("nbsp", named=True, hexadecimal=False)
         node2 = HTMLEntity("107", named=False, hexadecimal=False)
         node3 = HTMLEntity("e9", named=False, hexadecimal=True)
-
-        self.assertEqual("\xa0", node1.__strip__(True, True))
-        self.assertEqual("\xa0", node1.__strip__(True, False))
-        self.assertEqual("&nbsp;", node1.__strip__(False, True))
-        self.assertEqual("&nbsp;", node1.__strip__(False, False))
-        self.assertEqual("k", node2.__strip__(True, True))
-        self.assertEqual("k", node2.__strip__(True, False))
-        self.assertEqual("&#107;", node2.__strip__(False, True))
-        self.assertEqual("&#107;", node2.__strip__(False, False))
-        self.assertEqual("é", node3.__strip__(True, True))
-        self.assertEqual("é", node3.__strip__(True, False))
-        self.assertEqual("&#xe9;", node3.__strip__(False, True))
-        self.assertEqual("&#xe9;", node3.__strip__(False, False))
+        for a in (True, False):
+            self.assertEqual("\xa0", node1.__strip__(True, a))
+            self.assertEqual("&nbsp;", node1.__strip__(False, a))
+            self.assertEqual("k", node2.__strip__(True, a))
+            self.assertEqual("&#107;", node2.__strip__(False, a))
+            self.assertEqual("é", node3.__strip__(True, a))
+            self.assertEqual("&#xe9;", node3.__strip__(False, a))
 
     def test_showtree(self):
         """test HTMLEntity.__showtree__()"""

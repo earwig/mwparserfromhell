@@ -41,16 +41,11 @@ class TestArgument(TreeEqualityTestCase):
     def test_strip(self):
         """test Argument.__strip__()"""
         node = Argument(wrap([Text("foobar")]))
-        self.assertIs(None, node.__strip__(True, True))
-        self.assertIs(None, node.__strip__(True, False))
-        self.assertIs(None, node.__strip__(False, True))
-        self.assertIs(None, node.__strip__(False, False))
-
         node2 = Argument(wrap([Text("foo")]), wrap([Text("bar")]))
-        self.assertEqual("bar", node2.__strip__(True, True))
-        self.assertEqual("bar", node2.__strip__(True, False))
-        self.assertEqual("bar", node2.__strip__(False, True))
-        self.assertEqual("bar", node2.__strip__(False, False))
+        for a in (True, False):
+            for b in (True, False):
+                self.assertIs(None, node.__strip__(a, b))
+                self.assertEqual("bar", node2.__strip__(a, b))
 
     def test_showtree(self):
         """test Argument.__showtree__()"""
