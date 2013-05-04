@@ -25,12 +25,8 @@ import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Heading, Text
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
 
-from ._test_tree_equality import TreeEqualityTestCase
-
-wrap = lambda L: Wikicode(SmartList(L))
+from ._test_tree_equality import TreeEqualityTestCase, wrap
 
 class TestHeading(TreeEqualityTestCase):
     """Test cases for the Heading node."""

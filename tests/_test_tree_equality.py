@@ -26,7 +26,11 @@ from unittest import TestCase
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
+from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
+
+wrap = lambda L: Wikicode(SmartList(L))
+wraptext = lambda t: wrap([Text(t)])
 
 class TreeEqualityTestCase(TestCase):
     """A base test case with support for comparing the equality of node trees.

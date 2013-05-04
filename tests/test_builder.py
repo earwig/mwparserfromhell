@@ -28,12 +28,8 @@ from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
 from mwparserfromhell.nodes.extras import Attribute, Parameter
 from mwparserfromhell.parser import tokens
 from mwparserfromhell.parser.builder import Builder
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
 
-from ._test_tree_equality import TreeEqualityTestCase
-
-wrap = lambda L: Wikicode(SmartList(L))
+from ._test_tree_equality import TreeEqualityTestCase, wrap
 
 class TestBuilder(TreeEqualityTestCase):
     """Tests for the builder, which turns tokens into Wikicode objects."""

@@ -26,12 +26,8 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
 from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
-from ._test_tree_equality import TreeEqualityTestCase
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
-wrap = lambda L: Wikicode(SmartList(L))
-wraptext = lambda t: wrap([Text(t)])
 pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
 pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
 

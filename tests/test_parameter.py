@@ -26,12 +26,8 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Text
 from mwparserfromhell.nodes.extras import Parameter
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.wikicode import Wikicode
 
-from ._test_tree_equality import TreeEqualityTestCase
-
-wrap = lambda L: Wikicode(SmartList(L))
+from ._test_tree_equality import TreeEqualityTestCase, wrap
 
 class TestParameter(TreeEqualityTestCase):
     """Test cases for the Parameter node extra."""
