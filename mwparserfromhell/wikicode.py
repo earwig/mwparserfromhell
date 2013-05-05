@@ -162,6 +162,8 @@ class Wikicode(StringMixIn):
 
     @nodes.setter
     def nodes(self, value):
+        if not isinstance(value, list):
+            value = parse_anything(value).nodes
         self._nodes = value
 
     def get(self, index):
