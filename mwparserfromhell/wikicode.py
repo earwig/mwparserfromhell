@@ -184,9 +184,10 @@ class Wikicode(StringMixIn):
             raise ValueError("Cannot coerce multiple nodes into one index")
         if index >= len(self.nodes) or -1 * index > len(self.nodes):
             raise IndexError("List assignment index out of range")
-        self.nodes.pop(index)
         if nodes:
             self.nodes[index] = nodes[0]
+        else:
+            self.nodes.pop(index)
 
     def index(self, obj, recursive=False):
         """Return the index of *obj* in the list of nodes.

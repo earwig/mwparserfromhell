@@ -66,11 +66,34 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_set(self):
         """test Wikicode.set()"""
-        pass
+        code = parse("Have a {{template}} and a [[page|link]]")
+        code.set(1, "{{{argument}}}")
+        self.assertEqual("Have a {{{argument}}} and a [[page|link]]", code)
+        self.assertIsInstance(code.get(1), Argument)
+        code.set(2, None)
+        self.assertEqual("Have a {{{argument}}}[[page|link]]", code)
+        code.set(-3, "This is an ")
+        self.assertEqual("This is an {{{argument}}}[[page|link]]", code)
+        self.assertRaises(ValueError, code.set, 1, "foo {{bar}}")
+        self.assertRaises(IndexError, code.set, 3, "{{baz}}")
+        self.assertRaises(IndexError, code.set, -4, "{{baz}}")
 
     def test_index(self):
         """test Wikicode.index()"""
-        pass
+        code = parse("Have a {{template}} and a [[page|link]]")
+        self.assertEqual(0, code.index("Have a "))
+        self.assertEqual(3, code.index("[[page|link]]"))
+        self.assertEqual(1, code.index(code.get(1)))
+        self.assertRaises(ValueError, code.index, "foo")
+
+        code = parse("{{foo}}{{bar|{{baz}}}}")
+        self.assertEqual(1, code.index("{{bar|{{baz}}}}"))
+        self.assertEqual(1, code.index("{{baz}}", recursive=True))
+        self.assertEqual(1, code.index(code.get(1).get(1).value,
+                                       recursive=True))
+        self.assertRaises(ValueError, code.index, "{{baz}}", recursive=False)
+        self.assertRaises(ValueError, code.index,
+                          code.get(1).get(1).value, recursive=False)
 
     def test_insert(self):
         """test Wikicode.insert()"""
