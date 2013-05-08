@@ -68,7 +68,7 @@ class Wikicode(StringMixIn):
         Raises ``ValueError`` if *obj* is not within *node*.
         """
         for context, child in node.__iternodes__(self._get_all_nodes):
-            if child is obj:
+            if self._is_equivalent(obj, child):
                 return context
         raise ValueError(obj)
 

@@ -97,27 +97,116 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_insert(self):
         """test Wikicode.insert()"""
-        pass
+        code = parse("Have a {{template}} and a [[page|link]]")
+        code.insert(1, "{{{argument}}}")
+        self.assertEqual(
+            "Have a {{{argument}}}{{template}} and a [[page|link]]", code)
+        self.assertIsInstance(code.get(1), Argument)
+        code.insert(2, None)
+        self.assertEqual(
+            "Have a {{{argument}}}{{template}} and a [[page|link]]", code)
+        code.insert(-3, Text("foo"))
+        self.assertEqual(
+            "Have a {{{argument}}}foo{{template}} and a [[page|link]]", code)
+
+        code2 = parse("{{foo}}{{bar}}{{baz}}")
+        code2.insert(1, "abc{{def}}ghi[[jk]]")
+        self.assertEqual("{{foo}}abc{{def}}ghi[[jk]]{{bar}}{{baz}}", code2)
+        self.assertEqual(["{{foo}}", "abc", "{{def}}", "ghi", "[[jk]]",
+                          "{{bar}}", "{{baz}}"], code2.nodes)
+
+        code3 = parse("{{foo}}bar")
+        code3.insert(1000, "[[baz]]")
+        code3.insert(-1000, "derp")
+        self.assertEqual("derp{{foo}}bar[[baz]]", code3)
 
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
-        pass
+        code = parse("{{a}}{{b}}{{c}}{{d}}")
+        code.insert_before("{{b}}", "x", recursive=True)
+        code.insert_before("{{d}}", "[[y]]", recursive=False)
+        self.assertEqual("{{a}}x{{b}}{{c}}[[y]]{{d}}", code)
+        code.insert_before(code.get(2), "z")
+        self.assertEqual("{{a}}xz{{b}}{{c}}[[y]]{{d}}", code)
+        self.assertRaises(ValueError, code.insert_before, "{{r}}", "n",
+                          recursive=True)
+        self.assertRaises(ValueError, code.insert_before, "{{r}}", "n",
+                          recursive=False)
+
+        code2 = parse("{{a|{{b}}|{{c|d={{f}}}}}}")
+        code2.insert_before(code2.get(0).params[0].value.get(0), "x",
+                            recursive=True)
+        code2.insert_before("{{f}}", "y", recursive=True)
+        self.assertEqual("{{a|x{{b}}|{{c|d=y{{f}}}}}}", code2)
+        self.assertRaises(ValueError, code2.insert_before, "{{f}}", "y",
+                          recursive=False)
 
     def test_insert_after(self):
         """test Wikicode.insert_after()"""
-        pass
+        code = parse("{{a}}{{b}}{{c}}{{d}}")
+        code.insert_after("{{b}}", "x", recursive=True)
+        code.insert_after("{{d}}", "[[y]]", recursive=False)
+        self.assertEqual("{{a}}{{b}}x{{c}}{{d}}[[y]]", code)
+        code.insert_after(code.get(2), "z")
+        self.assertEqual("{{a}}{{b}}xz{{c}}{{d}}[[y]]", code)
+        self.assertRaises(ValueError, code.insert_after, "{{r}}", "n",
+                          recursive=True)
+        self.assertRaises(ValueError, code.insert_after, "{{r}}", "n",
+                          recursive=False)
+
+        code2 = parse("{{a|{{b}}|{{c|d={{f}}}}}}")
+        code2.insert_after(code2.get(0).params[0].value.get(0), "x",
+                           recursive=True)
+        code2.insert_after("{{f}}", "y", recursive=True)
+        self.assertEqual("{{a|{{b}}x|{{c|d={{f}}y}}}}", code2)
+        self.assertRaises(ValueError, code2.insert_after, "{{f}}", "y",
+                          recursive=False)
 
     def test_replace(self):
         """test Wikicode.replace()"""
-        pass
+        code = parse("{{a}}{{b}}{{c}}{{d}}")
+        code.replace("{{b}}", "x", recursive=True)
+        code.replace("{{d}}", "[[y]]", recursive=False)
+        self.assertEqual("{{a}}x{{c}}[[y]]", code)
+        code.replace(code.get(1), "z")
+        self.assertEqual("{{a}}z{{c}}[[y]]", code)
+        self.assertRaises(ValueError, code.replace, "{{r}}", "n",
+                          recursive=True)
+        self.assertRaises(ValueError, code.replace, "{{r}}", "n",
+                          recursive=False)
+
+        code2 = parse("{{a|{{b}}|{{c|d={{f}}}}}}")
+        code2.replace(code2.get(0).params[0].value.get(0), "x", recursive=True)
+        code2.replace("{{f}}", "y", recursive=True)
+        self.assertEqual("{{a|x|{{c|d=y}}}}", code2)
+        self.assertRaises(ValueError, code2.replace, "y", "z", recursive=False)
 
     def test_append(self):
         """test Wikicode.append()"""
-        pass
+        code = parse("Have a {{template}}")
+        code.append("{{{argument}}}")
+        self.assertEqual("Have a {{template}}{{{argument}}}", code)
+        self.assertIsInstance(code.get(2), Argument)
+        code.append(None)
+        self.assertEqual("Have a {{template}}{{{argument}}}", code)
+        code.append(Text(" foo"))
+        self.assertEqual("Have a {{template}}{{{argument}}} foo", code)
+        self.assertRaises(ValueError, code.append, slice(0, 1))
 
     def test_remove(self):
         """test Wikicode.remove()"""
-        pass
+        code = parse("{{a}}{{b}}{{c}}{{d}}")
+        code.remove("{{b}}", recursive=True)
+        code.remove(code.get(1), recursive=True)
+        self.assertEqual("{{a}}{{d}}", code)
+        self.assertRaises(ValueError, code.remove, "{{r}}", recursive=True)
+        self.assertRaises(ValueError, code.remove, "{{r}}", recursive=False)
+
+        code2 = parse("{{a|{{b}}|{{c|d={{f}}{{h}}}}}}")
+        code2.remove(code2.get(0).params[0].value.get(0), recursive=True)
+        code2.remove("{{f}}", recursive=True)
+        self.assertEqual("{{a||{{c|d={{h}}}}}}", code2)
+        self.assertRaises(ValueError, code2.remove, "{{h}}", recursive=False)
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""
