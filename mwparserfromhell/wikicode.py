@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 import re
 
-from .compat import maxsize, str
+from .compat import maxsize, py3k, str
 from .nodes import Heading, Node, Tag, Template, Text, Wikilink
 from .string_mixin import StringMixIn
 from .utils import parse_anything
@@ -291,46 +291,36 @@ class Wikicode(StringMixIn):
         *flags*. If *forcetype* is given, only nodes that are instances of this
         type are yielded.
         """
-        if recursive:
-            nodes = self._get_all_nodes(self)
-        else:
-            nodes = self.nodes
-        for node in nodes:
+        for node in (self._get_all_nodes(self) if recursive else self.nodes):
             if not forcetype or isinstance(node, forcetype):
                 if not matches or re.search(matches, str(node), flags):
                     yield node
 
-    def ifilter_links(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over wikilink nodes.
+    @classmethod
+    def _build_filter_methods(cls, meths):
+        """Given a dict of Node types, build corresponding i?filter shortcuts.
 
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Wikilink`.
+        The dict should be given as keys storing the method's base name paired
+        with values storing the corresponding :py:class:`~.Node` type. For
+        example, the dict may contain the pair ``("templates", Template)``,
+        which will produce the methods :py:meth:`ifilter_templates` and
+        :py:meth:`filter_templates`, which are shortcuts for
+        :py:meth:`ifilter(forcetype=Template) <ifilter>` and
+        :py:meth:`filter(forcetype=Template) <filter>`, respectively. These
+        shortcuts are added to the class itself, with an appropriate docstring.
         """
-        return self.ifilter(recursive, matches, flags, forcetype=Wikilink)
+        doc = """Iterate over {0}.
 
-    def ifilter_templates(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over template nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Template`.
+        This is equivalent to :py:meth:`{1}` with *forcetype* set to
+        :py:class:`~.{2}`.
         """
-        return self.filter(recursive, matches, flags, forcetype=Template)
-
-    def ifilter_text(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over text nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.nodes.Text`.
-        """
-        return self.filter(recursive, matches, flags, forcetype=Text)
-
-    def ifilter_tags(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over tag nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Tag`.
-        """
-        return self.ifilter(recursive, matches, flags, forcetype=Tag)
+        for name, forcetype in (meths.items() if py3k else meths.iteritems()):
+            ifil = lambda self, **kw: self.ifilter(forcetype=forcetype, **kw)
+            fil = lambda self, **kw: self.filter(forcetype=forcetype, **kw)
+            ifil.__doc__ = doc.format(name, "ifilter", forcetype)
+            fil.__doc__ = doc.format(name, "filter", forcetype)
+            setattr(cls, "ifilter_" + name, ifil)
+            setattr(cls, "filter_" + name, fil)
 
     def filter(self, recursive=False, matches=None, flags=FLAGS,
                forcetype=None):
@@ -339,38 +329,6 @@ class Wikicode(StringMixIn):
         This is equivalent to calling :py:func:`list` on :py:meth:`ifilter`.
         """
         return list(self.ifilter(recursive, matches, flags, forcetype))
-
-    def filter_links(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of wikilink nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_links`.
-        """
-        return list(self.ifilter_links(recursive, matches, flags))
-
-    def filter_templates(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of template nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_templates`.
-        """
-        return list(self.ifilter_templates(recursive, matches, flags))
-
-    def filter_text(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of text nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_text`.
-        """
-        return list(self.ifilter_text(recursive, matches, flags))
-
-    def filter_tags(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of tag nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_tags`.
-        """
-        return list(self.ifilter_tags(recursive, matches, flags))
 
     def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
                      include_headings=True):
@@ -470,3 +428,10 @@ class Wikicode(StringMixIn):
         """
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
+
+Wikicode._build_filter_methods({
+    "links": Wikilink,
+    "templates": Template,
+    "text": Text,
+    "tag": Tag
+    })
