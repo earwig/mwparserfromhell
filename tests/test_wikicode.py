@@ -21,6 +21,8 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+import re
+from types import GeneratorType
 import unittest
 
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
@@ -210,7 +212,67 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""
-        pass
+        def genlist(gen):
+            self.assertIsInstance(gen, GeneratorType)
+            return list(gen)
+        ifilter = lambda code: (lambda **kw: genlist(code.ifilter(**kw)))
+
+        code = parse("a{{b}}c[[d]]{{{e}}}{{f}}[[g]]")
+        for func in (code.filter, ifilter(code)):
+            self.assertEqual(["a", "{{b}}", "c", "[[d]]", "{{{e}}}", "{{f}}",
+                              "[[g]]"], func())
+            self.assertEqual(["{{{e}}}"], func(forcetype=Argument))
+            self.assertIs(code.get(4), func(forcetype=Argument)[0])
+            self.assertEqual(["a", "c"], func(forcetype=Text))
+            self.assertEqual([], func(forcetype=Heading))
+            self.assertRaises(TypeError, func, forcetype=True)
+
+        funcs = [
+            lambda name, **kw: getattr(code, "filter_" + name)(**kw),
+            lambda name, **kw: genlist(getattr(code, "ifilter_" + name)(**kw))
+        ]
+        for get_filter in funcs:
+            self.assertEqual(["{{{e}}}"], get_filter("arguments"))
+            self.assertIs(code.get(4), get_filter("arguments")[0])
+            self.assertEqual([], get_filter("comments"))
+            self.assertEqual([], get_filter("headings"))
+            self.assertEqual([], get_filter("html_entities"))
+            self.assertEqual([], get_filter("tags"))
+            self.assertEqual(["{{b}}", "{{f}}"], get_filter("templates"))
+            self.assertEqual(["a", "c"], get_filter("text"))
+            self.assertEqual(["[[d]]", "[[g]]"], get_filter("wikilinks"))
+
+        code2 = parse("{{a|{{b}}|{{c|d={{f}}{{h}}}}}}")
+        for func in (code2.filter, ifilter(code2)):
+            self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
+                             func(recursive=False, forcetype=Template))
+            self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
+                              "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
+                             func(recursive=True, forcetype=Template))
+
+        code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}")
+        for func in (code3.filter, ifilter(code3)):
+            self.assertEqual(["{{foobar}}", "{{FOO}}"], func(matches=r"foo"))
+            self.assertEqual(["{{foobar}}", "{{FOO}}"],
+                             func(matches=r"^{{foo.*?}}"))
+            self.assertEqual(["{{foobar}}"],
+                             func(matches=r"^{{foo.*?}}", flags=re.UNICODE))
+            self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
+            self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
+
+        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
+                         code2.filter_templates(recursive=False))
+        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
+                          "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
+                         code2.filter_templates(recursive=True))
+        self.assertEqual(["{{baz}}", "{{bz}}"],
+                         code3.filter_templates(matches=r"^{{b.*?z"))
+        self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z"))
+        self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z", flags=0))
+
+        self.assertRaises(TypeError, code.filter_templates, 100)
+        self.assertRaises(TypeError, code.filter_templates, a=42)
+        self.assertRaises(TypeError, code.filter_templates, forcetype=Template)
 
     def test_get_sections(self):
         """test Wikicode.get_sections()"""
@@ -223,7 +285,6 @@ class TestWikicode(TreeEqualityTestCase):
     def test_get_tree(self):
         """test Wikicode.get_tree()"""
         pass
-
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

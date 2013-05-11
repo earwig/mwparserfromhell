@@ -24,7 +24,8 @@ from __future__ import unicode_literals
 import re
 
 from .compat import maxsize, py3k, str
-from .nodes import Heading, Node, Tag, Template, Text, Wikilink
+from .nodes import (Argument, Comment, Heading, HTMLEntity, Node, Tag,
+                    Template, Text, Wikilink)
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -150,6 +151,36 @@ class Wikicode(StringMixIn):
         for node in code.nodes:
             node.__showtree__(write, get, mark)
         return lines
+
+    @classmethod
+    def _build_filter_methods(cls, **meths):
+        """Given Node types, build the corresponding i?filter shortcuts.
+
+        The should be given as keys storing the method's base name paired
+        with values storing the corresponding :py:class:`~.Node` type. For
+        example, the dict may contain the pair ``("templates", Template)``,
+        which will produce the methods :py:meth:`ifilter_templates` and
+        :py:meth:`filter_templates`, which are shortcuts for
+        :py:meth:`ifilter(forcetype=Template) <ifilter>` and
+        :py:meth:`filter(forcetype=Template) <filter>`, respectively. These
+        shortcuts are added to the class itself, with an appropriate docstring.
+        """
+        doc = """Iterate over {0}.
+
+        This is equivalent to :py:meth:`{1}` with *forcetype* set to
+        :py:class:`~.{2}`.
+        """
+        make_ifilter = lambda ftype: (lambda self, **kw:
+                                      self.ifilter(forcetype=ftype, **kw))
+        make_filter = lambda ftype: (lambda self, **kw:
+                                     self.filter(forcetype=ftype, **kw))
+        for name, ftype in (meths.items() if py3k else meths.iteritems()):
+            ifilter = make_ifilter(ftype)
+            filter = make_filter(ftype)
+            ifilter.__doc__ = doc.format(name, "ifilter", ftype.__name__)
+            filter.__doc__ = doc.format(name, "filter", ftype.__name__)
+            setattr(cls, "ifilter_" + name, ifilter)
+            setattr(cls, "filter_" + name, filter)
 
     @property
     def nodes(self):
@@ -296,32 +327,6 @@ class Wikicode(StringMixIn):
                 if not matches or re.search(matches, str(node), flags):
                     yield node
 
-    @classmethod
-    def _build_filter_methods(cls, meths):
-        """Given a dict of Node types, build corresponding i?filter shortcuts.
-
-        The dict should be given as keys storing the method's base name paired
-        with values storing the corresponding :py:class:`~.Node` type. For
-        example, the dict may contain the pair ``("templates", Template)``,
-        which will produce the methods :py:meth:`ifilter_templates` and
-        :py:meth:`filter_templates`, which are shortcuts for
-        :py:meth:`ifilter(forcetype=Template) <ifilter>` and
-        :py:meth:`filter(forcetype=Template) <filter>`, respectively. These
-        shortcuts are added to the class itself, with an appropriate docstring.
-        """
-        doc = """Iterate over {0}.
-
-        This is equivalent to :py:meth:`{1}` with *forcetype* set to
-        :py:class:`~.{2}`.
-        """
-        for name, forcetype in (meths.items() if py3k else meths.iteritems()):
-            ifil = lambda self, **kw: self.ifilter(forcetype=forcetype, **kw)
-            fil = lambda self, **kw: self.filter(forcetype=forcetype, **kw)
-            ifil.__doc__ = doc.format(name, "ifilter", forcetype)
-            fil.__doc__ = doc.format(name, "filter", forcetype)
-            setattr(cls, "ifilter_" + name, ifil)
-            setattr(cls, "filter_" + name, fil)
-
     def filter(self, recursive=False, matches=None, flags=FLAGS,
                forcetype=None):
         """Return a list of nodes within our list matching certain conditions.
@@ -429,9 +434,7 @@ class Wikicode(StringMixIn):
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
 
-Wikicode._build_filter_methods({
-    "links": Wikilink,
-    "templates": Template,
-    "text": Text,
-    "tag": Tag
-    })
+Wikicode._build_filter_methods(
+    arguments=Argument, comments=Comment, headings=Heading,
+    html_entities=HTMLEntity, tags=Tag, templates=Template, text=Text,
+    wikilinks=Wikilink)
