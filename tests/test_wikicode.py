@@ -26,11 +26,11 @@ from types import GeneratorType
 import unittest
 
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
-                                    Tag, Template, Text, Wikilink)
+                                    Node, Tag, Template, Text, Wikilink)
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
-from mwparserfromhell.compat import str
+from mwparserfromhell.compat import py3k, str
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
@@ -276,7 +276,37 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_get_sections(self):
         """test Wikicode.get_sections()"""
-        pass
+        page1 = ""
+        page2 = "==Heading=="
+        page3 = "===Heading===\nFoo bar baz\n====Gnidaeh====\n"
+        page4 = """
+This is a lead.
+== Section I ==
+Section I body. {{and a|template}}
+=== Section I.A ===
+Section I.A [[body]].
+=== Section I.B ===
+==== Section I.B.1 ====
+Section I.B.1 body.
+
+&bull;Some content.
+
+== Section II ==
+Section II body.
+
+== Section III ==
+=== Section III.A ===
+Text.
+===== Section III.A.1.a =====
+More text.
+==== Section III.A.2 ====
+Even more text.
+======= section III.A.2.a.i.1 =======
+An invalid section!"""
+
+        self.assertEqual([], parse(page1).get_sections())
+        self.assertEqual(["==Heading=="], parse(page2).get_sections())
+        self.assertEqual(["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"], parse(page2).get_sections())
 
     def test_strip_code(self):
         """test Wikicode.strip_code()"""
@@ -284,7 +314,13 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_get_tree(self):
         """test Wikicode.get_tree()"""
-        pass
+        # Since individual nodes have test cases for their __showtree___
+        # methods, and the docstring covers all possibilities, this doesn't
+        # need to test anything other than it:
+        code = parse("Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}")
+        expected = "Lorem ipsum \n{{\n\t  foo\n\t| 1\n\t= bar\n\t| 2\n\t= " + \
+                   "{{\n\t\t\tbaz\n\t  }}\n\t| spam\n\t= eggs\n}}"
+        self.assertEqual(expected.expandtabs(4), code.get_tree())
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

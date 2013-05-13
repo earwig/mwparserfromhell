@@ -335,34 +335,36 @@ class Wikicode(StringMixIn):
         """
         return list(self.ifilter(recursive, matches, flags, forcetype))
 
-    def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
-                     include_headings=True):
+    def get_sections(self, levels=None, matches=None, flags=FLAGS,
+                     include_lead=True, include_headings=True):
         """Return a list of sections within the page.
 
         Sections are returned as :py:class:`~.Wikicode` objects with a shared
         node list (implemented using :py:class:`~.SmartList`) so that changes
         to sections are reflected in the parent Wikicode object.
 
-        With *flat* as ``True``, each returned section contains all of its
-        subsections within the :py:class:`~.Wikicode`; otherwise, the returned
-        sections contain only the section up to the next heading, regardless of
-        its size. If *matches* is given, it should be a regex to be matched
-        against the titles of section headings; only sections whose headings
-        match the regex will be included. If *levels* is given, it should be a
-        iterable of integers; only sections whose heading levels are within it
-        will be returned. If *include_headings* is ``True``, the section's
-        beginning :py:class:`~.Heading` object will be included in returned
-        :py:class:`~.Wikicode` objects; otherwise, this is skipped.
+        Each section contains all of its subsections. If *levels* is given, it
+        should be a iterable of integers; only sections whose heading levels
+        are within it will be returned.If *matches* is given, it should be a
+        regex to be matched against the titles of section headings; only
+        sections whose headings match the regex will be included. *flags* can
+        be used to override the default regex flags (see :py:meth:`ifilter`) if
+        *matches* is used.
+
+        If *include_lead* is ``True``, the first, lead section (without a
+        heading) will be included in the list. If *include_headings* is
+        ``True``, the section's beginning :py:class:`~.Heading` object will be
+        included; otherwise, this is skipped.
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter(recursive=True, matches=matches, flags=flags,
-                                forcetype=Heading)
+        headings = self.filter_headings(recursive=True, matches=matches,
+                                        flags=flags)
         if levels:
             headings = [head for head in headings if head.level in levels]
 
         sections = []
-        buffers = [(maxsize, 0)]
+        buffers = [(maxsize, 0)] if include_lead else []
         i = 0
         while i < len(self.nodes):
             if self.nodes[i] in headings:
