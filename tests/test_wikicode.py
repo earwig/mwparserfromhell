@@ -305,8 +305,8 @@ Even more text.
 An invalid section!"""
 
         self.assertEqual([], parse(page1).get_sections())
-        self.assertEqual(["==Heading=="], parse(page2).get_sections())
-        self.assertEqual(["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"], parse(page2).get_sections())
+        self.assertEqual(["", "==Heading=="], parse(page2).get_sections())
+        self.assertEqual(["", "===Heading===\nFoo bar baz\n====Gnidaeh====\n", "====Gnidaeh====\n"], parse(page3).get_sections())
 
     def test_strip_code(self):
         """test Wikicode.strip_code()"""

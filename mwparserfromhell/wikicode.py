@@ -370,7 +370,7 @@ class Wikicode(StringMixIn):
             if self.nodes[i] in headings:
                 this = self.nodes[i].level
                 for (level, start) in buffers:
-                    if not flat or this <= level:
+                    if this <= level:
                         buffers.remove((level, start))
                         sections.append(Wikicode(self.nodes[start:i]))
                 buffers.append((this, i))
