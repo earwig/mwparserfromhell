@@ -434,7 +434,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
             if (Tokenizer_parse_template(self))
                 return -1;
             if (BAD_ROUTE) {
-                char text[MAX_BRACES];
+                char text[MAX_BRACES + 1];
                 RESET_ROUTE();
                 for (i = 0; i < braces; i++) text[i] = *"{";
                 text[braces] = *"";
