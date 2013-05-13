@@ -48,6 +48,7 @@ static const char* MARKERS[] = {
 #define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
+#define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
 static int route_state = 0;

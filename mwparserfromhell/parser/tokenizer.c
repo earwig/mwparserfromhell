@@ -23,6 +23,11 @@ SOFTWARE.
 
 #include "tokenizer.h"
 
+double log2(double n)
+{
+    return log(n) / log(2);
+}
+
 static PyObject*
 Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
@@ -52,8 +57,9 @@ Textbuffer_new(void)
 static void
 Tokenizer_dealloc(Tokenizer* self)
 {
-    Py_XDECREF(self->text);
     struct Stack *this = self->topstack, *next;
+    Py_XDECREF(self->text);
+
     while (this) {
         Py_DECREF(this->stack);
         Textbuffer_dealloc(this->textbuffer);
@@ -139,20 +145,21 @@ Textbuffer_render(struct Textbuffer* self)
 static int
 Tokenizer_push_textbuffer(Tokenizer* self)
 {
+    PyObject *text, *kwargs, *token;
     struct Textbuffer* buffer = self->topstack->textbuffer;
     if (buffer->size == 0 && !buffer->next)
         return 0;
-    PyObject* text = Textbuffer_render(buffer);
+    text = Textbuffer_render(buffer);
     if (!text)
         return -1;
-    PyObject* kwargs = PyDict_New();
+    kwargs = PyDict_New();
     if (!kwargs) {
         Py_DECREF(text);
         return -1;
     }
     PyDict_SetItemString(kwargs, "text", text);
     Py_DECREF(text);
-    PyObject* token = PyObject_Call(Text, NOARGS, kwargs);
+    token = PyObject_Call(Text, NOARGS, kwargs);
     Py_DECREF(kwargs);
     if (!token)
         return -1;
@@ -185,9 +192,10 @@ Tokenizer_delete_top_of_stack(Tokenizer* self)
 static PyObject*
 Tokenizer_pop(Tokenizer* self)
 {
+    PyObject* stack;
     if (Tokenizer_push_textbuffer(self))
         return NULL;
-    PyObject* stack = self->topstack->stack;
+    stack = self->topstack->stack;
     Py_INCREF(stack);
     Tokenizer_delete_top_of_stack(self);
     return stack;
@@ -200,11 +208,13 @@ Tokenizer_pop(Tokenizer* self)
 static PyObject*
 Tokenizer_pop_keeping_context(Tokenizer* self)
 {
+    PyObject* stack;
+    int context;
     if (Tokenizer_push_textbuffer(self))
         return NULL;
-    PyObject* stack = self->topstack->stack;
+    stack = self->topstack->stack;
     Py_INCREF(stack);
-    int context = self->topstack->context;
+    context = self->topstack->context;
     Tokenizer_delete_top_of_stack(self);
     self->topstack->context = context;
     return stack;
@@ -376,9 +386,10 @@ Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 static PyObject*
 Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 {
+    Py_ssize_t index;
     if (delta > self->head)
         return EMPTY;
-    Py_ssize_t index = self->head - delta;
+    index = self->head - delta;
     return PyList_GET_ITEM(self->text, index);
 }
 
@@ -392,7 +403,7 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
     PyObject *tokenlist;
 
     self->head += 2;
-    while (Tokenizer_READ(self, 0) == *"{") {
+    while (Tokenizer_READ(self, 0) == *"{" && braces < MAX_BRACES) {
         self->head++;
         braces++;
     }
@@ -423,8 +434,8 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
             if (Tokenizer_parse_template(self))
                 return -1;
             if (BAD_ROUTE) {
+                char text[MAX_BRACES];
                 RESET_ROUTE();
-                char text[braces + 1];
                 for (i = 0; i < braces; i++) text[i] = *"{";
                 text[braces] = *"";
                 if (Tokenizer_write_text_then_stack(self, text)) {
@@ -635,9 +646,10 @@ Tokenizer_handle_template_end(Tokenizer* self)
 static int
 Tokenizer_handle_argument_separator(Tokenizer* self)
 {
+    PyObject* token;
     self->topstack->context ^= LC_ARGUMENT_NAME;
     self->topstack->context |= LC_ARGUMENT_DEFAULT;
-    PyObject* token = PyObject_CallObject(ArgumentSeparator, NULL);
+    token = PyObject_CallObject(ArgumentSeparator, NULL);
     if (!token)
         return -1;
     if (Tokenizer_write(self, token)) {
@@ -654,8 +666,8 @@ Tokenizer_handle_argument_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_argument_end(Tokenizer* self)
 {
-    self->head += 2;
     PyObject* stack = Tokenizer_pop(self);
+    self->head += 2;
     return stack;
 }
 
@@ -716,9 +728,10 @@ Tokenizer_parse_wikilink(Tokenizer* self)
 static int
 Tokenizer_handle_wikilink_separator(Tokenizer* self)
 {
+    PyObject* token;
     self->topstack->context ^= LC_WIKILINK_TITLE;
     self->topstack->context |= LC_WIKILINK_TEXT;
-    PyObject* token = PyObject_CallObject(WikilinkSeparator, NULL);
+    token = PyObject_CallObject(WikilinkSeparator, NULL);
     if (!token)
         return -1;
     if (Tokenizer_write(self, token)) {
@@ -735,8 +748,8 @@ Tokenizer_handle_wikilink_separator(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_wikilink_end(Tokenizer* self)
 {
-    self->head += 1;
     PyObject* stack = Tokenizer_pop(self);
+    self->head += 1;
     return stack;
 }
 
@@ -1093,9 +1106,9 @@ Tokenizer_parse_comment(Tokenizer* self)
     self->head += 4;
     comment = Tokenizer_parse(self, LC_COMMENT);
     if (BAD_ROUTE) {
+        const char* text = "<!--";
         RESET_ROUTE();
         self->head = reset;
-        const char* text = "<!--";
         i = 0;
         while (1) {
             if (!text[i])
@@ -1359,10 +1372,10 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     PyObject *text, *temp;
 
     if (!PyArg_ParseTuple(args, "U", &text)) {
-        /* Failed to parse a Unicode object; try a string instead. */
-        PyErr_Clear();
         const char* encoded;
         Py_ssize_t size;
+        /* Failed to parse a Unicode object; try a string instead. */
+        PyErr_Clear();
         if (!PyArg_ParseTuple(args, "s#", &encoded, &size))
             return NULL;
         temp = PyUnicode_FromStringAndSize(encoded, size);
