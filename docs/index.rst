@@ -22,10 +22,16 @@ so you can install the latest release with ``pip install mwparserfromhell``
     cd mwparserfromhell
     python setup.py install
 
+If you get ``error: Unable to find vcvarsall.bat`` while installing, this is
+because Windows can't find the compiler for C extensions. Consult this
+`StackOverflow question`_ for help. You can also set ``ext_modules`` in
+``setup.py`` to an empty list to prevent the extension from building.
+
 You can run the comprehensive unit testing suite with ``python setup.py test``.
 
-.. _Python Package Index: http://pypi.python.org
-.. _get pip:              http://pypi.python.org/pypi/pip
+.. _Python Package Index:   http://pypi.python.org
+.. _get pip:                http://pypi.python.org/pypi/pip
+.. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 
 Contents
 --------
