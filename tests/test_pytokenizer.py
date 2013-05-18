@@ -34,10 +34,11 @@ class TestPyTokenizer(TokenizerTestCase, unittest.TestCase):
     def setUpClass(cls):
         cls.tokenizer = Tokenizer
 
-    def test_uses_c(self):
-        """make sure the Python tokenizer identifies as not using C"""
-        self.assertFalse(Tokenizer.USES_C)
-        self.assertFalse(Tokenizer().USES_C)
+    if not TokenizerTestCase.skip_others:
+        def test_uses_c(self):
+            """make sure the Python tokenizer identifies as not using C"""
+            self.assertFalse(Tokenizer.USES_C)
+            self.assertFalse(Tokenizer().USES_C)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,0 +1,4 @@
+name:   no_params
+label:  simplest type of argument
+input:  "{{{argument}}}"
+output: [ArgumentOpen(), Text(text="argument"), ArgumentClose()]

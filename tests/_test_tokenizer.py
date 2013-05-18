@@ -22,6 +22,7 @@
 
 from __future__ import print_function, unicode_literals
 from os import listdir, path
+import sys
 
 from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser import tokens
@@ -107,15 +108,25 @@ class TokenizerTestCase(object):
     @classmethod
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
-        directory = path.join(path.dirname(__file__), "tokenizer")
-        extension = ".mwtest"
-        for filename in listdir(directory):
-            if not filename.endswith(extension):
-                continue
-            with open(path.join(directory, filename), "r") as fp:
+        def load_file(filename):
+            with open(filename, "r") as fp:
                 text = fp.read()
                 if not py3k:
                     text = text.decode("utf8")
                 cls._load_tests(filename[:0-len(extension)], text)
+
+        directory = path.join(path.dirname(__file__), "tokenizer")
+        extension = ".mwtest"
+        if len(sys.argv) > 1:  # Read specific tests from command line
+            for name in sys.argv[1:]:
+                load_file(path.join(directory, name + extension))
+            sys.argv = [sys.argv[0]]  # So unittest doesn't try to load these
+            cls.skip_others = True
+        else:
+            for filename in listdir(directory):
+                if not filename.endswith(extension):
+                    continue
+                load_file(path.join(directory, filename))
+            cls.skip_others = False
 
 TokenizerTestCase.build()

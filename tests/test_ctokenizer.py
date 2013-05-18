@@ -38,10 +38,11 @@ class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     def setUpClass(cls):
         cls.tokenizer = CTokenizer
 
-    def test_uses_c(self):
-        """make sure the C tokenizer identifies as using a C extension"""
-        self.assertTrue(CTokenizer.USES_C)
-        self.assertTrue(CTokenizer().USES_C)
+    if not TokenizerTestCase.skip_others:
+        def test_uses_c(self):
+            """make sure the C tokenizer identifies as using a C extension"""
+            self.assertTrue(CTokenizer.USES_C)
+            self.assertTrue(CTokenizer().USES_C)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
