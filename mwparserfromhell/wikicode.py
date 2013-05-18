@@ -336,7 +336,7 @@ class Wikicode(StringMixIn):
         return list(self.ifilter(recursive, matches, flags, forcetype))
 
     def get_sections(self, levels=None, matches=None, flags=FLAGS,
-                     include_lead=True, include_headings=True):
+                     include_lead=None, include_headings=True):
         """Return a list of sections within the page.
 
         Sections are returned as :py:class:`~.Wikicode` objects with a shared
@@ -352,30 +352,39 @@ class Wikicode(StringMixIn):
         *matches* is used.
 
         If *include_lead* is ``True``, the first, lead section (without a
-        heading) will be included in the list. If *include_headings* is
-        ``True``, the section's beginning :py:class:`~.Heading` object will be
-        included; otherwise, this is skipped.
+        heading) will be included in the list; ``False`` will not include it;
+        the default will include it only if no specific *levels* were given. If
+        *include_headings* is ``True``, the section's beginning
+        :py:class:`~.Heading` object will be included; otherwise, this is
+        skipped.
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter_headings(recursive=True, matches=matches,
+        headings = self.filter_headings(recursive=True)
+        filtered = self.filter_headings(recursive=True, matches=matches,
                                         flags=flags)
         if levels:
-            headings = [head for head in headings if head.level in levels]
+            filtered = [head for head in filtered if head.level in levels]
 
+        if matches or include_lead is False or (not include_lead and levels):
+            buffers = []
+        else:
+            buffers = [(maxsize, 0)]
         sections = []
-        buffers = [(maxsize, 0)] if include_lead else []
         i = 0
         while i < len(self.nodes):
             if self.nodes[i] in headings:
                 this = self.nodes[i].level
                 for (level, start) in buffers:
                     if this <= level:
-                        buffers.remove((level, start))
                         sections.append(Wikicode(self.nodes[start:i]))
-                buffers.append((this, i))
-                if not include_headings:
-                    i += 1
+                buffers = [buf for buf in buffers if buf[0] < this]
+                if self.nodes[i] in filtered:
+                    if not include_headings:
+                        i += 1
+                        if i >= len(self.nodes):
+                            break
+                    buffers.append((this, i))
             i += 1
         for (level, start) in buffers:
             if start != i:
