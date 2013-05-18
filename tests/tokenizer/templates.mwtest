@@ -1,3 +1,17 @@
+name:   blank
+label:  template with no content
+input:  "{{}}"
+output: [TemplateOpen(), TemplateClose()]
+
+---
+
+name:   blank_with_params
+label:  template with no content, but pipes and equal signs
+input:  "{{||=|}}"
+output: [TemplateOpen(), TemplateParamSeparator(), TemplateParamSeparator(), TemplateParamEquals(), TemplateParamSeparator(), TemplateClose()]
+
+---
+
 name:   no_params
 label:  simplest type of template
 input:  "{{template}}"

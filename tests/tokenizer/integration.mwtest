@@ -1,0 +1,4 @@
+name:   empty
+label:  sanity check that parsing an empty string yields nothing
+input:  ""
+output: []
