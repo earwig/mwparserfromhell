@@ -338,13 +338,23 @@ class TestWikicode(TreeEqualityTestCase):
 
     def test_strip_code(self):
         """test Wikicode.strip_code()"""
-        pass
+        # Since individual nodes have test cases for their __strip__ methods,
+        # we're only going to do an integration test:
+        code = parse("Foo [[bar]]\n\n{{baz}}\n\n[[a|b]] &Sigma;")
+        self.assertEqual("Foo bar\n\nb Σ",
+                         code.strip_code(normalize=True, collapse=True))
+        self.assertEqual("Foo bar\n\n\n\nb Σ",
+                         code.strip_code(normalize=True, collapse=False))
+        self.assertEqual("Foo bar\n\nb &Sigma;",
+                         code.strip_code(normalize=False, collapse=True))
+        self.assertEqual("Foo bar\n\n\n\nb &Sigma;",
+                         code.strip_code(normalize=False, collapse=False))
 
     def test_get_tree(self):
         """test Wikicode.get_tree()"""
         # Since individual nodes have test cases for their __showtree___
-        # methods, and the docstring covers all possibilities, this doesn't
-        # need to test anything other than it:
+        # methods, and the docstring covers all possibilities for the output of
+        # __showtree__, we'll test it only:
         code = parse("Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}")
         expected = "Lorem ipsum \n{{\n\t  foo\n\t| 1\n\t= bar\n\t| 2\n\t= " + \
                    "{{\n\t\t\tbaz\n\t  }}\n\t| spam\n\t= eggs\n}}"
