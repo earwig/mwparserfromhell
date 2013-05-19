@@ -1,0 +1,144 @@
+name:   named
+label:  a basic named HTML entity
+input:  "&nbsp;"
+output: [HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_decimal
+label:  a basic decimal HTML entity
+input:  "&#107;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), Text(text="107"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_hexadecimal_x
+label:  a basic hexadecimal HTML entity, using 'x' as a signal
+input:  "&#x6B;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), HTMLEntityHex(char="x"), Text(text="6B"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_hexadecimal_X
+label:  a basic hexadecimal HTML entity, using 'X' as a signal
+input:  "&#X6B;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), HTMLEntityHex(char="X"), Text(text="6B"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_decimal_max
+label:  the maximum acceptable decimal numeric entity
+input:  "&#1114111;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), Text(text="1114111"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_hex_max
+label:  the maximum acceptable hexadecimal numeric entity
+input:  "&#x10FFFF;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), HTMLEntityHex(char="x"), Text(text="10FFFF"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_zeros
+label:  zeros accepted at the beginning of a numeric entity
+input:  "&#0000000107;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), Text(text="0000000107"), HTMLEntityEnd()]
+
+---
+
+name:   numeric_hex_zeros
+label:  zeros accepted at the beginning of a hex numeric entity
+input:  "&#x0000000107;"
+output: [HTMLEntityStart(), HTMLEntityNumeric(), HTMLEntityHex(char="x"), Text(text="0000000107"), HTMLEntityEnd()]
+
+---
+
+name:   invalid_named_too_long
+label:  a named entity that is too long
+input:  "&sigmaSigma;"
+output: [Text(text="&sigmaSigma;")]
+
+---
+
+name:   invalid_named_undefined
+label:  a named entity that doesn't exist
+input:  "&foobar;"
+output: [Text(text="&foobar;")]
+
+---
+
+name:   invalid_named_nonascii
+label:  a named entity with non-ASCII characters
+input:  "&sígma;"
+output: [Text(text="&sígma;")]
+
+---
+
+name:   invalid_numeric_out_of_range_1
+label:  a numeric entity that is out of range: < 1
+input:  "&#0;"
+output: [Text(text="&#0;")]
+
+---
+
+name:   invalid_numeric_out_of_range_2
+label:  a hex numeric entity that is out of range: < 1
+input:  "&#x0;"
+output: [Text(text="&#x0;")]
+
+---
+
+name:   invalid_numeric_out_of_range_3
+label:  a numeric entity that is out of range: > 0x10FFFF
+input:  "&#1114112;"
+output: [Text(text="&#1114112;")]
+
+---
+
+name:   invalid_numeric_out_of_range_4
+label:  a hex numeric entity that is out of range: > 0x10FFFF
+input:  "&#x0110000;"
+output: [Text(text="&#x0110000;")]
+
+---
+
+name:   invalid_partial_amp
+label:  invalid entities: just an ampersand
+input:  "&"
+output: [Text(text="&")]
+
+---
+
+name:   invalid_partial_amp_semicolon
+label:  invalid entities: an ampersand and semicolon
+input:  "&;"
+output: [Text(text="&;")]
+
+---
+
+name:   invalid_partial_amp_pound_semicolon
+label:  invalid entities: an ampersand, pound sign, and semicolon
+input:  "&#;"
+output: [Text(text="&#;")]
+
+---
+
+name:   invalid_partial_amp_pound_x_semicolon
+label:  invalid entities: an ampersand, pound sign, x, and semicolon
+input:  "&#x;"
+output: [Text(text="&#x;")]
+
+---
+
+name:   invalid_partial_amp_pound_numbers
+label:  invalid entities: an ampersand, pound sign, numbers
+input:  "&#123"
+output: [Text(text="&#123")]
+
+---
+
+name:   invalid_partial_amp_pound_x_semicolon
+label:  invalid entities: an ampersand, pound sign, and x
+input:  "&#x"
+output: [Text(text="&#x")]
