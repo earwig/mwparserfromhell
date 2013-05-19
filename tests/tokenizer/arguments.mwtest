@@ -61,6 +61,13 @@ output: [ArgumentOpen(), Text(text="foo}b}"), ArgumentSeparator(), Text(text="}a
 
 ---
 
+name:   nested
+label:  an argument nested within another argument
+input:  "{{{{{{foo}}}|{{{bar}}}}}}"
+output: [ArgumentOpen(), ArgumentOpen(), Text(text="foo"), ArgumentClose(), ArgumentSeparator(), ArgumentOpen(), Text(text="bar"), ArgumentClose(), ArgumentClose()]
+
+---
+
 name:   invalid_braces
 label:  invalid argument: multiple braces that are not part of a template or argument
 input:  "{{{foo{{[a}}}}}"
