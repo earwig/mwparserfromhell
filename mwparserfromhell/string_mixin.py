@@ -40,7 +40,6 @@ def inheritdoc(method):
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
 
-
 class StringMixIn(object):
     """Implement the interface for ``unicode``/``str`` in a dynamic manner.
 

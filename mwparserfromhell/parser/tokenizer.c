@@ -911,8 +911,8 @@ Tokenizer_really_parse_entity(Tokenizer* self)
 {
     PyObject *token, *kwargs, *textobj;
     Py_UNICODE this;
-    int numeric, hexadecimal, i, j, test;
-    char *valid, *text, *def;
+    int numeric, hexadecimal, i, j, zeroes, test;
+    char *valid, *text, *buffer, *def;
 
     #define FAIL_ROUTE_AND_EXIT() { \
         Tokenizer_fail_route(self); \
@@ -984,6 +984,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
         return -1;
     }
     i = 0;
+    zeroes = 0;
     while (1) {
         this = Tokenizer_READ(self, 0);
         if (this == *";") {
@@ -992,6 +993,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
             break;
         }
         if (i == 0 && this == *"0") {
+            zeroes++;
             self->head++;
             continue;
         }
@@ -1028,6 +1030,19 @@ Tokenizer_really_parse_entity(Tokenizer* self)
                 break;
             i++;
         }
+    }
+    if (zeroes) {
+        buffer = calloc(strlen(text) + zeroes + 1, sizeof(char));
+        if (!buffer) {
+            free(text);
+            PyErr_NoMemory();
+            return -1;
+        }
+        for (i = 0; i < zeroes; i++)
+            strcat(buffer, "0");
+        strcat(buffer, text);
+        free(text);
+        text = buffer;
     }
     textobj = PyUnicode_FromString(text);
     if (!textobj) {
