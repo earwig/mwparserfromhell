@@ -1,6 +1,6 @@
 /*
 Tokenizer Header File for MWParserFromHell
-Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -36,12 +36,19 @@ SOFTWARE.
 #define malloc PyObject_Malloc
 #define free   PyObject_Free
 
+#define DIGITS    "0123456789"
+#define HEXDIGITS "0123456789abcdefABCDEF"
+#define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
 static const char* MARKERS[] = {
     "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
     "!", "\n", ""};
 
 #define NUM_MARKERS 18
 #define TEXTBUFFER_BLOCKSIZE 1024
+#define MAX_DEPTH 40
+#define MAX_CYCLES 100000
+#define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
 static int route_state = 0;
@@ -118,6 +125,7 @@ static PyObject* TagCloseClose;
 
 #define LC_COMMENT              0x02000
 
+#define LC_SAFETY_CHECK         0xFC000
 #define LC_HAS_TEXT             0x04000
 #define LC_FAIL_ON_TEXT         0x08000
 #define LC_FAIL_NEXT            0x10000
@@ -160,12 +168,15 @@ typedef struct {
     Py_ssize_t head;        /* current position in text */
     Py_ssize_t length;      /* length of text */
     int global;             /* global context */
+    int depth;              /* stack recursion depth */
+    int cycles;             /* total number of stack recursions */
 } Tokenizer;
 
 
 /* Macros for accessing Tokenizer data: */
 
 #define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
+#define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
 
 
 /* Function prototypes: */
@@ -205,7 +216,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
 static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
-static void Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
+static int Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
 static PyObject* Tokenizer_parse(Tokenizer*, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 

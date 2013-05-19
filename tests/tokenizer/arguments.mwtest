@@ -1,0 +1,130 @@
+name:   blank
+label:  argument with no content
+input:  "{{{}}}"
+output: [ArgumentOpen(), ArgumentClose()]
+
+---
+
+name:   blank_with_default
+label:  argument with no content but a pipe
+input:  "{{{|}}}"
+output: [ArgumentOpen(), ArgumentSeparator(), ArgumentClose()]
+
+---
+
+name:   basic
+label:  simplest type of argument
+input:  "{{{argument}}}"
+output: [ArgumentOpen(), Text(text="argument"), ArgumentClose()]
+
+---
+
+name:   default
+label:  argument with a default value
+input:  "{{{foo|bar}}}"
+output: [ArgumentOpen(), Text(text="foo"), ArgumentSeparator(), Text(text="bar"), ArgumentClose()]
+
+---
+
+name:   blank_with_multiple_defaults
+label:  no content, multiple pipes
+input:  "{{{|||}}}"
+output: [ArgumentOpen(), ArgumentSeparator(), Text(text="||"), ArgumentClose()]
+
+---
+
+name:   multiple_defaults
+label:  multiple values separated by pipes
+input:  "{{{foo|bar|baz}}}"
+output: [ArgumentOpen(), Text(text="foo"), ArgumentSeparator(), Text(text="bar|baz"), ArgumentClose()]
+
+---
+
+name:   newline
+label:  newline as only content
+input:  "{{{\n}}}"
+output: [ArgumentOpen(), Text(text="\n"), ArgumentClose()]
+
+---
+
+name:   right_braces
+label:  multiple } scattered throughout text
+input:  "{{{foo}b}a}r}}}"
+output: [ArgumentOpen(), Text(text="foo}b}a}r"), ArgumentClose()]
+
+---
+
+name:   right_braces_default
+label:  multiple } scattered throughout text, with a default value
+input:  "{{{foo}b}|}a}r}}}"
+output: [ArgumentOpen(), Text(text="foo}b}"), ArgumentSeparator(), Text(text="}a}r"), ArgumentClose()]
+
+---
+
+name:   nested
+label:  an argument nested within another argument
+input:  "{{{{{{foo}}}|{{{bar}}}}}}"
+output: [ArgumentOpen(), ArgumentOpen(), Text(text="foo"), ArgumentClose(), ArgumentSeparator(), ArgumentOpen(), Text(text="bar"), ArgumentClose(), ArgumentClose()]
+
+---
+
+name:   invalid_braces
+label:  invalid argument: multiple braces that are not part of a template or argument
+input:  "{{{foo{{[a}}}}}"
+output: [Text(text="{{{foo{{[a}}}}}")]
+
+---
+
+name:   incomplete_open_only
+label:  incomplete arguments: just an open
+input:  "{{{"
+output: [Text(text="{{{")]
+
+---
+
+name:   incomplete_open_text
+label:  incomplete arguments: an open with some text
+input:  "{{{foo"
+output: [Text(text="{{{foo")]
+
+---
+
+name:   incomplete_open_text_pipe
+label:  incomplete arguments: an open, text, then a pipe
+input:  "{{{foo|"
+output: [Text(text="{{{foo|")]
+
+---
+
+name:   incomplete_open_pipe
+label:  incomplete arguments: an open, then a pipe
+input:  "{{{|"
+output: [Text(text="{{{|")]
+
+---
+
+name:   incomplete_open_pipe_text
+label:  incomplete arguments: an open, then a pipe, then text
+input:  "{{{|foo"
+output: [Text(text="{{{|foo")]
+
+---
+
+name:   incomplete_open_pipes_text
+label:  incomplete arguments: a pipe, then text then two pipes
+input:  "{{{|f||"
+output: [Text(text="{{{|f||")]
+
+---
+
+name:   incomplete_open_partial_close
+label:  incomplete arguments: an open, then one right brace
+input:  "{{{{}"
+output: [Text(text="{{{{}")]
+
+---
+
+name:   incomplete_preserve_previous
+label:  incomplete arguments: a valid argument followed by an invalid one
+input:  "{{{foo}}} {{{bar"
+output: [ArgumentOpen(), Text(text="foo"), ArgumentClose(), Text(text=" {{{bar")]

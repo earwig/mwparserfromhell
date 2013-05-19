@@ -1,0 +1,39 @@
+name:   blank
+label:  a blank comment
+input:  "<!---->"
+output: [CommentStart(), CommentEnd()]
+
+---
+
+name:   basic
+label:  a basic comment
+input:  "<!-- comment -->"
+output: [CommentStart(), Text(text=" comment "), CommentEnd()]
+
+---
+
+name:   tons_of_nonsense
+label:  a comment with tons of ignorable garbage in it
+input:  "<!-- foo{{bar}}[[basé\n\n]{}{}{}{}]{{{{{{haha{{--a>aa<!--aa -->"
+output: [CommentStart(), Text(text=" foo{{bar}}[[basé\n\n]{}{}{}{}]{{{{{{haha{{--a>aa<!--aa "), CommentEnd()]
+
+---
+
+name:   incomplete_blank
+label:  a comment that doesn't close
+input:  "<!--"
+output: [Text(text="<!--")]
+
+---
+
+name:   incomplete_text
+label:  a comment that doesn't close, with text
+input:  "<!-- foo"
+output: [Text(text="<!-- foo")]
+
+---
+
+name:   incomplete_partial_close
+label:  a comment that doesn't close, with a partial close
+input:  "<!-- foo --\x01>"
+output: [Text(text="<!-- foo --\x01>")]

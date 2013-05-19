@@ -1,0 +1,109 @@
+name:   level_1
+label:  a basic level-1 heading
+input:  "= Heading ="
+output: [HeadingStart(level=1), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_2
+label:  a basic level-2 heading
+input:  "== Heading =="
+output: [HeadingStart(level=2), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_3
+label:  a basic level-3 heading
+input:  "=== Heading ==="
+output: [HeadingStart(level=3), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_4
+label:  a basic level-4 heading
+input:  "==== Heading ===="
+output: [HeadingStart(level=4), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_5
+label:  a basic level-5 heading
+input:  "===== Heading ====="
+output: [HeadingStart(level=5), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_6
+label:  a basic level-6 heading
+input:  "====== Heading ======"
+output: [HeadingStart(level=6), Text(text=" Heading "), HeadingEnd()]
+
+---
+
+name:   level_7
+label:  a level-6 heading that pretends to be a level-7 heading
+input:  "======= Heading ======="
+output: [HeadingStart(level=6), Text(text="= Heading ="), HeadingEnd()]
+
+---
+
+name:   level_3_2
+label:  a level-2 heading that pretends to be a level-3 heading
+input:  "=== Heading =="
+output: [HeadingStart(level=2), Text(text="= Heading "), HeadingEnd()]
+
+---
+
+name:   level_4_6
+label:  a level-4 heading that pretends to be a level-6 heading
+input:  "==== Heading ======"
+output: [HeadingStart(level=4), Text(text=" Heading =="), HeadingEnd()]
+
+---
+
+name:   newline_before
+label:  a heading that starts after a newline
+input:  "This is some text.\n== Foobar ==\nbaz"
+output: [Text(text="This is some text.\n"), HeadingStart(level=2), Text(text=" Foobar "), HeadingEnd(), Text(text="\nbaz")]
+
+---
+
+name:   text_after
+label:  text on the same line after
+input:  "This is some text.\n== Foobar == baz"
+output: [Text(text="This is some text.\n"), HeadingStart(level=2), Text(text=" Foobar "), HeadingEnd(), Text(text=" baz")]
+
+---
+
+name:   invalid_text_before
+label:  invalid headings: text on the same line before
+input:  "This is some text. == Foobar ==\nbaz"
+output: [Text(text="This is some text. == Foobar ==\nbaz")]
+
+---
+
+name:   invalid_newline_middle
+label:  invalid headings: newline in the middle
+input:  "This is some text.\n== Foo\nbar =="
+output: [Text(text="This is some text.\n== Foo\nbar ==")]
+
+---
+
+name:   invalid_newline_end
+label:  invalid headings: newline in the middle
+input:  "This is some text.\n=== Foo\n==="
+output: [Text(text="This is some text.\n=== Foo\n===")]
+
+---
+
+name:   invalid_nesting
+label:  invalid headings: attempts at nesting
+input:  "== Foo === Bar === Baz =="
+output: [HeadingStart(level=2), Text(text=" Foo === Bar === Baz "), HeadingEnd()]
+
+---
+
+name:   incomplete
+label:  a heading that starts but doesn't finish
+input:  "Foobar. \n== Heading "
+output: [Text(text="Foobar. \n== Heading ")]

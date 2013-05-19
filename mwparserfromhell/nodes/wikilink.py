@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,6 +30,7 @@ __all__ = ["Wikilink"]
 
 class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
+
     def __init__(self, title, text=None):
         super(Wikilink, self).__init__()
         self._title = title
@@ -78,4 +79,7 @@ class Wikilink(Node):
 
     @text.setter
     def text(self, value):
-        self._text = parse_anything(value)
+        if value is None:
+            self._text = None
+        else:
+            self._text = parse_anything(value)

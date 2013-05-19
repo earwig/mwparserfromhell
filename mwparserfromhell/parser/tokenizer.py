@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,7 +23,6 @@
 from __future__ import unicode_literals
 from math import log
 import re
-import string
 
 from . import contexts
 from . import tokens
@@ -39,10 +38,13 @@ class BadRoute(Exception):
 
 class Tokenizer(object):
     """Creates a list of tokens from a string of wikicode."""
+    USES_C = False
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
                "/", "-", "!", "\n", END]
+    MAX_DEPTH = 40
+    MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
 
     def __init__(self):
@@ -50,6 +52,8 @@ class Tokenizer(object):
         self._head = 0
         self._stacks = []
         self._global = 0
+        self._depth = 0
+        self._cycles = 0
 
     @property
     def _stack(self):
@@ -77,6 +81,8 @@ class Tokenizer(object):
     def _push(self, context=0):
         """Add a new token stack, context, and textbuffer to the list."""
         self._stacks.append([[], context, []])
+        self._depth += 1
+        self._cycles += 1
 
     def _push_textbuffer(self):
         """Push the textbuffer onto the stack as a Text node and clear it."""
@@ -91,12 +97,17 @@ class Tokenizer(object):
         stack's context with the current stack's.
         """
         self._push_textbuffer()
+        self._depth -= 1
         if keep_context:
             context = self._context
             stack = self._stacks.pop()[0]
             self._context = context
             return stack
         return self._stacks.pop()[0]
+
+    def _can_recurse(self):
+        """Return whether or not our max recursion depth has been exceeded."""
+        return self._depth < self.MAX_DEPTH and self._cycles < self.MAX_CYCLES
 
     def _fail_route(self):
         """Fail the current tokenization route.
@@ -214,24 +225,9 @@ class Tokenizer(object):
         self._write_all(argument)
         self._write(tokens.ArgumentClose())
 
-    def _verify_safe(self, unsafes):
-        """Verify that there are no unsafe characters in the current stack.
-
-        The route will be failed if the name contains any element of *unsafes*
-        in it (not merely at the beginning or end). This is used when parsing a
-        template name or parameter key, which cannot contain newlines.
-        """
-        self._push_textbuffer()
-        if self._stack:
-            text = [tok for tok in self._stack if isinstance(tok, tokens.Text)]
-            text = "".join([token.text for token in text]).strip()
-            if text and any([unsafe in text for unsafe in unsafes]):
-                self._fail_route()
-
     def _handle_template_param(self):
         """Handle a template parameter at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
-            self._verify_safe(["\n", "{", "}", "[", "]"])
             self._context ^= contexts.TEMPLATE_NAME
         elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
@@ -243,11 +239,6 @@ class Tokenizer(object):
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        try:
-            self._verify_safe(["\n", "{{", "}}"])
-        except BadRoute:
-            self._pop()
-            raise
         self._write_all(self._pop(keep_context=True))
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
@@ -255,24 +246,19 @@ class Tokenizer(object):
 
     def _handle_template_end(self):
         """Handle the end of a template at the head of the string."""
-        if self._context & contexts.TEMPLATE_NAME:
-            self._verify_safe(["\n", "{", "}", "[", "]"])
-        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+        if self._context & contexts.TEMPLATE_PARAM_KEY:
             self._write_all(self._pop(keep_context=True))
         self._head += 1
         return self._pop()
 
     def _handle_argument_separator(self):
         """Handle the separator between an argument's name and default."""
-        self._verify_safe(["\n", "{{", "}}"])
         self._context ^= contexts.ARGUMENT_NAME
         self._context |= contexts.ARGUMENT_DEFAULT
         self._write(tokens.ArgumentSeparator())
 
     def _handle_argument_end(self):
         """Handle the end of an argument at the head of the string."""
-        if self._context & contexts.ARGUMENT_NAME:
-            self._verify_safe(["\n", "{{", "}}"])
         self._head += 2
         return self._pop()
 
@@ -292,15 +278,12 @@ class Tokenizer(object):
 
     def _handle_wikilink_separator(self):
         """Handle the separator between a wikilink's title and its text."""
-        self._verify_safe(["\n", "{", "}", "[", "]"])
         self._context ^= contexts.WIKILINK_TITLE
         self._context |= contexts.WIKILINK_TEXT
         self._write(tokens.WikilinkSeparator())
 
     def _handle_wikilink_end(self):
         """Handle the end of a wikilink at the head of the string."""
-        if self._context & contexts.WIKILINK_TITLE:
-            self._verify_safe(["\n", "{", "}", "[", "]"])
         self._head += 1
         return self._pop()
 
@@ -340,14 +323,14 @@ class Tokenizer(object):
         current = int(log(self._context / contexts.HEADING_LEVEL_1, 2)) + 1
         level = min(current, min(best, 6))
 
-        try:
+        try:  # Try to check for a heading closure after this one
             after, after_level = self._parse(self._context)
         except BadRoute:
             if level < best:
                 self._write_text("=" * (best - level))
             self._head = reset + best - 1
             return self._pop(), level
-        else:
+        else:  # Found another closure
             self._write_text("=" * best)
             self._write_all(after)
             return self._pop(), after_level
@@ -374,9 +357,9 @@ class Tokenizer(object):
         else:
             numeric = hexadecimal = False
 
-        valid = string.hexdigits if hexadecimal else string.digits
+        valid = "0123456789abcdefABCDEF" if hexadecimal else "0123456789"
         if not numeric and not hexadecimal:
-            valid += string.ascii_letters
+            valid += "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
         if not all([char in valid for char in this]):
             self._fail_route()
 
@@ -608,11 +591,73 @@ class Tokenizer(object):
         self._write(tokens.TagCloseClose())
         return self._pop()
 
+    def _verify_safe(self, this):
+        """Make sure we are not trying to write an invalid character."""
+        context = self._context
+        if context & contexts.FAIL_NEXT:
+            return False
+        if context & contexts.WIKILINK_TITLE:
+            if this == "]" or this == "{":
+                self._context |= contexts.FAIL_NEXT
+            elif this == "\n" or this == "[" or this == "}":
+                return False
+            return True
+        if context & contexts.TEMPLATE_NAME:
+            if this == "{" or this == "}" or this == "[":
+                self._context |= contexts.FAIL_NEXT
+                return True
+            if this == "]":
+                return False
+            if this == "|":
+                return True
+            if context & contexts.HAS_TEXT:
+                if context & contexts.FAIL_ON_TEXT:
+                    if this is self.END or not this.isspace():
+                        return False
+                else:
+                    if this == "\n":
+                        self._context |= contexts.FAIL_ON_TEXT
+            elif this is self.END or not this.isspace():
+                self._context |= contexts.HAS_TEXT
+            return True
+        else:
+            if context & contexts.FAIL_ON_EQUALS:
+                if this == "=":
+                    return False
+            elif context & contexts.FAIL_ON_LBRACE:
+                if this == "{" or (self._read(-1) == self._read(-2) == "{"):
+                    if context & contexts.TEMPLATE:
+                        self._context |= contexts.FAIL_ON_EQUALS
+                    else:
+                        self._context |= contexts.FAIL_NEXT
+                    return True
+                self._context ^= contexts.FAIL_ON_LBRACE
+            elif context & contexts.FAIL_ON_RBRACE:
+                if this == "}":
+                    if context & contexts.TEMPLATE:
+                        self._context |= contexts.FAIL_ON_EQUALS
+                    else:
+                        self._context |= contexts.FAIL_NEXT
+                    return True
+                self._context ^= contexts.FAIL_ON_RBRACE
+            elif this == "{":
+                self._context |= contexts.FAIL_ON_LBRACE
+            elif this == "}":
+                self._context |= contexts.FAIL_ON_RBRACE
+            return True
+
     def _parse(self, context=0):
         """Parse the wikicode string, using *context* for when to stop."""
         self._push(context)
         while True:
             this = self._read()
+            unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
+                      contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME)
+            if self._context & unsafe:
+                if not self._verify_safe(this):
+                    if self._context & contexts.TEMPLATE_PARAM_KEY:
+                        self._pop()
+                    self._fail_route()
             if this not in self.MARKERS:
                 if self._context & contexts.TAG_OPEN:
                     should_exit = self._handle_tag_chunk(this)
@@ -641,7 +686,12 @@ class Tokenizer(object):
                 else:
                     self._write_text(this)
             elif this == next == "{":
-                self._parse_template_or_argument()
+                if self._can_recurse():
+                    self._parse_template_or_argument()
+                    if self._context & contexts.FAIL_NEXT:
+                        self._context ^= contexts.FAIL_NEXT
+                else:
+                    self._write_text("{")
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
@@ -656,8 +706,10 @@ class Tokenizer(object):
                 else:
                     self._write_text("}")
             elif this == next == "[":
-                if not self._context & contexts.WIKILINK_TITLE:
+                if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
                     self._parse_wikilink()
+                    if self._context & contexts.FAIL_NEXT:
+                        self._context ^= contexts.FAIL_NEXT
                 else:
                     self._write_text("[")
             elif this == "|" and self._context & contexts.WIKILINK_TITLE:

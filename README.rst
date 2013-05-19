@@ -18,7 +18,13 @@ so you can install the latest release with ``pip install mwparserfromhell``
     cd mwparserfromhell
     python setup.py install
 
-You can run the comprehensive unit testing suite with ``python setup.py test``.
+If you get ``error: Unable to find vcvarsall.bat`` while installing, this is
+because Windows can't find the compiler for C extensions. Consult this
+`StackOverflow question`_ for help. You can also set ``ext_modules`` in
+``setup.py`` to an empty list to prevent the extension from building.
+
+You can run the comprehensive unit testing suite with
+``python setup.py test -q``.
 
 Usage
 -----
@@ -106,12 +112,12 @@ Integration
 ``Page`` objects have a ``parse`` method that essentially calls
 ``mwparserfromhell.parse()`` on ``page.get()``.
 
-If you're using PyWikipedia_, your code might look like this::
+If you're using Pywikipedia_, your code might look like this::
 
     import mwparserfromhell
     import wikipedia as pywikibot
     def parse(title):
-        site = pywikibot.get_site()
+        site = pywikibot.getSite()
         page = pywikibot.Page(site, title)
         text = page.get()
         return mwparserfromhell.parse(text)
@@ -124,16 +130,19 @@ following code (via the API_)::
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
     def parse(title):
-        raw = urllib.urlopen(API_URL, data).read()
+        data = {"action": "query", "prop": "revisions", "rvlimit": 1,
+                "rvprop": "content", "format": "json", "titles": title}
+        raw = urllib.urlopen(API_URL, urllib.urlencode(data)).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
 
-.. _MediaWiki:            http://mediawiki.org
-.. _Earwig:               http://en.wikipedia.org/wiki/User:The_Earwig
-.. _Σ:                    http://en.wikipedia.org/wiki/User:%CE%A3
-.. _Python Package Index: http://pypi.python.org
-.. _get pip:              http://pypi.python.org/pypi/pip
-.. _EarwigBot:            https://github.com/earwig/earwigbot
-.. _PyWikipedia:          http://pywikipediabot.sourceforge.net/
-.. _API:                  http://mediawiki.org/wiki/API
+.. _MediaWiki:              http://mediawiki.org
+.. _Earwig:                 http://en.wikipedia.org/wiki/User:The_Earwig
+.. _Σ:                      http://en.wikipedia.org/wiki/User:%CE%A3
+.. _Python Package Index:   http://pypi.python.org
+.. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
+.. _get pip:                http://pypi.python.org/pypi/pip
+.. _EarwigBot:              https://github.com/earwig/earwigbot
+.. _Pywikipedia:            https://www.mediawiki.org/wiki/Manual:Pywikipediabot
+.. _API:                    http://mediawiki.org/wiki/API

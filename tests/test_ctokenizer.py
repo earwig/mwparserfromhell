@@ -20,42 +20,29 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-This package contains the actual wikicode parser, split up into two main
-modules: the :py:mod:`~.tokenizer` and the :py:mod:`~.builder`. This module
-joins them together under one interface.
-"""
+from __future__ import unicode_literals
+import unittest
 
-from .builder import Builder
-from .tokenizer import Tokenizer
 try:
-    from ._tokenizer import CTokenizer
-    use_c = True
+    from mwparserfromhell.parser._tokenizer import CTokenizer
 except ImportError:
     CTokenizer = None
-    use_c = False
 
-__all__ = ["use_c", "Parser"]
+from ._test_tokenizer import TokenizerTestCase
 
-class Parser(object):
-    """Represents a parser for wikicode.
+@unittest.skipUnless(CTokenizer, "C tokenizer not available")
+class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
+    """Test cases for the C tokenizer."""
 
-    Actual parsing is a two-step process: first, the text is split up into a
-    series of tokens by the :py:class:`~.Tokenizer`, and then the tokens are
-    converted into trees of :py:class:`~.Wikicode` objects and
-    :py:class:`~.Node`\ s by the :py:class:`~.Builder`.
-    """
+    @classmethod
+    def setUpClass(cls):
+        cls.tokenizer = CTokenizer
 
-    def __init__(self, text):
-        self.text = text
-        if use_c and CTokenizer:
-            self._tokenizer = CTokenizer()
-        else:
-            self._tokenizer = Tokenizer()
-        self._builder = Builder()
+    if not TokenizerTestCase.skip_others:
+        def test_uses_c(self):
+            """make sure the C tokenizer identifies as using a C extension"""
+            self.assertTrue(CTokenizer.USES_C)
+            self.assertTrue(CTokenizer().USES_C)
 
-    def parse(self):
-        """Return a string as a parsed :py:class:`~.Wikicode` object tree."""
-        tokens = self._tokenizer.tokenize(self.text)
-        code = self._builder.build(tokens)
-        return code
+if __name__ == "__main__":
+    unittest.main(verbosity=2)
