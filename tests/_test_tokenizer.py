@@ -58,7 +58,7 @@ class TokenizerTestCase(object):
         return inner
 
     @classmethod
-    def _load_tests(cls, filename, text):
+    def _load_tests(cls, filename, name, text):
         """Load all tests in *text* from the file *filename*."""
         tests = text.split("\n---\n")
         counter = 1
@@ -100,7 +100,7 @@ class TokenizerTestCase(object):
                 print(error.format(data["name"], filename))
                 continue
             number = str(counter).zfill(digits)
-            fname = "test_{0}{1}_{2}".format(filename, number, data["name"])
+            fname = "test_{0}{1}_{2}".format(name, number, data["name"])
             meth = cls._build_test_method(fname, data)
             setattr(cls, fname, meth)
             counter += 1
@@ -113,12 +113,13 @@ class TokenizerTestCase(object):
                 text = fp.read()
                 if not py3k:
                     text = text.decode("utf8")
-                cls._load_tests(filename[:0-len(extension)], text)
+                name = path.split(filename)[1][:0-len(extension)]
+                cls._load_tests(filename, name, text)
 
         directory = path.join(path.dirname(__file__), "tokenizer")
         extension = ".mwtest"
-        if len(sys.argv) > 1:  # Read specific tests from command line
-            for name in sys.argv[1:]:
+        if len(sys.argv) > 2 and sys.argv[1] == "--use":
+            for name in sys.argv[2:]:
                 load_file(path.join(directory, name + extension))
             sys.argv = [sys.argv[0]]  # So unittest doesn't try to load these
             cls.skip_others = True

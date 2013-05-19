@@ -35,5 +35,5 @@ output: [Text(text="<!-- foo")]
 
 name:   incomplete_partial_close
 label:  a comment that doesn't close, with a partial close
-input:  "<!-- foo --\x00>"
-output: [Text(text="<!-- foo --\x00>")]
+input:  "<!-- foo --\x01>"
+output: [Text(text="<!-- foo --\x01>")]
