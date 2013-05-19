@@ -2,3 +2,10 @@ name:   empty
 label:  sanity check that parsing an empty string yields nothing
 input:  ""
 output: []
+
+---
+
+name:   rich_heading
+label:  a heading with templates/wikilinks in it
+input:  "== Head{{ing}} [[with]] {{{funky|{{stuf}}}}} =="
+output: [HeadingStart(level=2), Text(text=" Head"), TemplateOpen(), Text(text="ing"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="with"), WikilinkClose(), Text(text=" "), ArgumentOpen(), Text(text="funky"), ArgumentSeparator(), TemplateOpen(), Text(text="stuf"), TemplateClose(), ArgumentClose(), Text(text=" "), HeadingEnd()]
