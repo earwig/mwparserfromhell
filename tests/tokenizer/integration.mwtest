@@ -5,7 +5,42 @@ output: []
 
 ---
 
+name:   template_argument_mix
+label:  an ambiguous mix of templates and arguments
+input:  "{{{{{{{{foo}}}}}}}}{{{{{{{bar}}baz}}}buz}}"
+output: [TemplateOpen(), ArgumentOpen(), ArgumentOpen(), Text(text="foo"), ArgumentClose(), ArgumentClose(), TemplateClose(), TemplateOpen(), ArgumentOpen(), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz"), ArgumentClose(), Text(text="buz"), TemplateClose()]
+
+---
+
 name:   rich_heading
 label:  a heading with templates/wikilinks in it
 input:  "== Head{{ing}} [[with]] {{{funky|{{stuf}}}}} =="
 output: [HeadingStart(level=2), Text(text=" Head"), TemplateOpen(), Text(text="ing"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="with"), WikilinkClose(), Text(text=" "), ArgumentOpen(), Text(text="funky"), ArgumentSeparator(), TemplateOpen(), Text(text="stuf"), TemplateClose(), ArgumentClose(), Text(text=" "), HeadingEnd()]
+
+---
+
+name:   html_entity_with_template
+label:  a HTML entity with a template embedded inside
+input:  "&n{{bs}}p;"
+output: [Text(text="&n"), TemplateOpen(), Text(text="bs"), TemplateClose(), Text(text="p;")]
+
+---
+
+name:   html_entity_with_comment
+label:  a HTML entity with a comment embedded inside
+input:  "&n<!--foo-->bsp;"
+output: [Text(text="&n"), CommentStart(), Text(text="foo"), CommentEnd(), Text(text="bsp;")]
+
+---
+
+name:   wildcard
+label:  a wildcard assortment of various things
+input:  "{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
+output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamEquals(), Text(text="biz"), TemplateClose(), Text(text="buzz"), TemplateClose(), Text(text="usr"), TemplateParamSeparator(), TemplateOpen(), Text(text="bin"), TemplateClose(), TemplateClose()]
+
+---
+
+name:   wildcard_redux
+label:  an even wilder assortment of various things
+input:  "{{a|b|{{c|[[d]]{{{e}}}}}}}[[f|{{{g}}}<!--h-->]]{{i|j=&nbsp;}}"
+output: [TemplateOpen(), Text(text="a"), TemplateParamSeparator(), Text(text="b"), TemplateParamSeparator(), TemplateOpen(), Text(text="c"), TemplateParamSeparator(), WikilinkOpen(), Text(text="d"), WikilinkClose(), ArgumentOpen(), Text(text="e"), ArgumentClose(), TemplateClose(), TemplateClose(), WikilinkOpen(), Text(text="f"), WikilinkSeparator(), ArgumentOpen(), Text(text="g"), ArgumentClose(), CommentStart(), Text(text="h"), CommentEnd(), WikilinkClose(), TemplateOpen(), Text(text="i"), TemplateParamSeparator(), Text(text="j"), TemplateParamEquals(), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), TemplateClose()]
