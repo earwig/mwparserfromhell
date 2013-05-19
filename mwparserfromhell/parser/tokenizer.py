@@ -26,8 +26,8 @@ import re
 
 from . import contexts
 from . import tokens
-from ..nodes.tag import Tag
 from ..compat import htmlentities
+from ..nodes.tag import Tag
 
 __all__ = ["Tokenizer"]
 
@@ -431,7 +431,7 @@ class Tokenizer(object):
         try:
             return Tag.TRANSLATIONS[text]
         except KeyError:
-            self._fail_route()
+            return Tag.TAG_UNKNOWN
 
     def _actually_close_tag_opening(self):
         """Handle cleanup at the end of a opening tag.

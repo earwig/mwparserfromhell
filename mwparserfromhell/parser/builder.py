@@ -191,8 +191,8 @@ class Builder(object):
                 self._push()
             elif isinstance(token, tokens.TagAttrQuote):
                 quoted = True
-            elif isinstance(token, (tokens.TagAttrStart,
-                                    tokens.TagCloseOpen)):
+            elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
+                                    tokens.TagCloseSelfclose)):
                 self._tokens.append(token)
                 if name is not None:
                     return Attribute(name, self._pop(), quoted, padding)

@@ -79,8 +79,9 @@ class Tag(TagDefinitions, Node):
                 if attr.value:
                     for child in getter(attr.value):
                         yield attr.value, child
-        for child in getter(self.contents):
-            yield self.contents, child
+        if self.contents:
+            for child in getter(self.contents):
+                yield self.contents, child
 
     def __strip__(self, normalize, collapse):
         if self.type in self.TAGS_VISIBLE:
