@@ -170,7 +170,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_comment(self):
-        """Handle a case where a hidden comment is at the head of the tokens."""
+        """Handle a case where an HTML comment is at the head of the tokens."""
         self._push()
         while self._tokens:
             token = self._tokens.pop()

@@ -1,0 +1,88 @@
+name:   basic
+label:  a basic tag with an open and close
+input:  "<ref></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   basic_selfclosing
+label:  a basic self-closing tag
+input:  "<ref/>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   content
+label:  a tag with some content in the middle
+input:  "<ref>this is a reference</ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseOpen(padding=""), Text(text="this is a reference"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   padded_open
+label:  a tag with some padding in the open tag
+input:  "<ref ></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseOpen(padding=" "), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   padded_close
+label:  a tag with some padding in the close tag
+input:  "<ref></ref >"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+
+---
+
+name:   padded_selfclosing
+label:  a self-closing tag with padding
+input:  "<ref />"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagCloseSelfclose(padding=" ")]
+
+---
+
+name:   attribute
+label:  a tag with a single attribute
+input:  "<ref name></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_value
+label:  a tag with a single attribute with a value
+input:  "<ref name=foo></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_quoted
+label:  a tag with a single quoted attribute
+input:  "<ref name="foo"></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_hyphen
+label:  a tag with a single attribute, containing a hyphen
+input:  "<ref name=foo-bar></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_quoted_hyphen
+label:  a tag with a single quoted attribute, containing a hyphen
+input:  "<ref name="foo-bar"></ref>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_selfclosing
+label:  a self-closing tag with a single attribute
+input:  "<ref name/>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   attribute_selfclosing_value
+label:  a self-closing tag with a single attribute with a value
+input:  "<ref name=foo/>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
