@@ -452,6 +452,7 @@ class Tokenizer(object):
             self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
 
+        self._push_textbuffer()
         if isinstance(self._stack[-1], tokens.TagAttrStart):
             return self._stack.pop().padding
         return ""

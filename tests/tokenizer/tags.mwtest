@@ -86,3 +86,10 @@ name:   attribute_selfclosing_value
 label:  a self-closing tag with a single attribute with a value
 input:  "<ref name=foo/>"
 output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   attribute_selfclosing_value_quoted
+label:  a self-closing tag with a single quoted attribute
+input:  "<ref name="foo"/>"
+output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
