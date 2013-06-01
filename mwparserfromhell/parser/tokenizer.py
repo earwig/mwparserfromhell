@@ -476,7 +476,7 @@ class Tokenizer(object):
             self._context ^= contexts.TAG_OPEN_ATTR_IGNORE
             chunks.pop(0)
             return
-        elif self._context & contexts.TAG_OPEN_ATTR_QUOTED:
+        elif is_new and self._context & contexts.TAG_OPEN_ATTR_QUOTED:
             self._write_text(" ")  # Quoted chunks don't lose their spaces
 
         if chunks:
@@ -501,7 +501,7 @@ class Tokenizer(object):
         wikicode when we're inside of an opening tag and no :py:attr:`MARKERS`
         are present.
         """
-        if " " not in text:
+        if " " not in text and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
             self._write_text(text)
             return
         chunks = text.split(" ")
@@ -603,7 +603,7 @@ class Tokenizer(object):
             elif this == "\n" or this == "[" or this == "}":
                 return False
             return True
-        if context & contexts.TEMPLATE_NAME:
+        elif context & contexts.TEMPLATE_NAME:
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
                 return True
@@ -621,6 +621,8 @@ class Tokenizer(object):
             elif this is self.END or not this.isspace():
                 self._context |= contexts.HAS_TEXT
             return True
+        elif context & contexts.TAG_CLOSE:
+            return this != "<" and this != "\n"
         else:
             if context & contexts.FAIL_ON_EQUALS:
                 if this == "=":
@@ -653,10 +655,12 @@ class Tokenizer(object):
         while True:
             this = self._read()
             unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
-                      contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME)
+                      contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
+                      contexts.TAG_CLOSE)
             if self._context & unsafe:
                 if not self._verify_safe(this):
-                    if self._context & contexts.TEMPLATE_PARAM_KEY:
+                    double = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
+                    if self._context & double:
                         self._pop()
                     self._fail_route()
             if this not in self.MARKERS:
@@ -672,12 +676,12 @@ class Tokenizer(object):
                 fail = (
                     contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
                     contexts.HEADING | contexts.COMMENT | contexts.TAG)
-                double_fail = (
-                    contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE |
-                    contexts.TAG_OPEN_ATTR_QUOTED)
-                if self._context & double_fail:
-                    self._pop()
                 if self._context & fail:
+                    double_fail = (
+                        contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE |
+                        contexts.TAG_OPEN_ATTR_QUOTED)
+                    if self._context & double_fail:
+                        self._pop()
                     self._fail_route()
                 return self._pop()
             next = self._read(1)
@@ -738,10 +742,10 @@ class Tokenizer(object):
             elif this == "<" and next != "/" and (
                     not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
                 self._parse_tag()
-            elif self._context & (contexts.TAG_OPEN ^ contexts.TAG_OPEN_ATTR_QUOTED):
-                if this == "\n":
-                    if self._context & contexts.TAG_CLOSE:
-                        self._pop()
+            elif self._context & contexts.TAG_OPEN:
+                if self._context & contexts.TAG_OPEN_ATTR_QUOTED:
+                    self._handle_tag_chunk(this)
+                elif this == "\n":
                     self._fail_route()
                 elif this == ">":
                     self._handle_tag_close_open()
@@ -749,6 +753,8 @@ class Tokenizer(object):
                     return self._handle_tag_selfclose()
                 elif this == "=" and self._context & contexts.TAG_OPEN_ATTR_NAME:
                     self._handle_tag_attribute_body()
+                else:
+                    self._handle_tag_chunk(this)
             elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
                 self._handle_tag_open_close()
             elif this == ">" and self._context & contexts.TAG_CLOSE:
