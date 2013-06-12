@@ -93,3 +93,143 @@ name:   attribute_selfclosing_value_quoted
 label:  a self-closing tag with a single quoted attribute
 input:  "<ref name="foo"/>"
 output: [TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   incomplete_lbracket
+label:  incomplete tags: just a left bracket
+input:  "<"
+output: [Text(text="<")]
+
+---
+
+name:   incomplete_lbracket_junk
+label:  incomplete tags: just a left bracket, surrounded by stuff
+input:  "foo<bar"
+output: [Text(text="foo<bar")]
+
+---
+
+name:   incomplete_unclosed_open
+label:  incomplete tags: an unclosed open tag
+input:  "junk <ref"
+output: [Text(text="junk <ref")]
+
+---
+
+name:   incomplete_unclosed_open_space
+label:  incomplete tags: an unclosed open tag, space
+input:  "junk <ref "
+output: [Text(text="junk <ref ")]
+
+---
+
+name:   incomplete_unclosed_open_unnamed_attr
+label:  incomplete tags: an unclosed open tag, unnamed attribute
+input:  "junk <ref name"
+output: [Text(text="junk <ref name")]
+
+---
+
+name:   incomplete_unclosed_open_attr_equals
+label:  incomplete tags: an unclosed open tag, attribute, equal sign
+input:  "junk <ref name="
+output: [Text(text="junk <ref name=")]
+
+---
+
+name:   incomplete_unclosed_open_attr_equals_quoted
+label:  incomplete tags: an unclosed open tag, attribute, equal sign, quote
+input:  "junk <ref name=""
+output: [Text(text="junk <ref name=\"")]
+
+---
+
+name:   incomplete_unclosed_open_attr
+label:  incomplete tags: an unclosed open tag, attribute with a key/value
+input:  "junk <ref name=foo"
+output: [Text(text="junk <ref name=foo")]
+
+---
+
+name:   incomplete_unclosed_open_attr_quoted
+label:  incomplete tags: an unclosed open tag, attribute with a key/value, quoted
+input:  "junk <ref name="foo""
+output: [Text(text="junk <ref name=\"foo\"")]
+
+---
+
+name:   incomplete_open
+label:  incomplete tags: an open tag
+input:  "junk <ref>"
+output: [Text(text="junk <ref>")]
+
+---
+
+name:   incomplete_open_unnamed_attr
+label:  incomplete tags: an open tag, unnamed attribute
+input:  "junk <ref name>"
+output: [Text(text="junk <ref name>")]
+
+---
+
+name:   incomplete_open_attr_equals
+label:  incomplete tags: an open tag, attribute, equal sign
+input:  "junk <ref name=>"
+output: [Text(text="junk <ref name=>")]
+
+---
+
+name:   incomplete_open_attr
+label:  incomplete tags: an open tag, attribute with a key/value
+input:  "junk <ref name=foo>"
+output: [Text(text="junk <ref name=foo>")]
+
+---
+
+name:   incomplete_open_attr_quoted
+label:  incomplete tags: an open tag, attribute with a key/value, quoted
+input:  "junk <ref name="foo">"
+output: [Text(text="junk <ref name=\"foo\">")]
+
+---
+
+name:   incomplete_open_text
+label:  incomplete tags: an open tag, text
+input:  "junk <ref>foo"
+output: [Text(text="junk <ref>foo")]
+
+---
+
+name:   incomplete_open_attr_text
+label:  incomplete tags: an open tag, attribute with a key/value, text
+input:  "junk <ref name=foo>bar"
+output: [Text(text="junk <ref name=foo>bar")]
+
+---
+
+name:   incomplete_open_text_lbracket
+label:  incomplete tags: an open tag, text, left open bracket
+input:  "junk <ref>bar<"
+output: [Text(text="junk <ref>bar<")]
+
+---
+
+name:   incomplete_open_text_lbracket_slash
+label:  incomplete tags: an open tag, text, left bracket, slash
+input:  "junk <ref>bar</"
+output: [Text(text="junk <ref>bar</")]
+
+---
+
+name:   incomplete_open_text_unclosed_close
+label:  incomplete tags: an open tag, text, unclosed close
+input:  "junk <ref>bar</ref"
+output: [Text(text="junk <ref>bar</ref")]
+
+---
+
+name:   incomplete_open_text_wrong_close
+label:  incomplete tags: an open tag, text, wrong close
+input:  "junk <ref>bar</span>"
+output: [Text(text="junk <ref>bar</span>")]

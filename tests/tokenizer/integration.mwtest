@@ -33,6 +33,13 @@ output: [Text(text="&n"), CommentStart(), Text(text="foo"), CommentEnd(), Text(t
 
 ---
 
+name:   rich_tags
+label:  a HTML tag with tons of other things in it
+input:  "{{dubious claim}}<ref name={{abc}}  foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}} mno="{{p}} [[q]] {{r}}">[[Source]]</ref>"
+output: [TemplateOpen(), Text(text="dubious claim"), TemplateClose(), TagOpenOpen(showtag=True, type=101), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TemplateOpen(), Text(text="abc"), TemplateClose(), TagAttrStart(padding=" "), Text(text="foo"), TagAttrEquals(), TagAttrQuote(), Text(text="bar "), TemplateOpen(), Text(text="baz"), TemplateClose(), TagAttrStart(padding=""), Text(text="abc"), TagAttrEquals(), TemplateOpen(), Text(text="de"), TemplateClose(), Text(text="f"), TagAttrStart(padding=""), Text(text="ghi"), TagAttrEquals(), Text(text="j"), TemplateOpen(), Text(text="k"), TemplateClose(), TemplateOpen(), Text(text="l"), TemplateClose(), TagAttrStart(padding=""), Text(text="mno"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="p"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="q"), WikilinkClose(), Text(text=" "), TemplateOpen(), Text(text="r"), TemplateClose(), TagOpenClose(), WikilinkOpen(), Text(text="Source"), WikilinkClose(), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
 name:   wildcard
 label:  a wildcard assortment of various things
 input:  "{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
