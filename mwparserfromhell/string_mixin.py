@@ -253,12 +253,12 @@ class StringMixIn(object):
     if py3k:
         @staticmethod
         @inheritdoc
-        def maketrans(self, x, y=None, z=None):
+        def maketrans(x, y=None, z=None):
             if z is None:
                 if y is None:
-                    return self.__unicode__.maketrans(x)
-                return self.__unicode__.maketrans(x, y)
-            return self.__unicode__.maketrans(x, y, z)
+                    return str.maketrans(x)
+                return str.maketrans(x, y)
+            return str.maketrans(x, y, z)
 
     @inheritdoc
     def partition(self, sep):
