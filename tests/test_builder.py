@@ -190,11 +190,6 @@ class TestBuilder(TreeEqualityTestCase):
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
 
-    @unittest.skip("holding this until feature/html_tags is ready")
-    def test_tag(self):
-        """tests for building Tag nodes"""
-        pass
-
     def test_integration(self):
         """a test for building a combination of templates together"""
         # {{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}
