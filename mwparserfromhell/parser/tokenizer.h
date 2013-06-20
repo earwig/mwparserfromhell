@@ -181,6 +181,7 @@ typedef struct {
 
 /* Function prototypes: */
 
+static int heading_level_from_context(int);
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static struct Textbuffer* Textbuffer_new(void);
 static void Tokenizer_dealloc(Tokenizer*);
