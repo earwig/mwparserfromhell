@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,8 +23,9 @@
 from __future__ import unicode_literals
 import re
 
-from .compat import maxsize, str
-from .nodes import Heading, Node, Tag, Template, Text, Wikilink
+from .compat import maxsize, py3k, str
+from .nodes import (Argument, Comment, Heading, HTMLEntity, Node, Tag,
+                    Template, Text, Wikilink)
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -68,7 +69,7 @@ class Wikicode(StringMixIn):
         Raises ``ValueError`` if *obj* is not within *node*.
         """
         for context, child in node.__iternodes__(self._get_all_nodes):
-            if child is obj:
+            if self._is_equivalent(obj, child):
                 return context
         raise ValueError(obj)
 
@@ -88,13 +89,7 @@ class Wikicode(StringMixIn):
         If *obj* is a ``Node``, the function will test whether they are the
         same object, otherwise it will compare them with ``==``.
         """
-        if isinstance(obj, Node):
-            if node is obj:
-                return True
-        else:
-            if node == obj:
-                return True
-        return False
+        return (node is obj) if isinstance(obj, Node) else (node == obj)
 
     def _contains(self, nodes, obj):
         """Return ``True`` if *obj* is inside of *nodes*, else ``False``.
@@ -157,6 +152,36 @@ class Wikicode(StringMixIn):
             node.__showtree__(write, get, mark)
         return lines
 
+    @classmethod
+    def _build_filter_methods(cls, **meths):
+        """Given Node types, build the corresponding i?filter shortcuts.
+
+        The should be given as keys storing the method's base name paired
+        with values storing the corresponding :py:class:`~.Node` type. For
+        example, the dict may contain the pair ``("templates", Template)``,
+        which will produce the methods :py:meth:`ifilter_templates` and
+        :py:meth:`filter_templates`, which are shortcuts for
+        :py:meth:`ifilter(forcetype=Template) <ifilter>` and
+        :py:meth:`filter(forcetype=Template) <filter>`, respectively. These
+        shortcuts are added to the class itself, with an appropriate docstring.
+        """
+        doc = """Iterate over {0}.
+
+        This is equivalent to :py:meth:`{1}` with *forcetype* set to
+        :py:class:`~{2.__module__}.{2.__name__}`.
+        """
+        make_ifilter = lambda ftype: (lambda self, **kw:
+                                      self.ifilter(forcetype=ftype, **kw))
+        make_filter = lambda ftype: (lambda self, **kw:
+                                     self.filter(forcetype=ftype, **kw))
+        for name, ftype in (meths.items() if py3k else meths.iteritems()):
+            ifilter = make_ifilter(ftype)
+            filter = make_filter(ftype)
+            ifilter.__doc__ = doc.format(name, "ifilter", ftype)
+            filter.__doc__ = doc.format(name, "filter", ftype)
+            setattr(cls, "ifilter_" + name, ifilter)
+            setattr(cls, "filter_" + name, filter)
+
     @property
     def nodes(self):
         """A list of :py:class:`~.Node` objects.
@@ -168,6 +193,8 @@ class Wikicode(StringMixIn):
 
     @nodes.setter
     def nodes(self, value):
+        if not isinstance(value, list):
+            value = parse_anything(value).nodes
         self._nodes = value
 
     def get(self, index):
@@ -188,9 +215,10 @@ class Wikicode(StringMixIn):
             raise ValueError("Cannot coerce multiple nodes into one index")
         if index >= len(self.nodes) or -1 * index > len(self.nodes):
             raise IndexError("List assignment index out of range")
-        self.nodes.pop(index)
         if nodes:
             self.nodes[index] = nodes[0]
+        else:
+            self.nodes.pop(index)
 
     def index(self, obj, recursive=False):
         """Return the index of *obj* in the list of nodes.
@@ -294,46 +322,10 @@ class Wikicode(StringMixIn):
         *flags*. If *forcetype* is given, only nodes that are instances of this
         type are yielded.
         """
-        if recursive:
-            nodes = self._get_all_nodes(self)
-        else:
-            nodes = self.nodes
-        for node in nodes:
+        for node in (self._get_all_nodes(self) if recursive else self.nodes):
             if not forcetype or isinstance(node, forcetype):
                 if not matches or re.search(matches, str(node), flags):
                     yield node
-
-    def ifilter_links(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over wikilink nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Wikilink`.
-        """
-        return self.ifilter(recursive, matches, flags, forcetype=Wikilink)
-
-    def ifilter_templates(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over template nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Template`.
-        """
-        return self.filter(recursive, matches, flags, forcetype=Template)
-
-    def ifilter_text(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over text nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.nodes.Text`.
-        """
-        return self.filter(recursive, matches, flags, forcetype=Text)
-
-    def ifilter_tags(self, recursive=False, matches=None, flags=FLAGS):
-        """Iterate over tag nodes.
-
-        This is equivalent to :py:meth:`ifilter` with *forcetype* set to
-        :py:class:`~.Tag`.
-        """
-        return self.ifilter(recursive, matches, flags, forcetype=Tag)
 
     def filter(self, recursive=False, matches=None, flags=FLAGS,
                forcetype=None):
@@ -343,77 +335,56 @@ class Wikicode(StringMixIn):
         """
         return list(self.ifilter(recursive, matches, flags, forcetype))
 
-    def filter_links(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of wikilink nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_links`.
-        """
-        return list(self.ifilter_links(recursive, matches, flags))
-
-    def filter_templates(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of template nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_templates`.
-        """
-        return list(self.ifilter_templates(recursive, matches, flags))
-
-    def filter_text(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of text nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_text`.
-        """
-        return list(self.ifilter_text(recursive, matches, flags))
-
-    def filter_tags(self, recursive=False, matches=None, flags=FLAGS):
-        """Return a list of tag nodes.
-
-        This is equivalent to calling :py:func:`list` on
-        :py:meth:`ifilter_tags`.
-        """
-        return list(self.ifilter_tags(recursive, matches, flags))
-
-    def get_sections(self, flat=True, matches=None, levels=None, flags=FLAGS,
-                     include_headings=True):
+    def get_sections(self, levels=None, matches=None, flags=FLAGS,
+                     include_lead=None, include_headings=True):
         """Return a list of sections within the page.
 
         Sections are returned as :py:class:`~.Wikicode` objects with a shared
         node list (implemented using :py:class:`~.SmartList`) so that changes
         to sections are reflected in the parent Wikicode object.
 
-        With *flat* as ``True``, each returned section contains all of its
-        subsections within the :py:class:`~.Wikicode`; otherwise, the returned
-        sections contain only the section up to the next heading, regardless of
-        its size. If *matches* is given, it should be a regex to matched
-        against the titles of section headings; only sections whose headings
-        match the regex will be included. If *levels* is given, it should be a =
-        list of integers; only sections whose heading levels are within the
-        list will be returned. If *include_headings* is ``True``, the section's
-        literal :py:class:`~.Heading` object will be included in returned
-        :py:class:`~.Wikicode` objects; otherwise, this is skipped.
+        Each section contains all of its subsections. If *levels* is given, it
+        should be a iterable of integers; only sections whose heading levels
+        are within it will be returned.If *matches* is given, it should be a
+        regex to be matched against the titles of section headings; only
+        sections whose headings match the regex will be included. *flags* can
+        be used to override the default regex flags (see :py:meth:`ifilter`) if
+        *matches* is used.
+
+        If *include_lead* is ``True``, the first, lead section (without a
+        heading) will be included in the list; ``False`` will not include it;
+        the default will include it only if no specific *levels* were given. If
+        *include_headings* is ``True``, the section's beginning
+        :py:class:`~.Heading` object will be included; otherwise, this is
+        skipped.
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter(recursive=True, matches=matches, flags=flags,
-                                forcetype=Heading)
+        headings = self.filter_headings(recursive=True)
+        filtered = self.filter_headings(recursive=True, matches=matches,
+                                        flags=flags)
         if levels:
-            headings = [head for head in headings if head.level in levels]
+            filtered = [head for head in filtered if head.level in levels]
 
+        if matches or include_lead is False or (not include_lead and levels):
+            buffers = []
+        else:
+            buffers = [(maxsize, 0)]
         sections = []
-        buffers = [[maxsize, 0]]
         i = 0
         while i < len(self.nodes):
             if self.nodes[i] in headings:
                 this = self.nodes[i].level
                 for (level, start) in buffers:
-                    if not flat or this <= level:
-                        buffers.remove([level, start])
+                    if this <= level:
                         sections.append(Wikicode(self.nodes[start:i]))
-                buffers.append([this, i])
-                if not include_headings:
-                    i += 1
+                buffers = [buf for buf in buffers if buf[0] < this]
+                if self.nodes[i] in filtered:
+                    if not include_headings:
+                        i += 1
+                        if i >= len(self.nodes):
+                            break
+                    buffers.append((this, i))
             i += 1
         for (level, start) in buffers:
             if start != i:
@@ -473,3 +444,8 @@ class Wikicode(StringMixIn):
         """
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
+
+Wikicode._build_filter_methods(
+    arguments=Argument, comments=Comment, headings=Heading,
+    html_entities=HTMLEntity, tags=Tag, templates=Template, text=Text,
+    wikilinks=Wikilink)

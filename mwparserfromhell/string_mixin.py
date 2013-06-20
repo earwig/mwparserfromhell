@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,6 @@ def inheritdoc(method):
     """
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
-
 
 class StringMixIn(object):
     """Implement the interface for ``unicode``/``str`` in a dynamic manner.
@@ -114,6 +113,9 @@ class StringMixIn(object):
     def __getitem__(self, key):
         return self.__unicode__()[key]
 
+    def __reversed__(self):
+        return reversed(self.__unicode__())
+
     def __contains__(self, item):
         if isinstance(item, StringMixIn):
             return str(item) in self.__unicode__()
@@ -123,22 +125,39 @@ class StringMixIn(object):
     def capitalize(self):
         return self.__unicode__().capitalize()
 
+    if py3k:
+        @inheritdoc
+        def casefold(self):
+            return self.__unicode__().casefold()
+
     @inheritdoc
     def center(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().center(width)
         return self.__unicode__().center(width, fillchar)
 
     @inheritdoc
-    def count(self, sub=None, start=None, end=None):
+    def count(self, sub, start=None, end=None):
         return self.__unicode__().count(sub, start, end)
 
     if not py3k:
         @inheritdoc
         def decode(self, encoding=None, errors=None):
-            return self.__unicode__().decode(encoding, errors)
+            kwargs = {}
+            if encoding is not None:
+                kwargs["encoding"] = encoding
+            if errors is not None:
+                kwargs["errors"] = errors
+            return self.__unicode__().decode(**kwargs)
 
     @inheritdoc
     def encode(self, encoding=None, errors=None):
-        return self.__unicode__().encode(encoding, errors)
+        kwargs = {}
+        if encoding is not None:
+            kwargs["encoding"] = encoding
+        if errors is not None:
+            kwargs["errors"] = errors
+        return self.__unicode__().encode(**kwargs)
 
     @inheritdoc
     def endswith(self, prefix, start=None, end=None):
@@ -146,18 +165,25 @@ class StringMixIn(object):
 
     @inheritdoc
     def expandtabs(self, tabsize=None):
+        if tabsize is None:
+            return self.__unicode__().expandtabs()
         return self.__unicode__().expandtabs(tabsize)
 
     @inheritdoc
-    def find(self, sub=None, start=None, end=None):
+    def find(self, sub, start=None, end=None):
         return self.__unicode__().find(sub, start, end)
 
     @inheritdoc
     def format(self, *args, **kwargs):
         return self.__unicode__().format(*args, **kwargs)
 
+    if py3k:
+        @inheritdoc
+        def format_map(self, mapping):
+            return self.__unicode__().format_map(mapping)
+
     @inheritdoc
-    def index(self, sub=None, start=None, end=None):
+    def index(self, sub, start=None, end=None):
         return self.__unicode__().index(sub, start, end)
 
     @inheritdoc
@@ -176,6 +202,11 @@ class StringMixIn(object):
     def isdigit(self):
         return self.__unicode__().isdigit()
 
+    if py3k:
+        @inheritdoc
+        def isidentifier(self):
+            return self.__unicode__().isidentifier()
+
     @inheritdoc
     def islower(self):
         return self.__unicode__().islower()
@@ -183,6 +214,11 @@ class StringMixIn(object):
     @inheritdoc
     def isnumeric(self):
         return self.__unicode__().isnumeric()
+
+    if py3k:
+        @inheritdoc
+        def isprintable(self):
+            return self.__unicode__().isprintable()
 
     @inheritdoc
     def isspace(self):
@@ -202,6 +238,8 @@ class StringMixIn(object):
 
     @inheritdoc
     def ljust(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().ljust(width)
         return self.__unicode__().ljust(width, fillchar)
 
     @inheritdoc
@@ -212,44 +250,88 @@ class StringMixIn(object):
     def lstrip(self, chars=None):
         return self.__unicode__().lstrip(chars)
 
+    if py3k:
+        @staticmethod
+        @inheritdoc
+        def maketrans(x, y=None, z=None):
+            if z is None:
+                if y is None:
+                    return str.maketrans(x)
+                return str.maketrans(x, y)
+            return str.maketrans(x, y, z)
+
     @inheritdoc
     def partition(self, sep):
         return self.__unicode__().partition(sep)
 
     @inheritdoc
-    def replace(self, old, new, count):
+    def replace(self, old, new, count=None):
+        if count is None:
+            return self.__unicode__().replace(old, new)
         return self.__unicode__().replace(old, new, count)
 
     @inheritdoc
-    def rfind(self, sub=None, start=None, end=None):
+    def rfind(self, sub, start=None, end=None):
         return self.__unicode__().rfind(sub, start, end)
 
     @inheritdoc
-    def rindex(self, sub=None, start=None, end=None):
+    def rindex(self, sub, start=None, end=None):
         return self.__unicode__().rindex(sub, start, end)
 
     @inheritdoc
     def rjust(self, width, fillchar=None):
+        if fillchar is None:
+            return self.__unicode__().rjust(width)
         return self.__unicode__().rjust(width, fillchar)
 
     @inheritdoc
     def rpartition(self, sep):
         return self.__unicode__().rpartition(sep)
 
-    @inheritdoc
-    def rsplit(self, sep=None, maxsplit=None):
-        return self.__unicode__().rsplit(sep, maxsplit)
+    if py3k:
+        @inheritdoc
+        def rsplit(self, sep=None, maxsplit=None):
+            kwargs = {}
+            if sep is not None:
+                kwargs["sep"] = sep
+            if maxsplit is not None:
+                kwargs["maxsplit"] = maxsplit
+            return self.__unicode__().rsplit(**kwargs)
+    else:
+        @inheritdoc
+        def rsplit(self, sep=None, maxsplit=None):
+            if maxsplit is None:
+                if sep is None:
+                    return self.__unicode__().rsplit()
+                return self.__unicode__().rsplit(sep)
+            return self.__unicode__().rsplit(sep, maxsplit)
 
     @inheritdoc
     def rstrip(self, chars=None):
         return self.__unicode__().rstrip(chars)
 
-    @inheritdoc
-    def split(self, sep=None, maxsplit=None):
-        return self.__unicode__().split(sep, maxsplit)
+    if py3k:
+        @inheritdoc
+        def split(self, sep=None, maxsplit=None):
+            kwargs = {}
+            if sep is not None:
+                kwargs["sep"] = sep
+            if maxsplit is not None:
+                kwargs["maxsplit"] = maxsplit
+            return self.__unicode__().split(**kwargs)
+    else:
+        @inheritdoc
+        def split(self, sep=None, maxsplit=None):
+            if maxsplit is None:
+                if sep is None:
+                    return self.__unicode__().split()
+                return self.__unicode__().split(sep)
+            return self.__unicode__().split(sep, maxsplit)
 
     @inheritdoc
     def splitlines(self, keepends=None):
+        if keepends is None:
+            return self.__unicode__().splitlines()
         return self.__unicode__().splitlines(keepends)
 
     @inheritdoc
@@ -269,8 +351,8 @@ class StringMixIn(object):
         return self.__unicode__().title()
 
     @inheritdoc
-    def translate(self, table, deletechars=None):
-        return self.__unicode__().translate(table, deletechars)
+    def translate(self, table):
+        return self.__unicode__().translate(table)
 
     @inheritdoc
     def upper(self):

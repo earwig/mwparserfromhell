@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,12 +29,11 @@ outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 from __future__ import unicode_literals
 
 __author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012 Ben Kurtovic"
+__copyright__ = "Copyright (C) 2012, 2013 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.1.1"
+__version__ = "0.2"
 __email__ = "ben.kurtovic@verizon.net"
 
-from . import nodes, parser, smart_list, string_mixin, wikicode
+from . import compat, nodes, parser, smart_list, string_mixin, utils, wikicode
 
-parse = lambda text: parser.Parser(text).parse()
-parse.__doc__ = "Short for :py:meth:`.Parser.parse`."
+parse = utils.parse_anything

@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,16 +21,24 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from setuptools import setup, find_packages
+from setuptools import setup, find_packages, Extension
 
 from mwparserfromhell import __version__
+from mwparserfromhell.compat import py3k
 
 with open("README.rst") as fp:
     long_docs = fp.read()
 
+# builder = Extension("mwparserfromhell.parser._builder",
+#                     sources = ["mwparserfromhell/parser/builder.c"])
+
+tokenizer = Extension("mwparserfromhell.parser._tokenizer",
+                      sources = ["mwparserfromhell/parser/tokenizer.c"])
+
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
+    ext_modules = [] if py3k else [tokenizer],
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",

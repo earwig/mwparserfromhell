@@ -1,0 +1,33 @@
+v0.1.1 (19da4d2144) to v0.2:
+
+- The parser now fully supports Python 3 in addition to Python 2.7.
+- Added a C tokenizer extension that is significantly faster than its Python
+  equivalent. It is enabled by default (if available) and can be toggled by
+  setting `mwparserfromhell.parser.use_c` to a boolean value.
+- Added a complete set of unit tests covering parsing and wikicode
+  manipulation.
+- Renamed Wikicode.filter_links() to filter_wikilinks() (applies to ifilter as
+  well).
+- Added filter methods for Arguments, Comments, Headings, and HTMLEntities.
+- Added 'before' param to Template.add(); renamed 'force_nonconformity' to
+  'preserve_spacing'.
+- Added 'include_lead' param to Wikicode.get_sections().
+- Removed 'flat' param from Wikicode.get_sections().
+- Removed 'force_no_field' param from Template.remove().
+- Added support for Travis CI.
+- Added note about Windows build issue in the README.
+- The tokenizer will limit itself to a realistic recursion depth to prevent
+  errors and unreasonably long parse times.
+- Fixed how some nodes' attribute setters handle input.
+- Fixed multiple bugs in the tokenizer's handling of invalid markup.
+- Fixed bugs in the implementation of SmartList and StringMixIn.
+- Fixed some broken example code in the README; other copyedits.
+- Other bugfixes and code cleanup.
+
+v0.1 (ba94938fe8) to v0.1.1 (19da4d2144):
+
+- Added support for Comments (<!-- foo -->) and Wikilinks ([[foo]]).
+- Added corresponding ifilter_links() and filter_links() methods to Wikicode.
+- Fixed a bug when parsing incomplete templates.
+- Fixed strip_code() to affect the contents of headings.
+- Various copyedits in documentation and comments.

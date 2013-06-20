@@ -1,0 +1,158 @@
+name:   blank
+label:  wikilink with no content
+input:  "[[]]"
+output: [WikilinkOpen(), WikilinkClose()]
+
+---
+
+name:   blank_with_text
+label:  wikilink with no content but a pipe
+input:  "[[|]]"
+output: [WikilinkOpen(), WikilinkSeparator(), WikilinkClose()]
+
+---
+
+name:   basic
+label:  simplest type of wikilink
+input:  "[[wikilink]]"
+output: [WikilinkOpen(), Text(text="wikilink"), WikilinkClose()]
+
+---
+
+name:   with_text
+label:  wikilink with a text value
+input:  "[[foo|bar]]"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="bar"), WikilinkClose()]
+
+---
+
+name:   blank_with_multiple_texts
+label:  no content, multiple pipes
+input:  "[[|||]]"
+output: [WikilinkOpen(), WikilinkSeparator(), Text(text="||"), WikilinkClose()]
+
+---
+
+name:   multiple_texts
+label:  multiple text values separated by pipes
+input:  "[[foo|bar|baz]]"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="bar|baz"), WikilinkClose()]
+
+---
+
+name:   nested
+label:  a wikilink nested within the value of another
+input:  "[[foo|[[bar]]]]"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), WikilinkOpen(), Text(text="bar"), WikilinkClose(), WikilinkClose()]
+
+---
+
+name:   nested_with_text
+label:  a wikilink nested within the value of another, separated by other data
+input:  "[[foo|a[[b]]c]]"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="a"), WikilinkOpen(), Text(text="b"), WikilinkClose(), Text(text="c"), WikilinkClose()]
+
+---
+
+name:   invalid_newline
+label:  invalid wikilink: newline as only content
+input:  "[[\n]]"
+output: [Text(text="[[\n]]")]
+
+---
+
+name:   invalid_right_brace
+label:  invalid wikilink: right brace
+input:  "[[foo}b}a}r]]"
+output: [Text(text="[[foo}b}a}r]]")]
+
+---
+
+name:   invalid_left_brace
+label:  invalid wikilink: left brace
+input:  "[[foo{{[a}}]]"
+output: [Text(text="[[foo{{[a}}]]")]
+
+---
+
+name:   invalid_right_bracket
+label:  invalid wikilink: right bracket
+input:  "[[foo]bar]]"
+output: [Text(text="[[foo]bar]]")]
+
+---
+
+name:   invalid_left_bracket
+label:  invalid wikilink: left bracket
+input:  "[[foo[bar]]"
+output: [Text(text="[[foo[bar]]")]
+
+---
+
+name:   invalid_nested
+label:  invalid wikilink: trying to nest in the wrong context
+input:  "[[foo[[bar]]]]"
+output: [Text(text="[[foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="]]")]
+
+---
+
+name:   invalid_nested_text
+label:  invalid wikilink: trying to nest in the wrong context, with a text param
+input:  "[[foo[[bar]]|baz]]"
+output: [Text(text="[[foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="|baz]]")]
+
+---
+
+name:   incomplete_open_only
+label:  incomplete wikilinks: just an open
+input:  "[["
+output: [Text(text="[[")]
+
+---
+
+name:   incomplete_open_text
+label:  incomplete wikilinks: an open with some text
+input:  "[[foo"
+output: [Text(text="[[foo")]
+
+---
+
+name:   incomplete_open_text_pipe
+label:  incomplete wikilinks: an open, text, then a pipe
+input:  "[[foo|"
+output: [Text(text="[[foo|")]
+
+---
+
+name:   incomplete_open_pipe
+label:  incomplete wikilinks: an open, then a pipe
+input:  "[[|"
+output: [Text(text="[[|")]
+
+---
+
+name:   incomplete_open_pipe_text
+label:  incomplete wikilinks: an open, then a pipe, then text
+input:  "[[|foo"
+output: [Text(text="[[|foo")]
+
+---
+
+name:   incomplete_open_pipes_text
+label:  incomplete wikilinks: a pipe, then text then two pipes
+input:  "[[|f||"
+output: [Text(text="[[|f||")]
+
+---
+
+name:   incomplete_open_partial_close
+label:  incomplete wikilinks: an open, then one right brace
+input:  "[[{}"
+output: [Text(text="[[{}")]
+
+---
+
+name:   incomplete_preserve_previous
+label:  incomplete wikilinks: a valid wikilink followed by an invalid one
+input:  "[[foo]] [[bar"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkClose(), Text(text=" [[bar")]

@@ -10,7 +10,7 @@ types are meant to be imported directly from within the parser's modules.
 
 import sys
 
-py3k = sys.version_info.major == 3
+py3k = sys.version_info[0] == 3
 
 if py3k:
     bytes = bytes
