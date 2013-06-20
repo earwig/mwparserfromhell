@@ -1,5 +1,6 @@
 *.pyc
 *.so
+*.dll
 *.egg
 *.egg-info
 .DS_Store
