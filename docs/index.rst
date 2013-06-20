@@ -41,6 +41,7 @@ Contents
 
    usage
    integration
+   changelog
    API Reference <api/modules>
 
 
