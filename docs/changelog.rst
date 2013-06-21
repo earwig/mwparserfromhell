@@ -4,7 +4,7 @@ Changelog
 v0.2
 ----
 
-19da4d2144_ to master_ (released June 20, 2013)
+19da4d2144_ to edf6a3a8a6_ (released June 20, 2013)
 
 - The parser now fully supports Python 3 in addition to Python 2.7.
 - Added a C tokenizer extension that is significantly faster than its Python
@@ -53,6 +53,6 @@ v0.1
 
 ba94938fe8_ (released August 23, 2012)
 
-.. _master:     https://github.com/earwig/mwparserfromhell/tree/v0.2
+.. _edf6a3a8a6: https://github.com/earwig/mwparserfromhell/tree/v0.2
 .. _19da4d2144: https://github.com/earwig/mwparserfromhell/tree/v0.1.1
 .. _ba94938fe8: https://github.com/earwig/mwparserfromhell/tree/v0.1

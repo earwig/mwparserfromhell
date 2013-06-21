@@ -1,4 +1,4 @@
-v0.1.1 (19da4d2144) to v0.2:
+v0.1.1 (19da4d2144) to v0.2 (edf6a3a8a6):
 
 - The parser now fully supports Python 3 in addition to Python 2.7.
 - Added a C tokenizer extension that is significantly faster than its Python
