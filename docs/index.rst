@@ -1,5 +1,5 @@
-MWParserFromHell v0.3 Documentation
-===================================
+MWParserFromHell v\ |version| Documentation
+===========================================
 
 :py:mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python
 package that provides an easy-to-use and outrageously powerful parser for

@@ -1,4 +1,8 @@
-v0.1.1 (19da4d2144) to v0.2 (edf6a3a8a6):
+v0.3 (unreleased):
+
+- Various fixes and cleanup.
+
+v0.2 (released June 20, 2013):
 
 - The parser now fully supports Python 3 in addition to Python 2.7.
 - Added a C tokenizer extension that is significantly faster than its Python
@@ -24,10 +28,14 @@ v0.1.1 (19da4d2144) to v0.2 (edf6a3a8a6):
 - Fixed some broken example code in the README; other copyedits.
 - Other bugfixes and code cleanup.
 
-v0.1 (ba94938fe8) to v0.1.1 (19da4d2144):
+v0.1.1 (released September 21, 2012):
 
 - Added support for Comments (<!-- foo -->) and Wikilinks ([[foo]]).
 - Added corresponding ifilter_links() and filter_links() methods to Wikicode.
 - Fixed a bug when parsing incomplete templates.
 - Fixed strip_code() to affect the contents of headings.
 - Various copyedits in documentation and comments.
+
+v0.1 (released August 23, 2012):
+
+- Initial release.

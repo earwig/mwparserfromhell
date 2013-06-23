@@ -1,10 +1,19 @@
 Changelog
 =========
 
+v0.3
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...develop>`__):
+
+- Various fixes and cleanup.
+
 v0.2
 ----
 
-19da4d2144_ to edf6a3a8a6_ (released June 20, 2013)
+`Released June 20, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.1.1...v0.2>`__):
 
 - The parser now fully supports Python 3 in addition to Python 2.7.
 - Added a C tokenizer extension that is significantly faster than its Python
@@ -38,7 +47,8 @@ v0.2
 v0.1.1
 ------
 
-ba94938fe8_ to 19da4d2144_ (released September 21, 2012)
+`Released September 21, 2012 <https://github.com/earwig/mwparserfromhell/tree/v0.1.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.1...v0.1.1>`__):
 
 - Added support for :py:class:`Comments <.Comment>` (``<!-- foo -->``) and
   :py:class:`Wikilinks <.Wikilink>` (``[[foo]]``).
@@ -51,8 +61,6 @@ ba94938fe8_ to 19da4d2144_ (released September 21, 2012)
 v0.1
 ----
 
-ba94938fe8_ (released August 23, 2012)
+`Released August 23, 2012 <https://github.com/earwig/mwparserfromhell/tree/v0.1>`_:
 
-.. _edf6a3a8a6: https://github.com/earwig/mwparserfromhell/tree/v0.2
-.. _19da4d2144: https://github.com/earwig/mwparserfromhell/tree/v0.1.1
-.. _ba94938fe8: https://github.com/earwig/mwparserfromhell/tree/v0.1
+- Initial release.
