@@ -23,9 +23,16 @@ SOFTWARE.
 
 #include "tokenizer.h"
 
-double log2(double n)
+/*
+    Given a context, return the heading level encoded within it.
+*/
+static int heading_level_from_context(int n)
 {
-    return log(n) / log(2);
+    int level;
+    n /= LC_HEADING_LEVEL_1;
+    for (level = 1; n > 1; n >>= 1)
+        level++;
+    return level;
 }
 
 static PyObject*
@@ -175,6 +182,9 @@ Tokenizer_push_textbuffer(Tokenizer* self)
     return 0;
 }
 
+/*
+    Pop and deallocate the top token stack/context/textbuffer.
+*/
 static void
 Tokenizer_delete_top_of_stack(Tokenizer* self)
 {
@@ -857,7 +867,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
         best++;
         self->head++;
     }
-    current = log2(self->topstack->context / LC_HEADING_LEVEL_1) + 1;
+    current = heading_level_from_context(self->topstack->context);
     level = current > best ? (best > 6 ? 6 : best) :
                              (current > 6 ? 6 : current);
     after = (HeadingData*) Tokenizer_parse(self, self->topstack->context);

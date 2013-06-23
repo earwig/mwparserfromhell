@@ -293,7 +293,7 @@ class Template(Node):
         """
         name = name.strip() if isinstance(name, basestring) else str(name)
         removed = False
-        to_remove =[]
+        to_remove = []
         for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:

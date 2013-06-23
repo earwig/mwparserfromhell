@@ -414,10 +414,10 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("Fake String", str1.title())
 
         if py3k:
-            table1 = str.maketrans({97: "1", 101: "2", 105: "3", 111: "4",
-                                    117: "5"})
-            table2 = str.maketrans("aeiou", "12345")
-            table3 = str.maketrans("aeiou", "12345", "rts")
+            table1 = StringMixIn.maketrans({97: "1", 101: "2", 105: "3",
+                                            111: "4", 117: "5"})
+            table2 = StringMixIn.maketrans("aeiou", "12345")
+            table3 = StringMixIn.maketrans("aeiou", "12345", "rts")
             self.assertEqual("f1k2 str3ng", str1.translate(table1))
             self.assertEqual("f1k2 str3ng", str1.translate(table2))
             self.assertEqual("f1k2 3ng", str1.translate(table3))

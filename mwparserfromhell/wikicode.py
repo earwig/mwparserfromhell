@@ -168,7 +168,7 @@ class Wikicode(StringMixIn):
         doc = """Iterate over {0}.
 
         This is equivalent to :py:meth:`{1}` with *forcetype* set to
-        :py:class:`~.{2}`.
+        :py:class:`~{2.__module__}.{2.__name__}`.
         """
         make_ifilter = lambda ftype: (lambda self, **kw:
                                       self.ifilter(forcetype=ftype, **kw))
@@ -177,8 +177,8 @@ class Wikicode(StringMixIn):
         for name, ftype in (meths.items() if py3k else meths.iteritems()):
             ifilter = make_ifilter(ftype)
             filter = make_filter(ftype)
-            ifilter.__doc__ = doc.format(name, "ifilter", ftype.__name__)
-            filter.__doc__ = doc.format(name, "filter", ftype.__name__)
+            ifilter.__doc__ = doc.format(name, "ifilter", ftype)
+            filter.__doc__ = doc.format(name, "filter", ftype)
             setattr(cls, "ifilter_" + name, ifilter)
             setattr(cls, "filter_" + name, filter)
 

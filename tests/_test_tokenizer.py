@@ -109,7 +109,7 @@ class TokenizerTestCase(object):
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
         def load_file(filename):
-            with open(filename, "r") as fp:
+            with open(filename, "rU") as fp:
                 text = fp.read()
                 if not py3k:
                     text = text.decode("utf8")
