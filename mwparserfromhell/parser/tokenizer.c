@@ -1021,7 +1021,7 @@ Tokenizer_really_parse_entity(Tokenizer* self)
                 break;
             j++;
         }
-        text[i] = this;
+        text[i] = (char) this;
         self->head++;
         i++;
     }
