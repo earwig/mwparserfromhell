@@ -91,7 +91,6 @@ class TreeEqualityTestCase(TestCase):
 
     def assertTagNodeEqual(self, expected, actual):
         """Assert that two Tag nodes have the same data."""
-        self.assertEqual(expected.type, actual.type)
         self.assertWikicodeEqual(expected.tag, actual.tag)
         if expected.contents is not None:
             self.assertWikicodeEqual(expected.contents, actual.contents)
