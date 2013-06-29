@@ -233,3 +233,24 @@ name:   incomplete_open_text_wrong_close
 label:  incomplete tags: an open tag, text, wrong close
 input:  "junk <ref>bar</span>"
 output: [Text(text="junk <ref>bar</span>")]
+
+---
+
+name:   incomplete_no_tag_name_open
+label:  incomplete tags: no tag name within brackets; just an open
+input:  "junk <>"
+output: [Text(text="junk <>")]
+
+---
+
+name:   incomplete_no_tag_name_selfclosing
+label:  incomplete tags: no tag name within brackets; self-closing
+input:  "junk < />"
+output: [Text(text="junk < />")]
+
+---
+
+name:   incomplete_no_tag_name_open_close
+label:  incomplete tags: no tag name within brackets; open and close
+input:  "junk <></>"
+output: [Text(text="junk <></>")]

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from itertools import takewhile
 from math import log
 import re
 
@@ -416,19 +417,6 @@ class Tokenizer(object):
         else:
             self._write_all(tokens)
 
-    def _get_tag_from_stack(self, stack=None):
-        """Return the tag based on the text in *stack*.
-
-        If *stack* is ``None``, we will use the current, topmost one.
-        """
-        if stack is None:
-            stack = self._stack
-            self._push_textbuffer()
-        if not stack:
-            self._fail_route()  # Tag has an empty name?
-        text = [tok for tok in stack if isinstance(tok, tokens.Text)]
-        return "".join([token.text for token in text]).rstrip().lower()
-
     def _actually_close_tag_opening(self):
         """Handle cleanup at the end of a opening tag.
 
@@ -557,14 +545,27 @@ class Tokenizer(object):
             while chunks:
                 self._actually_handle_chunk(chunks, True)
 
+    def _get_tag_from_stack(self, stack=None):
+        """Return the tag based on the text in *stack*."""
+        if not stack:
+            sentinels = (tokens.TagAttrStart, tokens.TagCloseOpen)
+            func = lambda tok: not isinstance(tok, sentinels)
+            stack = takewhile(func, self._stack)
+        text = [tok.text for tok in stack if isinstance(tok, tokens.Text)]
+        return "".join(text).rstrip().lower()
+
     def _handle_tag_close_open(self):
         """Handle the ending of an open tag (``<foo>``)."""
         padding = self._actually_close_tag_opening()
+        if not self._get_tag_from_stack():  # Tags cannot be blank
+            self._fail_route()
         self._write(tokens.TagCloseOpen(padding=padding))
 
     def _handle_tag_selfclose(self):
         """Handle the ending of an tag that closes itself (``<foo />``)."""
         padding = self._actually_close_tag_opening()
+        if not self._get_tag_from_stack():  # Tags cannot be blank
+            self._fail_route()
         self._write(tokens.TagCloseSelfclose(padding=padding))
         self._head += 1
         return self._pop()
@@ -578,8 +579,10 @@ class Tokenizer(object):
     def _handle_tag_close_close(self):
         """Handle the ending of a closing tag (``</foo>``)."""
         closing = self._pop()
-        if self._get_tag_from_stack(closing) != self._get_tag_from_stack():
-            # Closing and opening tags are not the same, so fail this route:
+        close_tag = self._get_tag_from_stack(closing)
+        open_tag = self._get_tag_from_stack()
+        if not close_tag or close_tag != open_tag:
+            # Closing and opening tags are empty or unequal, so fail this tag:
             self._fail_route()
         self._write_all(closing)
         self._write(tokens.TagCloseClose())
