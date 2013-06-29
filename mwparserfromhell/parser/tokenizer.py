@@ -27,7 +27,7 @@ import re
 from . import contexts
 from . import tokens
 from ..compat import htmlentities
-from ..nodes.tag import Tag
+from ..tag_defs import is_parsable
 
 __all__ = ["Tokenizer"]
 
@@ -416,8 +416,8 @@ class Tokenizer(object):
         else:
             self._write_all(tokens)
 
-    def _get_tag_type_from_stack(self, stack=None):
-        """Return the tag type based on the text in *stack*.
+    def _get_tag_from_stack(self, stack=None):
+        """Return the tag based on the text in *stack*.
 
         If *stack* is ``None``, we will use the current, topmost one.
         """
@@ -427,11 +427,7 @@ class Tokenizer(object):
         if not stack:
             self._fail_route()  # Tag has an empty name?
         text = [tok for tok in stack if isinstance(tok, tokens.Text)]
-        text = "".join([token.text for token in text]).rstrip().lower()
-        try:
-            return Tag.TRANSLATIONS[text]
-        except KeyError:
-            return Tag.TAG_UNKNOWN
+        return "".join([token.text for token in text]).rstrip().lower()
 
     def _actually_close_tag_opening(self):
         """Handle cleanup at the end of a opening tag.
@@ -447,8 +443,7 @@ class Tokenizer(object):
             if self._context & contexts.TAG_OPEN_ATTR_BODY:
                 self._context ^= contexts.TAG_OPEN_ATTR_BODY
         else:
-            tag = self._get_tag_type_from_stack()
-            self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
+            self._write_first(tokens.TagOpenOpen(showtag=True))
             self._context ^= contexts.TAG_OPEN_NAME
         self._context |= contexts.TAG_BODY
 
@@ -509,8 +504,7 @@ class Tokenizer(object):
         is_quoted = False
         if self._context & contexts.TAG_OPEN_NAME:
             self._write_text(chunks.pop(0))
-            tag = self._get_tag_type_from_stack()
-            self._write_first(tokens.TagOpenOpen(type=tag, showtag=True))
+            self._write_first(tokens.TagOpenOpen(showtag=True))
             self._context ^= contexts.TAG_OPEN_NAME
             self._context |= contexts.TAG_OPEN_ATTR_NAME
             self._actually_handle_chunk(chunks, True)
@@ -584,8 +578,7 @@ class Tokenizer(object):
     def _handle_tag_close_close(self):
         """Handle the ending of a closing tag (``</foo>``)."""
         closing = self._pop()
-        tag = self._get_tag_type_from_stack(closing)
-        if tag != self._stack[0].type:
+        if self._get_tag_from_stack(closing) != self._get_tag_from_stack():
             # Closing and opening tags are not the same, so fail this route:
             self._fail_route()
         self._write_all(closing)

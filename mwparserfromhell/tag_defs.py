@@ -20,99 +20,48 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""Contains data regarding certain HTML tags."""
+
 from __future__ import unicode_literals
 
-class TagDefinitions(object):
-    """Contains numerical definitions for valid HTML (and wikicode) tags.
+__all__ = ["get_wikicode", "is_parsable", "is_visible"]
 
-    Base class for :py:class:`~.Tag` objects.
-    """
+PARSER_BLACKLIST = [
+    # enwiki extensions @ 2013-06-28
+    "categorytree", "gallery", "hiero", "imagemap", "inputbox", "math",
+    "nowiki", "pre", "score", "section", "source", "syntaxhighlight",
+    "templatedata", "timeline"
+]
 
-    TAG_UNKNOWN = 0
+INVISIBLE_TAGS = [
+    # enwiki extensions @ 2013-06-28
+    "categorytree", "gallery", "imagemap", "inputbox", "math", "score",
+    "section", "templatedata", "timeline"
+]
 
-    # Basic HTML:
-    TAG_ITALIC = 1
-    TAG_BOLD = 2
-    TAG_UNDERLINE = 3
-    TAG_STRIKETHROUGH = 4
-    TAG_UNORDERED_LIST = 5
-    TAG_ORDERED_LIST = 6
-    TAG_DEF_TERM = 7
-    TAG_DEF_ITEM = 8
-    TAG_BLOCKQUOTE = 9
-    TAG_RULE = 10
-    TAG_BREAK = 11
-    TAG_ABBR = 12
-    TAG_PRE = 13
-    TAG_MONOSPACE = 14
-    TAG_CODE = 15
-    TAG_SPAN = 16
-    TAG_DIV = 17
-    TAG_FONT = 18
-    TAG_SMALL = 19
-    TAG_BIG = 20
-    TAG_CENTER = 21
+# [mediawiki/core.git]/includes/Sanitizer.php @ 87a0aef762
+SINGLE_ONLY = ["br", "hr", "meta", "link", "img"]
+SINGLE = SINGLE_ONLY + ["li", "dt", "dd"]
 
-    # MediaWiki parser hooks:
-    TAG_REF = 101
-    TAG_GALLERY = 102
-    TAG_MATH = 103
-    TAG_NOWIKI = 104
-    TAG_NOINCLUDE = 105
-    TAG_INCLUDEONLY = 106
-    TAG_ONLYINCLUDE = 107
+WIKICODE = {
+    "i": {"open": "''", "close": "''"},
+    "b": {"open": "'''", "close": "'''"},
+    "ul": {"open": "*"},
+    "ol": {"open": "#"},
+    "dt": {"open": ";"},
+    "dd": {"open": ":"},
+    "hr": {"open": "----"},
+}
 
-    # Additional parser hooks:
-    TAG_SYNTAXHIGHLIGHT = 201
-    TAG_POEM = 202
+def get_wikicode(tag):
+    """Return the appropriate wikicode before and after the given *tag*."""
+    data = WIKICODE[tag.lower()]
+    return (data.get("open"), data.get("close"))
 
-    # Lists of tags:
-    TAGS_ALL = set(range(300))
-    TAGS_INVISIBLE = {TAG_REF, TAG_GALLERY, TAG_MATH, TAG_NOINCLUDE}
-    TAGS_VISIBLE = TAGS_ALL - TAGS_INVISIBLE
+def is_parsable(tag):
+    """Return if the given *tag*'s contents should be passed to the parser."""
+    return tag.lower() not in PARSER_BLACKLIST
 
-    TRANSLATIONS = {
-        "i": TAG_ITALIC,
-        "em": TAG_ITALIC,
-        "b": TAG_BOLD,
-        "strong": TAG_BOLD,
-        "u": TAG_UNDERLINE,
-        "s": TAG_STRIKETHROUGH,
-        "ul": TAG_UNORDERED_LIST,
-        "ol": TAG_ORDERED_LIST,
-        "dt": TAG_DEF_TERM,
-        "dd": TAG_DEF_ITEM,
-        "blockquote": TAG_BLOCKQUOTE,
-        "hl": TAG_RULE,
-        "br": TAG_BREAK,
-        "abbr": TAG_ABBR,
-        "pre": TAG_PRE,
-        "tt": TAG_MONOSPACE,
-        "code": TAG_CODE,
-        "span": TAG_SPAN,
-        "div": TAG_DIV,
-        "font": TAG_FONT,
-        "small": TAG_SMALL,
-        "big": TAG_BIG,
-        "center": TAG_CENTER,
-        "ref": TAG_REF,
-        "gallery": TAG_GALLERY,
-        "math": TAG_MATH,
-        "nowiki": TAG_NOWIKI,
-        "noinclude": TAG_NOINCLUDE,
-        "includeonly": TAG_INCLUDEONLY,
-        "onlyinclude": TAG_ONLYINCLUDE,
-        "syntaxhighlight": TAG_SYNTAXHIGHLIGHT,
-        "source": TAG_SYNTAXHIGHLIGHT,
-        "poem": TAG_POEM,
-    }
-
-    WIKICODE = {
-        TAG_ITALIC: ("''", "''"),
-        TAG_BOLD: ("'''", "'''"),
-        TAG_UNORDERED_LIST: ("*", ""),
-        TAG_ORDERED_LIST: ("#", ""),
-        TAG_DEF_TERM: (";", ""),
-        TAG_DEF_ITEM: (":", ""),
-        TAG_RULE: ("----", ""),
-    }
+def is_visible(tag):
+    """Return whether or not the given *tag* contains visible text."""
+    return tag.lower() not in INVISIBLE_TAGS

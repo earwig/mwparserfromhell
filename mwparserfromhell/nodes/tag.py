@@ -24,18 +24,17 @@ from __future__ import unicode_literals
 
 from . import Node, Text
 from ..compat import str
-from ..tag_defs import TagDefinitions
+from ..tag_defs import get_wikicode, is_visible
 from ..utils import parse_anything
 
 __all__ = ["Tag"]
 
-class Tag(TagDefinitions, Node):
+class Tag(Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
 
-    def __init__(self, type_, tag, contents=None, attrs=None, showtag=True,
+    def __init__(self, tag, contents=None, attrs=None, showtag=True,
                  self_closing=False, padding="", closing_tag=None):
         super(Tag, self).__init__()
-        self._type = type_
         self._tag = tag
         self._contents = contents
         if attrs:
@@ -52,7 +51,7 @@ class Tag(TagDefinitions, Node):
 
     def __unicode__(self):
         if not self.showtag:
-            open_, close = self.WIKICODE[self.type]
+            open_, close = get_wikicode[self.tag]
             if self.self_closing:
                 return open_
             else:
@@ -84,7 +83,7 @@ class Tag(TagDefinitions, Node):
                 yield self.contents, child
 
     def __strip__(self, normalize, collapse):
-        if self.type in self.TAGS_VISIBLE:
+        if is_visible(self.tag):
             return self.contents.strip_code(normalize, collapse)
         return None
 
@@ -111,11 +110,6 @@ class Tag(TagDefinitions, Node):
             write("</")
             get(self.tag)
             write(">")
-
-    @property
-    def type(self):
-        """The tag type."""
-        return self._type
 
     @property
     def tag(self):
@@ -159,23 +153,9 @@ class Tag(TagDefinitions, Node):
         """
         return self._closing_tag
 
-    @type.setter
-    def type(self, value):
-        value = int(value)
-        if value not in self.TAGS_ALL:
-            raise ValueError(value)
-        self._type = value
-        for key in self.TRANSLATIONS:
-            if self.TRANSLATIONS[key] == value:
-                self._tag = self._closing_tag = parse_anything(key)
-
     @tag.setter
     def tag(self, value):
         self._tag = self._closing_tag = parse_anything(value)
-        try:
-            self._type = self.TRANSLATIONS[text]
-        except KeyError:
-            self._type = self.TAG_UNKNOWN
 
     @contents.setter
     def contents(self, value):

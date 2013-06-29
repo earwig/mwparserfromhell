@@ -202,7 +202,7 @@ class Builder(object):
 
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
-        type_, showtag = token.type, token.showtag
+        showtag = token.showtag
         attrs = []
         self._push()
         while self._tokens:
@@ -215,14 +215,14 @@ class Builder(object):
                 self._push()
             elif isinstance(token, tokens.TagCloseSelfclose):
                 tag = self._pop()
-                return Tag(type_, tag, attrs=attrs, showtag=showtag,
+                return Tag(tag, attrs=attrs, showtag=showtag,
                            self_closing=True, padding=token.padding)
             elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagCloseClose):
-                return Tag(type_, tag, contents, attrs, showtag, False,
-                           padding, self._pop())
+                return Tag(tag, contents, attrs, showtag, False, padding,
+                           self._pop())
             else:
                 self._write(self._handle_token(token))
 

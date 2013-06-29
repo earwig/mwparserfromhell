@@ -31,6 +31,8 @@ from .compat import bytes, str
 from .nodes import Node
 from .smart_list import SmartList
 
+__all__ = ["parse_anything"]
+
 def parse_anything(value):
     """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
 
