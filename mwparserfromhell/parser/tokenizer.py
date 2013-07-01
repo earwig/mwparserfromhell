@@ -475,6 +475,11 @@ class Tokenizer(object):
             self._head += 1
 
     def _handle_tag_chunk(self, data, chunk):
+        """Handle a *chunk* of text inside a HTML open tag.
+
+        A "chunk" is either a marker, whitespace, or text containing no markers
+        or whitespace. *data* is a :py:class:`_TagOpenData` object.
+        """
         if not chunk:
             return
         if data.context & data.CX_NAME:
@@ -546,6 +551,10 @@ class Tokenizer(object):
                 self._write_text(chunk)                        ### hook on here for {, <, etc
 
     def _push_tag_buffer(self, data):
+        """Write a pending tag attribute from *data* to the stack.
+
+        *data* is a :py:class:`_TagOpenData` object.
+        """
         buf = data.padding_buffer
         while len(buf) < 3:
             buf.append("")
