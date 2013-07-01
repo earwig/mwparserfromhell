@@ -96,6 +96,76 @@ output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" "
 
 ---
 
+name:   invalid_space_begin_open
+label:  invalid tag: a space at the beginning of the open tag
+input:  "< ref>test</ref>"
+output: [Text(text="< ref>test</ref>")]
+
+---
+
+name:   invalid_space_begin_close
+label:  invalid tag: a space at the beginning of the close tag
+input:  "<ref>test</ ref>"
+output: [Text(text="<ref>test</ ref>")]
+
+---
+
+name:   valid_space_end
+label:  valid tag: spaces at the ends of both the open and close tags
+input:  "<ref >test</ref >"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=" "), Text(text="test"), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+
+---
+
+name:   invalid_template_ends
+label:  invalid tag: a template at the ends of both the open and close tags
+input:  "<ref {{foo}}>test</ref {{foo}}>"
+output: [Text(text="<ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">")]
+
+---
+
+name:   invalid_template_ends_nospace
+label:  invalid tag: a template at the ends of both the open and close tags, without spacing
+input:  "<ref {{foo}}>test</ref{{foo}}>"
+output: [Text(text="<ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">")]
+
+---
+
+name:   valid_template_end_open
+label:  valid tag: a template at the end of the open tag
+input:  "<ref {{foo}}>test</ref>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   valid_template_end_open_space_end_close
+label:  valid tag: a template at the end of the open tag; whitespace at the end of the close tag
+input:  "<ref {{foo}}>test</ref\n>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref\n"), TagCloseClose()]
+
+---
+
+name:   invalid_template_end_open_nospace
+label:  invalid tag: a template at the end of the open tag, without spacing
+input:  "<ref{{foo}}>test</ref>"
+output: [Text(text="<ref"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref>")]
+
+---
+
+name:   invalid_template_start_close
+label:  invalid tag: a template at the beginning of the close tag
+input:  "<ref>test</{{foo}}ref>"
+output: [Text(text="<ref>test</"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="ref>")]
+
+---
+
+name:   invalid_template_start_open
+label:  invalid tag: a template at the beginning of the open tag
+input:  "<{{foo}}ref>test</ref>"
+output: [Text(text="<"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="ref>test</ref>")]
+
+---
+
 name:   incomplete_lbracket
 label:  incomplete tags: just a left bracket
 input:  "<"
