@@ -72,6 +72,14 @@ class TestBuilder(TreeEqualityTestCase):
              wrap([Template(wraptext("foo"), params=[
                  Parameter(wraptext("bar"), wraptext("baz"))])])),
 
+            ([tokens.TemplateOpen(), tokens.TemplateParamSeparator(),
+              tokens.TemplateParamSeparator(), tokens.TemplateParamEquals(),
+              tokens.TemplateParamSeparator(), tokens.TemplateClose()],
+             wrap([Template(wrap([]), params=[
+                 Parameter(wraptext("1"), wrap([]), showkey=False),
+                 Parameter(wrap([]), wrap([]), showkey=True),
+                 Parameter(wraptext("2"), wrap([]), showkey=False)])])),
+
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
               tokens.TemplateParamEquals(), tokens.Text(text="baz"),

@@ -83,7 +83,7 @@ class Builder(object):
                                     tokens.TemplateClose)):
                 self._tokens.append(token)
                 value = self._pop()
-                if not key:
+                if key is None:
                     key = self._wrap([Text(str(default))])
                 return Parameter(key, value, showkey)
             else:
