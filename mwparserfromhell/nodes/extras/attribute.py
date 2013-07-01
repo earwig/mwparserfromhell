@@ -36,19 +36,22 @@ class Attribute(StringMixIn):
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quoted=True, padding=""):
+    def __init__(self, name, value=None, quoted=True, pad_first="",
+                 pad_before_eq="", pad_after_eq=""):
         super(Attribute, self).__init__()
         self._name = name
         self._value = value
         self._quoted = quoted
-        self._padding = padding
+        self._pad_first = pad_first
+        self._pad_before_eq = pad_before_eq
+        self._pad_after_eq = pad_after_eq
 
     def __unicode__(self):
-        base = self.padding + str(self.name)
+        base = self.pad_first + str(self.name) + self.pad_before_eq
         if self.value:
             if self.quoted:
-                return base + '="' + str(self.value) + '"'
-            return base + "=" + str(self.value)
+                return base + '="' + self.pad_after_eq + str(self.value) + '"'
+            return base + "=" + self.pad_after_eq + str(self.value)
         return base
 
     @property
@@ -67,9 +70,19 @@ class Attribute(StringMixIn):
         return self._quoted
 
     @property
-    def padding(self):
+    def pad_first(self):
         """Spacing to insert right before the attribute."""
-        return self._padding
+        return self._pad_first
+
+    @property
+    def pad_before_eq(self):
+        """Spacing to insert right before the equal sign."""
+        return self._pad_before_eq
+
+    @property
+    def pad_after_eq(self):
+        """Spacing to insert right after the equal sign."""
+        return self._pad_after_eq
 
     @name.setter
     def name(self, value):
@@ -83,6 +96,14 @@ class Attribute(StringMixIn):
     def quoted(self, value):
         self._quoted = bool(value)
 
-    @padding.setter
-    def padding(self, value):
-        self._padding = str(value)
+    @pad_first.setter
+    def pad_first(self, value):
+        self._pad_first = str(value)
+
+    @pad_before_eq.setter
+    def pad_before_eq(self, value):
+        self._pad_before_eq = str(value)
+
+    @pad_after_eq.setter
+    def pad_after_eq(self, value):
+        self._pad_after_eq = str(value)

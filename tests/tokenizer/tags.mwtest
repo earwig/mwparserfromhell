@@ -43,56 +43,56 @@ output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseSelfclose(padding=
 name:   attribute
 label:  a tag with a single attribute
 input:  "<ref name></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_value
 label:  a tag with a single attribute with a value
 input:  "<ref name=foo></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_quoted
 label:  a tag with a single quoted attribute
 input:  "<ref name="foo"></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_hyphen
 label:  a tag with a single attribute, containing a hyphen
 input:  "<ref name=foo-bar></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_quoted_hyphen
 label:  a tag with a single quoted attribute, containing a hyphen
 input:  "<ref name="foo-bar"></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_selfclosing
 label:  a self-closing tag with a single attribute
 input:  "<ref name/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   attribute_selfclosing_value
 label:  a self-closing tag with a single attribute with a value
 input:  "<ref name=foo/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   attribute_selfclosing_value_quoted
 label:  a self-closing tag with a single quoted attribute
 input:  "<ref name="foo"/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(padding=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
 
 ---
 

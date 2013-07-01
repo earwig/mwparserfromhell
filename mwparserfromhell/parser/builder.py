@@ -180,9 +180,9 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
-    def _handle_attribute(self, token):
+    def _handle_attribute(self, start):
         """Handle a case where a tag attribute is at the head of the tokens."""
-        name, quoted, padding = None, False, token.padding
+        name, quoted = None, False
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -194,9 +194,12 @@ class Builder(object):
             elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
                                     tokens.TagCloseSelfclose)):
                 self._tokens.append(token)
-                if name is not None:
-                    return Attribute(name, self._pop(), quoted, padding)
-                return Attribute(self._pop(), quoted=quoted, padding=padding)
+                if name:
+                    value = self._pop()
+                else:
+                    name, value = self._pop(), None
+                return Attribute(name, value, quoted, start.pad_first,
+                                 start.pad_before_eq, start.pad_after_eq)
             else:
                 self._write(self._handle_token(token))
 

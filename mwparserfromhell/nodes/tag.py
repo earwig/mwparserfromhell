@@ -59,7 +59,7 @@ class Tag(Node):
 
         result = "<" + str(self.tag)
         if self.attributes:
-            result += " " + " ".join([str(attr) for attr in self.attributes])
+            result += "".join([str(attr) for attr in self.attributes])
         if self.self_closing:
             result += self.padding + "/>"
         else:
