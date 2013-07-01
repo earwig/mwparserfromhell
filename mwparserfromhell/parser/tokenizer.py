@@ -568,18 +568,6 @@ class Tokenizer(object):
         data.padding_buffer, data.quote_buffer = [], []
         data.ignore_quote = False
 
-    def _get_tag_from_stack(self, stack=None):
-        """Return the tag based on the text in *stack*."""
-        if not stack:
-            sentinels = (tokens.TagAttrStart, tokens.TagCloseOpen)
-            pred = lambda tok: not isinstance(tok, sentinels)
-            stack = takewhile(pred, self._stack)
-        text = [tok.text for tok in stack if isinstance(tok, tokens.Text)]
-        try:
-            return "".join(text).rstrip().lower().split()[0]
-        except IndexError:
-            self._fail_route()
-
     def _handle_tag_open_close(self):
         """Handle the opening of a closing tag (``</foo>``)."""
         self._write(tokens.TagOpenClose())
@@ -588,8 +576,10 @@ class Tokenizer(object):
 
     def _handle_tag_close_close(self):
         """Handle the ending of a closing tag (``</foo>``)."""
+        strip = lambda tok: tok.text.rstrip().lower()
         closing = self._pop()
-        if self._get_tag_from_stack(closing) != self._get_tag_from_stack():
+        if len(closing) != 1 or (not isinstance(closing[0], tokens.Text) or
+                                 strip(closing[0]) != strip(self._stack[1])):
             self._fail_route()
         self._write_all(closing)
         self._write(tokens.TagCloseClose())
@@ -625,7 +615,7 @@ class Tokenizer(object):
                 self._context |= contexts.HAS_TEXT
             return True
         elif context & contexts.TAG_CLOSE:
-            return this != "<" and this != "\n"
+            return this != "<"
         else:
             if context & contexts.FAIL_ON_EQUALS:
                 if this == "=":
