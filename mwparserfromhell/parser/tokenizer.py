@@ -37,6 +37,26 @@ class BadRoute(Exception):
     pass
 
 
+class _TagOpenData(object):
+    """Stores data about an HTML open tag, like ``<ref name="foo">``."""
+    CX_NAME =        1 << 0
+    CX_ATTR_READY =  1 << 1
+    CX_ATTR_NAME =   1 << 2
+    CX_ATTR_VALUE =  1 << 3
+    CX_NEED_SPACE =  1 << 4
+    CX_NEED_EQUALS = 1 << 5
+    CX_NEED_QUOTE =  1 << 6
+    CX_ATTR = CX_ATTR_NAME | CX_ATTR_VALUE
+
+    def __init__(self):
+        self.context = self.CX_NAME
+        self.literal = True
+        self.padding_buffer = []
+        self.quote_buffer = []
+        self.reset = 0
+        self.ignore_quote = False
+
+
 class Tokenizer(object):
     """Creates a list of tokens from a string of wikicode."""
     USES_C = False
@@ -47,6 +67,7 @@ class Tokenizer(object):
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
+    tag_splitter = re.compile(r"([\s\"\\])")
 
     def __init__(self):
         self._text = None
@@ -410,165 +431,145 @@ class Tokenizer(object):
         reset = self._head
         self._head += 1
         try:
-            tokens = self._parse(contexts.TAG_OPEN_NAME)
+            tokens = self._really_parse_tag()
         except BadRoute:
             self._head = reset
             self._write_text("<")
         else:
             self._write_all(tokens)
 
-    def _actually_close_tag_opening(self):
-        """Handle cleanup at the end of a opening tag.
-
-        The current context will be updated and the
-        :py:class:`~.tokens.TagOpenOpen` token will be written. Returns the
-        opening tag's padding to be used in the
-        :py:class:`~.tokens.TagOpenClose` token.
-        """
-        if self._context & contexts.TAG_OPEN_ATTR:
-            if self._context & contexts.TAG_OPEN_ATTR_NAME:
-                self._context ^= contexts.TAG_OPEN_ATTR_NAME
-            if self._context & contexts.TAG_OPEN_ATTR_BODY:
-                self._context ^= contexts.TAG_OPEN_ATTR_BODY
-        else:
-            self._write_first(tokens.TagOpenOpen(showtag=True))
-            self._context ^= contexts.TAG_OPEN_NAME
-        self._context |= contexts.TAG_BODY
-
-        self._push_textbuffer()
-        if isinstance(self._stack[-1], tokens.TagAttrStart):
-            return self._stack.pop().padding
-        return ""
-
-    def _actually_handle_chunk(self, chunks, is_new):
-        """Actually handle a chunk of code within a tag's attributes.
-
-        Called by :py:meth:`_handle_tag_chunk` and
-        :py:meth:`_handle_tag_attribute_body`.
-        """
-        if is_new and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
-            padding = 0
-            while chunks:
-                if chunks[0] == "":
-                    padding += 1
-                    chunks.pop(0)
-                else:
-                    break
-            self._write(tokens.TagAttrStart(padding=" " * padding))
-        elif self._context & contexts.TAG_OPEN_ATTR_IGNORE:
-            self._context ^= contexts.TAG_OPEN_ATTR_IGNORE
-            chunks.pop(0)
-            return
-        elif is_new and self._context & contexts.TAG_OPEN_ATTR_QUOTED:
-            self._write_text(" ")  # Quoted chunks don't lose their spaces
-
-        if chunks:
-            chunk = chunks.pop(0)
-            if self._context & contexts.TAG_OPEN_ATTR_BODY:
-                self._context ^= contexts.TAG_OPEN_ATTR_BODY
-                self._context |= contexts.TAG_OPEN_ATTR_NAME
-            if self._context & contexts.TAG_OPEN_ATTR_QUOTED:
-                if re.search(r'[^\\]"', chunk[:-1]):
-                    self._fail_route()
-                if re.search(r'[^\\]"$', chunk):
-                    self._write_text(chunk[:-1])
-                    self._context ^= contexts.TAG_OPEN_ATTR_QUOTED
-                    self._context |= contexts.TAG_OPEN_ATTR_NAME
-                    return True  # Back to _handle_tag_attribute_body()
-            self._write_text(chunk)
-
-    def _handle_tag_chunk(self, text):
-        """Handle a chunk of code within a tag's attributes.
-
-        This is called by :py:meth:`_parse`, which intercepts parsing of
-        wikicode when we're inside of an opening tag and no :py:attr:`MARKERS`
-        are present.
-        """
-        if " " not in text and not self._context & contexts.TAG_OPEN_ATTR_QUOTED:
-            self._write_text(text)
-            return
-        chunks = text.split(" ")
-        is_new = False
-        is_quoted = False
-        if self._context & contexts.TAG_OPEN_NAME:
-            self._write_text(chunks.pop(0))
-            self._write_first(tokens.TagOpenOpen(showtag=True))
-            self._context ^= contexts.TAG_OPEN_NAME
-            self._context |= contexts.TAG_OPEN_ATTR_NAME
-            self._actually_handle_chunk(chunks, True)
-            is_new = True
-        while chunks:
-            result = self._actually_handle_chunk(chunks, is_new)
-            is_quoted = result or is_quoted
-            is_new = True
-        if is_quoted:
-            return self._pop()
-
-    def _handle_tag_attribute_body(self):
-        """Handle the body, or value, of a tag attribute.
-
-        Attribute bodies can usually be handled at once, but sometimes a new
-        stack must be created to keep track of "rich" attribute values that
-        contain, for example, templates.
-        """
-        self._context ^= contexts.TAG_OPEN_ATTR_NAME
-        self._context |= contexts.TAG_OPEN_ATTR_BODY
-        self._write(tokens.TagAttrEquals())
-        next = self._read(1)
-        if next not in self.MARKERS and next.startswith('"'):
-            chunks = None
-            if " " in next:
-                chunks = next.split(" ")
-                next = chunks.pop(0)
-            if re.search(r'[^\\]"$', next[1:]):
-                if not re.search(r'[^\\]"', next[1:-1]):
-                    self._write(tokens.TagAttrQuote())
-                    self._write_text(next[1:-1])
-                    self._head += 1
+    def _really_parse_tag(self):
+        """Actually parse an HTML tag, starting with the open (``<foo>``)."""
+        data = _TagOpenData()
+        self._push(contexts.TAG_OPEN)
+        self._write(tokens.TagOpenOpen(showtag=True))
+        while True:
+            this, next = self._read(), self._read(1)
+            if this not in self.MARKERS:
+                for chunk in self.tag_splitter.split(this):
+                    if self._handle_tag_chunk(data, chunk):
+                        continue
+            elif this is self.END:
+                if self._context & contexts.TAG_ATTR:
+                    self._pop()
+                self._fail_route()
+            elif this == ">" and data.literal:
+                if data.context & data.CX_ATTR:
+                    self._push_tag_buffer(data)
+                padding = data.padding_buffer[0] if data.padding_buffer else ""
+                self._write(tokens.TagCloseOpen(padding=padding))
+                self._context = contexts.TAG_BODY
+                self._head += 1
+                return self._parse(push=False)
+            elif this == "/" and next == ">" and data.literal:
+                if data.context & data.CX_ATTR:
+                    self._push_tag_buffer(data)
+                padding = data.padding_buffer[0] if data.padding_buffer else ""
+                self._write(tokens.TagCloseSelfclose(padding=padding))
+                self._head += 1
+                return self._pop()
             else:
-                if not re.search(r'[^\\]"', next[1:]):
-                    self._head += 1
-                    reset = self._head
-                    try:
-                        attr = self._parse(contexts.TAG_OPEN_ATTR_QUOTED |
-                                           contexts.TAG_OPEN_ATTR_IGNORE)
-                    except BadRoute:
-                        self._head = reset
-                        self._write_text(next)
-                    else:
-                        self._write(tokens.TagAttrQuote())
-                        self._write_text(next[1:])
-                        self._write_all(attr)
-                        return
-            self._context ^= contexts.TAG_OPEN_ATTR_BODY
-            self._context |= contexts.TAG_OPEN_ATTR_NAME
-            while chunks:
-                self._actually_handle_chunk(chunks, True)
+                for chunk in self.tag_splitter.split(this):
+                    if self._handle_tag_chunk(data, chunk):
+                        continue
+            self._head += 1
+
+    def _handle_tag_chunk(self, data, chunk):
+        if not chunk:
+            return
+        if data.context & data.CX_NAME:
+            if chunk != chunk.lstrip():  # Tags cannot start with whitespace
+                self._fail_route()
+            self._write_text(chunk)
+            data.context = data.CX_NEED_SPACE
+        elif data.context & data.CX_NEED_SPACE:
+            if chunk.isspace():
+                if data.context & data.CX_ATTR_VALUE:
+                    self._push_tag_buffer(data)
+                data.padding_buffer.append(chunk)
+                data.context = data.CX_ATTR_READY
+            else:
+                if data.context & data.CX_ATTR_VALUE:
+                    data.context ^= data.CX_NEED_SPACE
+                    data.quote_buffer = []
+                    data.ignore_quote = True
+                    self._head = data.reset
+                    return True  # Break out of chunk processing early
+                else:
+                    self._fail_route()
+        elif data.context & data.CX_ATTR_READY:
+            if chunk.isspace():
+                data.padding_buffer.append(chunk)
+            else:
+                data.context = data.CX_ATTR_NAME
+                self._push(contexts.TAG_ATTR)
+                self._write_text(chunk)                        ### hook on here for {, <, etc
+        elif data.context & data.CX_ATTR_NAME:
+            if chunk.isspace():
+                data.padding_buffer.append(chunk)
+                data.context |= data.CX_NEED_EQUALS
+            elif chunk == "=":
+                if not data.context & data.CX_NEED_EQUALS:
+                    data.padding_buffer.append("")  # No padding before equals
+                data.context = data.CX_ATTR_VALUE | data.CX_NEED_QUOTE
+                self._write(tokens.TagAttrEquals())
+            else:
+                if data.context & data.CX_NEED_EQUALS:
+                    self._push_tag_buffer(data)
+                    data.padding_buffer.append("")  # No padding before tag
+                    data.context = data.CX_ATTR_NAME
+                    self._push(contexts.TAG_ATTR)
+                self._write_text(chunk)                        ### hook on here for {, <, etc
+        elif data.context & data.CX_ATTR_VALUE:
+            ### handle backslashes here
+            if data.context & data.CX_NEED_QUOTE:
+                if chunk == '"' and not data.ignore_quote:
+                    data.context ^= data.CX_NEED_QUOTE
+                    data.literal = False
+                    data.reset = self._head
+                elif chunk.isspace():
+                    data.padding_buffer.append(chunk)
+                else:
+                    data.context ^= data.CX_NEED_QUOTE
+                    self._write_text(chunk)                    ### hook on here for {, <, etc
+            elif not data.literal:
+                if chunk == '"':
+                    data.context |= data.CX_NEED_SPACE
+                    data.literal = True
+                else:
+                    data.quote_buffer.append(chunk)
+            elif chunk.isspace():
+                self._push_tag_buffer(data)
+                data.padding_buffer.append(chunk)
+                data.context = data.CX_ATTR_READY
+            else:
+                self._write_text(chunk)                        ### hook on here for {, <, etc
+
+    def _push_tag_buffer(self, data):
+        buf = data.padding_buffer
+        while len(buf) < 3:
+            buf.append("")
+        self._write_first(tokens.TagAttrStart(
+            pad_after_eq=buf.pop(), pad_before_eq=buf.pop(),
+            pad_first=buf.pop()))
+        if data.quote_buffer:
+            self._write(tokens.TagAttrQuote())
+            self._write_text("".join(data.quote_buffer))
+        self._write_all(self._pop())
+        data.padding_buffer, data.quote_buffer = [], []
+        data.ignore_quote = False
 
     def _get_tag_from_stack(self, stack=None):
         """Return the tag based on the text in *stack*."""
         if not stack:
             sentinels = (tokens.TagAttrStart, tokens.TagCloseOpen)
-            func = lambda tok: not isinstance(tok, sentinels)
-            stack = takewhile(func, self._stack)
+            pred = lambda tok: not isinstance(tok, sentinels)
+            stack = takewhile(pred, self._stack)
         text = [tok.text for tok in stack if isinstance(tok, tokens.Text)]
-        return "".join(text).rstrip().lower()
-
-    def _handle_tag_close_open(self):
-        """Handle the ending of an open tag (``<foo>``)."""
-        padding = self._actually_close_tag_opening()
-        if not self._get_tag_from_stack():  # Tags cannot be blank
+        try:
+            return "".join(text).rstrip().lower().split()[0]
+        except IndexError:
             self._fail_route()
-        self._write(tokens.TagCloseOpen(padding=padding))
-
-    def _handle_tag_selfclose(self):
-        """Handle the ending of an tag that closes itself (``<foo />``)."""
-        padding = self._actually_close_tag_opening()
-        if not self._get_tag_from_stack():  # Tags cannot be blank
-            self._fail_route()
-        self._write(tokens.TagCloseSelfclose(padding=padding))
-        self._head += 1
-        return self._pop()
 
     def _handle_tag_open_close(self):
         """Handle the opening of a closing tag (``</foo>``)."""
@@ -579,10 +580,7 @@ class Tokenizer(object):
     def _handle_tag_close_close(self):
         """Handle the ending of a closing tag (``</foo>``)."""
         closing = self._pop()
-        close_tag = self._get_tag_from_stack(closing)
-        open_tag = self._get_tag_from_stack()
-        if not close_tag or close_tag != open_tag:
-            # Closing and opening tags are empty or unequal, so fail this tag:
+        if self._get_tag_from_stack(closing) != self._get_tag_from_stack():
             self._fail_route()
         self._write_all(closing)
         self._write(tokens.TagCloseClose())
@@ -645,37 +643,30 @@ class Tokenizer(object):
                 self._context |= contexts.FAIL_ON_RBRACE
             return True
 
-    def _parse(self, context=0):
+    def _parse(self, context=0, push=True):
         """Parse the wikicode string, using *context* for when to stop."""
-        self._push(context)
+        unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
+                  contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
+                  contexts.TAG_CLOSE)
+        fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
+                contexts.HEADING | contexts.COMMENT | contexts.TAG)
+        double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
+
+        if push:
+            self._push(context)
         while True:
             this = self._read()
-            unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
-                      contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
-                      contexts.TAG_CLOSE)
             if self._context & unsafe:
                 if not self._verify_safe(this):
-                    double = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
-                    if self._context & double:
+                    if self._context & double_fail:
                         self._pop()
                     self._fail_route()
             if this not in self.MARKERS:
-                if self._context & contexts.TAG_OPEN:
-                    should_exit = self._handle_tag_chunk(this)
-                    if should_exit:
-                        return should_exit
-                else:
-                    self._write_text(this)
+                self._write_text(this)
                 self._head += 1
                 continue
             if this is self.END:
-                fail = (
-                    contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
-                    contexts.HEADING | contexts.COMMENT | contexts.TAG)
                 if self._context & fail:
-                    double_fail = (
-                        contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE |
-                        contexts.TAG_OPEN_ATTR_QUOTED)
                     if self._context & double_fail:
                         self._pop()
                     self._fail_route()
@@ -720,8 +711,6 @@ class Tokenizer(object):
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
-                elif self._context & contexts.TAG_OPEN_ATTR_NAME:
-                    self._handle_tag_attribute_body()
                 else:
                     self._write_text("=")
             elif this == "=" and self._context & contexts.HEADING:
@@ -735,22 +724,8 @@ class Tokenizer(object):
                     self._parse_comment()
                 else:
                     self._write_text(this)
-            elif this == "<" and next != "/" and (
-                    not self._context & (contexts.TAG ^ contexts.TAG_BODY)):
+            elif this == "<" and next != "/" and not self._context & contexts.TAG_CLOSE:
                 self._parse_tag()
-            elif self._context & contexts.TAG_OPEN:
-                if self._context & contexts.TAG_OPEN_ATTR_QUOTED:
-                    self._handle_tag_chunk(this)
-                elif this == "\n":
-                    self._fail_route()
-                elif this == ">":
-                    self._handle_tag_close_open()
-                elif this == "/" and next == ">":
-                    return self._handle_tag_selfclose()
-                elif this == "=" and self._context & contexts.TAG_OPEN_ATTR_NAME:
-                    self._handle_tag_attribute_body()
-                else:
-                    self._handle_tag_chunk(this)
             elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
                 self._handle_tag_open_close()
             elif this == ">" and self._context & contexts.TAG_CLOSE:
