@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from itertools import takewhile
 from math import log
 import re
 
