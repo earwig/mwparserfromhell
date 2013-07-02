@@ -96,6 +96,34 @@ output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" "
 
 ---
 
+name:   nested_tag
+label:  a tag nested within the attributes of another
+input:  "<ref name=<span style="color: red;">foo</span>>citation</ref>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   nested_tag_quoted
+label:  a tag nested within the attributes of another, quoted
+input:  "<ref name="<span style="color: red;">foo</span>">citation</ref>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   nested_troll_tag
+label:  a bogus tag that appears to be nested within the attributes of another
+input:  "<ref name=</ ><//>>citation</ref>"
+output: [Text(text="<ref name=</ ><//>>citation</ref>")]
+
+---
+
+name:   nested_troll_tag_quoted
+label:  a bogus tag that appears to be nested within the attributes of another, quoted
+input:  "<ref name="</ ><//>">citation</ref>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="</ ><//>"), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
 name:   invalid_space_begin_open
 label:  invalid tag: a space at the beginning of the open tag
 input:  "< ref>test</ref>"

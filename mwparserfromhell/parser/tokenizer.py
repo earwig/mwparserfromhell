@@ -447,7 +447,8 @@ class Tokenizer(object):
         self._write(tokens.TagOpenOpen(showtag=True))
         while True:
             this, next = self._read(), self._read(1)
-            can_exit = not data.context & data.CX_QUOTED or data.context & data.CX_NEED_SPACE
+            can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or
+                        data.context & data.CX_NEED_SPACE)
             if this not in self.MARKERS:
                 for chunk in self.tag_splitter.split(this):
                     if self._handle_tag_chunk(data, chunk):
@@ -488,8 +489,8 @@ class Tokenizer(object):
         if not chunk:
             return
         if data.context & data.CX_NAME:
-            if chunk != chunk.lstrip():  # Tags cannot start with whitespace
-                self._fail_route()
+            if chunk in self.MARKERS or chunk.isspace():
+                self._fail_route()  # Tags must start with text (not a space)
             self._write_text(chunk)
             data.context = data.CX_NEED_SPACE
         elif data.context & data.CX_NEED_SPACE:
@@ -563,6 +564,8 @@ class Tokenizer(object):
             self._parse_template_or_argument()
         elif chunk == next == "[":
             self._parse_wikilink()
+        elif chunk == "<":
+            self._parse_tag()
         else:
             self._write_text(chunk)
 
@@ -735,10 +738,13 @@ class Tokenizer(object):
                     self._parse_comment()
                 else:
                     self._write_text(this)
-            elif this == "<" and next != "/" and not self._context & contexts.TAG_CLOSE:
-                self._parse_tag()
             elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
                 self._handle_tag_open_close()
+            elif this == "<":
+                if not self._context & contexts.TAG_CLOSE and self._can_recurse():
+                    self._parse_tag()
+                else:
+                    self._write_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
             else:
