@@ -42,16 +42,15 @@ class _TagOpenData(object):
     CX_ATTR_READY =  1 << 1
     CX_ATTR_NAME =   1 << 2
     CX_ATTR_VALUE =  1 << 3
-    CX_NEED_SPACE =  1 << 4
-    CX_NEED_EQUALS = 1 << 5
-    CX_NEED_QUOTE =  1 << 6
+    CX_QUOTED =      1 << 4
+    CX_NEED_SPACE =  1 << 5
+    CX_NEED_EQUALS = 1 << 6
+    CX_NEED_QUOTE =  1 << 7
     CX_ATTR = CX_ATTR_NAME | CX_ATTR_VALUE
 
     def __init__(self):
         self.context = self.CX_NAME
-        self.literal = True
         self.padding_buffer = []
-        self.quoted = False
         self.reset = 0
         self.ignore_quote = False
 
@@ -448,17 +447,18 @@ class Tokenizer(object):
         self._write(tokens.TagOpenOpen(showtag=True))
         while True:
             this, next = self._read(), self._read(1)
+            can_exit = not data.context & data.CX_QUOTED or data.context & data.CX_NEED_SPACE
             if this not in self.MARKERS:
                 for chunk in self.tag_splitter.split(this):
                     if self._handle_tag_chunk(data, chunk):
                         continue
             elif this is self.END:
                 if self._context & contexts.TAG_ATTR:
-                    if data.quoted:
+                    if data.context & data.CX_QUOTED:
                         self._pop()
                     self._pop()
                 self._fail_route()
-            elif this == ">" and data.literal:
+            elif this == ">" and can_exit:
                 if data.context & data.CX_ATTR:
                     self._push_tag_buffer(data)
                 padding = data.padding_buffer[0] if data.padding_buffer else ""
@@ -466,7 +466,7 @@ class Tokenizer(object):
                 self._context = contexts.TAG_BODY
                 self._head += 1
                 return self._parse(push=False)
-            elif this == "/" and next == ">" and data.literal:
+            elif this == "/" and next == ">" and can_exit:
                 if data.context & data.CX_ATTR:
                     self._push_tag_buffer(data)
                 padding = data.padding_buffer[0] if data.padding_buffer else ""
@@ -499,9 +499,8 @@ class Tokenizer(object):
                 data.padding_buffer.append(chunk)
                 data.context = data.CX_ATTR_READY
             else:
-                if data.context & data.CX_ATTR_VALUE:
-                    data.context ^= data.CX_NEED_SPACE
-                    data.quoted = False
+                if data.context & data.CX_QUOTED:
+                    data.context ^= data.CX_NEED_SPACE | data.CX_QUOTED
                     data.ignore_quote = True
                     self._pop()
                     self._head = data.reset
@@ -536,8 +535,7 @@ class Tokenizer(object):
             if data.context & data.CX_NEED_QUOTE:
                 if chunk == '"' and not data.ignore_quote:
                     data.context ^= data.CX_NEED_QUOTE
-                    data.literal = False
-                    data.quoted = True
+                    data.context |= data.CX_QUOTED
                     self._push(self._context)
                     data.reset = self._head
                 elif chunk.isspace():
@@ -545,10 +543,9 @@ class Tokenizer(object):
                 else:
                     data.context ^= data.CX_NEED_QUOTE
                     self._parse_tag_chunk(chunk)
-            elif not data.literal:
+            elif data.context & data.CX_QUOTED:
                 if chunk == '"':
                     data.context |= data.CX_NEED_SPACE
-                    data.literal = True
                 else:
                     self._parse_tag_chunk(chunk)
             elif chunk.isspace():
@@ -574,13 +571,12 @@ class Tokenizer(object):
 
         *data* is a :py:class:`_TagOpenData` object.
         """
+        if data.context & data.CX_QUOTED:
+            self._write_first(tokens.TagAttrQuote())
+            self._write_all(self._pop())
         buf = data.padding_buffer
         while len(buf) < 3:
             buf.append("")
-        if data.quoted:
-            data.quoted = False
-            self._write_first(tokens.TagAttrQuote())
-            self._write_all(self._pop())
         self._write_first(tokens.TagAttrStart(
             pad_after_eq=buf.pop(), pad_before_eq=buf.pop(),
             pad_first=buf.pop()))
