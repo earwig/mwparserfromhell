@@ -221,6 +221,8 @@ class Tokenizer(object):
                 self._head += 1
 
         self._write_all(self._pop())
+        if self._context & contexts.FAIL_NEXT:
+            self._context ^= contexts.FAIL_NEXT
 
     def _parse_template(self):
         """Parse a template at the head of the wikicode string."""
@@ -293,6 +295,8 @@ class Tokenizer(object):
             self._head = reset
             self._write_text("[[")
         else:
+            if self._context & contexts.FAIL_NEXT:
+                self._context ^= contexts.FAIL_NEXT
             self._write(tokens.WikilinkOpen())
             self._write_all(wikilink)
             self._write(tokens.WikilinkClose())
@@ -507,7 +511,7 @@ class Tokenizer(object):
             else:
                 data.context = data.CX_ATTR_NAME
                 self._push(contexts.TAG_ATTR)
-                self._write_text(chunk)                        ### hook on here for {, <, etc
+                self._parse_tag_chunk(chunk)
         elif data.context & data.CX_ATTR_NAME:
             if chunk.isspace():
                 data.padding_buffer.append(chunk)
@@ -523,7 +527,7 @@ class Tokenizer(object):
                     data.padding_buffer.append("")  # No padding before tag
                     data.context = data.CX_ATTR_NAME
                     self._push(contexts.TAG_ATTR)
-                self._write_text(chunk)                        ### hook on here for {, <, etc
+                self._parse_tag_chunk(chunk)
         elif data.context & data.CX_ATTR_VALUE:
             ### handle backslashes here
             if data.context & data.CX_NEED_QUOTE:
@@ -535,7 +539,7 @@ class Tokenizer(object):
                     data.padding_buffer.append(chunk)
                 else:
                     data.context ^= data.CX_NEED_QUOTE
-                    self._write_text(chunk)                    ### hook on here for {, <, etc
+                    self._parse_tag_chunk(chunk)
             elif not data.literal:
                 if chunk == '"':
                     data.context |= data.CX_NEED_SPACE
@@ -547,7 +551,18 @@ class Tokenizer(object):
                 data.padding_buffer.append(chunk)
                 data.context = data.CX_ATTR_READY
             else:
-                self._write_text(chunk)                        ### hook on here for {, <, etc
+                self._parse_tag_chunk(chunk)
+
+    def _parse_tag_chunk(self, chunk):
+        next = self._read(1)
+        if not self._can_recurse() or chunk not in self.MARKERS:
+            self._write_text(chunk)
+        elif chunk == next == "{":
+            self._parse_template_or_argument()
+        elif chunk == next == "[":
+            self._parse_wikilink()
+        else:
+            self._write_text(chunk)
 
     def _push_tag_buffer(self, data):
         """Write a pending tag attribute from *data* to the stack.
@@ -678,8 +693,6 @@ class Tokenizer(object):
             elif this == next == "{":
                 if self._can_recurse():
                     self._parse_template_or_argument()
-                    if self._context & contexts.FAIL_NEXT:
-                        self._context ^= contexts.FAIL_NEXT
                 else:
                     self._write_text("{")
             elif this == "|" and self._context & contexts.TEMPLATE:
@@ -698,8 +711,6 @@ class Tokenizer(object):
             elif this == next == "[":
                 if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
                     self._parse_wikilink()
-                    if self._context & contexts.FAIL_NEXT:
-                        self._context ^= contexts.FAIL_NEXT
                 else:
                     self._write_text("[")
             elif this == "|" and self._context & contexts.WIKILINK_TITLE:
