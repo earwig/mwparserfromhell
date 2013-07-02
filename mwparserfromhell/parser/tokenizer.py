@@ -51,7 +51,7 @@ class _TagOpenData(object):
         self.context = self.CX_NAME
         self.literal = True
         self.padding_buffer = []
-        self.quote_buffer = []
+        self.quoted = False
         self.reset = 0
         self.ignore_quote = False
 
@@ -454,6 +454,8 @@ class Tokenizer(object):
                         continue
             elif this is self.END:
                 if self._context & contexts.TAG_ATTR:
+                    if data.quoted:
+                        self._pop()
                     self._pop()
                 self._fail_route()
             elif this == ">" and data.literal:
@@ -499,8 +501,9 @@ class Tokenizer(object):
             else:
                 if data.context & data.CX_ATTR_VALUE:
                     data.context ^= data.CX_NEED_SPACE
-                    data.quote_buffer = []
+                    data.quoted = False
                     data.ignore_quote = True
+                    self._pop()
                     self._head = data.reset
                     return True  # Break out of chunk processing early
                 else:
@@ -534,6 +537,8 @@ class Tokenizer(object):
                 if chunk == '"' and not data.ignore_quote:
                     data.context ^= data.CX_NEED_QUOTE
                     data.literal = False
+                    data.quoted = True
+                    self._push(self._context)
                     data.reset = self._head
                 elif chunk.isspace():
                     data.padding_buffer.append(chunk)
@@ -545,7 +550,7 @@ class Tokenizer(object):
                     data.context |= data.CX_NEED_SPACE
                     data.literal = True
                 else:
-                    data.quote_buffer.append(chunk)
+                    self._parse_tag_chunk(chunk)
             elif chunk.isspace():
                 self._push_tag_buffer(data)
                 data.padding_buffer.append(chunk)
@@ -572,14 +577,15 @@ class Tokenizer(object):
         buf = data.padding_buffer
         while len(buf) < 3:
             buf.append("")
+        if data.quoted:
+            data.quoted = False
+            self._write_first(tokens.TagAttrQuote())
+            self._write_all(self._pop())
         self._write_first(tokens.TagAttrStart(
             pad_after_eq=buf.pop(), pad_before_eq=buf.pop(),
             pad_first=buf.pop()))
-        if data.quote_buffer:
-            self._write(tokens.TagAttrQuote())
-            self._write_text("".join(data.quote_buffer))
         self._write_all(self._pop())
-        data.padding_buffer, data.quote_buffer = [], []
+        data.padding_buffer = []
         data.ignore_quote = False
 
     def _handle_tag_open_close(self):
