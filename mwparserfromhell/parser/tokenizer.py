@@ -46,13 +46,11 @@ class _TagOpenData(object):
     CX_NEED_SPACE =  1 << 5
     CX_NEED_EQUALS = 1 << 6
     CX_NEED_QUOTE =  1 << 7
-    CX_ATTR = CX_ATTR_NAME | CX_ATTR_VALUE
 
     def __init__(self):
         self.context = self.CX_NAME
         self.padding_buffer = []
         self.reset = 0
-        self.ignore_quote = False
 
 
 class Tokenizer(object):
@@ -452,7 +450,11 @@ class Tokenizer(object):
             if this is self.END:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
+                        # Unclosed attribute quote: reset, don't die
+                        data.context = data.CX_ATTR_VALUE
                         self._pop()
+                        self._head = data.reset
+                        continue
                     self._pop()
                 self._fail_route()
             elif this == ">" and can_exit:
@@ -463,122 +465,104 @@ class Tokenizer(object):
                 self._handle_tag_close_open(data, tokens.TagCloseSelfclose)
                 return self._pop()
             else:
-                for chunk in self.tag_splitter.split(this):
-                    if self._handle_tag_chunk(data, chunk):
-                        continue
+                self._handle_tag_data(data, this)
             self._head += 1
 
-    def _handle_tag_chunk(self, data, chunk):
-        """Handle a *chunk* of text inside a HTML open tag.
-
-        A "chunk" is either a marker, whitespace, or text containing no markers
-        or whitespace. *data* is a :py:class:`_TagOpenData` object.
-        """
-        if not chunk:
-            return
-        if data.context & data.CX_NAME:
-            if chunk in self.MARKERS or chunk.isspace():
-                self._fail_route()  # Tags must start with text (not a space)
-            self._write_text(chunk)
-            data.context = data.CX_NEED_SPACE
-        elif data.context & data.CX_NEED_SPACE:
-            if chunk.isspace():
-                if data.context & data.CX_ATTR_VALUE:
-                    self._push_tag_buffer(data)
-                data.padding_buffer.append(chunk)
-                data.context = data.CX_ATTR_READY
-            else:
-                if data.context & data.CX_QUOTED:
-                    data.context ^= data.CX_NEED_SPACE | data.CX_QUOTED
-                    data.ignore_quote = True
-                    self._pop()
-                    self._head = data.reset
-                    return True  # Break out of chunk processing early
-                else:
-                    self._fail_route()
-        elif data.context & data.CX_ATTR_READY:
-            if chunk.isspace():
-                data.padding_buffer.append(chunk)
-            else:
-                data.context = data.CX_ATTR_NAME
-                self._push(contexts.TAG_ATTR)
-                self._parse_text_in_tag(chunk)
-        elif data.context & data.CX_ATTR_NAME:
-            if chunk.isspace():
-                data.padding_buffer.append(chunk)
-                data.context |= data.CX_NEED_EQUALS
-            elif chunk == "=":
-                if not data.context & data.CX_NEED_EQUALS:
-                    data.padding_buffer.append("")  # No padding before equals
-                data.context = data.CX_ATTR_VALUE | data.CX_NEED_QUOTE
-                self._write(tokens.TagAttrEquals())
-            else:
-                if data.context & data.CX_NEED_EQUALS:
-                    self._push_tag_buffer(data)
-                    data.padding_buffer.append("")  # No padding before tag
-                    data.context = data.CX_ATTR_NAME
-                    self._push(contexts.TAG_ATTR)
-                self._parse_text_in_tag(chunk)
-        elif data.context & data.CX_ATTR_VALUE:
-            ### handle backslashes here
-            if data.context & data.CX_NEED_QUOTE:
-                if chunk == '"' and not data.ignore_quote:
-                    data.context ^= data.CX_NEED_QUOTE
-                    data.context |= data.CX_QUOTED
-                    self._push(self._context)
-                    data.reset = self._head
-                elif chunk.isspace():
-                    data.padding_buffer.append(chunk)
-                else:
-                    data.context ^= data.CX_NEED_QUOTE
-                    self._parse_text_in_tag(chunk)
-            elif data.context & data.CX_QUOTED:
-                if chunk == '"':
-                    data.context |= data.CX_NEED_SPACE
-                else:
-                    self._parse_text_in_tag(chunk)
-            elif chunk.isspace():
-                self._push_tag_buffer(data)
-                data.padding_buffer.append(chunk)
-                data.context = data.CX_ATTR_READY
-            else:
-                self._parse_text_in_tag(chunk)
-
-    def _parse_text_in_tag(self, chunk):
-        """Parse a chunk of text in a tag that has no special significance."""
-        next = self._read(1)
-        if not self._can_recurse() or chunk not in self.MARKERS:
-            self._write_text(chunk)
-        elif chunk == next == "{":
-            self._parse_template_or_argument()
-        elif chunk == next == "[":
-            self._parse_wikilink()
-        elif chunk == "<":
-            self._parse_tag()
-        else:
-            self._write_text(chunk)
-
     def _push_tag_buffer(self, data):
-        """Write a pending tag attribute from *data* to the stack.
-
-        *data* is a :py:class:`_TagOpenData` object.
-        """
+        """Write a pending tag attribute from *data* to the stack."""
         if data.context & data.CX_QUOTED:
             self._write_first(tokens.TagAttrQuote())
             self._write_all(self._pop())
         buf = data.padding_buffer
         while len(buf) < 3:
             buf.append("")
-        self._write_first(tokens.TagAttrStart(
-            pad_after_eq=buf.pop(), pad_before_eq=buf.pop(),
-            pad_first=buf.pop()))
+        self._write_first(tokens.TagAttrStart(pad_after_eq=buf.pop(),
+            pad_before_eq=buf.pop(), pad_first=buf.pop()))
         self._write_all(self._pop())
         data.padding_buffer = []
-        data.ignore_quote = False
+
+    def _handle_tag_data(self, data, text):
+        """Handle all sorts of *text* data inside of an HTML open tag."""
+        for chunk in self.tag_splitter.split(text):
+            if not chunk:
+                continue
+            if data.context & data.CX_NAME:
+                if chunk in self.MARKERS or chunk.isspace():
+                    self._fail_route()  # Tags must start with text, not spaces
+                data.context = data.CX_NEED_SPACE
+            elif chunk.isspace():
+                self._handle_tag_space(data, chunk)
+                continue
+            elif data.context & data.CX_NEED_SPACE:
+                if data.context & data.CX_QUOTED:
+                    data.context = data.CX_ATTR_VALUE
+                    self._pop()
+                    self._head = data.reset - 1  # Will be auto-incremented
+                    return  # Break early
+                self._fail_route()
+            elif data.context & data.CX_ATTR_READY:
+                data.context = data.CX_ATTR_NAME
+                self._push(contexts.TAG_ATTR)
+            elif data.context & data.CX_ATTR_NAME:
+                if chunk == "=":
+                    if not data.context & data.CX_NEED_EQUALS:
+                        data.padding_buffer.append("")  # No padding before '='
+                    data.context = data.CX_ATTR_VALUE | data.CX_NEED_QUOTE
+                    self._write(tokens.TagAttrEquals())
+                    continue
+                if data.context & data.CX_NEED_EQUALS:
+                    self._push_tag_buffer(data)
+                    data.padding_buffer.append("")  # No padding before tag
+                    data.context = data.CX_ATTR_NAME
+                    self._push(contexts.TAG_ATTR)
+            elif data.context & data.CX_ATTR_VALUE:
+                ### handle backslashes here
+                if data.context & data.CX_NEED_QUOTE:
+                    data.context ^= data.CX_NEED_QUOTE
+                    if chunk == '"':
+                        data.context |= data.CX_QUOTED
+                        self._push(self._context)
+                        data.reset = self._head
+                        continue
+                elif data.context & data.CX_QUOTED:
+                    if chunk == '"':
+                        data.context |= data.CX_NEED_SPACE
+                        continue
+            self._handle_tag_text(chunk)
+
+    def _handle_tag_space(self, data, text):
+        """Handle whitespace (*text*) inside of an HTML open tag."""
+        ctx = data.context
+        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (data.CX_QUOTED | data.CX_NEED_QUOTE)
+        if end_of_value or (ctx & data.CX_QUOTED and ctx & data.CX_NEED_SPACE):
+            self._push_tag_buffer(data)
+            data.context = data.CX_ATTR_READY
+        elif ctx & data.CX_NEED_SPACE:
+            data.context = data.CX_ATTR_READY
+        elif ctx & data.CX_ATTR_NAME:
+            data.context |= data.CX_NEED_EQUALS
+        if ctx & data.CX_QUOTED and not ctx & data.CX_NEED_SPACE:
+            self._write_text(text)
+        else:
+            data.padding_buffer.append(text)
+
+    def _handle_tag_text(self, text):
+        """Handle regular *text* inside of an HTML open tag."""
+        next = self._read(1)
+        if not self._can_recurse() or text not in self.MARKERS:
+            self._write_text(text)
+        elif text == next == "{":
+            self._parse_template_or_argument()
+        elif text == next == "[":
+            self._parse_wikilink()
+        elif text == "<":
+            self._parse_tag()
+        else:
+            self._write_text(text)
 
     def _handle_tag_close_open(self, data, token):
         """Handle the closing of a open tag (``<foo>``)."""
-        if data.context & data.CX_ATTR:
+        if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
             self._push_tag_buffer(data)
         padding = data.padding_buffer[0] if data.padding_buffer else ""
         self._write(token(padding=padding))
