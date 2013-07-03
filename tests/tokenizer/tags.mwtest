@@ -194,6 +194,27 @@ output: [Text(text="<"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text
 
 ---
 
+name:   unclosed_quote
+label:  a quoted attribute that is never closed
+input:  "<span style="foobar>stuff</span>"
+output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foobar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
+name:   fake_quote
+label:  a fake quoted attribute
+input:  "<span style="foo"bar>stuff</span>"
+output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo\"bar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
+name:   fake_quote_complex
+label:  a fake quoted attribute, with spaces and templates and links
+input:  "<span style="foo {{bar}}\n[[baz]]"buzz >stuff</span>"
+output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo"), TagAttrStart(pad_first=" ", pad_before_eq="\n", pad_after_eq=""), TemplateOpen(), Text(text="bar"), TemplateClose(), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), WikilinkOpen(), Text(text="baz"), WikilinkClose(), Text(text="\"buzz"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
 name:   incomplete_lbracket
 label:  incomplete tags: just a left bracket
 input:  "<"
