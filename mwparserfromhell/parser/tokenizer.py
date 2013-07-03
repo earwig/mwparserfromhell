@@ -449,30 +449,18 @@ class Tokenizer(object):
             this, next = self._read(), self._read(1)
             can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or
                         data.context & data.CX_NEED_SPACE)
-            if this not in self.MARKERS:
-                for chunk in self.tag_splitter.split(this):
-                    if self._handle_tag_chunk(data, chunk):
-                        continue
-            elif this is self.END:
+            if this is self.END:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
                         self._pop()
                     self._pop()
                 self._fail_route()
             elif this == ">" and can_exit:
-                if data.context & data.CX_ATTR:
-                    self._push_tag_buffer(data)
-                padding = data.padding_buffer[0] if data.padding_buffer else ""
-                self._write(tokens.TagCloseOpen(padding=padding))
+                self._handle_tag_close_open(data, tokens.TagCloseOpen)
                 self._context = contexts.TAG_BODY
-                self._head += 1
                 return self._parse(push=False)
             elif this == "/" and next == ">" and can_exit:
-                if data.context & data.CX_ATTR:
-                    self._push_tag_buffer(data)
-                padding = data.padding_buffer[0] if data.padding_buffer else ""
-                self._write(tokens.TagCloseSelfclose(padding=padding))
-                self._head += 1
+                self._handle_tag_close_open(data, tokens.TagCloseSelfclose)
                 return self._pop()
             else:
                 for chunk in self.tag_splitter.split(this):
@@ -514,7 +502,7 @@ class Tokenizer(object):
             else:
                 data.context = data.CX_ATTR_NAME
                 self._push(contexts.TAG_ATTR)
-                self._parse_tag_chunk(chunk)
+                self._parse_text_in_tag(chunk)
         elif data.context & data.CX_ATTR_NAME:
             if chunk.isspace():
                 data.padding_buffer.append(chunk)
@@ -530,7 +518,7 @@ class Tokenizer(object):
                     data.padding_buffer.append("")  # No padding before tag
                     data.context = data.CX_ATTR_NAME
                     self._push(contexts.TAG_ATTR)
-                self._parse_tag_chunk(chunk)
+                self._parse_text_in_tag(chunk)
         elif data.context & data.CX_ATTR_VALUE:
             ### handle backslashes here
             if data.context & data.CX_NEED_QUOTE:
@@ -543,20 +531,21 @@ class Tokenizer(object):
                     data.padding_buffer.append(chunk)
                 else:
                     data.context ^= data.CX_NEED_QUOTE
-                    self._parse_tag_chunk(chunk)
+                    self._parse_text_in_tag(chunk)
             elif data.context & data.CX_QUOTED:
                 if chunk == '"':
                     data.context |= data.CX_NEED_SPACE
                 else:
-                    self._parse_tag_chunk(chunk)
+                    self._parse_text_in_tag(chunk)
             elif chunk.isspace():
                 self._push_tag_buffer(data)
                 data.padding_buffer.append(chunk)
                 data.context = data.CX_ATTR_READY
             else:
-                self._parse_tag_chunk(chunk)
+                self._parse_text_in_tag(chunk)
 
-    def _parse_tag_chunk(self, chunk):
+    def _parse_text_in_tag(self, chunk):
+        """Parse a chunk of text in a tag that has no special significance."""
         next = self._read(1)
         if not self._can_recurse() or chunk not in self.MARKERS:
             self._write_text(chunk)
@@ -586,6 +575,14 @@ class Tokenizer(object):
         self._write_all(self._pop())
         data.padding_buffer = []
         data.ignore_quote = False
+
+    def _handle_tag_close_open(self, data, token):
+        """Handle the closing of a open tag (``<foo>``)."""
+        if data.context & data.CX_ATTR:
+            self._push_tag_buffer(data)
+        padding = data.padding_buffer[0] if data.padding_buffer else ""
+        self._write(token(padding=padding))
+        self._head += 1
 
     def _handle_tag_open_close(self):
         """Handle the opening of a closing tag (``</foo>``)."""
