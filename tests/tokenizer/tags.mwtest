@@ -56,8 +56,8 @@ output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" "
 
 name:   attribute_quoted
 label:  a tag with a single quoted attribute
-input:  "<ref name="foo"></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+input:  "<ref name="foo bar"></ref>"
+output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
@@ -373,3 +373,52 @@ name:   incomplete_no_tag_name_open_close
 label:  incomplete tags: no tag name within brackets; open and close
 input:  "junk <></>"
 output: [Text(text="junk <></>")]
+
+---
+
+name:   backslash_premature_before
+label:  a backslash before a quote before a space
+input:  "<foo attribute="this is\\" quoted">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\" quoted"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_premature_after
+label:  a backslash before a quote after a space
+input:  "<foo attribute="this is \\"quoted">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is \\\"quoted"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_premature_middle
+label:  a backslash before a quote in the middle of a word
+input:  "<foo attribute="this i\\"s quoted">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this i\\\"s quoted"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_adjacent
+label:  escaped quotes next to unescaped quotes
+input:  "<foo attribute="\\"this is quoted\\"">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\\"this is quoted\\\""), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_endquote
+label:  backslashes before the end quote, causing the attribute to become unquoted
+input:  "<foo attribute="this_is quoted\\">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), Text(text="\"this_is"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\\\""), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_double
+label:  two adjacent backslashes, which do *not* affect the quote
+input:  "<foo attribute="this is\\\\" quoted">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_unaffecting
+label:  backslashes near quotes, but not immediately adjacent, thus having no effect
+input:  "<foo attribute="\\quote\\d" also="quote\\d\\">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\quote\\d"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="also"), TagAttrEquals(), Text(text="\"quot\\ed\\\""), TagCloseOpen(padding=""), TagOpenClose(), Text(text="foo"), TagCloseClose()]
