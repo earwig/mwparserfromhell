@@ -48,7 +48,7 @@ class _TagOpenData(object):
 
     def __init__(self):
         self.context = self.CX_NAME
-        self.padding_buffer = []
+        self.padding_buffer = {"first": "", "before_eq": "", "after_eq": ""}
         self.reset = 0
 
 
@@ -62,7 +62,7 @@ class Tokenizer(object):
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
-    tag_splitter = re.compile(r"([\s\"\\])")
+    tag_splitter = re.compile(r"([\s\"\\]+)")
 
     def __init__(self):
         self._text = None
@@ -475,12 +475,10 @@ class Tokenizer(object):
             self._emit_first(tokens.TagAttrQuote())
             self._emit_all(self._pop())
         buf = data.padding_buffer
-        while len(buf) < 3:
-            buf.append("")
-        self._emit_first(tokens.TagAttrStart(pad_after_eq=buf.pop(),
-            pad_before_eq=buf.pop(), pad_first=buf.pop()))
+        self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
+            pad_before_eq=buf["before_eq"], pad_after_eq=buf["after_eq"]))
         self._emit_all(self._pop())
-        data.padding_buffer = []
+        data.padding_buffer = {key: "" for key in data.padding_buffer}
 
     def _handle_tag_data(self, data, text):
         """Handle all sorts of *text* data inside of an HTML open tag."""
@@ -506,14 +504,11 @@ class Tokenizer(object):
                 self._push(contexts.TAG_ATTR)
             elif data.context & data.CX_ATTR_NAME:
                 if chunk == "=":
-                    if not data.context & data.CX_NOTE_EQUALS:
-                        data.padding_buffer.append("")  # No padding before '='
                     data.context = data.CX_ATTR_VALUE | data.CX_NOTE_QUOTE
                     self._emit(tokens.TagAttrEquals())
                     continue
                 if data.context & data.CX_NOTE_EQUALS:
                     self._push_tag_buffer(data)
-                    data.padding_buffer.append("")  # No padding before tag
                     data.context = data.CX_ATTR_NAME
                     self._push(contexts.TAG_ATTR)
             elif data.context & data.CX_ATTR_VALUE:
@@ -542,10 +537,13 @@ class Tokenizer(object):
             data.context = data.CX_ATTR_READY
         elif ctx & data.CX_ATTR_NAME:
             data.context |= data.CX_NOTE_EQUALS
+            data.padding_buffer["before_eq"] += text
         if ctx & data.CX_QUOTED and not ctx & data.CX_NOTE_SPACE:
             self._emit_text(text)
-        else:
-            data.padding_buffer.append(text)
+        elif data.context & data.CX_ATTR_READY:
+            data.padding_buffer["first"] += text
+        elif data.context & data.CX_ATTR_VALUE:
+            data.padding_buffer["after_eq"] += text
 
     def _handle_tag_text(self, text):
         """Handle regular *text* inside of an HTML open tag."""
@@ -578,8 +576,7 @@ class Tokenizer(object):
         """Handle the closing of a open tag (``<foo>``)."""
         if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
             self._push_tag_buffer(data)
-        padding = data.padding_buffer[0] if data.padding_buffer else ""
-        self._emit(token(padding=padding))
+        self._emit(token(padding=data.padding_buffer["first"]))
         self._head += 1
 
     def _handle_tag_open_close(self):
