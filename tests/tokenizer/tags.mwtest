@@ -418,6 +418,13 @@ output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" "
 
 ---
 
+name:   backslash_triple
+label:  three adjacent backslashes, which do *not* affect the quote
+input:  "<foo attribute="this is\\\\\\" quoted">blah</foo>"
+output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
 name:   backslash_unaffecting
 label:  backslashes near quotes, but not immediately adjacent, thus having no effect
 input:  "<foo attribute="\\quote\\d" also="quote\\d\\">blah</foo>"
