@@ -459,7 +459,9 @@ class Tokenizer(object):
             elif this == ">" and can_exit:
                 self._handle_tag_close_open(data, tokens.TagCloseOpen)
                 self._context = contexts.TAG_BODY
-                return self._parse(push=False)
+                if is_parsable(self._stack[1].text):
+                    return self._parse(push=False)
+                return self._handle_blacklisted_tag()
             elif this == "/" and next == ">" and can_exit:
                 self._handle_tag_close_open(data, tokens.TagCloseSelfclose)
                 return self._pop()
@@ -558,6 +560,19 @@ class Tokenizer(object):
             self._parse_tag()
         else:
             self._emit_text(text)
+
+    def _handle_blacklisted_tag(self):
+        """Handle the body of an HTML tag that is parser-blacklisted."""
+        while True:
+            this, next = self._read(), self._read(1)
+            self._head += 1
+            if this is self.END:
+                self._fail_route()
+            elif this == "<" and next == "/":
+                self._handle_tag_open_close()
+                return self._parse(push=False)
+            else:
+                self._emit_text(this)
 
     def _handle_tag_close_open(self, data, token):
         """Handle the closing of a open tag (``<foo>``)."""
