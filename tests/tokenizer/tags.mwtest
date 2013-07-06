@@ -429,3 +429,31 @@ name:   backslash_unaffecting
 label:  backslashes near quotes, but not immediately adjacent, thus having no effect
 input:  "<foo attribute="\\quote\\d" also="quote\\d\\">blah</foo>"
 output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\quote\\d"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="also"), TagAttrEquals(), Text(text="\"quote\\d\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   unparsable
+label:  a tag that should not be put through the normal parser
+input:  "{{t1}}<nowiki>{{t2}}</nowiki>{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(showtag=True), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_complex
+label:  a tag that should not be put through the normal parser; lots of stuff inside
+input:  "{{t1}}<pre>{{t2}}\n==Heading==\nThis is some text with a [[page|link]].</pre>{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(showtag=True), Text(text="pre"), TagCloseOpen(padding=""), Text(text="{{t2}}\n==Heading==\nThis is some text with a [[page|link]]."), TagOpenClose(), Text(text="pre"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_attributed
+label:  a tag that should not be put through the normal parser; parsed attributes
+input:  "{{t1}}<nowiki attr=val attr2="{{val2}}">{{t2}}</nowiki>{{t3}}"
+output: [TemplateOpen(), Text(text=u't1'), TemplateClose(), TagOpenOpen(showtag=True), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_incomplete
+label:  a tag that should not be put through the normal parser; incomplete
+input:  "{{t1}}<nowiki>{{t2}}{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), Text(text="<nowiki>"), TemplateOpen(), Text(text="t2"), TemplateClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
