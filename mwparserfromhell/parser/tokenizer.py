@@ -42,9 +42,9 @@ class _TagOpenData(object):
     CX_ATTR_NAME =   1 << 2
     CX_ATTR_VALUE =  1 << 3
     CX_QUOTED =      1 << 4
-    CX_NEED_SPACE =  1 << 5
-    CX_NEED_EQUALS = 1 << 6
-    CX_NEED_QUOTE =  1 << 7
+    CX_NOTE_SPACE =  1 << 5
+    CX_NOTE_EQUALS = 1 << 6
+    CX_NOTE_QUOTE =  1 << 7
 
     def __init__(self):
         self.context = self.CX_NAME
@@ -58,10 +58,10 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "!", "\n", END]
+               "/", "\\", '"', "-", "!", "\n", END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
+    regex = re.compile(r"([{}\[\]<>|=&#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\\])")
 
     def __init__(self):
@@ -445,7 +445,7 @@ class Tokenizer(object):
         while True:
             this, next = self._read(), self._read(1)
             can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or
-                        data.context & data.CX_NEED_SPACE)
+                        data.context & data.CX_NOTE_SPACE)
             if this is self.END:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
@@ -488,11 +488,11 @@ class Tokenizer(object):
             if data.context & data.CX_NAME:
                 if chunk in self.MARKERS or chunk.isspace():
                     self._fail_route()  # Tags must start with text, not spaces
-                data.context = data.CX_NEED_SPACE
+                data.context = data.CX_NOTE_SPACE
             elif chunk.isspace():
                 self._handle_tag_space(data, chunk)
                 continue
-            elif data.context & data.CX_NEED_SPACE:
+            elif data.context & data.CX_NOTE_SPACE:
                 if data.context & data.CX_QUOTED:
                     data.context = data.CX_ATTR_VALUE
                     self._pop()
@@ -504,43 +504,43 @@ class Tokenizer(object):
                 self._push(contexts.TAG_ATTR)
             elif data.context & data.CX_ATTR_NAME:
                 if chunk == "=":
-                    if not data.context & data.CX_NEED_EQUALS:
+                    if not data.context & data.CX_NOTE_EQUALS:
                         data.padding_buffer.append("")  # No padding before '='
-                    data.context = data.CX_ATTR_VALUE | data.CX_NEED_QUOTE
+                    data.context = data.CX_ATTR_VALUE | data.CX_NOTE_QUOTE
                     self._emit(tokens.TagAttrEquals())
                     continue
-                if data.context & data.CX_NEED_EQUALS:
+                if data.context & data.CX_NOTE_EQUALS:
                     self._push_tag_buffer(data)
                     data.padding_buffer.append("")  # No padding before tag
                     data.context = data.CX_ATTR_NAME
                     self._push(contexts.TAG_ATTR)
             elif data.context & data.CX_ATTR_VALUE:
-                ### handle backslashes here
-                if data.context & data.CX_NEED_QUOTE:
-                    data.context ^= data.CX_NEED_QUOTE
-                    if chunk == '"':
+                escaped = self._read(-1) == "\\" and self._read(-2) != "\\"
+                if data.context & data.CX_NOTE_QUOTE:
+                    data.context ^= data.CX_NOTE_QUOTE
+                    if chunk == '"' and not escaped:
                         data.context |= data.CX_QUOTED
                         self._push(self._context)
                         data.reset = self._head
                         continue
                 elif data.context & data.CX_QUOTED:
-                    if chunk == '"':
-                        data.context |= data.CX_NEED_SPACE
+                    if chunk == '"' and not escaped:
+                        data.context |= data.CX_NOTE_SPACE
                         continue
             self._handle_tag_text(chunk)
 
     def _handle_tag_space(self, data, text):
         """Handle whitespace (*text*) inside of an HTML open tag."""
         ctx = data.context
-        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (data.CX_QUOTED | data.CX_NEED_QUOTE)
-        if end_of_value or (ctx & data.CX_QUOTED and ctx & data.CX_NEED_SPACE):
+        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (data.CX_QUOTED | data.CX_NOTE_QUOTE)
+        if end_of_value or (ctx & data.CX_QUOTED and ctx & data.CX_NOTE_SPACE):
             self._push_tag_buffer(data)
             data.context = data.CX_ATTR_READY
-        elif ctx & data.CX_NEED_SPACE:
+        elif ctx & data.CX_NOTE_SPACE:
             data.context = data.CX_ATTR_READY
         elif ctx & data.CX_ATTR_NAME:
-            data.context |= data.CX_NEED_EQUALS
-        if ctx & data.CX_QUOTED and not ctx & data.CX_NEED_SPACE:
+            data.context |= data.CX_NOTE_EQUALS
+        if ctx & data.CX_QUOTED and not ctx & data.CX_NOTE_SPACE:
             self._emit_text(text)
         else:
             data.padding_buffer.append(text)
