@@ -355,6 +355,13 @@ output: [Text(text="junk <ref>bar</span>")]
 
 ---
 
+name:   incomplete_close
+label:  incomplete tags: a close tag
+input:  "junk </ref>"
+output: [Text(text="junk </ref>")]
+
+---
+
 name:   incomplete_no_tag_name_open
 label:  incomplete tags: no tag name within brackets; just an open
 input:  "junk <>"
@@ -457,3 +464,59 @@ name:   unparsable_incomplete
 label:  a tag that should not be put through the normal parser; incomplete
 input:  "{{t1}}<nowiki>{{t2}}{{t3}}"
 output: [TemplateOpen(), Text(text="t1"), TemplateClose(), Text(text="<nowiki>"), TemplateOpen(), Text(text="t2"), TemplateClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   single_open_close
+label:  a tag that supports being single; both an open and a close tag
+input:  "foo<li>bar{{baz}}</li>"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseOpen(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenClose(), Text(text="li"), TagCloseClose()]
+
+---
+
+name:   single_open
+label:  a tag that supports being single; just an open tag
+input:  "foo<li>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_selfclose
+label:  a tag that supports being single; a self-closing tag
+input:  "foo<li/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_close
+label:  a tag that supports being single; just a close tag
+input:  "foo</li>bar{{baz}}"
+output: [Text(text="foo</li>bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_open_close
+label:  a tag that can only be single; both an open and a close tag
+input:  "foo<br>bar{{baz}}</br>"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   single_only_open
+label:  a tag that can only be single; just an open tag
+input:  "foo<br>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_selfclose
+label:  a tag that can only be single; a self-closing tag
+input:  "foo<br/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_close
+label:  a tag that can only be single; just a close tag
+input:  "foo</br>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
