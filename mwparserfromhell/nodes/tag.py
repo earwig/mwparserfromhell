@@ -33,20 +33,20 @@ class Tag(Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
 
     def __init__(self, tag, contents=None, attrs=None, showtag=True,
-                 self_closing=False, padding="", closing_tag=None):
+                 self_closing=False, invalid=False, implicit=False, padding="",
+                 closing_tag=None):
         super(Tag, self).__init__()
         self._tag = tag
         self._contents = contents
-        if attrs:
-            self._attrs = attrs
-        else:
-            self._attrs = []
+        self._attrs = attrs if attrs else []
         self._showtag = showtag
         self._self_closing = self_closing
+        self._invalid = invalid
+        self._implicit = implicit
         self._padding = padding
         if closing_tag:
             self._closing_tag = closing_tag
-        else:
+        elif not self_closing:
             self._closing_tag = tag
 
     def __unicode__(self):
@@ -57,11 +57,11 @@ class Tag(Node):
             else:
                 return open_ + str(self.contents) + close
 
-        result = "<" + str(self.tag)
+        result = ("</" if self.invalid else "<") + str(self.tag)
         if self.attributes:
             result += "".join([str(attr) for attr in self.attributes])
         if self.self_closing:
-            result += self.padding + "/>"
+            result += self.padding + (">" if self.implicit else "/>")
         else:
             result += self.padding + ">" + str(self.contents)
             result += "</" + str(self.closing_tag) + ">"
@@ -81,6 +81,9 @@ class Tag(Node):
         if self.contents:
             for child in getter(self.contents):
                 yield self.contents, child
+        if not self.self_closing and self.closing_tag:
+            for child in getter(self.closing_tag):
+                yield self.closing_tag, child
 
     def __strip__(self, normalize, collapse):
         if is_visible(self.tag):
@@ -88,27 +91,22 @@ class Tag(Node):
         return None
 
     def __showtree__(self, write, get, mark):
-        tagnodes = self.tag.nodes
-        if not self.attributes and (len(tagnodes) == 1 and
-                                    isinstance(tagnodes[0], Text)):
-            write("<" + str(tagnodes[0]) + ">")
+        write("</" if self.invalid else "<")
+        get(self.tag)
+        for attr in self.attributes:
+            get(attr.name)
+            if not attr.value:
+                continue
+            write("    = ")
+            mark()
+            get(attr.value)
+        if self.self_closing:
+            write(">" if self.implicit else "/>")
         else:
-            write("<")
-            get(self.tag)
-            for attr in self.attributes:
-                get(attr.name)
-                if not attr.value:
-                    continue
-                write("    = ")
-                mark()
-                get(attr.value)
             write(">")
-        get(self.contents)
-        if len(tagnodes) == 1 and isinstance(tagnodes[0], Text):
-            write("</" + str(tagnodes[0]) + ">")
-        else:
+            get(self.contents)
             write("</")
-            get(self.tag)
+            get(self.closing_tag)
             write(">")
 
     @property
@@ -140,6 +138,27 @@ class Tag(Node):
         return self._self_closing
 
     @property
+    def invalid(self):
+        """Whether the tag starts with a backslash after the opening bracket.
+
+        This makes the tag look like a lone close tag. It is technically
+        invalid and is only parsable Wikicode when the tag itself is
+        single-only, like ``<br>`` and ``<img>``. See
+        :py:func:`tag_defs.is_single_only`.
+        """
+        return self._invalid
+
+    @property
+    def implicit(self):
+        """Whether the tag is implicitly self-closing, with no ending slash.
+
+        This is only possible for specific "single" tags like ``<br>`` and
+        ``<li>``. See :py:func:`tag_defs.is_single`. This field only has an
+        effect if :py:attr:`self_closing` is also ``True``.
+        """
+        return self._implicit
+
+    @property
     def padding(self):
         """Spacing to insert before the first closing ``>``."""
         return self._padding
@@ -168,6 +187,14 @@ class Tag(Node):
     @self_closing.setter
     def self_closing(self, value):
         self._self_closing = bool(value)
+
+    @invalid.setter
+    def invalid(self, value):
+        self._invalid = bool(value)
+
+    @implicit.setter
+    def implicit(self, value):
+        self._implicit = bool(value)
 
     @padding.setter
     def padding(self, value):

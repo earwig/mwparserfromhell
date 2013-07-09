@@ -205,8 +205,9 @@ class Builder(object):
 
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
-        showtag = token.showtag
-        attrs = []
+        showtag, invalid = token.showtag, token.get("invalid", False)
+        implicit, attrs, contents, closing_tag = False, [], None, None
+        close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -216,16 +217,20 @@ class Builder(object):
                 padding = token.padding
                 tag = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TagCloseSelfclose):
-                tag = self._pop()
-                return Tag(tag, attrs=attrs, showtag=showtag,
-                           self_closing=True, padding=token.padding)
             elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TagCloseClose):
-                return Tag(tag, contents, attrs, showtag, False, padding,
-                           self._pop())
+            elif isinstance(token, close_tokens):
+                if isinstance(token, tokens.TagCloseSelfclose):
+                    tag = self._pop()
+                    self_closing = True
+                    padding = token.padding
+                    implicit = token.get("implicit", False)
+                else:
+                    self_closing = False
+                    closing_tag = self._pop()
+                return Tag(tag, contents, attrs, showtag, self_closing,
+                           invalid, implicit, padding, closing_tag)
             else:
                 self._write(self._handle_token(token))
 

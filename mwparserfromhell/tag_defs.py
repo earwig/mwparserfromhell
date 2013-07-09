@@ -24,7 +24,8 @@
 
 from __future__ import unicode_literals
 
-__all__ = ["get_wikicode", "is_parsable", "is_visible"]
+__all__ = ["get_wikicode", "is_parsable", "is_visible", "is_single",
+           "is_single_only"]
 
 PARSER_BLACKLIST = [
     # enwiki extensions @ 2013-06-28
@@ -65,3 +66,11 @@ def is_parsable(tag):
 def is_visible(tag):
     """Return whether or not the given *tag* contains visible text."""
     return tag.lower() not in INVISIBLE_TAGS
+
+def is_single(tag):
+    """Return whether or not the given *tag* can exist without a close tag."""
+    return tag.lower() in SINGLE
+
+def is_single_only(tag):
+    """Return whether or not the given *tag* must exist without a close tag."""
+    return tag.lower() in SINGLE_ONLY
