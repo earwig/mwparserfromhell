@@ -35,6 +35,22 @@ static int heading_level_from_context(int n)
     return level;
 }
 
+/*
+    Call the given function in tag_defs, using 'tag' as a parameter, and return
+    its output as a bool.
+*/
+static int
+call_tag_def_func(const char* funcname, PyObject* tag)
+{
+    PyObject* func = PyObject_GetAttrString(tag_defs, funcname);
+    PyObject* result = PyObject_CallFunctionObjArgs(func, tag, NULL);
+    int ans = (result == Py_True) ? 1 : 0;
+
+    Py_DECREF(func);
+    Py_DECREF(result);
+    return ans;
+}
+
 static PyObject*
 Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
@@ -1418,22 +1434,11 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     return Tokenizer_parse(self, 0);
 }
 
-PyMODINIT_FUNC
-init_tokenizer(void)
+static void
+load_entitydefs(void)
 {
-    PyObject *module, *tempmod, *defmap, *deflist, *globals, *locals,
-             *fromlist, *modname;
+    PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
-    char *name;
-
-    TokenizerType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&TokenizerType) < 0)
-        return;
-    module = Py_InitModule("_tokenizer", module_methods);
-    Py_INCREF(&TokenizerType);
-    PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
-    Py_INCREF(Py_True);
-    PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
 
     tempmod = PyImport_ImportModule("htmlentitydefs");
     if (!tempmod)
@@ -1451,18 +1456,19 @@ init_tokenizer(void)
     for (i = 0; i < numdefs; i++)
         entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
     Py_DECREF(deflist);
+}
 
-    EMPTY = PyUnicode_FromString("");
-    NOARGS = PyTuple_New(0);
+static void
+load_tokens(void)
+{
+    PyObject *tempmod, *tokens,
+             *globals = PyEval_GetGlobals(),
+             *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1),
+             *modname = PyBytes_FromString("tokens");
+    char *name = "mwparserfromhell.parser";
 
-    name = "mwparserfromhell.parser";
-    globals = PyEval_GetGlobals();
-    locals = PyEval_GetLocals();
-    fromlist = PyList_New(1);
-    if (!fromlist)
-        return;
-    modname = PyBytes_FromString("tokens");
-    if (!modname)
+    if (!fromlist || !modname)
         return;
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
@@ -1508,4 +1514,49 @@ init_tokenizer(void)
     TagCloseSelfclose = PyObject_GetAttrString(tokens, "TagCloseSelfclose");
     TagOpenClose = PyObject_GetAttrString(tokens, "TagOpenClose");
     TagCloseClose = PyObject_GetAttrString(tokens, "TagCloseClose");
+
+    Py_DECREF(tokens);
+}
+
+static void
+load_tag_defs(void)
+{
+    PyObject *tempmod,
+             *globals = PyEval_GetGlobals(),
+             *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1),
+             *modname = PyBytes_FromString("tag_defs");
+    char *name = "mwparserfromhell";
+
+    if (!fromlist || !modname)
+        return;
+    PyList_SET_ITEM(fromlist, 0, modname);
+    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
+    Py_DECREF(fromlist);
+    if (!tempmod)
+        return;
+    tag_defs = PyObject_GetAttrString(tempmod, "tag_defs");
+    Py_DECREF(tempmod);
+}
+
+PyMODINIT_FUNC
+init_tokenizer(void)
+{
+    PyObject *module;
+
+    TokenizerType.tp_new = PyType_GenericNew;
+    if (PyType_Ready(&TokenizerType) < 0)
+        return;
+    module = Py_InitModule("_tokenizer", module_methods);
+    Py_INCREF(&TokenizerType);
+    PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+    Py_INCREF(Py_True);
+    PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
+
+    EMPTY = PyUnicode_FromString("");
+    NOARGS = PyTuple_New(0);
+
+    load_entitydefs();
+    load_tokens();
+    load_tag_defs();
 }

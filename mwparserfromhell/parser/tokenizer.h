@@ -60,10 +60,10 @@ static char** entitydefs;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;
-static PyObject* tokens;
+static PyObject* tag_defs;
 
 
-/* Tokens */
+/* Tokens: */
 
 static PyObject* Text;
 
@@ -102,36 +102,42 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x00007
-#define LC_TEMPLATE_NAME        0x00001
-#define LC_TEMPLATE_PARAM_KEY   0x00002
-#define LC_TEMPLATE_PARAM_VALUE 0x00004
+#define LC_TEMPLATE             0x000007
+#define LC_TEMPLATE_NAME        0x000001
+#define LC_TEMPLATE_PARAM_KEY   0x000002
+#define LC_TEMPLATE_PARAM_VALUE 0x000004
 
-#define LC_ARGUMENT             0x00018
-#define LC_ARGUMENT_NAME        0x00008
-#define LC_ARGUMENT_DEFAULT     0x00010
+#define LC_ARGUMENT             0x000018
+#define LC_ARGUMENT_NAME        0x000008
+#define LC_ARGUMENT_DEFAULT     0x000010
 
-#define LC_WIKILINK             0x00060
-#define LC_WIKILINK_TITLE       0x00020
-#define LC_WIKILINK_TEXT        0x00040
+#define LC_WIKILINK             0x000060
+#define LC_WIKILINK_TITLE       0x000020
+#define LC_WIKILINK_TEXT        0x000040
 
-#define LC_HEADING              0x01F80
-#define LC_HEADING_LEVEL_1      0x00080
-#define LC_HEADING_LEVEL_2      0x00100
-#define LC_HEADING_LEVEL_3      0x00200
-#define LC_HEADING_LEVEL_4      0x00400
-#define LC_HEADING_LEVEL_5      0x00800
-#define LC_HEADING_LEVEL_6      0x01000
+#define LC_HEADING              0x001F80
+#define LC_HEADING_LEVEL_1      0x000080
+#define LC_HEADING_LEVEL_2      0x000100
+#define LC_HEADING_LEVEL_3      0x000200
+#define LC_HEADING_LEVEL_4      0x000400
+#define LC_HEADING_LEVEL_5      0x000800
+#define LC_HEADING_LEVEL_6      0x001000
 
-#define LC_COMMENT              0x02000
+#define LC_COMMENT              0x002000
 
-#define LC_SAFETY_CHECK         0xFC000
-#define LC_HAS_TEXT             0x04000
-#define LC_FAIL_ON_TEXT         0x08000
-#define LC_FAIL_NEXT            0x10000
-#define LC_FAIL_ON_LBRACE       0x20000
-#define LC_FAIL_ON_RBRACE       0x40000
-#define LC_FAIL_ON_EQUALS       0x80000
+#define LC_TAG                  0x03C000
+#define LC_TAG_OPEN             0x004000
+#define LC_TAG_ATTR             0x008000
+#define LC_TAG_BODY             0x010000
+#define LC_TAG_CLOSE            0x020000
+
+#define LC_SAFETY_CHECK         0xFC0000
+#define LC_HAS_TEXT             0x040000
+#define LC_FAIL_ON_TEXT         0x080000
+#define LC_FAIL_NEXT            0x100000
+#define LC_FAIL_ON_LBRACE       0x200000
+#define LC_FAIL_ON_RBRACE       0x400000
+#define LC_FAIL_ON_EQUALS       0x800000
 
 /* Global contexts: */
 
@@ -179,9 +185,15 @@ typedef struct {
 #define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
 
 
+/* Macros for accessing HTML tag definitions: */
+
+#define IS_PARSABLE(tag) (call_tag_def_func("is_parsable", tag))
+#define IS_SINGLE(tag) (call_tag_def_func("is_single", tag))
+#define IS_SINGLE_ONLY(tag) (call_tag_def_func("is_single_only", tag))
+
+
 /* Function prototypes: */
 
-static int heading_level_from_context(int);
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static struct Textbuffer* Textbuffer_new(void);
 static void Tokenizer_dealloc(Tokenizer*);
