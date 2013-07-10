@@ -487,6 +487,8 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
         return -1;
     }
     Py_DECREF(tokenlist);
+    if (self->topstack->context & LC_FAIL_NEXT)
+        self->topstack->context ^= LC_FAIL_NEXT;
     return 0;
 }
 
@@ -499,7 +501,7 @@ Tokenizer_parse_template(Tokenizer* self)
     PyObject *template, *token;
     Py_ssize_t reset = self->head;
 
-    template = Tokenizer_parse(self, LC_TEMPLATE_NAME);
+    template = Tokenizer_parse(self, LC_TEMPLATE_NAME, 1);
     if (BAD_ROUTE) {
         self->head = reset;
         return 0;
@@ -542,7 +544,7 @@ Tokenizer_parse_argument(Tokenizer* self)
     PyObject *argument, *token;
     Py_ssize_t reset = self->head;
 
-    argument = Tokenizer_parse(self, LC_ARGUMENT_NAME);
+    argument = Tokenizer_parse(self, LC_ARGUMENT_NAME, 1);
     if (BAD_ROUTE) {
         self->head = reset;
         return 0;
@@ -709,7 +711,7 @@ Tokenizer_parse_wikilink(Tokenizer* self)
 
     self->head += 2;
     reset = self->head - 1;
-    wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE);
+    wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE, 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
@@ -745,6 +747,8 @@ Tokenizer_parse_wikilink(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
+    if (self->topstack->context & LC_FAIL_NEXT)
+        self->topstack->context ^= LC_FAIL_NEXT;
     return 0;
 }
 
@@ -797,7 +801,7 @@ Tokenizer_parse_heading(Tokenizer* self)
         self->head++;
     }
     context = LC_HEADING_LEVEL_1 << (best > 5 ? 5 : best - 1);
-    heading = (HeadingData*) Tokenizer_parse(self, context);
+    heading = (HeadingData*) Tokenizer_parse(self, context, 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset + best - 1;
@@ -886,7 +890,7 @@ Tokenizer_handle_heading_end(Tokenizer* self)
     current = heading_level_from_context(self->topstack->context);
     level = current > best ? (best > 6 ? 6 : best) :
                              (current > 6 ? 6 : current);
-    after = (HeadingData*) Tokenizer_parse(self, self->topstack->context);
+    after = (HeadingData*) Tokenizer_parse(self, self->topstack->context, 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         if (level < best) {
@@ -1144,7 +1148,7 @@ Tokenizer_parse_comment(Tokenizer* self)
     int i;
 
     self->head += 4;
-    comment = Tokenizer_parse(self, LC_COMMENT);
+    comment = Tokenizer_parse(self, LC_COMMENT, 1);
     if (BAD_ROUTE) {
         const char* text = "<!--";
         RESET_ROUTE();
@@ -1192,6 +1196,156 @@ Tokenizer_parse_comment(Tokenizer* self)
 }
 
 /*
+    Parse an HTML tag at the head of the wikicode string.
+*/
+static int
+Tokenizer_parse_tag(Tokenizer* self)
+{
+    return 0;
+}
+
+/*
+    Actually parse an HTML tag, starting with the open (<foo>).
+*/
+static PyObject*
+Tokenizer_really_parse_tag(Tokenizer* self)
+{
+    return NULL;
+}
+
+/*
+    Write a pending tag attribute from data to the stack.
+*/
+static int
+Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
+{
+    return 0;
+}
+
+/*
+    Handle all sorts of text data inside of an HTML open tag.
+*/
+static int
+Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
+{
+    return 0;
+}
+
+/*
+    Handle whitespace inside of an HTML open tag.
+*/
+static int
+Tokenizer_handle_tag_space(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
+{
+    return 0;
+}
+
+/*
+    Handle regular text inside of an HTML open tag.
+*/
+static int
+Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
+{
+    return 0;
+}
+
+/*
+    Handle the body of an HTML tag that is parser-blacklisted.
+*/
+static PyObject*
+Tokenizer_handle_blacklisted_tag(Tokenizer* self)
+{
+    return NULL;
+}
+
+/*
+    Handle the closing of a open tag (<foo>).
+*/
+static int
+Tokenizer_handle_tag_close_open(Tokenizer* self, TagOpenData* data,
+                                PyObject* token)
+{
+    return 0;
+}
+
+/*
+    Handle the opening of a closing tag (</foo>).
+*/
+static int
+Tokenizer_handle_tag_open_close(Tokenizer* self)
+{
+    return 0;
+}
+
+/*
+    Handle the ending of a closing tag (</foo>).
+*/
+static PyObject*
+Tokenizer_handle_tag_close_close(Tokenizer* self)
+{
+    return NULL;
+}
+
+/*
+    Handle the (possible) start of an implicitly closing single tag.
+*/
+static int
+Tokenizer_handle_invalid_tag_start(Tokenizer* self)
+{
+    return 0;
+}
+
+/*
+    Handle the end of an implicitly closing single-only HTML tag.
+*/
+static PyObject*
+Tokenizer_handle_single_only_tag_end(Tokenizer* self)
+{
+    return NULL;
+}
+
+/*
+    Handle the stream end when inside a single-supporting HTML tag.
+*/
+static PyObject*
+Tokenizer_handle_single_tag_end(Tokenizer* self)
+{
+    return NULL;
+}
+
+/*
+    Handle the end of the stream of wikitext.
+*/
+static PyObject*
+Tokenizer_handle_end(Tokenizer* self, int context)
+{
+    static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
+                                LC_HEADING | LC_COMMENT);
+    static int double_fail = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
+    PyObject *token, *text, *trash;
+    int single;
+
+    if (context & fail_contexts) {
+        if (context & LC_TAG_BODY) {
+            token = PyList_GET_ITEM(self->topstack->stack, 1);
+            text = PyObject_GetAttrString(token, "text");
+            if (!text)
+                return NULL;
+            single = IS_SINGLE(text);
+            Py_DECREF(text);
+            if (single)
+                return Tokenizer_handle_single_tag_end(self);
+        }
+        else if (context & double_fail) {
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
+        }
+        return Tokenizer_fail_route(self);
+    }
+    return Tokenizer_pop(self);
+}
+
+/*
     Make sure we are not trying to write an invalid character. Return 0 if
     everything is safe, or -1 if the route must be failed.
 */
@@ -1205,6 +1359,11 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         if (data == *"]" || data == *"{")
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == *"\n" || data == *"[" || data == *"}")
+            return -1;
+        return 0;
+    }
+    if (context & LC_TAG_CLOSE) {
+        if (data == *"<")
             return -1;
         return 0;
     }
@@ -1267,32 +1426,33 @@ Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 }
 
 /*
-    Parse the wikicode string, using context for when to stop.
+    Parse the wikicode string, using context for when to stop. If push is true,
+    we will push a new context, otherwise we won't and context will be ignored.
 */
 static PyObject*
-Tokenizer_parse(Tokenizer* self, int context)
+Tokenizer_parse(Tokenizer* self, int context, int push)
 {
-    static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
-                                LC_HEADING | LC_COMMENT);
     static int unsafe_contexts = (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE |
                                   LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME);
+    static int double_unsafe = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
-    PyObject *trash;
+    PyObject* trash;
 
-    if (Tokenizer_push(self, context))
-        return NULL;
+    if (push) {
+        if (Tokenizer_push(self, context))
+            return NULL;
+    }
     while (1) {
         this = Tokenizer_READ(self, 0);
         this_context = self->topstack->context;
         if (this_context & unsafe_contexts) {
             if (Tokenizer_verify_safe(self, this_context, this) < 0) {
-                if (this_context & LC_TEMPLATE_PARAM_KEY) {
+                if (this_context & double_unsafe) {
                     trash = Tokenizer_pop(self);
                     Py_XDECREF(trash);
                 }
-                Tokenizer_fail_route(self);
-                return NULL;
+                return Tokenizer_fail_route(self);
             }
         }
         is_marker = 0;
@@ -1307,15 +1467,8 @@ Tokenizer_parse(Tokenizer* self, int context)
             self->head++;
             continue;
         }
-        if (this == *"") {
-            if (this_context & LC_TEMPLATE_PARAM_KEY) {
-                trash = Tokenizer_pop(self);
-                Py_XDECREF(trash);
-            }
-            if (this_context & fail_contexts)
-                return Tokenizer_fail_route(self);
-            return Tokenizer_pop(self);
-        }
+        if (this == *"")
+            return Tokenizer_handle_end(self, this_context);
         next = Tokenizer_READ(self, 1);
         if (this_context & LC_COMMENT) {
             if (this == next && next == *"-") {
@@ -1328,8 +1481,6 @@ Tokenizer_parse(Tokenizer* self, int context)
             if (Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_template_or_argument(self))
                     return NULL;
-                if (self->topstack->context & LC_FAIL_NEXT)
-                    self->topstack->context ^= LC_FAIL_NEXT;
             }
             else
                 Tokenizer_emit_text(self, this);
@@ -1359,8 +1510,6 @@ Tokenizer_parse(Tokenizer* self, int context)
                                                 Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
-                if (self->topstack->context & LC_FAIL_NEXT)
-                    self->topstack->context ^= LC_FAIL_NEXT;
             }
             else
                 Tokenizer_emit_text(self, this);
@@ -1397,6 +1546,28 @@ Tokenizer_parse(Tokenizer* self, int context)
             else
                 Tokenizer_emit_text(self, this);
         }
+        else if (this == *"<" && next == *"/" &&
+                                            Tokenizer_READ(self, 2) != *"") {
+            if (this_context & LC_TAG_BODY) {
+                if (Tokenizer_handle_tag_open_close(self))
+                    return NULL;
+            }
+            else {
+                if (Tokenizer_handle_invalid_tag_start(self))
+                    return NULL;
+            }
+        }
+        else if (this == *"<") {
+            if (!(this_context & LC_TAG_CLOSE) &&
+                                                Tokenizer_CAN_RECURSE(self)) {
+                if (Tokenizer_parse_tag(self))
+                    return NULL;
+            }
+            else
+                Tokenizer_emit_text(self, this);
+        }
+        else if (this == *">" && this_context & LC_TAG_CLOSE)
+            return Tokenizer_handle_tag_close_close(self);
         else
             Tokenizer_emit_text(self, this);
         self->head++;
@@ -1431,7 +1602,7 @@ Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         self->text = PySequence_Fast(text, "expected a sequence");
     }
     self->length = PyList_GET_SIZE(self->text);
-    return Tokenizer_parse(self, 0);
+    return Tokenizer_parse(self, 0, 1);
 }
 
 static void

@@ -192,7 +192,7 @@ typedef struct Stack Stack;
 typedef struct {
     PyObject_HEAD
     PyObject* text;         /* text to tokenize */
-    struct Stack* topstack; /* topmost stack */
+    Stack* topstack;        /* topmost stack */
     Py_ssize_t head;        /* current position in text */
     Py_ssize_t length;      /* length of text */
     int global;             /* global context */
@@ -251,8 +251,22 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer*);
 static int Tokenizer_really_parse_entity(Tokenizer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
+static int Tokenizer_parse_tag(Tokenizer*);
+static PyObject* Tokenizer_really_parse_tag(Tokenizer*);
+static int Tokenizer_push_tag_buffer(Tokenizer*, TagOpenData*);
+static int Tokenizer_handle_tag_data(Tokenizer*, TagOpenData*, Py_UNICODE);
+static int Tokenizer_handle_tag_space(Tokenizer*, TagOpenData*, Py_UNICODE);
+static int Tokenizer_handle_tag_text(Tokenizer*, Py_UNICODE);
+static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer*);
+static int Tokenizer_handle_tag_close_open(Tokenizer*, TagOpenData*, PyObject*);
+static int Tokenizer_handle_tag_open_close(Tokenizer*);
+static PyObject* Tokenizer_handle_tag_close_close(Tokenizer*);
+static int Tokenizer_handle_invalid_tag_start(Tokenizer*);
+static PyObject* Tokenizer_handle_single_only_tag_end(Tokenizer*);
+static PyObject* Tokenizer_handle_single_tag_end(Tokenizer*);
+static PyObject* Tokenizer_handle_end(Tokenizer*, int);
 static int Tokenizer_verify_safe(Tokenizer*, int, Py_UNICODE);
-static PyObject* Tokenizer_parse(Tokenizer*, int);
+static PyObject* Tokenizer_parse(Tokenizer*, int, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 
