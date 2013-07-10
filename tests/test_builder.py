@@ -193,7 +193,7 @@ class TestBuilder(TreeEqualityTestCase):
     def test_tag(self):
         """tests for building Tag nodes"""
         tests = [
-            ([tokens.TagOpenOpen(showtag=True), tokens.Text(text="ref"),
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
               tokens.TagCloseOpen(padding=""), tokens.TagOpenClose(),
               tokens.Text(text="ref"), tokens.TagCloseClose()],
              wrap([Tag(wraptext("ref"), wrap([]), [], True, False, "",

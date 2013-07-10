@@ -441,7 +441,7 @@ class Tokenizer(object):
         """Actually parse an HTML tag, starting with the open (``<foo>``)."""
         data = _TagOpenData()
         self._push(contexts.TAG_OPEN)
-        self._emit(tokens.TagOpenOpen(showtag=True))
+        self._emit(tokens.TagOpenOpen())
         while True:
             this, next = self._read(), self._read(1)
             can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or

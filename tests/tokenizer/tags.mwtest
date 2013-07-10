@@ -1,112 +1,112 @@
 name:   basic
 label:  a basic tag with an open and close
 input:  "<ref></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   basic_selfclosing
 label:  a basic self-closing tag
 input:  "<ref/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   content
 label:  a tag with some content in the middle
 input:  "<ref>this is a reference</ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=""), Text(text="this is a reference"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), Text(text="this is a reference"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   padded_open
 label:  a tag with some padding in the open tag
 input:  "<ref ></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=" "), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=" "), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   padded_close
 label:  a tag with some padding in the close tag
 input:  "<ref></ref >"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref "), TagCloseClose()]
 
 ---
 
 name:   padded_selfclosing
 label:  a self-closing tag with padding
 input:  "<ref />"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseSelfclose(padding=" ")]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseSelfclose(padding=" ")]
 
 ---
 
 name:   attribute
 label:  a tag with a single attribute
 input:  "<ref name></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_value
 label:  a tag with a single attribute with a value
 input:  "<ref name=foo></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_quoted
 label:  a tag with a single quoted attribute
 input:  "<ref name="foo bar"></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_hyphen
 label:  a tag with a single attribute, containing a hyphen
 input:  "<ref name=foo-bar></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_quoted_hyphen
 label:  a tag with a single quoted attribute, containing a hyphen
 input:  "<ref name="foo-bar"></ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   attribute_selfclosing
 label:  a self-closing tag with a single attribute
 input:  "<ref name/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   attribute_selfclosing_value
 label:  a self-closing tag with a single attribute with a value
 input:  "<ref name=foo/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   attribute_selfclosing_value_quoted
 label:  a self-closing tag with a single quoted attribute
 input:  "<ref name="foo"/>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
 
 ---
 
 name:   nested_tag
 label:  a tag nested within the attributes of another
 input:  "<ref name=<span style="color: red;">foo</span>>citation</ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   nested_tag_quoted
 label:  a tag nested within the attributes of another, quoted
 input:  "<ref name="<span style="color: red;">foo</span>">citation</ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
@@ -120,7 +120,7 @@ output: [Text(text="<ref name=</ ><//>>citation</ref>")]
 name:   nested_troll_tag_quoted
 label:  a bogus tag that appears to be nested within the attributes of another, quoted
 input:  "<ref name="</ ><//>">citation</ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="</ ><//>"), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="</ ><//>"), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
@@ -141,7 +141,7 @@ output: [Text(text="<ref>test</ ref>")]
 name:   valid_space_end
 label:  valid tag: spaces at the ends of both the open and close tags
 input:  "<ref >test</ref >"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagCloseOpen(padding=" "), Text(text="test"), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=" "), Text(text="test"), TagOpenClose(), Text(text="ref "), TagCloseClose()]
 
 ---
 
@@ -162,14 +162,14 @@ output: [Text(text="<ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), 
 name:   valid_template_end_open
 label:  valid tag: a template at the end of the open tag
 input:  "<ref {{foo}}>test</ref>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
 name:   valid_template_end_open_space_end_close
 label:  valid tag: a template at the end of the open tag; whitespace at the end of the close tag
 input:  "<ref {{foo}}>test</ref\n>"
-output: [TagOpenOpen(showtag=True), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref\n"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref\n"), TagCloseClose()]
 
 ---
 
@@ -197,21 +197,21 @@ output: [Text(text="<"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text
 name:   unclosed_quote
 label:  a quoted attribute that is never closed
 input:  "<span style="foobar>stuff</span>"
-output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foobar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foobar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
 
 ---
 
 name:   fake_quote
 label:  a fake quoted attribute
 input:  "<span style="foo"bar>stuff</span>"
-output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo\"bar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo\"bar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
 
 ---
 
 name:   fake_quote_complex
 label:  a fake quoted attribute, with spaces and templates and links
 input:  "<span style="foo {{bar}}\n[[baz]]"buzz >stuff</span>"
-output: [TagOpenOpen(showtag=True), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo"), TagAttrStart(pad_first=" ", pad_before_eq="\n", pad_after_eq=""), TemplateOpen(), Text(text="bar"), TemplateClose(), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), WikilinkOpen(), Text(text="baz"), WikilinkClose(), Text(text="\"buzz"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo"), TagAttrStart(pad_first=" ", pad_before_eq="\n", pad_after_eq=""), TemplateOpen(), Text(text="bar"), TemplateClose(), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), WikilinkOpen(), Text(text="baz"), WikilinkClose(), Text(text="\"buzz"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
 
 ---
 
@@ -386,77 +386,77 @@ output: [Text(text="junk <></>")]
 name:   backslash_premature_before
 label:  a backslash before a quote before a space
 input:  "<foo attribute="this is\\" quoted">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\" quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\" quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_premature_after
 label:  a backslash before a quote after a space
 input:  "<foo attribute="this is \\"quoted">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is \\\"quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is \\\"quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_premature_middle
 label:  a backslash before a quote in the middle of a word
 input:  "<foo attribute="this i\\"s quoted">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this i\\\"s quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this i\\\"s quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_adjacent
 label:  escaped quotes next to unescaped quotes
 input:  "<foo attribute="\\"this is quoted\\"">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\\"this is quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\\"this is quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_endquote
 label:  backslashes before the end quote, causing the attribute to become unquoted
 input:  "<foo attribute="this_is quoted\\">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), Text(text="\"this_is"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), Text(text="\"this_is"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_double
 label:  two adjacent backslashes, which do *not* affect the quote
 input:  "<foo attribute="this is\\\\" quoted">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_triple
 label:  three adjacent backslashes, which do *not* affect the quote
 input:  "<foo attribute="this is\\\\\\" quoted">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   backslash_unaffecting
 label:  backslashes near quotes, but not immediately adjacent, thus having no effect
 input:  "<foo attribute="\\quote\\d" also="quote\\d\\">blah</foo>"
-output: [TagOpenOpen(showtag=True), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\quote\\d"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="also"), TagAttrEquals(), Text(text="\"quote\\d\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\quote\\d"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="also"), TagAttrEquals(), Text(text="\"quote\\d\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
 
 ---
 
 name:   unparsable
 label:  a tag that should not be put through the normal parser
 input:  "{{t1}}<nowiki>{{t2}}</nowiki>{{t3}}"
-output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(showtag=True), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
 
 ---
 
 name:   unparsable_complex
 label:  a tag that should not be put through the normal parser; lots of stuff inside
 input:  "{{t1}}<pre>{{t2}}\n==Heading==\nThis is some text with a [[page|link]].</pre>{{t3}}"
-output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(showtag=True), Text(text="pre"), TagCloseOpen(padding=""), Text(text="{{t2}}\n==Heading==\nThis is some text with a [[page|link]]."), TagOpenClose(), Text(text="pre"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="pre"), TagCloseOpen(padding=""), Text(text="{{t2}}\n==Heading==\nThis is some text with a [[page|link]]."), TagOpenClose(), Text(text="pre"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
 
 ---
 
 name:   unparsable_attributed
 label:  a tag that should not be put through the normal parser; parsed attributes
 input:  "{{t1}}<nowiki attr=val attr2="{{val2}}">{{t2}}</nowiki>{{t3}}"
-output: [TemplateOpen(), Text(text=u't1'), TemplateClose(), TagOpenOpen(showtag=True), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+output: [TemplateOpen(), Text(text=u't1'), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
 
 ---
 
@@ -470,21 +470,21 @@ output: [TemplateOpen(), Text(text="t1"), TemplateClose(), Text(text="<nowiki>")
 name:   single_open_close
 label:  a tag that supports being single; both an open and a close tag
 input:  "foo<li>bar{{baz}}</li>"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseOpen(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenClose(), Text(text="li"), TagCloseClose()]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseOpen(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenClose(), Text(text="li"), TagCloseClose()]
 
 ---
 
 name:   single_open
 label:  a tag that supports being single; just an open tag
 input:  "foo<li>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
 name:   single_selfclose
 label:  a tag that supports being single; a self-closing tag
 input:  "foo<li/>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="li"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
@@ -498,32 +498,32 @@ output: [Text(text="foo</li>bar"), TemplateOpen(), Text(text="baz"), TemplateClo
 name:   single_only_open_close
 label:  a tag that can only be single; both an open and a close tag
 input:  "foo<br>bar{{baz}}</br>"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True)]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True)]
 
 ---
 
 name:   single_only_open
 label:  a tag that can only be single; just an open tag
 input:  "foo<br>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
 name:   single_only_selfclose
 label:  a tag that can only be single; a self-closing tag
 input:  "foo<br/>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
 name:   single_only_close
 label:  a tag that can only be single; just a close tag
 input:  "foo</br>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
 name:   single_only_double
 label:  a tag that can only be single; a tag with backslashes at the beginning and end
 input:  "foo</br/>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]

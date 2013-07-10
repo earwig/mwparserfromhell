@@ -205,9 +205,10 @@ class Builder(object):
 
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
-        showtag, invalid = token.showtag, token.get("invalid", False)
-        implicit, attrs, contents, closing_tag = False, [], None, None
         close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
+        implicit, attrs, contents, closing_tag = False, [], None, None
+        showtag = token.get("showtag", True)
+        invalid = token.get("invalid", False)
         self._push()
         while self._tokens:
             token = self._tokens.pop()
