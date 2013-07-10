@@ -41,10 +41,10 @@ SOFTWARE.
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char* MARKERS[] = {
-    "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
-    "!", "\n", ""};
+    "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/",
+    "\\", "\"", "-", "!", "\n", ""};
 
-#define NUM_MARKERS 18
+#define NUM_MARKERS 20
 #define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
@@ -143,6 +143,17 @@ static PyObject* TagCloseClose;
 
 #define GL_HEADING 0x1
 
+/* Tag contexts: */
+
+#define TAG_NAME        0x01
+#define TAG_ATTR_READY  0x02
+#define TAG_ATTR_NAME   0x04
+#define TAG_ATTR_VALUE  0x08
+#define TAG_QUOTED      0x10
+#define TAG_NOTE_SPACE  0x20
+#define TAG_NOTE_EQUALS 0x40
+#define TAG_NOTE_QUOTE  0x80
+
 
 /* Miscellaneous structs: */
 
@@ -163,6 +174,17 @@ typedef struct {
     PyObject* title;
     int level;
 } HeadingData;
+
+typedef struct {
+    int context;
+    struct Textbuffer* padding_first;
+    struct Textbuffer* padding_before_eq;
+    struct Textbuffer* padding_after_eq;
+    Py_ssize_t reset;
+} TagOpenData;
+
+typedef struct Textbuffer Textbuffer;
+typedef struct Stack Stack;
 
 
 /* Tokenizer object definition: */
@@ -206,11 +228,11 @@ static void Tokenizer_delete_top_of_stack(Tokenizer*);
 static PyObject* Tokenizer_pop(Tokenizer*);
 static PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
 static void* Tokenizer_fail_route(Tokenizer*);
-static int Tokenizer_write(Tokenizer*, PyObject*);
-static int Tokenizer_write_first(Tokenizer*, PyObject*);
-static int Tokenizer_write_text(Tokenizer*, Py_UNICODE);
-static int Tokenizer_write_all(Tokenizer*, PyObject*);
-static int Tokenizer_write_text_then_stack(Tokenizer*, const char*);
+static int Tokenizer_emit(Tokenizer*, PyObject*);
+static int Tokenizer_emit_first(Tokenizer*, PyObject*);
+static int Tokenizer_emit_text(Tokenizer*, Py_UNICODE);
+static int Tokenizer_emit_all(Tokenizer*, PyObject*);
+static int Tokenizer_emit_text_then_stack(Tokenizer*, const char*);
 static PyObject* Tokenizer_read(Tokenizer*, Py_ssize_t);
 static PyObject* Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
 static int Tokenizer_parse_template_or_argument(Tokenizer*);
