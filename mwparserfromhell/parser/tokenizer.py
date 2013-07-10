@@ -26,7 +26,7 @@ import re
 
 from . import contexts, tokens
 from ..compat import htmlentities
-from ..tag_defs import is_parsable
+from ..tag_defs import is_parsable, is_single, is_single_only
 
 __all__ = ["Tokenizer"]
 
@@ -596,6 +596,29 @@ class Tokenizer(object):
         self._emit(tokens.TagCloseClose())
         return self._pop()
 
+    def _handle_single_end(self):
+        """Handle the steam end when inside a single-supporting HTML tag."""
+        gen = enumerate(self._stack)
+        index = next(i for i, t in gen if isinstance(t, tokens.TagCloseOpen))
+        padding = self._stack[index].padding
+        token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
+        self._stack[index] = token
+        return self._pop()
+
+    def _handle_end(self):
+        """Handle the end of the stream of wikitext."""
+        fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
+                contexts.HEADING | contexts.COMMENT | contexts.TAG)
+        double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
+        if self._context & fail:
+            if self._context & contexts.TAG_BODY:
+                if is_single(self._stack[1].text):
+                    return self._handle_single_end()
+            if self._context & double_fail:
+                self._pop()
+            self._fail_route()
+        return self._pop()
+
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
         context = self._context
@@ -658,10 +681,6 @@ class Tokenizer(object):
         unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
                   contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
                   contexts.TAG_CLOSE)
-        fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
-                contexts.HEADING | contexts.COMMENT | contexts.TAG)
-        double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
-
         if push:
             self._push(context)
         while True:
@@ -676,11 +695,7 @@ class Tokenizer(object):
                 self._head += 1
                 continue
             if this is self.END:
-                if self._context & fail:
-                    if self._context & double_fail:
-                        self._pop()
-                    self._fail_route()
-                return self._pop()
+                return self._handle_end()
             next = self._read(1)
             if self._context & contexts.COMMENT:
                 if this == next == "-" and self._read(2) == ">":

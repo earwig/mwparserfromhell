@@ -520,3 +520,10 @@ name:   single_only_close
 label:  a tag that can only be single; just a close tag
 input:  "foo</br>bar{{baz}}"
 output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_double
+label:  a tag that can only be single; a tag with backslashes at the beginning and end
+input:  "foo</br/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
