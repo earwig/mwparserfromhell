@@ -498,7 +498,7 @@ output: [Text(text="foo</li>bar"), TemplateOpen(), Text(text="baz"), TemplateClo
 name:   single_only_open_close
 label:  a tag that can only be single; both an open and a close tag
 input:  "foo<br>bar{{baz}}</br>"
-output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="")]
+output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True)]
 
 ---
 
@@ -519,11 +519,11 @@ output: [Text(text="foo"), TagOpenOpen(showtag=True), Text(text="br"), TagCloseS
 name:   single_only_close
 label:  a tag that can only be single; just a close tag
 input:  "foo</br>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
 
 ---
 
 name:   single_only_double
 label:  a tag that can only be single; a tag with backslashes at the beginning and end
 input:  "foo</br/>bar{{baz}}"
-output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+output: [Text(text="foo"), TagOpenOpen(showtag=True, invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]

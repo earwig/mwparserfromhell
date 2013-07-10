@@ -460,7 +460,7 @@ class Tokenizer(object):
                 self._handle_tag_close_open(data, tokens.TagCloseOpen)
                 self._context = contexts.TAG_BODY
                 if is_single_only(self._stack[1].text):
-                    return self._handle_single_only_tag()
+                    return self._handle_single_only_tag_end()
                 if is_parsable(self._stack[1].text):
                     return self._parse(push=False)
                 return self._handle_blacklisted_tag()
@@ -598,12 +598,26 @@ class Tokenizer(object):
         self._emit(tokens.TagCloseClose())
         return self._pop()
 
-    def _handle_single_only_tag(self):
+    def _handle_invalid_tag_start(self):
+        """Handle the (possible) start of an implicitly closing single tag."""
+        reset = self._head + 1
+        self._head += 2
+        try:
+            if not is_single_only(self.tag_splitter.split(self._read())[0]):
+                raise BadRoute()
+            tag = self._really_parse_tag()
+        except BadRoute:
+            self._head = reset
+            self._emit_text("</")
+        else:
+            tag[0].invalid = True  # Set flag of TagOpenOpen
+            self._emit_all(tag)
+
+    def _handle_single_only_tag_end(self):
         """Handle the end of an implicitly closing single-only HTML tag."""
         padding = self._stack.pop().padding
-        token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
-        self._stack.append(token)
-        self._head -= 1
+        self._emit(tokens.TagCloseSelfclose(padding=padding, implicit=True))
+        self._head -= 1  # Offset displacement done by _handle_tag_close_open
         return self._pop()
 
     def _handle_single_tag_end(self):
@@ -691,13 +705,14 @@ class Tokenizer(object):
         unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
                   contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
                   contexts.TAG_CLOSE)
+        double_unsafe = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
         if push:
             self._push(context)
         while True:
             this = self._read()
             if self._context & unsafe:
                 if not self._verify_safe(this):
-                    if self._context & double_fail:
+                    if self._context & double_unsafe:
                         self._pop()
                     self._fail_route()
             if this not in self.MARKERS:
@@ -755,8 +770,11 @@ class Tokenizer(object):
                     self._parse_comment()
                 else:
                     self._emit_text(this)
-            elif this == "<" and next == "/" and self._context & contexts.TAG_BODY:
-                self._handle_tag_open_close()
+            elif this == "<" and next == "/" and self._read(2) is not self.END:
+                if self._context & contexts.TAG_BODY:
+                    self._handle_tag_open_close()
+                else:
+                    self._handle_invalid_tag_start()
             elif this == "<":
                 if not self._context & contexts.TAG_CLOSE and self._can_recurse():
                     self._parse_tag()
