@@ -459,6 +459,8 @@ class Tokenizer(object):
             elif this == ">" and can_exit:
                 self._handle_tag_close_open(data, tokens.TagCloseOpen)
                 self._context = contexts.TAG_BODY
+                if is_single_only(self._stack[1].text):
+                    return self._handle_single_only_tag()
                 if is_parsable(self._stack[1].text):
                     return self._parse(push=False)
                 return self._handle_blacklisted_tag()
@@ -596,8 +598,16 @@ class Tokenizer(object):
         self._emit(tokens.TagCloseClose())
         return self._pop()
 
-    def _handle_single_end(self):
-        """Handle the steam end when inside a single-supporting HTML tag."""
+    def _handle_single_only_tag(self):
+        """Handle the end of an implicitly closing single-only HTML tag."""
+        padding = self._stack.pop().padding
+        token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
+        self._stack.append(token)
+        self._head -= 1
+        return self._pop()
+
+    def _handle_single_tag_end(self):
+        """Handle the stream end when inside a single-supporting HTML tag."""
         gen = enumerate(self._stack)
         index = next(i for i, t in gen if isinstance(t, tokens.TagCloseOpen))
         padding = self._stack[index].padding
@@ -613,7 +623,7 @@ class Tokenizer(object):
         if self._context & fail:
             if self._context & contexts.TAG_BODY:
                 if is_single(self._stack[1].text):
-                    return self._handle_single_end()
+                    return self._handle_single_tag_end()
             if self._context & double_fail:
                 self._pop()
             self._fail_route()
