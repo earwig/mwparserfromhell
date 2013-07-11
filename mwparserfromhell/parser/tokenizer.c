@@ -1201,6 +1201,20 @@ Tokenizer_parse_comment(Tokenizer* self)
 static int
 Tokenizer_parse_tag(Tokenizer* self)
 {
+    Py_ssize_t reset = self->head;
+    PyObject* tag;
+
+    self->head++;
+    tag = Tokenizer_really_parse_tag(self);
+    if (!tag) {
+        return -1;
+    }
+    if (BAD_ROUTE) {
+        self->head = reset;
+        return Tokenizer_emit_text(self, *"<");
+    }
+    Tokenizer_emit_all(self, tag);
+    Py_DECREF(tag);
     return 0;
 }
 
@@ -1210,7 +1224,92 @@ Tokenizer_parse_tag(Tokenizer* self)
 static PyObject*
 Tokenizer_really_parse_tag(Tokenizer* self)
 {
-    return NULL;
+    TagOpenData *data = malloc(sizeof(TagOpenData));
+    PyObject *token, *text, *trash;
+    Py_UNICODE this, next;
+    int can_exit;
+
+    if (!data)
+        return NULL;
+    data->padding_first = Textbuffer_new();
+    data->padding_before_eq = Textbuffer_new();
+    data->padding_after_eq = Textbuffer_new();
+    if (!data->padding_first || !data->padding_before_eq ||
+                                !data->padding_after_eq) {
+        free(data);
+        return NULL;
+    }
+    Tokenizer_push(self, LC_TAG_OPEN);
+    token = PyObject_CallObject(TagOpenOpen, NULL);
+    if (!token) {
+        free(data);
+        return NULL;
+    }
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        free(data);
+        return NULL;
+    }
+    Py_DECREF(token);
+    while (1) {
+        this = Tokenizer_READ(self, 0);
+        next = Tokenizer_READ(self, 1);
+        can_exit = (!(data->context & (TAG_QUOTED | TAG_NAME)) ||
+                    data->context & TAG_NOTE_SPACE);
+        if (this == *"") {
+            if (self->topstack->context & LC_TAG_ATTR) {
+                if (data->context & TAG_QUOTED) {
+                    // Unclosed attribute quote: reset, don't die
+                    data->context = TAG_ATTR_VALUE;
+                    trash = Tokenizer_pop(self);
+                    Py_XDECREF(trash);
+                    self->head = data->reset;
+                    continue;
+                }
+                trash = Tokenizer_pop(self);
+                Py_XDECREF(trash);
+            }
+            free(data);
+            return Tokenizer_fail_route(self);
+        }
+        else if (this == *">" && can_exit) {
+            if (Tokenizer_handle_tag_close_open(self, data, TagCloseOpen)) {
+                free(data);
+                return NULL;
+            }
+            free(data);
+            self->topstack->context = LC_TAG_BODY;
+            token = PyList_GET_ITEM(self->topstack->stack, 1);
+            text = PyObject_GetAttrString(token, "text");
+            if (!text)
+                return NULL;
+            if (IS_SINGLE_ONLY(text)) {
+                Py_DECREF(text);
+                return Tokenizer_handle_single_only_tag_end(self);
+            }
+            if (IS_PARSABLE(text)) {
+                Py_DECREF(text);
+                return Tokenizer_parse(self, 0, 0);
+            }
+            Py_DECREF(text);
+            return Tokenizer_handle_blacklisted_tag(self);
+        }
+        else if (this == *"/" && next == *">" && can_exit) {
+            if (Tokenizer_handle_tag_close_open(self, data, TagCloseSelfclose)) {
+                free(data);
+                return NULL;
+            }
+            free(data);
+            return Tokenizer_pop(self);
+        }
+        else {
+            if (Tokenizer_handle_tag_data(self, data, this)) {
+                free(data);
+                return NULL;
+            }
+        }
+        self->head++;
+    }
 }
 
 /*
