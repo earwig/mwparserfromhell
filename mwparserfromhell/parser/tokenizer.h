@@ -177,9 +177,9 @@ typedef struct {
 
 typedef struct {
     int context;
-    struct Textbuffer* padding_first;
-    struct Textbuffer* padding_before_eq;
-    struct Textbuffer* padding_after_eq;
+    struct Textbuffer* pad_first;
+    struct Textbuffer* pad_before_eq;
+    struct Textbuffer* pad_after_eq;
     Py_ssize_t reset;
 } TagOpenData;
 

@@ -1231,11 +1231,10 @@ Tokenizer_really_parse_tag(Tokenizer* self)
 
     if (!data)
         return NULL;
-    data->padding_first = Textbuffer_new();
-    data->padding_before_eq = Textbuffer_new();
-    data->padding_after_eq = Textbuffer_new();
-    if (!data->padding_first || !data->padding_before_eq ||
-                                !data->padding_after_eq) {
+    data->pad_first = Textbuffer_new();
+    data->pad_before_eq = Textbuffer_new();
+    data->pad_after_eq = Textbuffer_new();
+    if (!data->pad_first || !data->pad_before_eq || !data->pad_after_eq) {
         free(data);
         return NULL;
     }
@@ -1318,6 +1317,66 @@ Tokenizer_really_parse_tag(Tokenizer* self)
 static int
 Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
 {
+    PyObject *token, *tokens, *kwargs, *pad_first, *pad_before_eq,
+             *pad_after_eq;
+
+    if (data->context & TAG_QUOTED) {
+        token = PyObject_CallObject(TagAttrQuote, NULL);
+        if (!token)
+            return -1;
+        if (Tokenizer_emit_first(self, token)) {
+            Py_DECREF(token);
+            return -1;
+        }
+        Py_DECREF(token);
+        tokens = Tokenizer_pop(self);
+        if (!tokens)
+            return -1;
+        if (Tokenizer_emit_all(self, tokens)) {
+            Py_DECREF(tokens);
+            return -1;
+        }
+        Py_DECREF(tokens);
+    }
+    pad_first = Textbuffer_render(data->pad_first);
+    pad_before_eq = Textbuffer_render(data->pad_before_eq);
+    pad_after_eq = Textbuffer_render(data->pad_after_eq);
+    if (!pad_first || !pad_before_eq || !pad_after_eq)
+        return -1;
+    kwargs = PyDict_New();
+    if (!kwargs)
+        return -1;
+    PyDict_SetItemString(kwargs, "pad_first", pad_first);
+    PyDict_SetItemString(kwargs, "pad_before_eq", pad_before_eq);
+    PyDict_SetItemString(kwargs, "pad_after_eq", pad_after_eq);
+    Py_DECREF(pad_first);
+    Py_DECREF(pad_before_eq);
+    Py_DECREF(pad_after_eq);
+    token = PyObject_Call(TagAttrStart, NOARGS, kwargs);
+    Py_DECREF(kwargs);
+    if (!token)
+        return -1;
+    if (Tokenizer_emit_first(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    tokens = Tokenizer_pop(self);
+    if (!tokens)
+        return -1;
+    if (Tokenizer_emit_all(self, tokens)) {
+        Py_DECREF(tokens);
+        return -1;
+    }
+    Py_DECREF(tokens);
+    Textbuffer_dealloc(data->pad_first);
+    Textbuffer_dealloc(data->pad_before_eq);
+    Textbuffer_dealloc(data->pad_after_eq);
+    data->pad_first = Textbuffer_new();
+    data->pad_before_eq = Textbuffer_new();
+    data->pad_after_eq = Textbuffer_new();
+    if (!data->pad_first || !data->pad_before_eq || !data->pad_after_eq)
+        return -1;
     return 0;
 }
 
