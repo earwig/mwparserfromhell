@@ -204,6 +204,8 @@ typedef struct {
 /* Macros for accessing Tokenizer data: */
 
 #define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
+#define Tokenizer_READ_BACKWARDS(self, delta) \
+                (*PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, delta)))
 #define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
 
 

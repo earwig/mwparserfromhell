@@ -1206,12 +1206,12 @@ Tokenizer_parse_tag(Tokenizer* self)
 
     self->head++;
     tag = Tokenizer_really_parse_tag(self);
-    if (!tag) {
-        return -1;
-    }
     if (BAD_ROUTE) {
         self->head = reset;
         return Tokenizer_emit_text(self, *"<");
+    }
+    if (!tag) {
+        return -1;
     }
     Tokenizer_emit_all(self, tag);
     Py_DECREF(tag);
@@ -1238,7 +1238,10 @@ Tokenizer_really_parse_tag(Tokenizer* self)
         free(data);
         return NULL;
     }
-    Tokenizer_push(self, LC_TAG_OPEN);
+    if (Tokenizer_push(self, LC_TAG_OPEN)) {
+        free(data);
+        return NULL;
+    }
     token = PyObject_CallObject(TagOpenOpen, NULL);
     if (!token) {
         free(data);
@@ -1302,7 +1305,7 @@ Tokenizer_really_parse_tag(Tokenizer* self)
             return Tokenizer_pop(self);
         }
         else {
-            if (Tokenizer_handle_tag_data(self, data, this)) {
+            if (Tokenizer_handle_tag_data(self, data, this) || BAD_ROUTE) {
                 free(data);
                 return NULL;
             }
@@ -1384,9 +1387,89 @@ Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
     Handle all sorts of text data inside of an HTML open tag.
 */
 static int
-Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
+Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE chunk)
 {
-    return 0;
+    PyObject *trash, *token;
+    int first_time, i, is_marker = 0, escaped;
+
+    if (data->context & TAG_NAME) {
+        first_time = !(data->context & TAG_NOTE_SPACE);
+        for (i = 0; i < NUM_MARKERS; i++) {
+            if (*MARKERS[i] == chunk) {
+                is_marker = 1;
+                break;
+            }
+        }
+        if (is_marker || (Py_UNICODE_ISSPACE(chunk) && first_time)) {
+            // Tags must start with text, not spaces
+            Tokenizer_fail_route(self);
+            return 0;
+        }
+        else if (first_time)
+            data->context |= TAG_NOTE_SPACE;
+        else if (Py_UNICODE_ISSPACE(chunk))
+            data->context = TAG_ATTR_READY;
+    }
+    else if (Py_UNICODE_ISSPACE(chunk))
+        return Tokenizer_handle_tag_space(self, data, chunk);
+    else if (data->context & TAG_NOTE_SPACE) {
+        if (data->context & TAG_QUOTED) {
+            data->context = TAG_ATTR_VALUE;
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
+            self->head = data->reset - 1;  // Will be auto-incremented
+        }
+        else
+            Tokenizer_fail_route(self);
+        return 0;
+    }
+    else if (data->context & TAG_ATTR_READY) {
+        data->context = TAG_ATTR_NAME;
+        if (Tokenizer_push(self, LC_TAG_ATTR))
+            return -1;
+    }
+    else if (data->context & TAG_ATTR_NAME) {
+        if (chunk == *"=") {
+            data->context = TAG_ATTR_VALUE | TAG_NOTE_QUOTE;
+            token = PyObject_CallObject(TagAttrEquals, NULL);
+            if (!token)
+                return -1;
+            if (Tokenizer_emit(self, token)) {
+                Py_DECREF(token);
+                return -1;
+            }
+            Py_DECREF(token);
+            return 0;
+        }
+        if (data->context & TAG_NOTE_EQUALS) {
+            if (Tokenizer_push_tag_buffer(self, data))
+                return -1;
+            data->context = TAG_ATTR_NAME;
+            if (Tokenizer_push(self, LC_TAG_ATTR))
+                return -1;
+        }
+    }
+    else if (data->context & TAG_ATTR_VALUE) {
+        escaped = (Tokenizer_READ_BACKWARDS(self, 1) == *"\\" &&
+                   Tokenizer_READ_BACKWARDS(self, 2) != *"\\");
+        if (data->context & TAG_NOTE_QUOTE) {
+            data->context ^= TAG_NOTE_QUOTE;
+            if (chunk == *"\"" && !escaped) {
+                data->context |= TAG_QUOTED;
+                if (Tokenizer_push(self, self->topstack->context))
+                    return -1;
+                data->reset = self->head;
+                return 0;
+            }
+        }
+        else if (data->context & TAG_QUOTED) {
+            if (chunk == *"\"" && !escaped) {
+                data->context |= TAG_NOTE_SPACE;
+                return 0;
+            }
+        }
+    }
+    return Tokenizer_handle_tag_text(self, chunk);
 }
 
 /*
@@ -1679,7 +1762,7 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
         else if (this == next && next == *"]" && this_context & LC_WIKILINK)
             return Tokenizer_handle_wikilink_end(self);
         else if (this == *"=" && !(self->global & GL_HEADING)) {
-            last = *PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, 1));
+            last = Tokenizer_READ_BACKWARDS(self, 1);
             if (last == *"\n" || last == *"") {
                 if (Tokenizer_parse_heading(self))
                     return NULL;
