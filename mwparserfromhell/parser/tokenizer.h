@@ -218,13 +218,15 @@ typedef struct {
 
 /* Function prototypes: */
 
-static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static struct Textbuffer* Textbuffer_new(void);
+static void Textbuffer_dealloc(Textbuffer*);
+static int Textbuffer_write(Textbuffer**, Py_UNICODE);
+static PyObject* Textbuffer_render(Textbuffer*);
+
+static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static void Tokenizer_dealloc(Tokenizer*);
-static void Textbuffer_dealloc(struct Textbuffer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
 static int Tokenizer_push(Tokenizer*, int);
-static PyObject* Textbuffer_render(struct Textbuffer*);
 static int Tokenizer_push_textbuffer(Tokenizer*);
 static void Tokenizer_delete_top_of_stack(Tokenizer*);
 static PyObject* Tokenizer_pop(Tokenizer*);

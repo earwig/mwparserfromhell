@@ -51,13 +51,6 @@ call_tag_def_func(const char* funcname, PyObject* tag)
     return ans;
 }
 
-static PyObject*
-Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-{
-    Tokenizer* self = (Tokenizer*) type->tp_alloc(type, 0);
-    return (PyObject*) self;
-}
-
 static Textbuffer*
 Textbuffer_new(void)
 {
@@ -78,6 +71,63 @@ Textbuffer_new(void)
 }
 
 static void
+Textbuffer_dealloc(Textbuffer* self)
+{
+    Textbuffer* next;
+    while (self) {
+        free(self->data);
+        next = self->next;
+        free(self);
+        self = next;
+    }
+}
+
+/*
+    Write text to the given textbuffer.
+*/
+static int
+Textbuffer_write(Textbuffer** this, Py_UNICODE text)
+{
+    Textbuffer* self = *this;
+    if (self->size == TEXTBUFFER_BLOCKSIZE) {
+        Textbuffer* new = Textbuffer_new();
+        if (!new)
+            return -1;
+        new->next = self;
+        *this = self = new;
+    }
+    self->data[self->size] = text;
+    self->size++;
+    return 0;
+}
+
+/*
+    Return the contents of the textbuffer as a Python Unicode object.
+*/
+static PyObject*
+Textbuffer_render(Textbuffer* self)
+{
+    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
+    PyObject *left, *concat;
+    while (self->next) {
+        self = self->next;
+        left = PyUnicode_FromUnicode(self->data, self->size);
+        concat = PyUnicode_Concat(left, result);
+        Py_DECREF(left);
+        Py_DECREF(result);
+        result = concat;
+    }
+    return result;
+}
+
+static PyObject*
+Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+{
+    Tokenizer* self = (Tokenizer*) type->tp_alloc(type, 0);
+    return (PyObject*) self;
+}
+
+static void
 Tokenizer_dealloc(Tokenizer* self)
 {
     Stack *this = self->topstack, *next;
@@ -91,18 +141,6 @@ Tokenizer_dealloc(Tokenizer* self)
         this = next;
     }
     self->ob_type->tp_free((PyObject*) self);
-}
-
-static void
-Textbuffer_dealloc(Textbuffer* this)
-{
-    Textbuffer* next;
-    while (this) {
-        free(this->data);
-        next = this->next;
-        free(this);
-        this = next;
-    }
 }
 
 static int
@@ -141,25 +179,6 @@ Tokenizer_push(Tokenizer* self, int context)
     self->depth++;
     self->cycles++;
     return 0;
-}
-
-/*
-    Return the contents of the textbuffer as a Python Unicode object.
-*/
-static PyObject*
-Textbuffer_render(Textbuffer* self)
-{
-    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
-    PyObject *left, *concat;
-    while (self->next) {
-        self = self->next;
-        left = PyUnicode_FromUnicode(self->data, self->size);
-        concat = PyUnicode_Concat(left, result);
-        Py_DECREF(left);
-        Py_DECREF(result);
-        result = concat;
-    }
-    return result;
 }
 
 /*
@@ -291,18 +310,7 @@ Tokenizer_emit_first(Tokenizer* self, PyObject* token)
 static int
 Tokenizer_emit_text(Tokenizer* self, Py_UNICODE text)
 {
-    Textbuffer* buf = self->topstack->textbuffer;
-    if (buf->size == TEXTBUFFER_BLOCKSIZE) {
-        Textbuffer* new = Textbuffer_new();
-        if (!new)
-            return -1;
-        new->next = buf;
-        self->topstack->textbuffer = new;
-        buf = new;
-    }
-    buf->data[buf->size] = text;
-    buf->size++;
-    return 0;
+    return Textbuffer_write(&(self->topstack->textbuffer), text);
 }
 
 /*
@@ -1478,6 +1486,29 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE chunk)
 static int
 Tokenizer_handle_tag_space(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
 {
+    int ctx = data->context;
+    int end_of_value = (ctx & TAG_ATTR_VALUE &&
+                        !(ctx & (TAG_QUOTED | TAG_NOTE_QUOTE)));
+
+    if (end_of_value || (ctx & TAG_QUOTED && ctx & TAG_NOTE_SPACE)) {
+        if (Tokenizer_push_tag_buffer(self, data))
+            return -1;
+        data->context = TAG_ATTR_READY;
+    }
+    else if (ctx & TAG_NOTE_SPACE)
+        data->context = TAG_ATTR_READY;
+    else if (ctx & TAG_ATTR_NAME) {
+        data->context |= TAG_NOTE_EQUALS;
+        Textbuffer_write(&(data->pad_before_eq), text);
+    }
+    if (ctx & TAG_QUOTED && !(ctx & TAG_NOTE_SPACE)) {
+        if (Tokenizer_emit_text(self, text))
+            return -1;
+    }
+    else if (data->context & TAG_ATTR_READY)
+        Textbuffer_write(&(data->pad_first), text);
+    else if (data->context & TAG_ATTR_VALUE)
+        Textbuffer_write(&(data->pad_after_eq), text);
     return 0;
 }
 
@@ -1704,7 +1735,8 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
             }
         }
         if (!is_marker) {
-            Tokenizer_emit_text(self, this);
+            if (Tokenizer_emit_text(self, this))
+                return NULL;
             self->head++;
             continue;
         }
@@ -1716,15 +1748,16 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
                 if (Tokenizer_READ(self, 2) == *">")
                     return Tokenizer_pop(self);
             }
-            Tokenizer_emit_text(self, this);
+            if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == next && next == *"{") {
             if (Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_template_or_argument(self))
                     return NULL;
             }
-            else
-                Tokenizer_emit_text(self, this);
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == *"|" && this_context & LC_TEMPLATE) {
             if (Tokenizer_handle_template_param(self))
@@ -1744,7 +1777,8 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
             if (Tokenizer_READ(self, 2) == *"}") {
                 return Tokenizer_handle_argument_end(self);
             }
-            Tokenizer_emit_text(self, this);
+            if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == next && next == *"[") {
             if (!(this_context & LC_WIKILINK_TITLE) &&
@@ -1752,8 +1786,8 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
             }
-            else
-                Tokenizer_emit_text(self, this);
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == *"|" && this_context & LC_WIKILINK_TITLE) {
             if (Tokenizer_handle_wikilink_separator(self))
@@ -1767,8 +1801,8 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
                 if (Tokenizer_parse_heading(self))
                     return NULL;
             }
-            else
-                Tokenizer_emit_text(self, this);
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == *"=" && this_context & LC_HEADING)
             return (PyObject*) Tokenizer_handle_heading_end(self);
@@ -1784,8 +1818,8 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
                 if (Tokenizer_parse_comment(self))
                     return NULL;
             }
-            else
-                Tokenizer_emit_text(self, this);
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == *"<" && next == *"/" &&
                                             Tokenizer_READ(self, 2) != *"") {
@@ -1804,13 +1838,13 @@ Tokenizer_parse(Tokenizer* self, int context, int push)
                 if (Tokenizer_parse_tag(self))
                     return NULL;
             }
-            else
-                Tokenizer_emit_text(self, this);
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
         }
         else if (this == *">" && this_context & LC_TAG_CLOSE)
             return Tokenizer_handle_tag_close_close(self);
-        else
-            Tokenizer_emit_text(self, this);
+        else if (Tokenizer_emit_text(self, this))
+            return NULL;
         self->head++;
     }
 }
