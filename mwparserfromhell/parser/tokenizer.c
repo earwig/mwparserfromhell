@@ -1237,8 +1237,10 @@ Tokenizer_really_parse_tag(Tokenizer* self)
     Py_UNICODE this, next;
     int can_exit;
 
-    if (!data)
+    if (!data) {
+        PyErr_NoMemory();
         return NULL;
+    }
     data->pad_first = Textbuffer_new();
     data->pad_before_eq = Textbuffer_new();
     data->pad_after_eq = Textbuffer_new();
@@ -1605,6 +1607,19 @@ Tokenizer_handle_tag_close_open(Tokenizer* self, TagOpenData* data,
 static int
 Tokenizer_handle_tag_open_close(Tokenizer* self)
 {
+    PyObject* token;
+
+    token = PyObject_CallObject(TagOpenClose, NULL);
+    if (!token)
+        return -1;
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    if (Tokenizer_push(self, LC_TAG_CLOSE))
+        return -1;
+    self->head++;
     return 0;
 }
 
