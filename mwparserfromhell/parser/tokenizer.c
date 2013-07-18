@@ -1570,6 +1570,32 @@ static int
 Tokenizer_handle_tag_close_open(Tokenizer* self, TagOpenData* data,
                                 PyObject* token)
 {
+    PyObject *padding, *kwargs, *tok;
+
+    if (data->context & (TAG_ATTR_NAME | TAG_ATTR_VALUE)) {
+        if (Tokenizer_push_tag_buffer(self, data))
+            return -1;
+    }
+    padding = Textbuffer_render(data->pad_first);
+    if (!padding)
+        return -1;
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Py_DECREF(padding);
+        return -1;
+    }
+    PyDict_SetItemString(kwargs, "padding", padding);
+    Py_DECREF(padding);
+    tok = PyObject_Call(token, NOARGS, kwargs);
+    Py_DECREF(kwargs);
+    if (!tok)
+        return -1;
+    if (Tokenizer_emit(self, tok)) {
+        Py_DECREF(tok);
+        return -1;
+    }
+    Py_DECREF(tok);
+    self->head++;
     return 0;
 }
 
