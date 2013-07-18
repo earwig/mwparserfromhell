@@ -1499,16 +1499,17 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
         data->context = TAG_ATTR_READY;
     else if (ctx & TAG_ATTR_NAME) {
         data->context |= TAG_NOTE_EQUALS;
-        Textbuffer_write(&(data->pad_before_eq), text);
+        if (Textbuffer_write(&(data->pad_before_eq), text))
+            return -1;
     }
     if (ctx & TAG_QUOTED && !(ctx & TAG_NOTE_SPACE)) {
         if (Tokenizer_emit_text(self, text))
             return -1;
     }
     else if (data->context & TAG_ATTR_READY)
-        Textbuffer_write(&(data->pad_first), text);
+        return Textbuffer_write(&(data->pad_first), text);
     else if (data->context & TAG_ATTR_VALUE)
-        Textbuffer_write(&(data->pad_after_eq), text);
+        return Textbuffer_write(&(data->pad_after_eq), text);
     return 0;
 }
 
@@ -1518,7 +1519,24 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
 static int
 Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 {
-    return 0;
+    Py_UNICODE next = Tokenizer_READ(self, 1);
+    int i, is_marker = 0;
+
+    for (i = 0; i < NUM_MARKERS; i++) {
+        if (*MARKERS[i] == text) {
+            is_marker = 1;
+            break;
+        }
+    }
+    if (!is_marker || !Tokenizer_CAN_RECURSE(self))
+        return Tokenizer_emit_text(self, text);
+    else if (text == next && next == *"{")
+        return Tokenizer_parse_template_or_argument(self);
+    else if (text == next && next == *"[")
+        return Tokenizer_parse_wikilink(self);
+    else if (text == *"<")
+        return Tokenizer_parse_tag(self);
+    return Tokenizer_emit_text(self, text);
 }
 
 /*
@@ -1527,7 +1545,22 @@ Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 static PyObject*
 Tokenizer_handle_blacklisted_tag(Tokenizer* self)
 {
-    return NULL;
+    Py_UNICODE this, next;
+
+    while (1) {
+        this = Tokenizer_READ(self, 0);
+        next = Tokenizer_READ(self, 1);
+        self->head++;
+        if (this == *"")
+            return Tokenizer_fail_route(self);
+        else if (this == *"<" && next == *"/") {
+            if (Tokenizer_handle_tag_open_close(self))
+                return NULL;
+            return Tokenizer_parse(self, 0, 0);
+        }
+        if (Tokenizer_emit_text(self, this))
+            return NULL;
+    }
 }
 
 /*
