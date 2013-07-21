@@ -1760,7 +1760,34 @@ Tokenizer_handle_invalid_tag_start(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_single_only_tag_end(Tokenizer* self)
 {
-    return NULL;
+    PyObject *top, *padding, *kwargs, *token;
+
+    top = PyObject_CallMethod(self->topstack->stack, "pop", NULL);
+    if (!top)
+        return NULL;
+    padding = PyObject_GetAttrString(top, "padding");
+    Py_DECREF(top);
+    if (!padding)
+        return NULL;
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Py_DECREF(padding);
+        return NULL;
+    }
+    PyDict_SetItemString(kwargs, "padding", padding);
+    PyDict_SetItemString(kwargs, "implicit", Py_True);
+    Py_DECREF(padding);
+    token = PyObject_Call(TagCloseSelfclose, NOARGS, kwargs);
+    Py_DECREF(kwargs);
+    if (!token)
+        return NULL;
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return NULL;
+    }
+    Py_DECREF(token);
+    self->head--;  // Offset displacement done by handle_tag_close_open
+    return Tokenizer_pop(self);
 }
 
 /*
@@ -1769,7 +1796,42 @@ Tokenizer_handle_single_only_tag_end(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_single_tag_end(Tokenizer* self)
 {
-    return NULL;
+    PyObject *token = 0, *padding, *kwargs;
+    Py_ssize_t len, index;
+    int is_instance;
+
+    len = PyList_GET_SIZE(self->topstack->stack);
+    for (index = 0; index < len; index++) {
+        token = PyList_GET_ITEM(self->topstack->stack, index);
+        is_instance = PyObject_IsInstance(token, TagCloseOpen);
+        if (is_instance == -1)
+            return NULL;
+        else if (is_instance == 1)
+            break;
+    }
+    if (!token)
+        return NULL;
+    padding = PyObject_GetAttrString(token, "padding");
+    if (!padding)
+        return NULL;
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Py_DECREF(padding);
+        return NULL;
+    }
+    PyDict_SetItemString(kwargs, "padding", padding);
+    PyDict_SetItemString(kwargs, "implicit", Py_True);
+    Py_DECREF(padding);
+    token = PyObject_Call(TagCloseSelfclose, NOARGS, kwargs);
+    Py_DECREF(kwargs);
+    if (!token)
+        return NULL;
+    if (PyList_SetItem(self->topstack->stack, index, token)) {
+        Py_DECREF(token);
+        return NULL;
+    }
+    Py_DECREF(token);
+    return Tokenizer_pop(self);
 }
 
 /*
