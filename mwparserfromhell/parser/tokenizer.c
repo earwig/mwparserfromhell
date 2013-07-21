@@ -1707,7 +1707,51 @@ Tokenizer_handle_tag_close_close(Tokenizer* self)
 static int
 Tokenizer_handle_invalid_tag_start(Tokenizer* self)
 {
-    return 0;
+    Py_ssize_t reset = self->head + 1, pos = 0;
+    Textbuffer* buf;
+    PyObject *name, *tag;
+    Py_UNICODE this;
+    int is_marker, i;
+
+    self->head += 2;
+    buf = Textbuffer_new();
+    if (!buf)
+        return -1;
+    while (1) {
+        this = Tokenizer_READ(self, pos);
+        is_marker = 0;
+        for (i = 0; i < NUM_MARKERS; i++) {
+            if (*MARKERS[i] == this) {
+                is_marker = 1;
+                break;
+            }
+        }
+        if (is_marker) {
+            name = Textbuffer_render(buf);
+            if (!name) {
+                Textbuffer_dealloc(buf);
+                return -1;
+            }
+            if (!IS_SINGLE_ONLY(name))
+                FAIL_ROUTE();
+            break;
+        }
+        pos++;
+    }
+    if (!BAD_ROUTE) {
+        tag = Tokenizer_really_parse_tag(self);
+        if (!tag)
+            return -1;
+    }
+    if (BAD_ROUTE) {
+        self->head = reset;
+        return (Tokenizer_emit_text(self, *"<") ||
+                Tokenizer_emit_text(self, *"/"));
+    }
+    // Set invalid=True flag of TagOpenOpen
+    if (PyObject_SetAttrString(PyList_GET_ITEM(tag, 0), "invalid", Py_True))
+        return -1;
+    return Tokenizer_emit_all(self, tag);
 }
 
 /*
