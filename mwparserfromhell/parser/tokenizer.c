@@ -51,6 +51,26 @@ call_tag_def_func(const char* funcname, PyObject* tag)
     return ans;
 }
 
+/*
+    Sanitize the name of a tag so it can be compared with others for equality.
+*/
+static PyObject*
+strip_tag_name(PyObject* token)
+{
+    PyObject *text, *rstripped, *lowered;
+
+    text = PyObject_GetAttrString(token, "text");
+    if (!text)
+        return NULL;
+    rstripped = PyObject_CallMethod(text, "rstrip", NULL);
+    Py_DECREF(text);
+    if (!rstripped)
+        return NULL;
+    lowered = PyObject_CallMethod(rstripped, "rstrip", NULL);
+    Py_DECREF(rstripped);
+    return lowered;
+}
+
 static Textbuffer*
 Textbuffer_new(void)
 {
@@ -1629,7 +1649,56 @@ Tokenizer_handle_tag_open_close(Tokenizer* self)
 static PyObject*
 Tokenizer_handle_tag_close_close(Tokenizer* self)
 {
-    return NULL;
+    PyObject *closing, *first, *so, *sc, *token;
+    int valid = 1;
+
+    closing = Tokenizer_pop(self);
+    if (!closing)
+        return NULL;
+    if (PyList_GET_SIZE(closing) != 1)
+        valid = 0;
+    else {
+        first = PyList_GET_ITEM(closing, 0);
+        switch (PyObject_IsInstance(first, Text)) {
+            case 0:
+                valid = 0;
+                break;
+            case 1: {
+                so = strip_tag_name(first);
+                sc = strip_tag_name(PyList_GET_ITEM(self->topstack->stack, 1));
+                if (so && sc) {
+                    if (PyUnicode_Compare(so, sc))
+                        valid = 0;
+                    Py_DECREF(so);
+                    Py_DECREF(sc);
+                    break;
+                }
+                Py_XDECREF(so);
+                Py_XDECREF(sc);
+            }
+            case -1:
+                Py_DECREF(closing);
+                return NULL;
+        }
+    }
+    if (!valid) {
+        Py_DECREF(closing);
+        return Tokenizer_fail_route(self);
+    }
+    if (Tokenizer_emit_all(self, closing)) {
+        Py_DECREF(closing);
+        return NULL;
+    }
+    Py_DECREF(closing);
+    token = PyObject_CallObject(TagCloseClose, NULL);
+    if (!token)
+        return NULL;
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return NULL;
+    }
+    Py_DECREF(token);
+    return Tokenizer_pop(self);
 }
 
 /*
