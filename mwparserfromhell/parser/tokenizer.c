@@ -1870,7 +1870,6 @@ Tokenizer_handle_single_tag_end(Tokenizer* self)
         Py_DECREF(token);
         return NULL;
     }
-    Py_DECREF(token);
     return Tokenizer_pop(self);
 }
 
