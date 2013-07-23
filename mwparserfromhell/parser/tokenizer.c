@@ -472,7 +472,6 @@ Tokenizer_parse_template_or_argument(Tokenizer* self)
         if (braces == 2) {
             if (Tokenizer_parse_template(self))
                 return -1;
-
             if (BAD_ROUTE) {
                 RESET_ROUTE();
                 if (Tokenizer_emit_text_then_stack(self, "{{"))
@@ -1235,6 +1234,7 @@ Tokenizer_parse_tag(Tokenizer* self)
     self->head++;
     tag = Tokenizer_really_parse_tag(self);
     if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         return Tokenizer_emit_text(self, *"<");
     }
@@ -1336,6 +1336,7 @@ Tokenizer_really_parse_tag(Tokenizer* self)
         }
         else {
             if (Tokenizer_handle_tag_data(self, data, this) || BAD_ROUTE) {
+                RESET_ROUTE();
                 free(data);
                 return NULL;
             }
@@ -1744,6 +1745,7 @@ Tokenizer_handle_invalid_tag_start(Tokenizer* self)
             return -1;
     }
     if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         return (Tokenizer_emit_text(self, *"<") ||
                 Tokenizer_emit_text(self, *"/"));
