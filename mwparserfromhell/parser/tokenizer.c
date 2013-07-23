@@ -1881,7 +1881,7 @@ static PyObject*
 Tokenizer_handle_end(Tokenizer* self, int context)
 {
     static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
-                                LC_HEADING | LC_COMMENT);
+                                LC_HEADING | LC_COMMENT | LC_TAG);
     static int double_fail = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     PyObject *token, *text, *trash;
     int single;
