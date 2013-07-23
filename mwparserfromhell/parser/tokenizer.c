@@ -1476,8 +1476,10 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
         }
         else if (first_time)
             data->context |= TAG_NOTE_SPACE;
-        else if (Py_UNICODE_ISSPACE(chunk))
+        else if (Py_UNICODE_ISSPACE(chunk)) {
             data->context = TAG_ATTR_READY;
+            return Tokenizer_handle_tag_space(self, data, chunk);
+        }
     }
     else if (Py_UNICODE_ISSPACE(chunk))
         return Tokenizer_handle_tag_space(self, data, chunk);
