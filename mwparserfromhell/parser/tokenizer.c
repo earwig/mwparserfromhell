@@ -1775,6 +1775,7 @@ Tokenizer_handle_invalid_tag_start(Tokenizer* self)
                 FAIL_ROUTE();
             break;
         }
+        Textbuffer_write(&buf, this);
         pos++;
     }
     if (!BAD_ROUTE) {
