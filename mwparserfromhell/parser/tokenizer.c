@@ -1261,6 +1261,7 @@ Tokenizer_really_parse_tag(Tokenizer* self)
         PyErr_NoMemory();
         return NULL;
     }
+    data->context = TAG_NAME;
     data->pad_first = Textbuffer_new();
     data->pad_before_eq = Textbuffer_new();
     data->pad_after_eq = Textbuffer_new();
@@ -1268,6 +1269,7 @@ Tokenizer_really_parse_tag(Tokenizer* self)
         free(data);
         return NULL;
     }
+    data->reset = 0;
     if (Tokenizer_push(self, LC_TAG_OPEN)) {
         free(data);
         return NULL;
