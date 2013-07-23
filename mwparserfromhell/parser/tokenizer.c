@@ -1380,7 +1380,6 @@ Tokenizer_really_parse_tag(Tokenizer* self)
         }
         else {
             if (Tokenizer_handle_tag_data(self, data, this) || BAD_ROUTE) {
-                RESET_ROUTE();
                 TagData_dealloc(data);
                 return NULL;
             }
