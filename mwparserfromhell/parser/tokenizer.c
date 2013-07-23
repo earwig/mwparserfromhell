@@ -140,6 +140,58 @@ Textbuffer_render(Textbuffer* self)
     return result;
 }
 
+static TagData*
+TagData_new(void)
+{
+    TagData *self = malloc(sizeof(TagData));
+
+    #define ALLOC_BUFFER(name)     \
+        name = Textbuffer_new();   \
+        if (!name) {               \
+            TagData_dealloc(self); \
+            return NULL;           \
+        }
+
+    if (!self) {
+        PyErr_NoMemory();
+        return NULL;
+    }
+    self->context = TAG_NAME;
+    ALLOC_BUFFER(self->pad_first)
+    ALLOC_BUFFER(self->pad_before_eq)
+    ALLOC_BUFFER(self->pad_after_eq)
+    self->reset = 0;
+    return self;
+}
+
+static void
+TagData_dealloc(TagData* self)
+{
+    #define DEALLOC_BUFFER(name) \
+        if (name)                \
+            Textbuffer_dealloc(name);
+
+    DEALLOC_BUFFER(self->pad_first);
+    DEALLOC_BUFFER(self->pad_before_eq);
+    DEALLOC_BUFFER(self->pad_after_eq);
+    free(self);
+}
+
+static int
+TagData_reset_buffers(TagData* self)
+{
+    #define RESET_BUFFER(name)    \
+        Textbuffer_dealloc(name); \
+        name = Textbuffer_new();  \
+        if (!name)                \
+            return -1;
+
+    RESET_BUFFER(self->pad_first)
+    RESET_BUFFER(self->pad_before_eq)
+    RESET_BUFFER(self->pad_after_eq)
+    return 0;
+}
+
 static PyObject*
 Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 {
@@ -1252,36 +1304,25 @@ Tokenizer_parse_tag(Tokenizer* self)
 static PyObject*
 Tokenizer_really_parse_tag(Tokenizer* self)
 {
-    TagOpenData *data = malloc(sizeof(TagOpenData));
+    TagData *data = TagData_new();
     PyObject *token, *text, *trash;
     Py_UNICODE this, next;
     int can_exit;
 
-    if (!data) {
-        PyErr_NoMemory();
+    if (!data)
         return NULL;
-    }
-    data->context = TAG_NAME;
-    data->pad_first = Textbuffer_new();
-    data->pad_before_eq = Textbuffer_new();
-    data->pad_after_eq = Textbuffer_new();
-    if (!data->pad_first || !data->pad_before_eq || !data->pad_after_eq) {
-        free(data);
-        return NULL;
-    }
-    data->reset = 0;
     if (Tokenizer_push(self, LC_TAG_OPEN)) {
-        free(data);
+        TagData_dealloc(data);
         return NULL;
     }
     token = PyObject_CallObject(TagOpenOpen, NULL);
     if (!token) {
-        free(data);
+        TagData_dealloc(data);
         return NULL;
     }
     if (Tokenizer_emit(self, token)) {
         Py_DECREF(token);
-        free(data);
+        TagData_dealloc(data);
         return NULL;
     }
     Py_DECREF(token);
@@ -1303,15 +1344,15 @@ Tokenizer_really_parse_tag(Tokenizer* self)
                 trash = Tokenizer_pop(self);
                 Py_XDECREF(trash);
             }
-            free(data);
+            TagData_dealloc(data);
             return Tokenizer_fail_route(self);
         }
         else if (this == *">" && can_exit) {
             if (Tokenizer_handle_tag_close_open(self, data, TagCloseOpen)) {
-                free(data);
+                TagData_dealloc(data);
                 return NULL;
             }
-            free(data);
+            TagData_dealloc(data);
             self->topstack->context = LC_TAG_BODY;
             token = PyList_GET_ITEM(self->topstack->stack, 1);
             text = PyObject_GetAttrString(token, "text");
@@ -1329,17 +1370,18 @@ Tokenizer_really_parse_tag(Tokenizer* self)
             return Tokenizer_handle_blacklisted_tag(self);
         }
         else if (this == *"/" && next == *">" && can_exit) {
-            if (Tokenizer_handle_tag_close_open(self, data, TagCloseSelfclose)) {
-                free(data);
+            if (Tokenizer_handle_tag_close_open(self, data,
+                                                TagCloseSelfclose)) {
+                TagData_dealloc(data);
                 return NULL;
             }
-            free(data);
+            TagData_dealloc(data);
             return Tokenizer_pop(self);
         }
         else {
             if (Tokenizer_handle_tag_data(self, data, this) || BAD_ROUTE) {
                 RESET_ROUTE();
-                free(data);
+                TagData_dealloc(data);
                 return NULL;
             }
         }
@@ -1351,7 +1393,7 @@ Tokenizer_really_parse_tag(Tokenizer* self)
     Write a pending tag attribute from data to the stack.
 */
 static int
-Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
+Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 {
     PyObject *token, *tokens, *kwargs, *pad_first, *pad_before_eq,
              *pad_after_eq;
@@ -1405,13 +1447,7 @@ Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
         return -1;
     }
     Py_DECREF(tokens);
-    Textbuffer_dealloc(data->pad_first);
-    Textbuffer_dealloc(data->pad_before_eq);
-    Textbuffer_dealloc(data->pad_after_eq);
-    data->pad_first = Textbuffer_new();
-    data->pad_before_eq = Textbuffer_new();
-    data->pad_after_eq = Textbuffer_new();
-    if (!data->pad_first || !data->pad_before_eq || !data->pad_after_eq)
+    if (TagData_reset_buffers(data))
         return -1;
     return 0;
 }
@@ -1420,7 +1456,7 @@ Tokenizer_push_tag_buffer(Tokenizer* self, TagOpenData* data)
     Handle all sorts of text data inside of an HTML open tag.
 */
 static int
-Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE chunk)
+Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
 {
     PyObject *trash, *token;
     int first_time, i, is_marker = 0, escaped;
@@ -1509,7 +1545,7 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagOpenData* data, Py_UNICODE chunk)
     Handle whitespace inside of an HTML open tag.
 */
 static int
-Tokenizer_handle_tag_space(Tokenizer* self, TagOpenData* data, Py_UNICODE text)
+Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
 {
     int ctx = data->context;
     int end_of_value = (ctx & TAG_ATTR_VALUE &&
@@ -1592,10 +1628,9 @@ Tokenizer_handle_blacklisted_tag(Tokenizer* self)
     Handle the closing of a open tag (<foo>).
 */
 static int
-Tokenizer_handle_tag_close_open(Tokenizer* self, TagOpenData* data,
-                                PyObject* token)
+Tokenizer_handle_tag_close_open(Tokenizer* self, TagData* data, PyObject* cls)
 {
-    PyObject *padding, *kwargs, *tok;
+    PyObject *padding, *kwargs, *token;
 
     if (data->context & (TAG_ATTR_NAME | TAG_ATTR_VALUE)) {
         if (Tokenizer_push_tag_buffer(self, data))
@@ -1611,15 +1646,15 @@ Tokenizer_handle_tag_close_open(Tokenizer* self, TagOpenData* data,
     }
     PyDict_SetItemString(kwargs, "padding", padding);
     Py_DECREF(padding);
-    tok = PyObject_Call(token, NOARGS, kwargs);
+    token = PyObject_Call(cls, NOARGS, kwargs);
     Py_DECREF(kwargs);
-    if (!tok)
+    if (!token)
         return -1;
-    if (Tokenizer_emit(self, tok)) {
-        Py_DECREF(tok);
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
         return -1;
     }
-    Py_DECREF(tok);
+    Py_DECREF(token);
     self->head++;
     return 0;
 }

@@ -181,7 +181,7 @@ typedef struct {
     struct Textbuffer* pad_before_eq;
     struct Textbuffer* pad_after_eq;
     Py_ssize_t reset;
-} TagOpenData;
+} TagData;
 
 typedef struct Textbuffer Textbuffer;
 typedef struct Stack Stack;
@@ -218,10 +218,14 @@ typedef struct {
 
 /* Function prototypes: */
 
-static struct Textbuffer* Textbuffer_new(void);
+static Textbuffer* Textbuffer_new(void);
 static void Textbuffer_dealloc(Textbuffer*);
 static int Textbuffer_write(Textbuffer**, Py_UNICODE);
 static PyObject* Textbuffer_render(Textbuffer*);
+
+static TagData* TagData_new(void);
+static void TagData_dealloc(TagData*);
+static int TagData_reset_buffers(TagData*);
 
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static void Tokenizer_dealloc(Tokenizer*);
@@ -257,12 +261,12 @@ static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
 static PyObject* Tokenizer_really_parse_tag(Tokenizer*);
-static int Tokenizer_push_tag_buffer(Tokenizer*, TagOpenData*);
-static int Tokenizer_handle_tag_data(Tokenizer*, TagOpenData*, Py_UNICODE);
-static int Tokenizer_handle_tag_space(Tokenizer*, TagOpenData*, Py_UNICODE);
+static int Tokenizer_push_tag_buffer(Tokenizer*, TagData*);
+static int Tokenizer_handle_tag_data(Tokenizer*, TagData*, Py_UNICODE);
+static int Tokenizer_handle_tag_space(Tokenizer*, TagData*, Py_UNICODE);
 static int Tokenizer_handle_tag_text(Tokenizer*, Py_UNICODE);
 static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer*);
-static int Tokenizer_handle_tag_close_open(Tokenizer*, TagOpenData*, PyObject*);
+static int Tokenizer_handle_tag_close_open(Tokenizer*, TagData*, PyObject*);
 static int Tokenizer_handle_tag_open_close(Tokenizer*);
 static PyObject* Tokenizer_handle_tag_close_close(Tokenizer*);
 static int Tokenizer_handle_invalid_tag_start(Tokenizer*);
