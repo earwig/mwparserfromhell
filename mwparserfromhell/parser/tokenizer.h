@@ -41,10 +41,10 @@ SOFTWARE.
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char* MARKERS[] = {
-    "{",  "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/",
-    "\\", "\"", "-", "!", "\n", ""};
+    "{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
+    "\n", ""};
 
-#define NUM_MARKERS 20
+#define NUM_MARKERS 17
 #define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
