@@ -213,9 +213,7 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
     self->text = Py_None;
     Py_INCREF(Py_None);
     self->topstack = NULL;
-    self->head = 0;
-    self->length = 0;
-    self->global = 0;
+    self->head = self->length = self->global = self->depth = self->cycles = 0;
     return 0;
 }
 
@@ -2111,6 +2109,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         Py_XDECREF(self->text);
         self->text = PySequence_Fast(text, "expected a sequence");
     }
+    self->head = self->global = self->depth = self->cycles = 0;
     self->length = PyList_GET_SIZE(self->text);
     return Tokenizer_parse(self, 0, 1);
 }
