@@ -91,7 +91,23 @@ class TreeEqualityTestCase(TestCase):
 
     def assertTagNodeEqual(self, expected, actual):
         """Assert that two Tag nodes have the same data."""
-        self.fail("Holding this until feature/html_tags is ready.")
+        self.assertWikicodeEqual(expected.tag, actual.tag)
+        if expected.contents is not None:
+            self.assertWikicodeEqual(expected.contents, actual.contents)
+        length = len(expected.attributes)
+        self.assertEqual(length, len(actual.attributes))
+        for i in range(length):
+            exp_attr = expected.attributes[i]
+            act_attr = actual.attributes[i]
+            self.assertWikicodeEqual(exp_attr.name, act_attr.name)
+            if exp_attr.value is not None:
+                self.assertWikicodeEqual(exp_attr.value, act_attr.value)
+            self.assertIs(exp_attr.quoted, act_attr.quoted)
+            self.assertEqual(exp.attr.padding, act_attr.padding)
+        self.assertIs(expected.showtag, actual.showtag)
+        self.assertIs(expected.self_closing, actual.self_closing)
+        self.assertEqual(expected.padding, actual.padding)
+        self.assertWikicodeEqual(expected.closing_tag, actual.closing_tag)
 
     def assertTemplateNodeEqual(self, expected, actual):
         """Assert that two Template nodes have the same data."""

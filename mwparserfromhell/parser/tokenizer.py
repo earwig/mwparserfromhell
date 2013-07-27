@@ -24,9 +24,9 @@ from __future__ import unicode_literals
 from math import log
 import re
 
-from . import contexts
-from . import tokens
+from . import contexts, tokens
 from ..compat import htmlentities
+from ..tag_defs import is_parsable, is_single, is_single_only
 
 __all__ = ["Tokenizer"]
 
@@ -35,16 +35,34 @@ class BadRoute(Exception):
     pass
 
 
+class _TagOpenData(object):
+    """Stores data about an HTML open tag, like ``<ref name="foo">``."""
+    CX_NAME =        1 << 0
+    CX_ATTR_READY =  1 << 1
+    CX_ATTR_NAME =   1 << 2
+    CX_ATTR_VALUE =  1 << 3
+    CX_QUOTED =      1 << 4
+    CX_NOTE_SPACE =  1 << 5
+    CX_NOTE_EQUALS = 1 << 6
+    CX_NOTE_QUOTE =  1 << 7
+
+    def __init__(self):
+        self.context = self.CX_NAME
+        self.padding_buffer = {"first": "", "before_eq": "", "after_eq": ""}
+        self.reset = 0
+
+
 class Tokenizer(object):
     """Creates a list of tokens from a string of wikicode."""
     USES_C = False
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "!", "\n", END]
+               "/", "-", "\n", END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\-!\n])", flags=re.IGNORECASE)
+    regex = re.compile(r"([{}\[\]<>|=&#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
+    tag_splitter = re.compile(r"([\s\"\\]+)")
 
     def __init__(self):
         self._text = None
@@ -117,33 +135,33 @@ class Tokenizer(object):
         self._pop()
         raise BadRoute()
 
-    def _write(self, token):
+    def _emit(self, token):
         """Write a token to the end of the current token stack."""
         self._push_textbuffer()
         self._stack.append(token)
 
-    def _write_first(self, token):
+    def _emit_first(self, token):
         """Write a token to the beginning of the current token stack."""
         self._push_textbuffer()
         self._stack.insert(0, token)
 
-    def _write_text(self, text):
+    def _emit_text(self, text):
         """Write text to the current textbuffer."""
         self._textbuffer.append(text)
 
-    def _write_all(self, tokenlist):
+    def _emit_all(self, tokenlist):
         """Write a series of tokens to the current stack at once."""
         if tokenlist and isinstance(tokenlist[0], tokens.Text):
-            self._write_text(tokenlist.pop(0).text)
+            self._emit_text(tokenlist.pop(0).text)
         self._push_textbuffer()
         self._stack.extend(tokenlist)
 
-    def _write_text_then_stack(self, text):
+    def _emit_text_then_stack(self, text):
         """Pop the current stack, write *text*, and then write the stack."""
         stack = self._pop()
-        self._write_text(text)
+        self._emit_text(text)
         if stack:
-            self._write_all(stack)
+            self._emit_all(stack)
         self._head -= 1
 
     def _read(self, delta=0, wrap=False, strict=False):
@@ -168,6 +186,30 @@ class Tokenizer(object):
                 self._fail_route()
             return self.END
 
+    def _parse_template(self):
+        """Parse a template at the head of the wikicode string."""
+        reset = self._head
+        try:
+            template = self._parse(contexts.TEMPLATE_NAME)
+        except BadRoute:
+            self._head = reset
+            raise
+        self._emit_first(tokens.TemplateOpen())
+        self._emit_all(template)
+        self._emit(tokens.TemplateClose())
+
+    def _parse_argument(self):
+        """Parse an argument at the head of the wikicode string."""
+        reset = self._head
+        try:
+            argument = self._parse(contexts.ARGUMENT_NAME)
+        except BadRoute:
+            self._head = reset
+            raise
+        self._emit_first(tokens.ArgumentOpen())
+        self._emit_all(argument)
+        self._emit(tokens.ArgumentClose())
+
     def _parse_template_or_argument(self):
         """Parse a template or argument at the head of the wikicode string."""
         self._head += 2
@@ -179,12 +221,12 @@ class Tokenizer(object):
 
         while braces:
             if braces == 1:
-                return self._write_text_then_stack("{")
+                return self._emit_text_then_stack("{")
             if braces == 2:
                 try:
                     self._parse_template()
                 except BadRoute:
-                    return self._write_text_then_stack("{{")
+                    return self._emit_text_then_stack("{{")
                 break
             try:
                 self._parse_argument()
@@ -194,35 +236,13 @@ class Tokenizer(object):
                     self._parse_template()
                     braces -= 2
                 except BadRoute:
-                    return self._write_text_then_stack("{" * braces)
+                    return self._emit_text_then_stack("{" * braces)
             if braces:
                 self._head += 1
 
-        self._write_all(self._pop())
-
-    def _parse_template(self):
-        """Parse a template at the head of the wikicode string."""
-        reset = self._head
-        try:
-            template = self._parse(contexts.TEMPLATE_NAME)
-        except BadRoute:
-            self._head = reset
-            raise
-        self._write_first(tokens.TemplateOpen())
-        self._write_all(template)
-        self._write(tokens.TemplateClose())
-
-    def _parse_argument(self):
-        """Parse an argument at the head of the wikicode string."""
-        reset = self._head
-        try:
-            argument = self._parse(contexts.ARGUMENT_NAME)
-        except BadRoute:
-            self._head = reset
-            raise
-        self._write_first(tokens.ArgumentOpen())
-        self._write_all(argument)
-        self._write(tokens.ArgumentClose())
+        self._emit_all(self._pop())
+        if self._context & contexts.FAIL_NEXT:
+            self._context ^= contexts.FAIL_NEXT
 
     def _handle_template_param(self):
         """Handle a template parameter at the head of the string."""
@@ -231,22 +251,22 @@ class Tokenizer(object):
         elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
         elif self._context & contexts.TEMPLATE_PARAM_KEY:
-            self._write_all(self._pop(keep_context=True))
+            self._emit_all(self._pop(keep_context=True))
         self._context |= contexts.TEMPLATE_PARAM_KEY
-        self._write(tokens.TemplateParamSeparator())
+        self._emit(tokens.TemplateParamSeparator())
         self._push(self._context)
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        self._write_all(self._pop(keep_context=True))
+        self._emit_all(self._pop(keep_context=True))
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
-        self._write(tokens.TemplateParamEquals())
+        self._emit(tokens.TemplateParamEquals())
 
     def _handle_template_end(self):
         """Handle the end of a template at the head of the string."""
         if self._context & contexts.TEMPLATE_PARAM_KEY:
-            self._write_all(self._pop(keep_context=True))
+            self._emit_all(self._pop(keep_context=True))
         self._head += 1
         return self._pop()
 
@@ -254,7 +274,7 @@ class Tokenizer(object):
         """Handle the separator between an argument's name and default."""
         self._context ^= contexts.ARGUMENT_NAME
         self._context |= contexts.ARGUMENT_DEFAULT
-        self._write(tokens.ArgumentSeparator())
+        self._emit(tokens.ArgumentSeparator())
 
     def _handle_argument_end(self):
         """Handle the end of an argument at the head of the string."""
@@ -269,17 +289,19 @@ class Tokenizer(object):
             wikilink = self._parse(contexts.WIKILINK_TITLE)
         except BadRoute:
             self._head = reset
-            self._write_text("[[")
+            self._emit_text("[[")
         else:
-            self._write(tokens.WikilinkOpen())
-            self._write_all(wikilink)
-            self._write(tokens.WikilinkClose())
+            if self._context & contexts.FAIL_NEXT:
+                self._context ^= contexts.FAIL_NEXT
+            self._emit(tokens.WikilinkOpen())
+            self._emit_all(wikilink)
+            self._emit(tokens.WikilinkClose())
 
     def _handle_wikilink_separator(self):
         """Handle the separator between a wikilink's title and its text."""
         self._context ^= contexts.WIKILINK_TITLE
         self._context |= contexts.WIKILINK_TEXT
-        self._write(tokens.WikilinkSeparator())
+        self._emit(tokens.WikilinkSeparator())
 
     def _handle_wikilink_end(self):
         """Handle the end of a wikilink at the head of the string."""
@@ -301,13 +323,13 @@ class Tokenizer(object):
             title, level = self._parse(context)
         except BadRoute:
             self._head = reset + best - 1
-            self._write_text("=" * best)
+            self._emit_text("=" * best)
         else:
-            self._write(tokens.HeadingStart(level=level))
+            self._emit(tokens.HeadingStart(level=level))
             if level < best:
-                self._write_text("=" * (best - level))
-            self._write_all(title)
-            self._write(tokens.HeadingEnd())
+                self._emit_text("=" * (best - level))
+            self._emit_all(title)
+            self._emit(tokens.HeadingEnd())
         finally:
             self._global ^= contexts.GL_HEADING
 
@@ -326,28 +348,28 @@ class Tokenizer(object):
             after, after_level = self._parse(self._context)
         except BadRoute:
             if level < best:
-                self._write_text("=" * (best - level))
+                self._emit_text("=" * (best - level))
             self._head = reset + best - 1
             return self._pop(), level
         else:  # Found another closure
-            self._write_text("=" * best)
-            self._write_all(after)
+            self._emit_text("=" * best)
+            self._emit_all(after)
             return self._pop(), after_level
 
     def _really_parse_entity(self):
         """Actually parse an HTML entity and ensure that it is valid."""
-        self._write(tokens.HTMLEntityStart())
+        self._emit(tokens.HTMLEntityStart())
         self._head += 1
 
         this = self._read(strict=True)
         if this == "#":
             numeric = True
-            self._write(tokens.HTMLEntityNumeric())
+            self._emit(tokens.HTMLEntityNumeric())
             self._head += 1
             this = self._read(strict=True)
             if this[0].lower() == "x":
                 hexadecimal = True
-                self._write(tokens.HTMLEntityHex(char=this[0]))
+                self._emit(tokens.HTMLEntityHex(char=this[0]))
                 this = this[1:]
                 if not this:
                     self._fail_route()
@@ -373,8 +395,8 @@ class Tokenizer(object):
             if this not in htmlentities.entitydefs:
                 self._fail_route()
 
-        self._write(tokens.Text(text=this))
-        self._write(tokens.HTMLEntityEnd())
+        self._emit(tokens.Text(text=this))
+        self._emit(tokens.HTMLEntityEnd())
 
     def _parse_entity(self):
         """Parse an HTML entity at the head of the wikicode string."""
@@ -384,9 +406,9 @@ class Tokenizer(object):
             self._really_parse_entity()
         except BadRoute:
             self._head = reset
-            self._write_text(self._read())
+            self._emit_text(self._read())
         else:
-            self._write_all(self._pop())
+            self._emit_all(self._pop())
 
     def _parse_comment(self):
         """Parse an HTML comment at the head of the wikicode string."""
@@ -396,12 +418,230 @@ class Tokenizer(object):
             comment = self._parse(contexts.COMMENT)
         except BadRoute:
             self._head = reset
-            self._write_text("<!--")
+            self._emit_text("<!--")
         else:
-            self._write(tokens.CommentStart())
-            self._write_all(comment)
-            self._write(tokens.CommentEnd())
+            self._emit(tokens.CommentStart())
+            self._emit_all(comment)
+            self._emit(tokens.CommentEnd())
             self._head += 2
+
+    def _push_tag_buffer(self, data):
+        """Write a pending tag attribute from *data* to the stack."""
+        if data.context & data.CX_QUOTED:
+            self._emit_first(tokens.TagAttrQuote())
+            self._emit_all(self._pop())
+        buf = data.padding_buffer
+        self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
+            pad_before_eq=buf["before_eq"], pad_after_eq=buf["after_eq"]))
+        self._emit_all(self._pop())
+        data.padding_buffer = {key: "" for key in data.padding_buffer}
+
+    def _handle_tag_space(self, data, text):
+        """Handle whitespace (*text*) inside of an HTML open tag."""
+        ctx = data.context
+        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (data.CX_QUOTED | data.CX_NOTE_QUOTE)
+        if end_of_value or (ctx & data.CX_QUOTED and ctx & data.CX_NOTE_SPACE):
+            self._push_tag_buffer(data)
+            data.context = data.CX_ATTR_READY
+        elif ctx & data.CX_NOTE_SPACE:
+            data.context = data.CX_ATTR_READY
+        elif ctx & data.CX_ATTR_NAME:
+            data.context |= data.CX_NOTE_EQUALS
+            data.padding_buffer["before_eq"] += text
+        if ctx & data.CX_QUOTED and not ctx & data.CX_NOTE_SPACE:
+            self._emit_text(text)
+        elif data.context & data.CX_ATTR_READY:
+            data.padding_buffer["first"] += text
+        elif data.context & data.CX_ATTR_VALUE:
+            data.padding_buffer["after_eq"] += text
+
+    def _handle_tag_text(self, text):
+        """Handle regular *text* inside of an HTML open tag."""
+        next = self._read(1)
+        if not self._can_recurse() or text not in self.MARKERS:
+            self._emit_text(text)
+        elif text == next == "{":
+            self._parse_template_or_argument()
+        elif text == next == "[":
+            self._parse_wikilink()
+        elif text == "<":
+            self._parse_tag()
+        else:
+            self._emit_text(text)
+
+    def _handle_tag_data(self, data, text):
+        """Handle all sorts of *text* data inside of an HTML open tag."""
+        for chunk in self.tag_splitter.split(text):
+            if not chunk:
+                continue
+            if data.context & data.CX_NAME:
+                if chunk in self.MARKERS or chunk.isspace():
+                    self._fail_route()  # Tags must start with text, not spaces
+                data.context = data.CX_NOTE_SPACE
+            elif chunk.isspace():
+                self._handle_tag_space(data, chunk)
+                continue
+            elif data.context & data.CX_NOTE_SPACE:
+                if data.context & data.CX_QUOTED:
+                    data.context = data.CX_ATTR_VALUE
+                    self._pop()
+                    self._head = data.reset - 1  # Will be auto-incremented
+                    return  # Break early
+                self._fail_route()
+            elif data.context & data.CX_ATTR_READY:
+                data.context = data.CX_ATTR_NAME
+                self._push(contexts.TAG_ATTR)
+            elif data.context & data.CX_ATTR_NAME:
+                if chunk == "=":
+                    data.context = data.CX_ATTR_VALUE | data.CX_NOTE_QUOTE
+                    self._emit(tokens.TagAttrEquals())
+                    continue
+                if data.context & data.CX_NOTE_EQUALS:
+                    self._push_tag_buffer(data)
+                    data.context = data.CX_ATTR_NAME
+                    self._push(contexts.TAG_ATTR)
+            elif data.context & data.CX_ATTR_VALUE:
+                escaped = self._read(-1) == "\\" and self._read(-2) != "\\"
+                if data.context & data.CX_NOTE_QUOTE:
+                    data.context ^= data.CX_NOTE_QUOTE
+                    if chunk == '"' and not escaped:
+                        data.context |= data.CX_QUOTED
+                        self._push(self._context)
+                        data.reset = self._head
+                        continue
+                elif data.context & data.CX_QUOTED:
+                    if chunk == '"' and not escaped:
+                        data.context |= data.CX_NOTE_SPACE
+                        continue
+            self._handle_tag_text(chunk)
+
+    def _handle_tag_close_open(self, data, token):
+        """Handle the closing of a open tag (``<foo>``)."""
+        if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+            self._push_tag_buffer(data)
+        self._emit(token(padding=data.padding_buffer["first"]))
+        self._head += 1
+
+    def _handle_tag_open_close(self):
+        """Handle the opening of a closing tag (``</foo>``)."""
+        self._emit(tokens.TagOpenClose())
+        self._push(contexts.TAG_CLOSE)
+        self._head += 1
+
+    def _handle_tag_close_close(self):
+        """Handle the ending of a closing tag (``</foo>``)."""
+        strip = lambda tok: tok.text.rstrip().lower()
+        closing = self._pop()
+        if len(closing) != 1 or (not isinstance(closing[0], tokens.Text) or
+                                 strip(closing[0]) != strip(self._stack[1])):
+            self._fail_route()
+        self._emit_all(closing)
+        self._emit(tokens.TagCloseClose())
+        return self._pop()
+
+    def _handle_blacklisted_tag(self):
+        """Handle the body of an HTML tag that is parser-blacklisted."""
+        while True:
+            this, next = self._read(), self._read(1)
+            self._head += 1
+            if this is self.END:
+                self._fail_route()
+            elif this == "<" and next == "/":
+                self._handle_tag_open_close()
+                return self._parse(push=False)
+            else:
+                self._emit_text(this)
+
+    def _handle_single_only_tag_end(self):
+        """Handle the end of an implicitly closing single-only HTML tag."""
+        padding = self._stack.pop().padding
+        self._emit(tokens.TagCloseSelfclose(padding=padding, implicit=True))
+        self._head -= 1  # Offset displacement done by _handle_tag_close_open
+        return self._pop()
+
+    def _handle_single_tag_end(self):
+        """Handle the stream end when inside a single-supporting HTML tag."""
+        gen = enumerate(self._stack)
+        index = next(i for i, t in gen if isinstance(t, tokens.TagCloseOpen))
+        padding = self._stack[index].padding
+        token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
+        self._stack[index] = token
+        return self._pop()
+
+    def _really_parse_tag(self):
+        """Actually parse an HTML tag, starting with the open (``<foo>``)."""
+        data = _TagOpenData()
+        self._push(contexts.TAG_OPEN)
+        self._emit(tokens.TagOpenOpen())
+        while True:
+            this, next = self._read(), self._read(1)
+            can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or
+                        data.context & data.CX_NOTE_SPACE)
+            if this is self.END:
+                if self._context & contexts.TAG_ATTR:
+                    if data.context & data.CX_QUOTED:
+                        # Unclosed attribute quote: reset, don't die
+                        data.context = data.CX_ATTR_VALUE
+                        self._pop()
+                        self._head = data.reset
+                        continue
+                    self._pop()
+                self._fail_route()
+            elif this == ">" and can_exit:
+                self._handle_tag_close_open(data, tokens.TagCloseOpen)
+                self._context = contexts.TAG_BODY
+                if is_single_only(self._stack[1].text):
+                    return self._handle_single_only_tag_end()
+                if is_parsable(self._stack[1].text):
+                    return self._parse(push=False)
+                return self._handle_blacklisted_tag()
+            elif this == "/" and next == ">" and can_exit:
+                self._handle_tag_close_open(data, tokens.TagCloseSelfclose)
+                return self._pop()
+            else:
+                self._handle_tag_data(data, this)
+            self._head += 1
+
+    def _handle_invalid_tag_start(self):
+        """Handle the (possible) start of an implicitly closing single tag."""
+        reset = self._head + 1
+        self._head += 2
+        try:
+            if not is_single_only(self.tag_splitter.split(self._read())[0]):
+                raise BadRoute()
+            tag = self._really_parse_tag()
+        except BadRoute:
+            self._head = reset
+            self._emit_text("</")
+        else:
+            tag[0].invalid = True  # Set flag of TagOpenOpen
+            self._emit_all(tag)
+
+    def _parse_tag(self):
+        """Parse an HTML tag at the head of the wikicode string."""
+        reset = self._head
+        self._head += 1
+        try:
+            tag = self._really_parse_tag()
+        except BadRoute:
+            self._head = reset
+            self._emit_text("<")
+        else:
+            self._emit_all(tag)
+
+    def _handle_end(self):
+        """Handle the end of the stream of wikitext."""
+        fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
+                contexts.HEADING | contexts.COMMENT | contexts.TAG)
+        double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
+        if self._context & fail:
+            if self._context & contexts.TAG_BODY:
+                if is_single(self._stack[1].text):
+                    return self._handle_single_tag_end()
+            if self._context & double_fail:
+                self._pop()
+            self._fail_route()
+        return self._pop()
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
@@ -414,7 +654,7 @@ class Tokenizer(object):
             elif this == "\n" or this == "[" or this == "}":
                 return False
             return True
-        if context & contexts.TEMPLATE_NAME:
+        elif context & contexts.TEMPLATE_NAME:
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
                 return True
@@ -432,6 +672,8 @@ class Tokenizer(object):
             elif this is self.END or not this.isspace():
                 self._context |= contexts.HAS_TEXT
             return True
+        elif context & contexts.TAG_CLOSE:
+            return this != "<"
         else:
             if context & contexts.FAIL_ON_EQUALS:
                 if this == "=":
@@ -458,44 +700,38 @@ class Tokenizer(object):
                 self._context |= contexts.FAIL_ON_RBRACE
             return True
 
-    def _parse(self, context=0):
+    def _parse(self, context=0, push=True):
         """Parse the wikicode string, using *context* for when to stop."""
-        self._push(context)
+        unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
+                  contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
+                  contexts.TAG_CLOSE)
+        double_unsafe = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
+        if push:
+            self._push(context)
         while True:
             this = self._read()
-            unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
-                      contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME)
             if self._context & unsafe:
                 if not self._verify_safe(this):
-                    if self._context & contexts.TEMPLATE_PARAM_KEY:
+                    if self._context & double_unsafe:
                         self._pop()
                     self._fail_route()
             if this not in self.MARKERS:
-                self._write_text(this)
+                self._emit_text(this)
                 self._head += 1
                 continue
             if this is self.END:
-                fail = (contexts.TEMPLATE | contexts.ARGUMENT |
-                        contexts.WIKILINK | contexts.HEADING |
-                        contexts.COMMENT)
-                if self._context & contexts.TEMPLATE_PARAM_KEY:
-                    self._pop()
-                if self._context & fail:
-                    self._fail_route()
-                return self._pop()
+                return self._handle_end()
             next = self._read(1)
             if self._context & contexts.COMMENT:
                 if this == next == "-" and self._read(2) == ">":
                     return self._pop()
                 else:
-                    self._write_text(this)
+                    self._emit_text(this)
             elif this == next == "{":
                 if self._can_recurse():
                     self._parse_template_or_argument()
-                    if self._context & contexts.FAIL_NEXT:
-                        self._context ^= contexts.FAIL_NEXT
                 else:
-                    self._write_text("{")
+                    self._emit_text("{")
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
@@ -508,14 +744,12 @@ class Tokenizer(object):
                 if self._read(2) == "}":
                     return self._handle_argument_end()
                 else:
-                    self._write_text("}")
+                    self._emit_text("}")
             elif this == next == "[":
                 if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
                     self._parse_wikilink()
-                    if self._context & contexts.FAIL_NEXT:
-                        self._context ^= contexts.FAIL_NEXT
                 else:
-                    self._write_text("[")
+                    self._emit_text("[")
             elif this == "|" and self._context & contexts.WIKILINK_TITLE:
                 self._handle_wikilink_separator()
             elif this == next == "]" and self._context & contexts.WIKILINK:
@@ -524,7 +758,7 @@ class Tokenizer(object):
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
                 else:
-                    self._write_text("=")
+                    self._emit_text("=")
             elif this == "=" and self._context & contexts.HEADING:
                 return self._handle_heading_end()
             elif this == "\n" and self._context & contexts.HEADING:
@@ -535,9 +769,21 @@ class Tokenizer(object):
                 if self._read(2) == self._read(3) == "-":
                     self._parse_comment()
                 else:
-                    self._write_text(this)
+                    self._emit_text(this)
+            elif this == "<" and next == "/" and self._read(2) is not self.END:
+                if self._context & contexts.TAG_BODY:
+                    self._handle_tag_open_close()
+                else:
+                    self._handle_invalid_tag_start()
+            elif this == "<":
+                if not self._context & contexts.TAG_CLOSE and self._can_recurse():
+                    self._parse_tag()
+                else:
+                    self._emit_text("<")
+            elif this == ">" and self._context & contexts.TAG_CLOSE:
+                return self._handle_tag_close_close()
             else:
-                self._write_text(this)
+                self._emit_text(this)
             self._head += 1
 
     def tokenize(self, text):

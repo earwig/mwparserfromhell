@@ -46,6 +46,7 @@ nodes Package
 
 .. automodule:: mwparserfromhell.nodes.tag
     :members:
+    :undoc-members:
     :show-inheritance:
 
 :mod:`template` Module

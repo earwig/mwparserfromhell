@@ -170,7 +170,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_comment(self):
-        """Handle a case where a hidden comment is at the head of the tokens."""
+        """Handle a case where an HTML comment is at the head of the tokens."""
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -180,7 +180,7 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
-    def _handle_attribute(self):
+    def _handle_attribute(self, start):
         """Handle a case where a tag attribute is at the head of the tokens."""
         name, quoted = None, False
         self._push()
@@ -191,37 +191,47 @@ class Builder(object):
                 self._push()
             elif isinstance(token, tokens.TagAttrQuote):
                 quoted = True
-            elif isinstance(token, (tokens.TagAttrStart,
-                                    tokens.TagCloseOpen)):
+            elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
+                                    tokens.TagCloseSelfclose)):
                 self._tokens.append(token)
-                if name is not None:
-                    return Attribute(name, self._pop(), quoted)
-                return Attribute(self._pop(), quoted=quoted)
+                if name:
+                    value = self._pop()
+                else:
+                    name, value = self._pop(), None
+                return Attribute(name, value, quoted, start.pad_first,
+                                 start.pad_before_eq, start.pad_after_eq)
             else:
                 self._write(self._handle_token(token))
 
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
-        type_, showtag = token.type, token.showtag
-        attrs = []
+        close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
+        implicit, attrs, contents, closing_tag = False, [], None, None
+        showtag = token.get("showtag", True)
+        invalid = token.get("invalid", False)
         self._push()
         while self._tokens:
             token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrStart):
-                attrs.append(self._handle_attribute())
+                attrs.append(self._handle_attribute(token))
             elif isinstance(token, tokens.TagCloseOpen):
-                open_pad = token.padding
+                padding = token.padding
                 tag = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TagCloseSelfclose):
-                tag = self._pop()
-                return Tag(type_, tag, attrs=attrs, showtag=showtag,
-                           self_closing=True, open_padding=token.padding)
             elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
-            elif isinstance(token, tokens.TagCloseClose):
-                return Tag(type_, tag, contents, attrs, showtag, False,
-                           open_pad, token.padding)
+                self._push()
+            elif isinstance(token, close_tokens):
+                if isinstance(token, tokens.TagCloseSelfclose):
+                    tag = self._pop()
+                    self_closing = True
+                    padding = token.padding
+                    implicit = token.get("implicit", False)
+                else:
+                    self_closing = False
+                    closing_tag = self._pop()
+                return Tag(tag, contents, attrs, showtag, self_closing,
+                           invalid, implicit, padding, closing_tag)
             else:
                 self._write(self._handle_token(token))
 

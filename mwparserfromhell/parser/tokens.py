@@ -63,6 +63,10 @@ class Token(object):
     def __delattr__(self, key):
         del self._kwargs[key]
 
+    def get(self, key, default=None):
+        """Same as :py:meth:`__getattr__`, but has a *default* if missing."""
+        return self._kwargs.get(key, default)
+
 
 def make(name):
     """Create a new Token class using ``type()`` and add it to ``__all__``."""

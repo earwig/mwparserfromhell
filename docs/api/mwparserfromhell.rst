@@ -30,6 +30,12 @@ mwparserfromhell Package
     :members:
     :undoc-members:
 
+:mod:`tag_defs` Module
+----------------------
+
+.. automodule:: mwparserfromhell.tag_defs
+    :members:
+
 :mod:`utils` Module
 -------------------
 

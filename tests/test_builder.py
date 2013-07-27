@@ -198,6 +198,18 @@ class TestBuilder(TreeEqualityTestCase):
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
 
+    def test_tag(self):
+        """tests for building Tag nodes"""
+        tests = [
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
+              tokens.TagCloseOpen(padding=""), tokens.TagOpenClose(),
+              tokens.Text(text="ref"), tokens.TagCloseClose()],
+             wrap([Tag(wraptext("ref"), wrap([]), [], True, False, "",
+                       wraptext("ref"))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
+
     def test_integration(self):
         """a test for building a combination of templates together"""
         # {{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}
