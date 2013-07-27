@@ -7,6 +7,8 @@ v0.3
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...develop>`__):
 
+- Added complete support for HTML :py:class:`Tags <.Tag>`, along with
+  appropriate unit tests.
 - Various fixes and cleanup.
 
 v0.2

@@ -19,7 +19,7 @@ The easiest way to install the parser is through the `Python Package Index`_,
 so you can install the latest release with ``pip install mwparserfromhell``
 (`get pip`_). Alternatively, get the latest development version::
 
-    git clone git://github.com/earwig/mwparserfromhell.git
+    git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
     python setup.py install
 

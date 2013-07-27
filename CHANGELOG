@@ -1,5 +1,6 @@
 v0.3 (unreleased):
 
+- Added complete support for HTML Tags, along with appropriate unit tests.
 - Various fixes and cleanup.
 
 v0.2 (released June 20, 2013):
