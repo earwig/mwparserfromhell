@@ -46,7 +46,7 @@ class Tag(Node):
         self._padding = padding
         if closing_tag:
             self._closing_tag = closing_tag
-        elif not self_closing:
+        else:
             self._closing_tag = tag
 
     def __unicode__(self):

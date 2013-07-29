@@ -102,10 +102,14 @@ class TreeEqualityTestCase(TestCase):
             self.assertWikicodeEqual(exp_attr.name, act_attr.name)
             if exp_attr.value is not None:
                 self.assertWikicodeEqual(exp_attr.value, act_attr.value)
-            self.assertIs(exp_attr.quoted, act_attr.quoted)
-            self.assertEqual(exp.attr.padding, act_attr.padding)
+                self.assertIs(exp_attr.quoted, act_attr.quoted)
+            self.assertEqual(exp_attr.pad_first, act_attr.pad_first)
+            self.assertEqual(exp_attr.pad_before_eq, act_attr.pad_before_eq)
+            self.assertEqual(exp_attr.pad_after_eq, act_attr.pad_after_eq)
         self.assertIs(expected.showtag, actual.showtag)
         self.assertIs(expected.self_closing, actual.self_closing)
+        self.assertIs(expected.invalid, actual.invalid)
+        self.assertIs(expected.implicit, actual.implicit)
         self.assertEqual(expected.padding, actual.padding)
         self.assertWikicodeEqual(expected.closing_tag, actual.closing_tag)
 

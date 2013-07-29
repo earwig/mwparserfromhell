@@ -36,7 +36,7 @@ class Attribute(StringMixIn):
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quoted=True, pad_first="",
+    def __init__(self, name, value=None, quoted=True, pad_first=" ",
                  pad_before_eq="", pad_after_eq=""):
         super(Attribute, self).__init__()
         self._name = name
