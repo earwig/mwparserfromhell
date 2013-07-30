@@ -54,6 +54,16 @@ class Attribute(StringMixIn):
             return base + "=" + self.pad_after_eq + str(self.value)
         return base
 
+    def _set_padding(self, attr, value):
+        """Setter for the value of a padding attribute."""
+        if not value:
+            setattr(self, attr, "")
+        else:
+            value = str(value)
+            if not value.isspace():
+                raise ValueError("padding must be entirely whitespace")
+            setattr(self, attr, value)
+
     @property
     def name(self):
         """The name of the attribute as a :py:class:`~.Wikicode` object."""
@@ -98,12 +108,12 @@ class Attribute(StringMixIn):
 
     @pad_first.setter
     def pad_first(self, value):
-        self._pad_first = str(value)
+        self._set_padding("_pad_first", value)
 
     @pad_before_eq.setter
     def pad_before_eq(self, value):
-        self._pad_before_eq = str(value)
+        self._set_padding("_pad_before_eq", value)
 
     @pad_after_eq.setter
     def pad_after_eq(self, value):
-        self._pad_after_eq = str(value)
+        self._set_padding("_pad_after_eq", value)
