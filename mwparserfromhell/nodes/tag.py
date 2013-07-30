@@ -37,7 +37,10 @@ class Tag(Node):
                  closing_tag=None):
         super(Tag, self).__init__()
         self._tag = tag
-        self._contents = contents
+        if contents is None and not self_closing:
+            self._contents = parse_anything("")
+        else:
+            self._contents = contents
         self._attrs = attrs if attrs else []
         self._showtag = showtag
         self._self_closing = self_closing
@@ -51,7 +54,7 @@ class Tag(Node):
 
     def __unicode__(self):
         if not self.showtag:
-            open_, close = get_wikicode[self.tag]
+            open_, close = get_wikicode(self.tag)
             if self.self_closing:
                 return open_
             else:
@@ -81,7 +84,7 @@ class Tag(Node):
         if self.contents:
             for child in getter(self.contents):
                 yield self.contents, child
-        if not self.self_closing and self.closing_tag:
+        if not self.self_closing and self.showtag and self.closing_tag:
             for child in getter(self.closing_tag):
                 yield self.closing_tag, child
 
@@ -198,7 +201,13 @@ class Tag(Node):
 
     @padding.setter
     def padding(self, value):
-        self._padding = str(value)
+        if not value:
+            self._padding = ""
+        else:
+            value = str(value)
+            if not value.isspace():
+                raise ValueError("padding must be entirely whitespace")
+            self._padding = value
 
     @closing_tag.setter
     def closing_tag(self, value):
