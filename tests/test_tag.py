@@ -29,10 +29,7 @@ from mwparserfromhell.nodes.extras import Attribute
 from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
-agennv = lambda name: Attribute(wraptext(name))
 agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
-agenp = lambda name, value, a, b, c: Attribute(wraptext(name), wraptext(value),
-                                               True, a, b, c)
 agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, True, a, b, c)
 
 class TestTag(TreeEqualityTestCase):
