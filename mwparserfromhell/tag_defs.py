@@ -24,7 +24,7 @@
 
 from __future__ import unicode_literals
 
-__all__ = ["get_wikicode", "is_parsable", "is_visible", "is_single",
+__all__ = ["get_wiki_markup", "is_parsable", "is_visible", "is_single",
            "is_single_only"]
 
 PARSER_BLACKLIST = [
@@ -44,7 +44,7 @@ INVISIBLE_TAGS = [
 SINGLE_ONLY = ["br", "hr", "meta", "link", "img"]
 SINGLE = SINGLE_ONLY + ["li", "dt", "dd"]
 
-WIKICODE = {
+WIKI_MARKUP = {
     "i": {"open": "''", "close": "''"},
     "b": {"open": "'''", "close": "'''"},
     "ul": {"open": "*"},
@@ -54,9 +54,9 @@ WIKICODE = {
     "hr": {"open": "----"},
 }
 
-def get_wikicode(tag):
-    """Return the appropriate wikicode before and after the given *tag*."""
-    data = WIKICODE[tag.lower()]
+def get_wiki_markup(tag):
+    """Return the appropriate wiki markup before and after the given *tag*."""
+    data = WIKI_MARKUP[tag.lower()]
     return (data.get("open"), data.get("close"))
 
 def is_parsable(tag):

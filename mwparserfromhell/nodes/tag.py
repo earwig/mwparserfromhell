@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from . import Node, Text
 from ..compat import str
-from ..tag_defs import get_wikicode, is_visible
+from ..tag_defs import get_wiki_markup, is_visible
 from ..utils import parse_anything
 
 __all__ = ["Tag"]
@@ -32,7 +32,7 @@ __all__ = ["Tag"]
 class Tag(Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
 
-    def __init__(self, tag, contents=None, attrs=None, showtag=True,
+    def __init__(self, tag, contents=None, attrs=None, wiki_markup=False,
                  self_closing=False, invalid=False, implicit=False, padding="",
                  closing_tag=None):
         super(Tag, self).__init__()
@@ -42,7 +42,7 @@ class Tag(Node):
         else:
             self._contents = contents
         self._attrs = attrs if attrs else []
-        self._showtag = showtag
+        self._wiki_markup = wiki_markup
         self._self_closing = self_closing
         self._invalid = invalid
         self._implicit = implicit
@@ -53,8 +53,8 @@ class Tag(Node):
             self._closing_tag = tag
 
     def __unicode__(self):
-        if not self.showtag:
-            open_, close = get_wikicode(self.tag)
+        if self.wiki_markup:
+            open_, close = get_wiki_markup(self.tag)
             if self.self_closing:
                 return open_
             else:
@@ -72,7 +72,7 @@ class Tag(Node):
 
     def __iternodes__(self, getter):
         yield None, self
-        if self.showtag:
+        if not self.wiki_markup:
             for child in getter(self.tag):
                 yield self.tag, child
             for attr in self.attributes:
@@ -84,7 +84,7 @@ class Tag(Node):
         if self.contents:
             for child in getter(self.contents):
                 yield self.contents, child
-        if not self.self_closing and self.showtag and self.closing_tag:
+        if not self.self_closing and not self.wiki_markup and self.closing_tag:
             for child in getter(self.closing_tag):
                 yield self.closing_tag, child
 
@@ -131,9 +131,9 @@ class Tag(Node):
         return self._attrs
 
     @property
-    def showtag(self):
-        """Whether to show the tag itself instead of a wikicode version."""
-        return self._showtag
+    def wiki_markup(self):
+        """Whether to show the wiki version of a tag instead of the HTML."""
+        return self._wiki_markup
 
     @property
     def self_closing(self):
@@ -183,9 +183,9 @@ class Tag(Node):
     def contents(self, value):
         self._contents = parse_anything(value)
 
-    @showtag.setter
-    def showtag(self, value):
-        self._showtag = bool(value)
+    @wiki_markup.setter
+    def wiki_markup(self, value):
+        self._wiki_markup = bool(value)
 
     @self_closing.setter
     def self_closing(self, value):
