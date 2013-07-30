@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell.compat import str
-from mwparserfromhell.nodes import Tag, Text
+from mwparserfromhell.nodes import Tag, Template, Text
 from mwparserfromhell.nodes.extras import Attribute
 from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
@@ -129,6 +129,101 @@ class TestTag(TreeEqualityTestCase):
             (getter, node1.contents), "</", (getter, node1.closing_tag), ">",
             "<", (getter, node2.tag), "/>", "</", (getter, node3.tag), ">"]
         self.assertEqual(valid, output)
+
+    def test_tag(self):
+        """test getter/setter for the tag attribute"""
+        tag = wraptext("ref")
+        node = Tag(tag, wraptext("text"))
+        self.assertIs(tag, node.tag)
+        self.assertIs(tag, node.closing_tag)
+        node.tag = "span"
+        self.assertWikicodeEqual(wraptext("span"), node.tag)
+        self.assertWikicodeEqual(wraptext("span"), node.closing_tag)
+        self.assertEqual("<span>text</span>", node)
+
+    def test_contents(self):
+        """test getter/setter for the contents attribute"""
+        contents = wraptext("text")
+        node = Tag(wraptext("ref"), contents)
+        self.assertIs(contents, node.contents)
+        node.contents = "text and a {{template}}"
+        parsed = wrap([Text("text and a "), Template(wraptext("template"))])
+        self.assertWikicodeEqual(parsed, node.contents)
+        self.assertEqual("<ref>text and a {{template}}</ref>", node)
+
+    def test_attributes(self):
+        """test getter for the attributes attribute"""
+        attrs = [agen("name", "bar")]
+        node1 = Tag(wraptext("ref"), wraptext("foo"))
+        node2 = Tag(wraptext("ref"), wraptext("foo"), attrs)
+        self.assertEqual([], node1.attributes)
+        self.assertIs(attrs, node2.attributes)
+
+    def test_showtag(self):
+        """test getter/setter for the showtag attribute"""
+        node = Tag(wraptext("i"), wraptext("italic text"))
+        self.assertTrue(node.showtag)
+        node.showtag = False
+        self.assertFalse(node.showtag)
+        self.assertEqual("''italic text''", node)
+        node.showtag = 1
+        self.assertTrue(node.showtag)
+        self.assertEqual("<i>italic text</i>", node)
+
+    def test_self_closing(self):
+        """test getter/setter for the self_closing attribute"""
+        node = Tag(wraptext("ref"), wraptext("foobar"))
+        self.assertFalse(node.self_closing)
+        node.self_closing = True
+        self.assertTrue(node.self_closing)
+        self.assertEqual("<ref/>", node)
+        node.self_closing = 0
+        self.assertFalse(node.self_closing)
+        self.assertEqual("<ref>foobar</ref>", node)
+
+    def test_invalid(self):
+        """test getter/setter for the invalid attribute"""
+        node = Tag(wraptext("br"), self_closing=True, implicit=True)
+        self.assertFalse(node.invalid)
+        node.invalid = True
+        self.assertTrue(node.invalid)
+        self.assertEqual("</br>", node)
+        node.invalid = 0
+        self.assertFalse(node.invalid)
+        self.assertEqual("<br>", node)
+
+    def test_implicit(self):
+        """test getter/setter for the implicit attribute"""
+        node = Tag(wraptext("br"), self_closing=True)
+        self.assertFalse(node.implicit)
+        node.implicit = True
+        self.assertTrue(node.implicit)
+        self.assertEqual("<br>", node)
+        node.implicit = 0
+        self.assertFalse(node.implicit)
+        self.assertEqual("<br/>", node)
+
+    def test_padding(self):
+        """test getter/setter for the padding attribute"""
+        node = Tag(wraptext("ref"), wraptext("foobar"))
+        self.assertEqual("", node.padding)
+        node.padding = "  "
+        self.assertEqual("  ", node.padding)
+        self.assertEqual("<ref  >foobar</ref>", node)
+        node.padding = None
+        self.assertEqual("", node.padding)
+        self.assertEqual("<ref>foobar</ref>", node)
+        self.assertRaises(ValueError, setattr, node, "padding", True)
+
+    def test_closing_tag(self):
+        """test getter/setter for the closing_tag attribute"""
+        tag = wraptext("ref")
+        node = Tag(tag, wraptext("foobar"))
+        self.assertIs(tag, node.closing_tag)
+        node.closing_tag = "ref {{ignore me}}"
+        parsed = wrap([Text("ref "), Template(wraptext("ignore me"))])
+        self.assertWikicodeEqual(parsed, node.closing_tag)
+        self.assertEqual("<ref>foobar</ref {{ignore me}}>", node)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -71,9 +71,8 @@ class TestAttribute(TreeEqualityTestCase):
     def test_padding(self):
         """test getter/setter for the padding attributes"""
         for pad in ["pad_first", "pad_before_eq", "pad_after_eq"]:
-            padding = wraptext("\n")
-            node = Attribute(wraptext("id"), wraptext("foo"), **{pad: padding})
-            self.assertIs(padding, getattr(node, pad))
+            node = Attribute(wraptext("id"), wraptext("foo"), **{pad: "\n"})
+            self.assertEqual("\n", getattr(node, pad))
             setattr(node, pad, " ")
             self.assertEqual(" ", getattr(node, pad))
             setattr(node, pad, None)
