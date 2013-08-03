@@ -102,10 +102,12 @@ class TestTag(TreeEqualityTestCase):
         """test Tag.__strip__()"""
         node1 = Tag(wraptext("i"), wraptext("foobar"))
         node2 = Tag(wraptext("math"), wraptext("foobar"))
+        node3 = Tag(wraptext("br"), self_closing=True)
         for a in (True, False):
             for b in (True, False):
                 self.assertEqual("foobar", node1.__strip__(a, b))
                 self.assertEqual(None, node2.__strip__(a, b))
+                self.assertEqual(None, node3.__strip__(a, b))
 
     def test_showtree(self):
         """test Tag.__showtree__()"""

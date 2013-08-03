@@ -89,7 +89,7 @@ class Tag(Node):
                 yield self.closing_tag, child
 
     def __strip__(self, normalize, collapse):
-        if is_visible(self.tag):
+        if self.contents and is_visible(self.tag):
             return self.contents.strip_code(normalize, collapse)
         return None
 
