@@ -55,7 +55,7 @@ class Token(object):
         return False
 
     def __getattr__(self, key):
-        return self._kwargs.get(key, False)
+        return self._kwargs.get(key)
 
     def __setattr__(self, key, value):
         self._kwargs[key] = value

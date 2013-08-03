@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 
 from . import Node, Text
 from ..compat import str
-from ..tag_defs import get_wiki_markup, is_visible
+from ..tag_defs import is_visible
 from ..utils import parse_anything
 
 __all__ = ["Tag"]
@@ -32,7 +32,7 @@ __all__ = ["Tag"]
 class Tag(Node):
     """Represents an HTML-style tag in wikicode, like ``<ref>``."""
 
-    def __init__(self, tag, contents=None, attrs=None, wiki_markup=False,
+    def __init__(self, tag, contents=None, attrs=None, wiki_markup=None,
                  self_closing=False, invalid=False, implicit=False, padding="",
                  closing_tag=None):
         super(Tag, self).__init__()
@@ -54,11 +54,10 @@ class Tag(Node):
 
     def __unicode__(self):
         if self.wiki_markup:
-            open_, close = get_wiki_markup(self.tag)
             if self.self_closing:
-                return open_
+                return self.wiki_markup
             else:
-                return open_ + str(self.contents) + close
+                return self.wiki_markup + str(self.contents) + self.wiki_markup
 
         result = ("</" if self.invalid else "<") + str(self.tag)
         if self.attributes:
@@ -132,7 +131,12 @@ class Tag(Node):
 
     @property
     def wiki_markup(self):
-        """Whether to show the wiki version of a tag instead of the HTML."""
+        """The wikified version of a tag to show instead of HTML.
+
+        If set to a value, this will be displayed instead of the brackets.
+        For example, set to ``''`` to replace ``<i>`` or ``----`` to replace
+        ``<hr>``.
+        """
         return self._wiki_markup
 
     @property
@@ -185,7 +189,7 @@ class Tag(Node):
 
     @wiki_markup.setter
     def wiki_markup(self, value):
-        self._wiki_markup = bool(value)
+        self._wiki_markup = str(value) if value else None
 
     @self_closing.setter
     def self_closing(self, value):

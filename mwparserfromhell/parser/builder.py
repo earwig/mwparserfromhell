@@ -207,14 +207,14 @@ class Builder(object):
         """Handle a case where a tag is at the head of the tokens."""
         close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
         implicit, attrs, contents, closing_tag = False, [], None, None
-        wiki_markup, invalid = token.wiki_markup, token.invalid
+        wiki_markup, invalid = token.wiki_markup, token.invalid or False
         self._push()
         while self._tokens:
             token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrStart):
                 attrs.append(self._handle_attribute(token))
             elif isinstance(token, tokens.TagCloseOpen):
-                padding = token.padding
+                padding = token.padding or ""
                 tag = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagOpenClose):
@@ -224,7 +224,8 @@ class Builder(object):
                 if isinstance(token, tokens.TagCloseSelfclose):
                     tag = self._pop()
                     self_closing = True
-                    padding, implicit = token.padding, token.implicit
+                    padding = token.padding or ""
+                    implicit = token.implicit or False
                 else:
                     self_closing = False
                     closing_tag = self._pop()
