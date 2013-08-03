@@ -303,6 +303,20 @@ class TestBuilder(TreeEqualityTestCase):
                               Text(" "), Wikilink(wraptext("q")), Text(" "),
                               Template(wraptext("r"))]), True, " \n ", " ",
                               "  ")])])),
+
+            # "''italic text''"
+            ([tokens.TagOpenOpen(wiki_markup="''"), tokens.Text(text="i"),
+              tokens.TagCloseOpen(), tokens.Text(text="italic text"),
+              tokens.TagOpenClose(), tokens.Text(text="i"),
+              tokens.TagCloseClose()],
+             wrap([Tag(wraptext("i"), wraptext("italic text"),
+                       wiki_markup="''")])),
+
+            # * bullet
+            ([tokens.TagOpenOpen(wiki_markup="*"), tokens.Text(text="li"),
+              tokens.TagCloseSelfclose(), tokens.Text(text=" bullet")],
+             wrap([Tag(wraptext("li"), wiki_markup="*", self_closing=True),
+                   Text(" bullet")])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))

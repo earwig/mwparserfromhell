@@ -1,0 +1,46 @@
+name:   basic_italics
+label:  basic italic text
+input:  "''text''"
+output: [TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="text"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   basic_bold
+label:  basic bold text
+input:  "'''text'''"
+output: [TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="text"), TagOpenClose(), Text(text="b"), TagCloseClose()]
+
+---
+
+name:   basic_ul
+label:  basic unordered list
+input:  "*text"
+output: [TagOpenOpen(wiki_markup="*"), Text(text="li"), TagCloseSelfclose(), Text(text="text")]
+
+---
+
+name:   basic_ol
+label:  basic ordered list
+input:  "#text"
+output: [TagOpenOpen(wiki_markup="#"), Text(text="li"), TagCloseSelfclose(), Text(text="text")]
+
+---
+
+name:   basic_dt
+label:  basic description term
+input:  ";text"
+output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="text")]
+
+---
+
+name:   basic_dd
+label:  basic description item
+input:  ":text"
+output: [TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="text")]
+
+---
+
+name:   basic_hr
+label:  basic horizontal rule
+input:  "----"
+output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose()]
