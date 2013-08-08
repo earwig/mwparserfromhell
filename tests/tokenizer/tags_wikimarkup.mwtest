@@ -44,3 +44,396 @@ name:   basic_hr
 label:  basic horizontal rule
 input:  "----"
 output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose()]
+
+---
+
+name:   complex_italics
+label:  italics with a lot in them
+input:  "''this is a&nbsp;test of [[Italic text|italics]] with {{plenty|of|stuff}}''"
+output: [TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="this is a"), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), Text(text="test of "), WikilinkOpen(), Text(text="Italic text"), WikilinkSeparator(), Text(text="italics"), WikilinkClose(), Text(text=" with "), TemplateOpen(), Text(text="plenty"), TemplateParamSeparator(), Text(text="of"), TemplateParamSeparator(), Text(text="stuff"), TemplateClose(), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   multiline_italics
+label:  italics spanning mulitple lines
+input:  "foo\nbar''testing\ntext\nspanning\n\n\n\n\nmultiple\nlines''foo\n\nbar"
+output: [Text(text="foo\nbar"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="testing\ntext\nspanning\n\n\n\n\nmultiple\nlines"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   unending_italics
+label:  italics without an ending tag
+input:  "''unending formatting!"
+output: [Text(text="''unending formatting!")]
+
+---
+
+name:   misleading_italics_end
+label:  italics with something that looks like an end but isn't
+input:  "''this is 'not' the en'd'<nowiki>''</nowiki>"
+output: [Text(text="''this is 'not' the en'd'"), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="''"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
+]
+
+---
+
+name:   italics_start_outside_end_inside
+label:  italics that start outside a link and end inside it
+input:  "''foo[[bar|baz'']]spam"
+output: []
+
+---
+
+name:   italics_start_inside_end_outside
+label:  italics that start inside a link and end outside it
+input:  "[[foo|''bar]]baz''spam"
+output: []
+
+---
+
+name:   complex_bold
+label:  bold with a lot in it
+input:  "'''this is a&nbsp;test of [[Bold text|bold]] with {{plenty|of|stuff}}'''"
+output: []
+
+---
+
+name:   multiline_bold
+label:  bold spanning mulitple lines
+input:  "foo\nbar'''testing\ntext\nspanning\n\n\n\n\nmultiple\nlines'''foo\n\nbar"
+output: []
+
+---
+
+name:   unending_bold
+label:  bold without an ending tag
+input:  "'''unending formatting!"
+output: [Text(text="'''unending formatting!")]
+
+---
+
+name:   misleading_bold_end
+label:  bold with something that looks like an end but isn't
+input:  "'''this is 'not' the en''d'<nowiki>''</nowiki>"
+output: [Text(text="'''this is 'not' the en''d'"), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="''"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
+
+---
+
+name:   bold_start_outside_end_inside
+label:  bold that start outside a link and end inside it
+input:  "'''foo[[bar|baz''']]spam"
+output: []
+
+---
+
+name:   bold_start_inside_end_outside
+label:  bold that start inside a link and end outside it
+input:  "[[foo|'''bar]]baz'''spam"
+output: []
+
+---
+
+name:   bold_and_italics
+label:  bold and italics together
+input:  "this is '''''bold and italic text'''''!"
+output: []
+
+---
+
+name:   both_then_bold
+label:  text that starts bold/italic, then is just bold
+input:  "'''''both''bold'''"
+output: []
+
+---
+
+name:   both_then_italics
+label:  text that starts bold/italic, then is just italic
+input:  "'''''both'''italics''"
+output: []
+
+---
+
+name:   bold_then_both
+label:  text that starts just bold, then is bold/italic
+input:  "'''bold''both'''''"
+output: []
+
+---
+
+name:   italics_then_both
+label:  text that starts just italic, then is bold/italic
+input:  "''italics'''both'''''"
+output: []
+
+---
+
+name:   seven
+label:  seven ticks
+input:  "'''''''seven'''''''"
+output: []
+
+---
+
+name:   complex_ul
+label:  ul with a lot in it
+input:  "* this is a&nbsp;test of an [[Unordered list|ul]] with {{plenty|of|stuff}}"
+output: []
+
+---
+
+name:   ul_multiline_template
+label:  ul with a template that spans multiple lines
+input:  "* this has a template with a {{line|\nbreak}}\nthis is not part of the list"
+output: []
+
+---
+
+name:   ul_adjacent
+label:  multiple adjacent uls
+input:  "a\n*b\n*c\nd\n*e\nf"
+output: []
+
+---
+
+name:   ul_depths
+label:  multiple adjacent uls, with differing depths
+input:  "*a\n**b\n***c\n********d\n**e\nf\n***g"
+output: []
+
+---
+
+name:   ul_space_before
+label:  uls with space before them
+input:  "foo    *bar\n *baz\n*buzz"
+output: []
+
+---
+
+name:   ul_interruption
+label:  high-depth ul with something blocking it
+input:  "**f*oobar"
+output: []
+
+---
+
+name:   complex_ol
+label:  ol with a lot in it
+input:  "# this is a&nbsp;test of an [[Ordered list|ol]] with {{plenty|of|stuff}}"
+output: []
+
+---
+
+name:   ol_multiline_template
+label:  ol with a template that spans moltiple lines
+input:  "# this has a template with a {{line|\nbreak}}\nthis is not part of the list"
+output: []
+
+---
+
+name:   ol_adjacent
+label:  moltiple adjacent ols
+input:  "a\n#b\n#c\nd\n#e\nf"
+output: []
+
+---
+
+name:   ol_depths
+label:  moltiple adjacent ols, with differing depths
+input:  "#a\n##b\n###c\n########d\n##e\nf\n###g"
+output: []
+
+---
+
+name:   ol_space_before
+label:  ols with space before them
+input:  "foo    #bar\n #baz\n#buzz"
+output: []
+
+---
+
+name:   ol_interruption
+label:  high-depth ol with something blocking it
+input:  "##f#oobar"
+output: []
+
+---
+
+name:   ul_ol_mix
+label:  a mix of adjacent uls and ols
+input:  "*a\n*#b\n*##c\n*##*#*#*d\n*#e\nf\n##*g"
+output: []
+
+---
+
+name:   complex_dt
+label:  dt with a lot in it
+input:  "; this is a&nbsp;test of an [[description term|dt]] with {{plenty|of|stuff}}"
+output: []
+
+---
+
+name:   dt_multiline_template
+label:  dt with a template that spans mdttiple lines
+input:  "; this has a template with a {{line|\nbreak}}\nthis is not part of the list"
+output: []
+
+---
+
+name:   dt_adjacent
+label:  mdttiple adjacent dts
+input:  ";\n;b\n;c\nd\n;e\nf"
+output: []
+
+---
+
+name:   dt_depths
+label:  mdttiple adjacent dts, with differing depths
+input:  ";a\n;;b\n;;;c\n;;;;;;;;d\n;;e\nf\n;;;g"
+output: []
+
+---
+
+name:   dt_space_before
+label:  dts with space before them
+input:  "foo    ;bar\n ;baz\n;buzz"
+output: []
+
+---
+
+name:   dt_interruption
+label:  high-depth dt with something blocking it
+input:  ";;f;oobar"
+output: []
+
+---
+
+name:   complex_dd
+label:  dd with a lot in it
+input:  ": this is a&nbsp:test of an [[description item|dd]] with {{plenty|of|stuff}}"
+output: []
+
+---
+
+name:   dd_multiline_template
+label:  dd with a template that spans mddtiple lines
+input:  ": this has a template with a {{line|\nbreak}}\nthis is not part of the list"
+output: []
+
+---
+
+name:   dd_adjacent
+label:  mddtiple adjacent dds
+input:  ":\n:b\n:c\nd\n:e\nf"
+output: []
+
+---
+
+name:   dd_depths
+label:  mddtiple adjacent dds, with differing depths
+input:  ":a\n::b\n:::c\n::::::::d\n::e\nf\n:::g"
+output: []
+
+---
+
+name:   dd_space_before
+label:  dds with space before them
+input:  "foo    :bar\n :baz\n:buzz"
+output: []
+
+---
+
+name:   dd_interruption
+label:  high-depth dd with something blocking it
+input:  "::f:oobar"
+output: []
+
+---
+
+name:   dt_dd_mix
+label:  a mix of adjacent dts and dds
+input:  ";a\n;:b\n;::c\n;::;:;:;d\n;:e\nf\n::;g"
+output: []
+
+---
+
+name:   dt_dd_mix2
+label:  the correct usage of a dt/dd unit, as in a dl
+input:  ";foo:bar"
+output: []
+
+---
+
+name:   dt_dd_mix3
+label:  another complex example of dts and dds
+input:  ";:::;foo::;:bar;;"
+output: []
+
+---
+
+name:   hr_text_before
+label:  text before an otherwise-valid hr
+input:  "foo----"
+output: [Text(text="foo----")]
+
+---
+
+name:   hr_text_after
+label:  text after a valid hr
+input:  "----bar"
+output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="bar")]
+
+---
+
+name:   hr_text_before_after
+label:  text at both ends of an otherwise-valid hr
+input:  "foo----bar"
+output: [Text(text="foo----bar")]
+
+---
+
+name:   hr_newlines
+label:  newlines surrounding a valid hr
+input:  "foo\n----\nbar"
+output: [Text(text="foo\n"), TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="\nbar")]
+
+---
+
+name:   hr_adjacent
+label:  two adjacent hrs
+input:  "----\n----"
+output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="\n"), TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose()]
+
+---
+
+name:   hr_adjacent_space
+label:  two adjacent hrs, with a space before the second one, making it invalid
+input:  "----\n ----"
+output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="\n ----")]
+
+---
+
+name:   hr_short
+label:  an invalid three-hyphen-long hr
+input:  "---"
+output: [Text(text="---")]
+
+---
+
+name:   hr_long
+label:  a very long, valid hr
+input:  "------------------------------------------"
+output: [TagOpenOpen(wiki_markup="------------------------------------------"), Text(text="hr"), TagCloseSelfclose()]
+
+---
+
+name:   hr_interruption_short
+label:  a hr that is interrupted, making it invalid
+input:  "---x-"
+output: [Text(text="---x-")]
+
+---
+
+name:   hr_interruption_long
+label:  a hr that is interrupted, but the first part remains valid because it is long enough
+input:  "----x--"
+output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="x--")]
