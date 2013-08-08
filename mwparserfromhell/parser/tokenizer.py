@@ -629,6 +629,17 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
+    def _parse_hr(self):
+        """Parse a wiki-style horizontal rule (``----``) at the string head."""
+        length = 4
+        self._head += 3
+        while self._read(1) == "-":
+            length += 1
+            self._head += 1
+        self._emit(tokens.TagOpenOpen(wiki_markup="-" * length))
+        self._emit_text("hr")
+        self._emit(tokens.TagCloseSelfclose())
+
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
         fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
@@ -782,6 +793,11 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
+            elif this == next == "-" and self._read(-1) in ("\n", self.START):
+                if self._read(2) == self._read(3) == "-":
+                    self._parse_hr()
+                else:
+                    self._emit_text("-")
             else:
                 self._emit_text(this)
             self._head += 1
