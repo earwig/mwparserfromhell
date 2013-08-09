@@ -811,7 +811,7 @@ class Tokenizer(object):
                 elif this == next == self._read(2) == self._read(3) == "-":
                     self._parse_hr()
                 else:
-                    self._emit_text("-")
+                    self._emit_text(self._read())
             else:
                 self._emit_text(this)
             self._head += 1
