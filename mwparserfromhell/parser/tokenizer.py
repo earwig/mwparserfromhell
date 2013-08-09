@@ -629,6 +629,18 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
+    def _parse_list(self):
+        """Parse a wiki-style list (``#``, ``*``, ``;``, ``:``)."""
+        def emit():
+            self._emit(tokens.TagOpenOpen(wiki_markup=self._read()))
+            self._emit_text("li")
+            self._emit(tokens.TagCloseSelfclose())
+
+        emit()
+        while self._read(1) in ("#", "*"):
+            self._head += 1
+            emit()
+
     def _parse_hr(self):
         """Parse a wiki-style horizontal rule (``----``) at the string head."""
         length = 4
@@ -793,8 +805,10 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
-            elif this == next == "-" and self._read(-1) in ("\n", self.START):
-                if self._read(2) == self._read(3) == "-":
+            elif self._read(-1) in ("\n", self.START):
+                if this in ("#", "*"):
+                    self._parse_list()
+                elif this == next == self._read(2) == self._read(3) == "-":
                     self._parse_hr()
                 else:
                     self._emit_text("-")
