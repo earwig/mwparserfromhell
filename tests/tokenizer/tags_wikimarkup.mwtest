@@ -281,7 +281,7 @@ output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Tex
 
 name:   dt_adjacent
 label:  mdttiple adjacent dts
-input:  ";\n;b\n;c\nd\n;e\nf"
+input:  "a\n;b\n;c\nd\n;e\nf"
 output: [Text(text="a\n"), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="b\n"), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="c\nd\n"), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="e\nf")]
 
 ---
@@ -309,7 +309,7 @@ output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Tag
 
 name:   complex_dd
 label:  dd with a lot in it
-input:  ": this is a&nbsp:test of an [[description item|dd]] with {{plenty|of|stuff}}"
+input:  ": this is a&nbsp;test of an [[description item|dd]] with {{plenty|of|stuff}}"
 output: [TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text=" this is a"), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), Text(text="test of an "), WikilinkOpen(), Text(text="description item"), WikilinkSeparator(), Text(text="dd"), WikilinkClose(), Text(text=" with "), TemplateOpen(), Text(text="plenty"), TemplateParamSeparator(), Text(text="of"), TemplateParamSeparator(), Text(text="stuff"), TemplateClose()]
 
 ---
@@ -323,7 +323,7 @@ output: [TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Tex
 
 name:   dd_adjacent
 label:  mddtiple adjacent dds
-input:  ":\n:b\n:c\nd\n:e\nf"
+input:  "a\n:b\n:c\nd\n:e\nf"
 output: [Text(text="a\n"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="b\n"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="c\nd\n"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="e\nf")]
 
 ---
@@ -358,15 +358,15 @@ output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Tex
 
 name:   dt_dd_mix2
 label:  the correct usage of a dt/dd unit, as in a dl
-input:  ";foo:bar"
-output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="foo"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="bar")]
+input:  ";foo:bar:baz"
+output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="foo"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="bar:baz")]
 
 ---
 
 name:   dt_dd_mix3
-label:  another complex example of dts and dds
-input:  ";:::;foo::;:bar;;"
-output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="foo"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text=";:bar;;")]
+label:  another example of correct (but strange) dt/dd usage
+input:  ":;;::foo:bar:baz"
+output: [TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="foo"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="bar:baz")]
 
 ---
 

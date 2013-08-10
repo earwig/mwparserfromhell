@@ -26,7 +26,7 @@ import re
 
 from . import contexts, tokens
 from ..compat import htmlentities
-from ..tag_defs import is_parsable, is_single, is_single_only
+from ..tag_defs import get_html_tag, is_parsable, is_single, is_single_only
 
 __all__ = ["Tokenizer"]
 
@@ -629,20 +629,24 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
-    def _parse_list(self):
-        """Parse a wiki-style list (``#``, ``*``, ``;``, ``:``)."""
-        def emit():
-            self._emit(tokens.TagOpenOpen(wiki_markup=self._read()))
-            self._emit_text("li")
-            self._emit(tokens.TagCloseSelfclose())
+    def _handle_list_marker(self):
+        """Handle a list marker at the head (``#``, ``*``, ``;``, ``:``)."""
+        markup = self._read()
+        if markup == ";":
+            self._context |= contexts.DL_TERM
+        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+        self._emit_text(get_html_tag(markup))
+        self._emit(tokens.TagCloseSelfclose())
 
-        emit()
-        while self._read(1) in ("#", "*"):
+    def _handle_list(self):
+        """Handle a wiki-style list (``#``, ``*``, ``;``, ``:``)."""
+        self._handle_list_marker()
+        while self._read(1) in ("#", "*", ";", ":"):
             self._head += 1
-            emit()
+            self._handle_list_marker()
 
-    def _parse_hr(self):
-        """Parse a wiki-style horizontal rule (``----``) at the string head."""
+    def _handle_hr(self):
+        """Handle a wiki-style horizontal rule (``----``) in the string."""
         length = 4
         self._head += 3
         while self._read(1) == "-":
@@ -651,6 +655,14 @@ class Tokenizer(object):
         self._emit(tokens.TagOpenOpen(wiki_markup="-" * length))
         self._emit_text("hr")
         self._emit(tokens.TagCloseSelfclose())
+
+    def _handle_dl_term(self):
+        """Handle the term in a description list (``foo`` in ``;foo:bar``)."""
+        self._context ^= contexts.DL_TERM
+        if self._read() == ":":
+            self._handle_list_marker()
+        else:
+            self._emit_text("\n")
 
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
@@ -806,12 +818,14 @@ class Tokenizer(object):
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
             elif self._read(-1) in ("\n", self.START):
-                if this in ("#", "*"):
-                    self._parse_list()
+                if this in ("#", "*", ";", ":"):
+                    self._handle_list()
                 elif this == next == self._read(2) == self._read(3) == "-":
-                    self._parse_hr()
+                    self._handle_hr()
                 else:
-                    self._emit_text(self._read())
+                    self._emit_text(this)
+            elif this in ("\n", ":") and self._context & contexts.DL_TERM:
+                self._handle_dl_term()
             else:
                 self._emit_text(this)
             self._head += 1

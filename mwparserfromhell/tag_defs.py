@@ -24,7 +24,8 @@
 
 from __future__ import unicode_literals
 
-__all__ = ["is_parsable", "is_visible", "is_single", "is_single_only"]
+__all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
+           "is_single_only"]
 
 PARSER_BLACKLIST = [
     # enwiki extensions @ 2013-06-28
@@ -42,6 +43,17 @@ INVISIBLE_TAGS = [
 # [mediawiki/core.git]/includes/Sanitizer.php @ 87a0aef762
 SINGLE_ONLY = ["br", "hr", "meta", "link", "img"]
 SINGLE = SINGLE_ONLY + ["li", "dt", "dd"]
+
+MARKUP_TO_HTML = {
+    "#": "li",
+    "*": "li",
+    ";": "dt",
+    ":": "dd"
+}
+
+def get_html_tag(markup):
+    """Return the HTML tag associated with the given wiki-markup."""
+    return MARKUP_TO_HTML[markup]
 
 def is_parsable(tag):
     """Return if the given *tag*'s contents should be passed to the parser."""
