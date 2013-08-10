@@ -69,6 +69,11 @@ Local (stack-specific) contexts:
     * :py:const:`TAG_BODY`
     * :py:const:`TAG_CLOSE`
 
+* :py:const:`STYLE`
+
+    * :py:const:`STYLE_ITALICS`
+    * :py:const:`STYLE_BOLD`
+
 * :py:const:`DL_TERM`
 
 * :py:const:`SAFETY_CHECK`
@@ -117,14 +122,18 @@ TAG_BODY =  1 << 16
 TAG_CLOSE = 1 << 17
 TAG = TAG_OPEN + TAG_ATTR + TAG_BODY + TAG_CLOSE
 
-DL_TERM = 1 << 18
+STYLE_ITALICS = 1 << 18
+STYLE_BOLD =    1 << 19
+STYLE = STYLE_ITALICS + STYLE_BOLD
 
-HAS_TEXT =       1 << 19
-FAIL_ON_TEXT =   1 << 20
-FAIL_NEXT  =     1 << 21
-FAIL_ON_LBRACE = 1 << 22
-FAIL_ON_RBRACE = 1 << 23
-FAIL_ON_EQUALS = 1 << 24
+DL_TERM = 1 << 20
+
+HAS_TEXT =       1 << 21
+FAIL_ON_TEXT =   1 << 22
+FAIL_NEXT  =     1 << 23
+FAIL_ON_LBRACE = 1 << 24
+FAIL_ON_RBRACE = 1 << 25
+FAIL_ON_EQUALS = 1 << 26
 SAFETY_CHECK = (HAS_TEXT + FAIL_ON_TEXT + FAIL_NEXT + FAIL_ON_LBRACE +
                 FAIL_ON_RBRACE + FAIL_ON_EQUALS)
 

@@ -57,11 +57,11 @@ class Tokenizer(object):
     USES_C = False
     START = object()
     END = object()
-    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "\n", END]
+    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
+               ":", "/", "-", "\n", END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
+    regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\\]+)")
 
     def __init__(self):
@@ -629,6 +629,58 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
+    def _really_parse_style(self, context):
+        """Parse wiki-style bold or italics. Raises :py:exc:`BadRoute`."""
+        stack = self._parse(context)
+        markup = "''" if context == contexts.STYLE_ITALICS else "'''"
+        tag = "i" if context == contexts.STYLE_ITALICS else "b"
+
+        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseOpen())
+        self._emit_all(stack)
+        self._emit(tokens.TagOpenClose())
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseClose())
+
+    def _parse_style(self):
+        """Parse wiki-style formatting (``''``/``'''`` for italics/bold)."""
+        self._head += 2
+        ticks = 2
+        while self._read() == "'":
+            self._head += 1
+            ticks += 1
+        reset = self._head
+
+        if ticks > 5:
+            self._emit_text("'" * (ticks - 5))
+            ticks = 5
+        elif ticks == 4:
+            self._emit_text("'")
+            ticks = 3
+
+        if ticks == 5:
+            raise NotImplementedError()
+        if ticks == 3:
+            try:
+                return self._really_parse_style(contexts.STYLE_BOLD)
+            except BadRoute:
+                self._emit_text("'")
+                self._head = reset
+        try:
+            self._really_parse_style(contexts.STYLE_ITALICS)
+        except BadRoute:
+            self._emit_text("''")
+            self._head = reset - 1
+
+    def _handle_style_end(self):
+        """Handle the end of wiki-style italics or bold (``''`` or ``'''``)."""
+        self._head += 1 if self._context & contexts.STYLE_ITALICS else 2
+        while self._read(1) == "'":
+            self._emit_text("'")
+            self._head += 1
+        return self._pop()
+
     def _handle_list_marker(self):
         """Handle a list marker at the head (``#``, ``*``, ``;``, ``:``)."""
         markup = self._read()
@@ -667,7 +719,8 @@ class Tokenizer(object):
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
         fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
-                contexts.HEADING | contexts.COMMENT | contexts.TAG)
+                contexts.HEADING | contexts.COMMENT | contexts.TAG |
+                contexts.STYLE)
         double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
         if self._context & fail:
             if self._context & contexts.TAG_BODY:
@@ -817,6 +870,14 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
+            elif this == next == "'":
+                if not self._context & contexts.STYLE and self._can_recurse():
+                    self._parse_style()
+                elif (self._context & contexts.STYLE_ITALICS or
+                      self._read(2) == "'" and self._context & contexts.STYLE_BOLD):
+                    return self._handle_style_end()
+                else:
+                    self._emit_text("'")
             elif self._read(-1) in ("\n", self.START):
                 if this in ("#", "*", ";", ":"):
                     self._handle_list()
