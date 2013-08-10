@@ -57,7 +57,7 @@ output: [TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(tex
 name:   multiline_italics
 label:  italics spanning mulitple lines
 input:  "foo\nbar''testing\ntext\nspanning\n\n\n\n\nmultiple\nlines''foo\n\nbar"
-output: [Text(text="foo\nbar"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="testing\ntext\nspanning\n\n\n\n\nmultiple\nlines"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+output: [Text(text="foo\nbar"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="testing\ntext\nspanning\n\n\n\n\nmultiple\nlines"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="foo\n\nbar")]
 
 ---
 
@@ -100,7 +100,7 @@ output: [TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(te
 name:   multiline_bold
 label:  bold spanning mulitple lines
 input:  "foo\nbar'''testing\ntext\nspanning\n\n\n\n\nmultiple\nlines'''foo\n\nbar"
-output: [Text(text="foo\nbar"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="testing\ntext\nspanning\n\n\n\n\nmultiple\nlines"), TagOpenClose(), Text(text="b"), TagCloseClose()]
+output: [Text(text="foo\nbar"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="testing\ntext\nspanning\n\n\n\n\nmultiple\nlines"), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text="foo\n\nbar")]
 
 ---
 
@@ -164,6 +164,20 @@ name:   italics_then_both
 label:  text that starts just italic, then is bold/italic
 input:  "''italics'''both'''''"
 output: [TagOpenOpen(wiki_markup="'"), Text(text="i"), TagCloseOpen(), Text(text="italics"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="both"), TagOpenClose(), Text(text="b"), TagCloseClose(), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   four
+label:  four ticks
+input:  "foo ''''bar'''' baz"
+output: [Text(text="foo '"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="bar'"), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text=" baz")]
+
+---
+
+name:   four_two
+label:  four ticks to open, two to end
+input:  "foo ''''bar'' baz"
+output: [Text(text="foo ''"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text=" baz")]
 
 ---
 
