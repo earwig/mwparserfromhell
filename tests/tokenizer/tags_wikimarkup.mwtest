@@ -181,6 +181,20 @@ output: [Text(text="none"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagC
 
 ---
 
+name:   five_three
+label:  five ticks to open, three to close (bold)
+input:  "'''''foobar'''"
+output: [Text(text="''"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="foobar"), TagOpenClose(), Text(text="b"), TagCloseClose()]
+
+---
+
+name:   five_two
+label:  five ticks to open, two to close (bold)
+input:  "'''''foobar''"
+output: [Text(text="'''"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="foobar"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
 name:   four
 label:  four ticks
 input:  "foo ''''bar'''' baz"
