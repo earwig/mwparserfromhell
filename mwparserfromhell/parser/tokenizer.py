@@ -632,8 +632,8 @@ class Tokenizer(object):
     def _really_parse_style(self, context):
         """Parse wiki-style bold or italics. Raises :py:exc:`BadRoute`."""
         stack = self._parse(context)
-        markup = "''" if context == contexts.STYLE_ITALICS else "'''"
-        tag = "i" if context == contexts.STYLE_ITALICS else "b"
+        markup = "''" if context & contexts.STYLE_ITALICS else "'''"
+        tag = "i" if context & contexts.STYLE_ITALICS else "b"
 
         self._emit(tokens.TagOpenOpen(wiki_markup=markup))
         self._emit_text(tag)
@@ -659,27 +659,128 @@ class Tokenizer(object):
             self._emit_text("'")
             ticks = 3
 
-        if ticks == 5:
-            raise NotImplementedError()
-        if ticks == 3:
-            try:
-                return self._really_parse_style(contexts.STYLE_BOLD)
-            except BadRoute:
+        if ticks == 2:
+            if self._context & contexts.STYLE_ITALICS:
+                return self._pop()
+            if self._can_recurse():
+                try:
+                    self._really_parse_style(contexts.STYLE_ITALICS)
+                except BadRoute:
+                    self._head = reset
+                    try:                                                         ## only if STYLE_PASS_AGAIN in destroyed context
+                        self._really_parse_style(contexts.STYLE_ITALICS|contexts.STYLE_PASS_2)
+                    except BadRoute:
+                        self._head = reset
+                        self._emit_text("''")
+            else:
+                self._emit_text("''")
+        elif ticks == 3:
+            if self._context & contexts.STYLE_BOLD:
+                return self._pop()
+            elif self._can_recurse():
+                try:
+                    self._really_parse_style(contexts.STYLE_BOLD)
+                except BadRoute:
+                    self._head = reset
+                    if self._context & contexts.STYLE_ITALICS:
+                        if self._context & contexts.STYLE_PASS_2:
+                            self._emit_text("'")
+                            return self._pop()
+                        self._emit_text("'''")                                   ## here is our hook for STYLE_PASS_AGAIN
+                    else:
+                        self._emit_text("'")
+                        try:
+                            self._really_parse_style(contexts.STYLE_ITALICS)
+                        except BadRoute:
+                            self._head = reset
+                            try:                                                 ## only if STYLE_PASS_AGAIN in destroyed context
+                                self._really_parse_style(contexts.STYLE_ITALICS|contexts.STYLE_PASS_2)
+                            except BadRoute:
+                                self._head = reset
+                                self._emit_text("''")
+            elif self._context & contexts.STYLE_ITALICS and self._context & contexts.STYLE_PASS_2:
                 self._emit_text("'")
-                self._head = reset
-        try:
-            self._really_parse_style(contexts.STYLE_ITALICS)
-        except BadRoute:
-            self._emit_text("''")
-            self._head = reset - 1
-
-    def _handle_style_end(self):
-        """Handle the end of wiki-style italics or bold (``''`` or ``'''``)."""
-        self._head += 1 if self._context & contexts.STYLE_ITALICS else 2
-        while self._read(1) == "'":
-            self._emit_text("'")
-            self._head += 1
-        return self._pop()
+                return self._pop()
+            else:                                                                ## here is our hook for STYLE_PASS_AGAIN
+                self._emit_text("'''")
+        elif ticks == 5:
+            if self._context & contexts.STYLE_ITALICS:
+                self._head -= 3
+                return self._pop()
+            elif self._context & contexts.STYLE_BOLD:
+                self._head -= 2
+                return self._pop()
+            elif self._can_recurse():
+                try:
+                    stack = self._parse(contexts.STYLE_BOLD)
+                except BadRoute:
+                    self._head = reset
+                    try:
+                        stack = self._parse(contexts.STYLE_ITALICS)
+                    except BadRoute:
+                        self._head = reset
+                        self._emit_text("'''''")
+                    else:
+                        reset = self._head
+                        try:
+                            stack2 = self._parse(contexts.STYLE_BOLD)
+                        except BadRoute:
+                            self._head = reset
+                            self._emit_text("'''")
+                            self._emit(tokens.TagOpenOpen(wiki_markup="''"))
+                            self._emit_text("i")
+                            self._emit(tokens.TagCloseOpen())
+                            self._emit_all(stack)
+                            self._emit(tokens.TagOpenClose())
+                            self._emit_text("i")
+                            self._emit(tokens.TagCloseClose())
+                        else:
+                            self._emit(tokens.TagOpenOpen(wiki_markup="'''"))
+                            self._emit_text("b")
+                            self._emit(tokens.TagCloseOpen())
+                            self._emit(tokens.TagOpenOpen(wiki_markup="''"))
+                            self._emit_text("i")
+                            self._emit(tokens.TagCloseOpen())
+                            self._emit_all(stack)
+                            self._emit(tokens.TagOpenClose())
+                            self._emit_text("i")
+                            self._emit(tokens.TagCloseClose())
+                            self._emit_all(stack2)
+                            self._emit(tokens.TagOpenClose())
+                            self._emit_text("b")
+                            self._emit(tokens.TagCloseClose())
+                else:
+                    reset = self._head
+                    try:
+                        stack2 = self._parse(contexts.STYLE_ITALICS)
+                    except BadRoute:
+                        self._head = reset
+                        self._emit_text("''")
+                        self._emit(tokens.TagOpenOpen(wiki_markup="'''"))
+                        self._emit_text("b")
+                        self._emit(tokens.TagCloseOpen())
+                        self._emit_all(stack)
+                        self._emit(tokens.TagOpenClose())
+                        self._emit_text("b")
+                        self._emit(tokens.TagCloseClose())
+                    else:
+                        self._emit(tokens.TagOpenOpen(wiki_markup="''"))
+                        self._emit_text("i")
+                        self._emit(tokens.TagCloseOpen())
+                        self._emit(tokens.TagOpenOpen(wiki_markup="'''"))
+                        self._emit_text("b")
+                        self._emit(tokens.TagCloseOpen())
+                        self._emit_all(stack)
+                        self._emit(tokens.TagOpenClose())
+                        self._emit_text("b")
+                        self._emit(tokens.TagCloseClose())
+                        self._emit_all(stack2)
+                        self._emit(tokens.TagOpenClose())
+                        self._emit_text("i")
+                        self._emit(tokens.TagCloseClose())
+            else:
+                self._emit_text("'''''")
+        self._head -= 1
 
     def _handle_list_marker(self):
         """Handle a list marker at the head (``#``, ``*``, ``;``, ``:``)."""
@@ -871,13 +972,9 @@ class Tokenizer(object):
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
             elif this == next == "'":
-                if not self._context & contexts.STYLE and self._can_recurse():
-                    self._parse_style()
-                elif (self._context & contexts.STYLE_ITALICS or
-                      self._read(2) == "'" and self._context & contexts.STYLE_BOLD):
-                    return self._handle_style_end()
-                else:
-                    self._emit_text("'")
+                result = self._parse_style()
+                if result is not None:
+                    return result
             elif self._read(-1) in ("\n", self.START):
                 if this in ("#", "*", ";", ":"):
                     self._handle_list()
