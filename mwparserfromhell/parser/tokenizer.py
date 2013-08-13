@@ -644,37 +644,27 @@ class Tokenizer(object):
         self._emit_text(tag)
         self._emit(tokens.TagCloseClose())
 
-    def _really_parse_style(self, context, reset, markup, tag):
-        """Parse wiki-style bold or italics. Raises :py:exc:`BadRoute`."""
-        if context & contexts.STYLE_ITALICS:
-            try:
-                stack = self._parse(context)
-            except BadRoute as route:
-                if not route.context & contexts.STYLE_PASS_AGAIN:
-                    raise
-                self._head = reset
-                stack = self._parse(context | contexts.STYLE_SECOND_PASS)
-        else:
-            stack = self._parse(context)
-
-        self._emit_tag_open(tag, markup)
-        self._emit_all(stack)
-        self._emit_tag_close(tag)
-
     def _parse_italics(self):
         """Parse wiki-style italics."""
         reset = self._head
         try:
-            self._really_parse_style(contexts.STYLE_ITALICS, reset, "''", "i")
-        except BadRoute:
+            stack = self._parse(contexts.STYLE_ITALICS)
+        except BadRoute as route:
             self._head = reset
-            self._emit_text("''")
+            if route.context & contexts.STYLE_PASS_AGAIN:
+                stack = self._parse(route.context | contexts.STYLE_SECOND_PASS)
+            else:
+                return self._emit_text("''")
+
+        self._emit_tag_open("i", "''")
+        self._emit_all(stack)
+        self._emit_tag_close("i")
 
     def _parse_bold(self):
         """Parse wiki-style bold."""
         reset = self._head
         try:
-            self._really_parse_style(contexts.STYLE_BOLD, reset, "'''", "b")
+            stack = self._parse(contexts.STYLE_BOLD)
         except BadRoute:
             self._head = reset
             if self._context & contexts.STYLE_SECOND_PASS:
@@ -686,6 +676,10 @@ class Tokenizer(object):
             else:
                 self._emit_text("'")
                 self._parse_italics()
+        else:
+            self._emit_tag_open("b", "'''")
+            self._emit_all(stack)
+            self._emit_tag_close("b")
 
     def _parse_italics_and_bold(self):
         """Parse wiki-style italics and bold together (i.e., five ticks)."""
