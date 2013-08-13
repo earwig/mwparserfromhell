@@ -170,14 +170,14 @@ output: [TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(tex
 name:   italics_then_bold
 label:  text that starts italic, then is bold
 input:  "none''italics'''''bold'''none"
-output: [Text(text="none"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="italics"), TagOpenClose(), Text(text="i"), TagCloseClose() TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="bold"), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text="none")]
+output: [Text(text="none"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="italics"), TagOpenClose(), Text(text="i"), TagCloseClose(), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="bold"), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text="none")]
 
 ---
 
 name:   bold_then_italics
 label:  text that starts bold, then is italic
 input:  "none'''bold'''''italics''none"
-output: [Text(text="none"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="bold"), TagOpenClose(), Text(text="b"), TagCloseClose() TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="italics"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="none")]
+output: [Text(text="none"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="bold"), TagOpenClose(), Text(text="b"), TagCloseClose(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="italics"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="none")]
 
 ---
 
@@ -219,7 +219,7 @@ output: [Text(text="foo "), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCl
 name:   two_four_four
 label:  two ticks to open, four to close, four afterwards
 input:  "foo ''bar'''' baz''''"
-output: [Text(text="foo bar'"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), " baz'", TagOpenClose(), Text(text="b"), TagCloseClose()]
+output: [Text(text="foo ''bar'"), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text=" baz'"), TagOpenClose(), Text(text="b"), TagCloseClose()]
 
 ---
 
