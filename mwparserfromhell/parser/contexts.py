@@ -73,7 +73,8 @@ Local (stack-specific) contexts:
 
     * :py:const:`STYLE_ITALICS`
     * :py:const:`STYLE_BOLD`
-    * :py:const:`STYLE_PASS_2`
+    * :py:const:`STYLE_PASS_AGAIN`
+    * :py:const:`STYLE_SECOND_PASS`
 
 * :py:const:`DL_TERM`
 
@@ -123,19 +124,20 @@ TAG_BODY =  1 << 16
 TAG_CLOSE = 1 << 17
 TAG = TAG_OPEN + TAG_ATTR + TAG_BODY + TAG_CLOSE
 
-STYLE_ITALICS = 1 << 18
-STYLE_BOLD =    1 << 19
-STYLE_PASS_2 =  1 << 20
-STYLE = STYLE_ITALICS + STYLE_BOLD + STYLE_PASS_2
+STYLE_ITALICS =      1 << 18
+STYLE_BOLD =         1 << 19
+STYLE_PASS_AGAIN =   1 << 20
+STYLE_SECOND_PASS =  1 << 21
+STYLE = STYLE_ITALICS + STYLE_BOLD + STYLE_PASS_AGAIN + STYLE_SECOND_PASS
 
-DL_TERM = 1 << 21
+DL_TERM = 1 << 22
 
-HAS_TEXT =       1 << 22
-FAIL_ON_TEXT =   1 << 23
-FAIL_NEXT  =     1 << 24
-FAIL_ON_LBRACE = 1 << 25
-FAIL_ON_RBRACE = 1 << 26
-FAIL_ON_EQUALS = 1 << 27
+HAS_TEXT =       1 << 23
+FAIL_ON_TEXT =   1 << 24
+FAIL_NEXT  =     1 << 25
+FAIL_ON_LBRACE = 1 << 26
+FAIL_ON_RBRACE = 1 << 27
+FAIL_ON_EQUALS = 1 << 28
 SAFETY_CHECK = (HAS_TEXT + FAIL_ON_TEXT + FAIL_NEXT + FAIL_ON_LBRACE +
                 FAIL_ON_RBRACE + FAIL_ON_EQUALS)
 

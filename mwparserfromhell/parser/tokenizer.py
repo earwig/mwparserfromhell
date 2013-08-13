@@ -32,7 +32,9 @@ __all__ = ["Tokenizer"]
 
 class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
-    pass
+
+    def __init__(self, context=0):
+        self.context = context
 
 
 class _TagOpenData(object):
@@ -132,8 +134,9 @@ class Tokenizer(object):
         Discards the current stack/context/textbuffer and raises
         :py:exc:`~.BadRoute`.
         """
+        context = self._context
         self._pop()
-        raise BadRoute()
+        raise BadRoute(context)
 
     def _emit(self, token):
         """Write a token to the end of the current token stack."""
@@ -646,9 +649,11 @@ class Tokenizer(object):
         if context & contexts.STYLE_ITALICS:
             try:
                 stack = self._parse(context)
-            except BadRoute:                                                     ## only if STYLE_PASS_AGAIN in destroyed context
+            except BadRoute as route:
+                if not route.context & contexts.STYLE_PASS_AGAIN:
+                    raise
                 self._head = reset
-                stack = self._parse(context | contexts.STYLE_PASS_2)
+                stack = self._parse(context | contexts.STYLE_SECOND_PASS)
         else:
             stack = self._parse(context)
 
@@ -672,11 +677,11 @@ class Tokenizer(object):
             self._really_parse_style(contexts.STYLE_BOLD, reset, "'''", "b")
         except BadRoute:
             self._head = reset
-            if self._context & contexts.STYLE_PASS_2:
+            if self._context & contexts.STYLE_SECOND_PASS:
                 self._emit_text("'")
                 return True
             elif self._context & contexts.STYLE_ITALICS:
-                # Set STYLE_PASS_AGAIN
+                self._context |= contexts.STYLE_PASS_AGAIN
                 self._emit_text("'''")
             else:
                 self._emit_text("'")
@@ -752,10 +757,10 @@ class Tokenizer(object):
             return self._pop()
         elif not self._can_recurse():
             if ticks == 3:
-                if self._context & contexts.STYLE_PASS_2:
+                if self._context & contexts.STYLE_SECOND_PASS:
                     self._emit_text("'")
                     return self._pop()
-                # Set STYLE_PASS_AGAIN
+                self._context |= contexts.STYLE_PASS_AGAIN
             self._emit_text("'" * ticks)
         elif ticks == 2:
             self._parse_italics()
