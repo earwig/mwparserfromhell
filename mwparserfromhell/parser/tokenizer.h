@@ -220,7 +220,7 @@ typedef struct {
 
 /* Macros for accessing HTML tag definitions: */
 
-#define GET_HTML_TAG(markup) (call_tag_def_func("get_html_tag", markup))
+#define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
 #define IS_PARSABLE(tag) (call_tag_def_func("is_parsable", tag))
 #define IS_SINGLE(tag) (call_tag_def_func("is_single", tag))
 #define IS_SINGLE_ONLY(tag) (call_tag_def_func("is_single_only", tag))

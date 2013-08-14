@@ -2101,12 +2101,43 @@ static PyObject* Tokenizer_parse_style(Tokenizer* self)
 */
 static int Tokenizer_handle_list_marker(Tokenizer* self)
 {
-    // markup = self._read()
-    // if markup == ";":
-    //     self._context |= contexts.DL_TERM
-    // self._emit(tokens.TagOpenOpen(wiki_markup=markup))
-    // self._emit_text(get_html_tag(markup))
-    // self._emit(tokens.TagCloseSelfclose())
+    PyObject *markup = Tokenizer_read(self, 0), *kwargs, *token;
+    Py_UNICODE code = *PyUnicode_AS_UNICODE(markup);
+    char *html;
+    int i = 0;
+
+    if (code == *";")
+        self->topstack->context |= LC_DLTERM;
+    kwargs = PyDict_New();
+    if (!kwargs)
+        return -1;
+    PyDict_SetItemString(kwargs, "wiki_markup", markup);
+    token = PyObject_Call(TagOpenOpen, NOARGS, kwargs);
+    if (!token) {
+        Py_DECREF(kwargs);
+        return -1;
+    }
+    Py_DECREF(kwargs);
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    html = GET_HTML_TAG(code);
+    while (html[i]) {
+        if (Tokenizer_emit_text(self, html[i]))
+            return -1;
+        i++;
+    }
+    token = PyObject_CallObject(TagCloseSelfclose, NULL);
+    if (!token)
+        return -1;
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    return 0;
 }
 
 /*
@@ -2114,10 +2145,18 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
 */
 static int Tokenizer_handle_list(Tokenizer* self)
 {
-    // self._handle_list_marker()
-    // while self._read(1) in ("#", "*", ";", ":"):
-    //     self._head += 1
-    //     self._handle_list_marker()
+    Py_UNICODE marker = Tokenizer_READ(self, 1);
+
+    if (Tokenizer_handle_list_marker(self))
+        return -1;
+    while (marker == *"#" || marker == *"*" || marker == *";" ||
+           marker == *":") {
+        self->head++;
+        if (Tokenizer_handle_list_marker(self))
+            return -1;
+        marker = Tokenizer_READ(self, 1);
+    }
+    return 0;
 }
 
 /*
