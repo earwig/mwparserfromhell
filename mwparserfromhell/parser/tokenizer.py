@@ -417,16 +417,22 @@ class Tokenizer(object):
         """Parse an HTML comment at the head of the wikicode string."""
         self._head += 4
         reset = self._head - 1
-        try:
-            comment = self._parse(contexts.COMMENT)
-        except BadRoute:
-            self._head = reset
-            self._emit_text("<!--")
-        else:
-            self._emit(tokens.CommentStart())
-            self._emit_all(comment)
-            self._emit(tokens.CommentEnd())
-            self._head += 2
+        self._push()
+        while True:
+            this = self._read()
+            if this == self.END:
+                self._pop()
+                self._head = reset
+                self._emit_text("<!--")
+                return
+            if this == self._read(1) == "-" and self._read(2) == ">":
+                self._emit_first(tokens.CommentStart())
+                self._emit(tokens.CommentEnd())
+                self._emit_all(self._pop())
+                self._head += 2
+                return
+            self._emit_text(this)
+            self._head += 1
 
     def _push_tag_buffer(self, data):
         """Write a pending tag attribute from *data* to the stack."""
@@ -871,12 +877,7 @@ class Tokenizer(object):
             if this is self.END:
                 return self._handle_end()
             next = self._read(1)
-            if self._context & contexts.COMMENT:
-                if this == next == "-" and self._read(2) == ">":
-                    return self._pop()
-                else:
-                    self._emit_text(this)
-            elif this == next == "{":
+            if this == next == "{":
                 if self._can_recurse():
                     self._parse_template_or_argument()
                 else:
