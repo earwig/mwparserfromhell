@@ -347,27 +347,6 @@ static void* Tokenizer_fail_route(Tokenizer* self)
 /*
     Write a token to the end of the current token stack.
 */
-static int Tokenizer_emit(Tokenizer* self, PyObject* token)
-{
-    if (Tokenizer_push_textbuffer(self))
-        return -1;
-    if (PyList_Append(self->topstack->stack, token))
-        return -1;
-    return 0;
-}
-
-/*
-    Write a token to the beginning of the current token stack.
-*/
-static int Tokenizer_emit_first(Tokenizer* self, PyObject* token)
-{
-    if (Tokenizer_push_textbuffer(self))
-        return -1;
-    if (PyList_Insert(self->topstack->stack, 0, token))
-        return -1;
-    return 0;
-}
-
 static int Tokenizer_emit_FAST(Tokenizer* self, PyObject* token)
 {
     PyObject* instance;
@@ -385,7 +364,22 @@ static int Tokenizer_emit_FAST(Tokenizer* self, PyObject* token)
     return 0;
 }
 
-static int Tokenizer_emit_first_FAST(Tokenizer* self, PyObject* token)
+/*
+    Write a token to the end of the current token stack.
+*/
+static int Tokenizer_emit(Tokenizer* self, PyObject* token)
+{
+    if (Tokenizer_push_textbuffer(self))
+        return -1;
+    if (PyList_Append(self->topstack->stack, token))
+        return -1;
+    return 0;
+}
+
+/*
+    Write a token to the beginning of the current token stack.
+*/
+static int Tokenizer_emit_first(Tokenizer* self, PyObject* token)
 {
     PyObject* instance;
 
@@ -399,6 +393,34 @@ static int Tokenizer_emit_first_FAST(Tokenizer* self, PyObject* token)
         return -1;
     }
     Py_DECREF(instance);
+    return 0;
+}
+
+/*
+    Write a token to the beginning of the current token stack, with kwargs.
+    Steals a reference to kwargs.
+*/
+static int Tokenizer_emit_first_kwargs(Tokenizer* self, PyObject* token,
+                                       PyObject* kwargs)
+{
+    PyObject* instance;
+
+    if (Tokenizer_push_textbuffer(self)) {
+        Py_DECREF(kwargs);
+        return -1;
+    }
+    instance = PyObject_Call(token, NOARGS, kwargs);
+    if (!instance) {
+        Py_DECREF(kwargs);
+        return -1;
+    }
+    if (PyList_Insert(self->topstack->stack, 0, instance)) {
+        Py_DECREF(instance);
+        Py_DECREF(kwargs);
+        return -1;
+    }
+    Py_DECREF(instance);
+    Py_DECREF(kwargs);
     return 0;
 }
 
@@ -547,7 +569,7 @@ static int Tokenizer_parse_template(Tokenizer* self)
     }
     if (!template)
         return -1;
-    if (Tokenizer_emit_first_FAST(self, TemplateOpen)) {
+    if (Tokenizer_emit_first(self, TemplateOpen)) {
         Py_DECREF(template);
         return -1;
     }
@@ -576,7 +598,7 @@ static int Tokenizer_parse_argument(Tokenizer* self)
     }
     if (!argument)
         return -1;
-    if (Tokenizer_emit_first_FAST(self, ArgumentOpen)) {
+    if (Tokenizer_emit_first(self, ArgumentOpen)) {
         Py_DECREF(argument);
         return -1;
     }
@@ -1164,7 +1186,7 @@ static int Tokenizer_parse_comment(Tokenizer* self)
         }
         if (this == *"-" && Tokenizer_READ(self, 1) == this &&
                             Tokenizer_READ(self, 2) == *">") {
-            if (Tokenizer_emit_first_FAST(self, CommentStart))
+            if (Tokenizer_emit_first(self, CommentStart))
                 return -1;
             if (Tokenizer_emit_FAST(self, CommentEnd))
                 return -1;
@@ -1188,11 +1210,10 @@ static int Tokenizer_parse_comment(Tokenizer* self)
 */
 static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 {
-    PyObject *token, *tokens, *kwargs, *pad_first, *pad_before_eq,
-             *pad_after_eq;
+    PyObject *tokens, *kwargs, *pad_first, *pad_before_eq, *pad_after_eq;
 
     if (data->context & TAG_QUOTED) {
-        if (Tokenizer_emit_first_FAST(self, TagAttrQuote))
+        if (Tokenizer_emit_first(self, TagAttrQuote))
             return -1;
         tokens = Tokenizer_pop(self);
         if (!tokens)
@@ -1217,15 +1238,8 @@ static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
     Py_DECREF(pad_first);
     Py_DECREF(pad_before_eq);
     Py_DECREF(pad_after_eq);
-    token = PyObject_Call(TagAttrStart, NOARGS, kwargs);
-    Py_DECREF(kwargs);
-    if (!token)
+    if (Tokenizer_emit_first_kwargs(self, TagAttrStart, kwargs))
         return -1;
-    if (Tokenizer_emit_first(self, token)) {
-        Py_DECREF(token);
-        return -1;
-    }
-    Py_DECREF(token);
     tokens = Tokenizer_pop(self);
     if (!tokens)
         return -1;
