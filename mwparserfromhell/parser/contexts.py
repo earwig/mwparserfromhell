@@ -90,6 +90,13 @@ Local (stack-specific) contexts:
 Global contexts:
 
 * :py:const:`GL_HEADING`
+
+Aggregate contexts:
+
+* :py:const:`FAIL`
+* :py:const:`UNSAFE`
+* :py:const:`DOUBLE`
+
 """
 
 # Local contexts:
@@ -144,3 +151,10 @@ SAFETY_CHECK = (HAS_TEXT + FAIL_ON_TEXT + FAIL_NEXT + FAIL_ON_LBRACE +
 # Global contexts:
 
 GL_HEADING = 1 << 0
+
+# Aggregate contexts:
+
+FAIL = TEMPLATE + ARGUMENT + WIKILINK + HEADING + COMMENT + TAG + STYLE
+UNSAFE = (TEMPLATE_NAME + WIKILINK_TITLE + TEMPLATE_PARAM_KEY + ARGUMENT_NAME +
+          TAG_CLOSE)
+DOUBLE = TEMPLATE_PARAM_KEY + TAG_CLOSE

@@ -787,15 +787,11 @@ class Tokenizer(object):
 
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
-        fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
-                contexts.HEADING | contexts.COMMENT | contexts.TAG |
-                contexts.STYLE)
-        double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
-        if self._context & fail:
+        if self._context & contexts.FAIL:
             if self._context & contexts.TAG_BODY:
                 if is_single(self._stack[1].text):
                     return self._handle_single_tag_end()
-            if self._context & double_fail:
+            if self._context & contexts.DOUBLE:
                 self._pop()
             self._fail_route()
         return self._pop()
@@ -859,17 +855,13 @@ class Tokenizer(object):
 
     def _parse(self, context=0, push=True):
         """Parse the wikicode string, using *context* for when to stop."""
-        unsafe = (contexts.TEMPLATE_NAME | contexts.WIKILINK_TITLE |
-                  contexts.TEMPLATE_PARAM_KEY | contexts.ARGUMENT_NAME |
-                  contexts.TAG_CLOSE)
-        double_unsafe = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
         if push:
             self._push(context)
         while True:
             this = self._read()
-            if self._context & unsafe:
+            if self._context & contexts.UNSAFE:
                 if not self._verify_safe(this):
-                    if self._context & double_unsafe:
+                    if self._context & contexts.DOUBLE:
                         self._pop()
                     self._fail_route()
             if this not in self.MARKERS:
