@@ -219,11 +219,11 @@ class TestWikicode(TreeEqualityTestCase):
 
         code = parse("a{{b}}c[[d]]{{{e}}}{{f}}[[g]]")
         for func in (code.filter, ifilter(code)):
-            self.assertEqual(["a", "{{b}}", "c", "[[d]]", "{{{e}}}", "{{f}}",
-                              "[[g]]"], func())
+            self.assertEqual(["a", "{{b}}", "b", "c", "[[d]]", "d", "{{{e}}}",
+                              "e", "{{f}}", "f", "[[g]]", "g"], func())
             self.assertEqual(["{{{e}}}"], func(forcetype=Argument))
             self.assertIs(code.get(4), func(forcetype=Argument)[0])
-            self.assertEqual(["a", "c"], func(forcetype=Text))
+            self.assertEqual(list("abcdefg"), func(forcetype=Text))
             self.assertEqual([], func(forcetype=Heading))
             self.assertRaises(TypeError, func, forcetype=True)
 
@@ -239,7 +239,7 @@ class TestWikicode(TreeEqualityTestCase):
             self.assertEqual([], get_filter("html_entities"))
             self.assertEqual([], get_filter("tags"))
             self.assertEqual(["{{b}}", "{{f}}"], get_filter("templates"))
-            self.assertEqual(["a", "c"], get_filter("text"))
+            self.assertEqual(list("abcdefg"), get_filter("text"))
             self.assertEqual(["[[d]]", "[[g]]"], get_filter("wikilinks"))
 
         code2 = parse("{{a|{{b}}|{{c|d={{f}}{{h}}}}}}")
@@ -252,13 +252,13 @@ class TestWikicode(TreeEqualityTestCase):
 
         code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}")
         for func in (code3.filter, ifilter(code3)):
-            self.assertEqual(["{{foobar}}", "{{FOO}}"], func(matches=r"foo"))
+            self.assertEqual(["{{foobar}}", "{{FOO}}"], func(recursive=False, matches=r"foo"))
             self.assertEqual(["{{foobar}}", "{{FOO}}"],
-                             func(matches=r"^{{foo.*?}}"))
+                             func(recursive=False, matches=r"^{{foo.*?}}"))
             self.assertEqual(["{{foobar}}"],
-                             func(matches=r"^{{foo.*?}}", flags=re.UNICODE))
-            self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
-            self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
+                             func(recursive=False, matches=r"^{{foo.*?}}", flags=re.UNICODE))
+            self.assertEqual(["{{baz}}", "{{bz}}"], func(recursive=False, matches=r"^{{b.*?z"))
+            self.assertEqual(["{{baz}}"], func(recursive=False, matches=r"^{{b.+?z}}"))
 
         self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
                          code2.filter_templates(recursive=False))

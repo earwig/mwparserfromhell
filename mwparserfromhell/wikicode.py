@@ -309,7 +309,7 @@ class Wikicode(StringMixIn):
         callback = lambda self, i: self.nodes.pop(i)
         self._do_search(obj, recursive, callback, self)
 
-    def ifilter(self, recursive=False, matches=None, flags=FLAGS,
+    def ifilter(self, recursive=True, matches=None, flags=FLAGS,
                 forcetype=None):
         """Iterate over nodes in our list matching certain conditions.
 
@@ -327,7 +327,7 @@ class Wikicode(StringMixIn):
                 if not matches or re.search(matches, str(node), flags):
                     yield node
 
-    def filter(self, recursive=False, matches=None, flags=FLAGS,
+    def filter(self, recursive=True, matches=None, flags=FLAGS,
                forcetype=None):
         """Return a list of nodes within our list matching certain conditions.
 
