@@ -103,50 +103,48 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x00000007
-#define LC_TEMPLATE_NAME        0x00000001
-#define LC_TEMPLATE_PARAM_KEY   0x00000002
-#define LC_TEMPLATE_PARAM_VALUE 0x00000004
+#define LC_TEMPLATE             0x0000007
+#define LC_TEMPLATE_NAME        0x0000001
+#define LC_TEMPLATE_PARAM_KEY   0x0000002
+#define LC_TEMPLATE_PARAM_VALUE 0x0000004
 
-#define LC_ARGUMENT             0x00000018
-#define LC_ARGUMENT_NAME        0x00000008
-#define LC_ARGUMENT_DEFAULT     0x00000010
+#define LC_ARGUMENT             0x0000018
+#define LC_ARGUMENT_NAME        0x0000008
+#define LC_ARGUMENT_DEFAULT     0x0000010
 
-#define LC_WIKILINK             0x00000060
-#define LC_WIKILINK_TITLE       0x00000020
-#define LC_WIKILINK_TEXT        0x00000040
+#define LC_WIKILINK             0x0000060
+#define LC_WIKILINK_TITLE       0x0000020
+#define LC_WIKILINK_TEXT        0x0000040
 
-#define LC_HEADING              0x00001F80
-#define LC_HEADING_LEVEL_1      0x00000080
-#define LC_HEADING_LEVEL_2      0x00000100
-#define LC_HEADING_LEVEL_3      0x00000200
-#define LC_HEADING_LEVEL_4      0x00000400
-#define LC_HEADING_LEVEL_5      0x00000800
-#define LC_HEADING_LEVEL_6      0x00001000
+#define LC_HEADING              0x0001F80
+#define LC_HEADING_LEVEL_1      0x0000080
+#define LC_HEADING_LEVEL_2      0x0000100
+#define LC_HEADING_LEVEL_3      0x0000200
+#define LC_HEADING_LEVEL_4      0x0000400
+#define LC_HEADING_LEVEL_5      0x0000800
+#define LC_HEADING_LEVEL_6      0x0001000
 
-#define LC_COMMENT              0x00002000
+#define LC_TAG                  0x001E000
+#define LC_TAG_OPEN             0x0002000
+#define LC_TAG_ATTR             0x0004000
+#define LC_TAG_BODY             0x0008000
+#define LC_TAG_CLOSE            0x0010000
 
-#define LC_TAG                  0x0003C000
-#define LC_TAG_OPEN             0x00004000
-#define LC_TAG_ATTR             0x00008000
-#define LC_TAG_BODY             0x00010000
-#define LC_TAG_CLOSE            0x00020000
+#define LC_STYLE                0x01E0000
+#define LC_STYLE_ITALICS        0x0020000
+#define LC_STYLE_BOLD           0x0040000
+#define LC_STYLE_PASS_AGAIN     0x0080000
+#define LC_STYLE_SECOND_PASS    0x0100000
 
-#define LC_STYLE                0x003C0000
-#define LC_STYLE_ITALICS        0x00040000
-#define LC_STYLE_BOLD           0x00080000
-#define LC_STYLE_PASS_AGAIN     0x00100000
-#define LC_STYLE_SECOND_PASS    0x00200000
+#define LC_DLTERM               0x0200000
 
-#define LC_DLTERM               0x00400000
-
-#define LC_SAFETY_CHECK         0x1F800000
-#define LC_HAS_TEXT             0x00800000
-#define LC_FAIL_ON_TEXT         0x01000000
-#define LC_FAIL_NEXT            0x02000000
-#define LC_FAIL_ON_LBRACE       0x04000000
-#define LC_FAIL_ON_RBRACE       0x08000000
-#define LC_FAIL_ON_EQUALS       0x10000000
+#define LC_SAFETY_CHECK         0xFC00000
+#define LC_HAS_TEXT             0x0400000
+#define LC_FAIL_ON_TEXT         0x0800000
+#define LC_FAIL_NEXT            0x1000000
+#define LC_FAIL_ON_LBRACE       0x2000000
+#define LC_FAIL_ON_RBRACE       0x4000000
+#define LC_FAIL_ON_EQUALS       0x8000000
 
 /* Global contexts: */
 
