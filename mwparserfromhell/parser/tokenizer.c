@@ -2084,13 +2084,10 @@ static int Tokenizer_handle_dl_term(Tokenizer* self)
 */
 static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
 {
-    static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
-                                LC_HEADING | LC_TAG | LC_STYLE);
-    static int double_fail = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     PyObject *token, *text, *trash;
     int single;
 
-    if (context & fail_contexts) {
+    if (context & AGG_FAIL) {
         if (context & LC_TAG_BODY) {
             token = PyList_GET_ITEM(self->topstack->stack, 1);
             text = PyObject_GetAttrString(token, "text");
@@ -2101,7 +2098,7 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
             if (single)
                 return Tokenizer_handle_single_tag_end(self);
         }
-        else if (context & double_fail) {
+        else if (context & AGG_DOUBLE) {
             trash = Tokenizer_pop(self);
             Py_XDECREF(trash);
         }
@@ -2195,9 +2192,6 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 */
 static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 {
-    static int unsafe_contexts = (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE |
-                                  LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME);
-    static int double_unsafe = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
     PyObject* temp;
@@ -2209,9 +2203,9 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
     while (1) {
         this = Tokenizer_READ(self, 0);
         this_context = self->topstack->context;
-        if (this_context & unsafe_contexts) {
+        if (this_context & AGG_UNSAFE) {
             if (Tokenizer_verify_safe(self, this_context, this) < 0) {
-                if (this_context & double_unsafe) {
+                if (this_context & AGG_DOUBLE) {
                     temp = Tokenizer_pop(self);
                     Py_XDECREF(temp);
                 }

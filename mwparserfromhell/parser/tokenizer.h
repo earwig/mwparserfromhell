@@ -150,6 +150,12 @@ static PyObject* TagCloseClose;
 
 #define GL_HEADING 0x1
 
+/* Aggregate contexts: */
+
+#define AGG_FAIL   (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_TAG | LC_STYLE)
+#define AGG_UNSAFE (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
+#define AGG_DOUBLE (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
+
 /* Tag contexts: */
 
 #define TAG_NAME        0x01
