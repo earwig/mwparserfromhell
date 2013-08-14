@@ -41,20 +41,21 @@ SOFTWARE.
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
 static const char* MARKERS[] = {
-    "{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":", "/", "-",
-    "\n", ""};
+    "{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";", ":", "/",
+    "-", "\n", ""};
 
-#define NUM_MARKERS 17
+#define NUM_MARKERS 18
 #define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
-static int route_state = 0;
-#define BAD_ROUTE     (route_state)
-#define FAIL_ROUTE()  (route_state = 1)
-#define RESET_ROUTE() (route_state = 0)
+static int route_state = 0, route_context = 0;
+#define BAD_ROUTE            route_state
+#define BAD_ROUTE_CONTEXT    route_context
+#define FAIL_ROUTE(context)  route_state = 1; route_context = context
+#define RESET_ROUTE()        route_state = 0
 
 static char** entitydefs;
 
@@ -102,42 +103,50 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x000007
-#define LC_TEMPLATE_NAME        0x000001
-#define LC_TEMPLATE_PARAM_KEY   0x000002
-#define LC_TEMPLATE_PARAM_VALUE 0x000004
+#define LC_TEMPLATE             0x00000007
+#define LC_TEMPLATE_NAME        0x00000001
+#define LC_TEMPLATE_PARAM_KEY   0x00000002
+#define LC_TEMPLATE_PARAM_VALUE 0x00000004
 
-#define LC_ARGUMENT             0x000018
-#define LC_ARGUMENT_NAME        0x000008
-#define LC_ARGUMENT_DEFAULT     0x000010
+#define LC_ARGUMENT             0x00000018
+#define LC_ARGUMENT_NAME        0x00000008
+#define LC_ARGUMENT_DEFAULT     0x00000010
 
-#define LC_WIKILINK             0x000060
-#define LC_WIKILINK_TITLE       0x000020
-#define LC_WIKILINK_TEXT        0x000040
+#define LC_WIKILINK             0x00000060
+#define LC_WIKILINK_TITLE       0x00000020
+#define LC_WIKILINK_TEXT        0x00000040
 
-#define LC_HEADING              0x001F80
-#define LC_HEADING_LEVEL_1      0x000080
-#define LC_HEADING_LEVEL_2      0x000100
-#define LC_HEADING_LEVEL_3      0x000200
-#define LC_HEADING_LEVEL_4      0x000400
-#define LC_HEADING_LEVEL_5      0x000800
-#define LC_HEADING_LEVEL_6      0x001000
+#define LC_HEADING              0x00001F80
+#define LC_HEADING_LEVEL_1      0x00000080
+#define LC_HEADING_LEVEL_2      0x00000100
+#define LC_HEADING_LEVEL_3      0x00000200
+#define LC_HEADING_LEVEL_4      0x00000400
+#define LC_HEADING_LEVEL_5      0x00000800
+#define LC_HEADING_LEVEL_6      0x00001000
 
-#define LC_COMMENT              0x002000
+#define LC_COMMENT              0x00002000
 
-#define LC_TAG                  0x03C000
-#define LC_TAG_OPEN             0x004000
-#define LC_TAG_ATTR             0x008000
-#define LC_TAG_BODY             0x010000
-#define LC_TAG_CLOSE            0x020000
+#define LC_TAG                  0x0003C000
+#define LC_TAG_OPEN             0x00004000
+#define LC_TAG_ATTR             0x00008000
+#define LC_TAG_BODY             0x00010000
+#define LC_TAG_CLOSE            0x00020000
 
-#define LC_SAFETY_CHECK         0xFC0000
-#define LC_HAS_TEXT             0x040000
-#define LC_FAIL_ON_TEXT         0x080000
-#define LC_FAIL_NEXT            0x100000
-#define LC_FAIL_ON_LBRACE       0x200000
-#define LC_FAIL_ON_RBRACE       0x400000
-#define LC_FAIL_ON_EQUALS       0x800000
+#define LC_STYLE                0x003C0000
+#define LC_STYLE_ITALICS        0x00040000
+#define LC_STYLE_BOLD           0x00080000
+#define LC_STYLE_PASS_AGAIN     0x00100000
+#define LC_STYLE_SECOND_PASS    0x00200000
+
+#define LC_DLTERM               0x00400000
+
+#define LC_SAFETY_CHECK         0x1F800000
+#define LC_HAS_TEXT             0x00800000
+#define LC_FAIL_ON_TEXT         0x01000000
+#define LC_FAIL_NEXT            0x02000000
+#define LC_FAIL_ON_LBRACE       0x04000000
+#define LC_FAIL_ON_RBRACE       0x08000000
+#define LC_FAIL_ON_EQUALS       0x10000000
 
 /* Global contexts: */
 
@@ -211,6 +220,7 @@ typedef struct {
 
 /* Macros for accessing HTML tag definitions: */
 
+#define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
 #define IS_PARSABLE(tag) (call_tag_def_func("is_parsable", tag))
 #define IS_SINGLE(tag) (call_tag_def_func("is_single", tag))
 #define IS_SINGLE_ONLY(tag) (call_tag_def_func("is_single_only", tag))

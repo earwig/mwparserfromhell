@@ -106,7 +106,7 @@ class TreeEqualityTestCase(TestCase):
             self.assertEqual(exp_attr.pad_first, act_attr.pad_first)
             self.assertEqual(exp_attr.pad_before_eq, act_attr.pad_before_eq)
             self.assertEqual(exp_attr.pad_after_eq, act_attr.pad_after_eq)
-        self.assertIs(expected.showtag, actual.showtag)
+        self.assertIs(expected.wiki_markup, actual.wiki_markup)
         self.assertIs(expected.self_closing, actual.self_closing)
         self.assertIs(expected.invalid, actual.invalid)
         self.assertIs(expected.implicit, actual.implicit)

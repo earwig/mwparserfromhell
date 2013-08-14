@@ -50,8 +50,8 @@ class TestTag(TreeEqualityTestCase):
                     implicit=True)
         node7 = Tag(wraptext("br"), self_closing=True, invalid=True,
                     padding=" ")
-        node8 = Tag(wraptext("hr"), showtag=False, self_closing=True)
-        node9 = Tag(wraptext("i"), wraptext("italics!"), showtag=False)
+        node8 = Tag(wraptext("hr"), wiki_markup="----", self_closing=True)
+        node9 = Tag(wraptext("i"), wraptext("italics!"), wiki_markup="''")
 
         self.assertEqual("<ref></ref>", str(node1))
         self.assertEqual('<span style="color: red;">foo</span>', str(node2))
@@ -72,7 +72,7 @@ class TestTag(TreeEqualityTestCase):
         # <ref>foobar</ref>
         node1 = Tag(wrap([node1n1]), wrap([node1n2]))
         # '''bold text'''
-        node2 = Tag(wraptext("i"), wrap([node2n1]), showtag=False)
+        node2 = Tag(wraptext("b"), wrap([node2n1]), wiki_markup="'''")
         # <img id="foo" class="bar" />
         node3 = Tag(wrap([node3n1]),
                     attrs=[Attribute(wrap([node3n2]), wrap([node3n3])),
@@ -158,15 +158,15 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual([], node1.attributes)
         self.assertIs(attrs, node2.attributes)
 
-    def test_showtag(self):
-        """test getter/setter for the showtag attribute"""
+    def test_wiki_markup(self):
+        """test getter/setter for the wiki_markup attribute"""
         node = Tag(wraptext("i"), wraptext("italic text"))
-        self.assertTrue(node.showtag)
-        node.showtag = False
-        self.assertFalse(node.showtag)
+        self.assertIs(None, node.wiki_markup)
+        node.wiki_markup = "''"
+        self.assertEqual("''", node.wiki_markup)
         self.assertEqual("''italic text''", node)
-        node.showtag = 1
-        self.assertTrue(node.showtag)
+        node.wiki_markup = False
+        self.assertFalse(node.wiki_markup)
         self.assertEqual("<i>italic text</i>", node)
 
     def test_self_closing(self):

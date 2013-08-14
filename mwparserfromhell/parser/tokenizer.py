@@ -26,13 +26,15 @@ import re
 
 from . import contexts, tokens
 from ..compat import htmlentities
-from ..tag_defs import is_parsable, is_single, is_single_only
+from ..tag_defs import get_html_tag, is_parsable, is_single, is_single_only
 
 __all__ = ["Tokenizer"]
 
 class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
-    pass
+
+    def __init__(self, context=0):
+        self.context = context
 
 
 class _TagOpenData(object):
@@ -57,11 +59,11 @@ class Tokenizer(object):
     USES_C = False
     START = object()
     END = object()
-    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "#", "*", ";", ":",
-               "/", "-", "\n", END]
+    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
+               ":", "/", "-", "\n", END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
-    regex = re.compile(r"([{}\[\]<>|=&#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
+    regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\\]+)")
 
     def __init__(self):
@@ -132,8 +134,9 @@ class Tokenizer(object):
         Discards the current stack/context/textbuffer and raises
         :py:exc:`~.BadRoute`.
         """
+        context = self._context
         self._pop()
-        raise BadRoute()
+        raise BadRoute(context)
 
     def _emit(self, token):
         """Write a token to the end of the current token stack."""
@@ -629,10 +632,164 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
+    def _emit_style_tag(self, tag, markup, body):
+        """Write the body of a tag and the tokens that should surround it."""
+        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseOpen())
+        self._emit_all(body)
+        self._emit(tokens.TagOpenClose())
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseClose())
+
+    def _parse_italics(self):
+        """Parse wiki-style italics."""
+        reset = self._head
+        try:
+            stack = self._parse(contexts.STYLE_ITALICS)
+        except BadRoute as route:
+            self._head = reset
+            if route.context & contexts.STYLE_PASS_AGAIN:
+                stack = self._parse(route.context | contexts.STYLE_SECOND_PASS)
+            else:
+                return self._emit_text("''")
+        self._emit_style_tag("i", "''", stack)
+
+    def _parse_bold(self):
+        """Parse wiki-style bold."""
+        reset = self._head
+        try:
+            stack = self._parse(contexts.STYLE_BOLD)
+        except BadRoute:
+            self._head = reset
+            if self._context & contexts.STYLE_SECOND_PASS:
+                self._emit_text("'")
+                return True
+            elif self._context & contexts.STYLE_ITALICS:
+                self._context |= contexts.STYLE_PASS_AGAIN
+                self._emit_text("'''")
+            else:
+                self._emit_text("'")
+                self._parse_italics()
+        else:
+            self._emit_style_tag("b", "'''", stack)
+
+    def _parse_italics_and_bold(self):
+        """Parse wiki-style italics and bold together (i.e., five ticks)."""
+        reset = self._head
+        try:
+            stack = self._parse(contexts.STYLE_BOLD)
+        except BadRoute:
+            self._head = reset
+            try:
+                stack = self._parse(contexts.STYLE_ITALICS)
+            except BadRoute:
+                self._head = reset
+                self._emit_text("'''''")
+            else:
+                reset = self._head
+                try:
+                    stack2 = self._parse(contexts.STYLE_BOLD)
+                except BadRoute:
+                    self._head = reset
+                    self._emit_text("'''")
+                    self._emit_style_tag("i", "''", stack)
+                else:
+                    self._push()
+                    self._emit_style_tag("i", "''", stack)
+                    self._emit_all(stack2)
+                    self._emit_style_tag("b", "'''", self._pop())
+        else:
+            reset = self._head
+            try:
+                stack2 = self._parse(contexts.STYLE_ITALICS)
+            except BadRoute:
+                self._head = reset
+                self._emit_text("''")
+                self._emit_style_tag("b", "'''", stack)
+            else:
+                self._push()
+                self._emit_style_tag("b", "'''", stack)
+                self._emit_all(stack2)
+                self._emit_style_tag("i", "''", self._pop())
+
+    def _parse_style(self):
+        """Parse wiki-style formatting (``''``/``'''`` for italics/bold)."""
+        self._head += 2
+        ticks = 2
+        while self._read() == "'":
+            self._head += 1
+            ticks += 1
+        italics = self._context & contexts.STYLE_ITALICS
+        bold = self._context & contexts.STYLE_BOLD
+
+        if ticks > 5:
+            self._emit_text("'" * (ticks - 5))
+            ticks = 5
+        elif ticks == 4:
+            self._emit_text("'")
+            ticks = 3
+
+        if (italics and ticks in (2, 5)) or (bold and ticks in (3, 5)):
+            if ticks == 5:
+                self._head -= 3 if italics else 2
+            return self._pop()
+        elif not self._can_recurse():
+            if ticks == 3:
+                if self._context & contexts.STYLE_SECOND_PASS:
+                    self._emit_text("'")
+                    return self._pop()
+                self._context |= contexts.STYLE_PASS_AGAIN
+            self._emit_text("'" * ticks)
+        elif ticks == 2:
+            self._parse_italics()
+        elif ticks == 3:
+            if self._parse_bold():
+                return self._pop()
+        elif ticks == 5:
+            self._parse_italics_and_bold()
+        self._head -= 1
+
+    def _handle_list_marker(self):
+        """Handle a list marker at the head (``#``, ``*``, ``;``, ``:``)."""
+        markup = self._read()
+        if markup == ";":
+            self._context |= contexts.DL_TERM
+        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+        self._emit_text(get_html_tag(markup))
+        self._emit(tokens.TagCloseSelfclose())
+
+    def _handle_list(self):
+        """Handle a wiki-style list (``#``, ``*``, ``;``, ``:``)."""
+        self._handle_list_marker()
+        while self._read(1) in ("#", "*", ";", ":"):
+            self._head += 1
+            self._handle_list_marker()
+
+    def _handle_hr(self):
+        """Handle a wiki-style horizontal rule (``----``) in the string."""
+        length = 4
+        self._head += 3
+        while self._read(1) == "-":
+            length += 1
+            self._head += 1
+        self._emit(tokens.TagOpenOpen(wiki_markup="-" * length))
+        self._emit_text("hr")
+        self._emit(tokens.TagCloseSelfclose())
+
+    def _handle_dl_term(self):
+        """Handle the term in a description list (``foo`` in ``;foo:bar``)."""
+        self._context ^= contexts.DL_TERM
+        if self._read() == ":":
+            self._handle_list_marker()
+        else:
+            self._emit_text("\n")
+
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
         fail = (contexts.TEMPLATE | contexts.ARGUMENT | contexts.WIKILINK |
-                contexts.HEADING | contexts.COMMENT | contexts.TAG)
+                contexts.HEADING | contexts.COMMENT | contexts.TAG |
+                contexts.STYLE)
         double_fail = (contexts.TEMPLATE_PARAM_KEY | contexts.TAG_CLOSE)
         if self._context & fail:
             if self._context & contexts.TAG_BODY:
@@ -782,6 +939,19 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
+            elif this == next == "'":
+                result = self._parse_style()
+                if result is not None:
+                    return result
+            elif self._read(-1) in ("\n", self.START):
+                if this in ("#", "*", ";", ":"):
+                    self._handle_list()
+                elif this == next == self._read(2) == self._read(3) == "-":
+                    self._handle_hr()
+                else:
+                    self._emit_text(this)
+            elif this in ("\n", ":") and self._context & contexts.DL_TERM:
+                self._handle_dl_term()
             else:
                 self._emit_text(this)
             self._head += 1
