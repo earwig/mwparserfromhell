@@ -2220,11 +2220,10 @@ static int Tokenizer_handle_hr(Tokenizer* self)
 */
 static int Tokenizer_handle_dl_term(Tokenizer* self)
 {
-    // self._context ^= contexts.DL_TERM
-    // if self._read() == ":":
-    //     self._handle_list_marker()
-    // else:
-    //     self._emit_text("\n")
+    self->topstack->context ^= LC_DLTERM;
+    if (Tokenizer_READ(self, 0) == *":")
+        return Tokenizer_handle_list_marker(self);
+    return Tokenizer_emit_text(self, *"\n");
 }
 
 /*
