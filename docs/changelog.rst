@@ -8,7 +8,9 @@ Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...develop>`__):
 
 - Added complete support for HTML :py:class:`Tags <.Tag>`, along with
-  appropriate unit tests.
+  appropriate unit tests. This includes forms like ``<ref>foo</ref>``,
+  ``<ref name="bar"/>``, and wiki-markup tags like bold (``'''``), italics
+  (``''``), and lists (``''*''``, ``''#''``, ``'';''`` and ``'':''``).
 - Various fixes and cleanup.
 
 v0.2

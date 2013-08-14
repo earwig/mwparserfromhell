@@ -1,6 +1,8 @@
 v0.3 (unreleased):
 
-- Added complete support for HTML Tags, along with appropriate unit tests.
+- Added complete support for HTML Tags, along with appropriate unit tests. This
+  includes forms like <ref>foo</ref>, <ref name="bar"/>, and wiki-markup tags
+  like bold ('''), italics (''), and lists (''*'', ''#'', '';'' and '':'').
 - Various fixes and cleanup.
 
 v0.2 (released June 20, 2013):
