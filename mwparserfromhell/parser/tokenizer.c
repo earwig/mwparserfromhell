@@ -2164,14 +2164,55 @@ static int Tokenizer_handle_list(Tokenizer* self)
 */
 static int Tokenizer_handle_hr(Tokenizer* self)
 {
-    // length = 4
-    // self._head += 3
-    // while self._read(1) == "-":
-    //     length += 1
-    //     self._head += 1
-    // self._emit(tokens.TagOpenOpen(wiki_markup="-" * length))
-    // self._emit_text("hr")
-    // self._emit(tokens.TagCloseSelfclose())
+    PyObject *markup, *kwargs, *token;
+    Textbuffer *buffer = Textbuffer_new();
+    int i;
+
+    if (!buffer)
+        return -1;
+    self->head += 3;
+    for (i = 0; i < 4; i++) {
+        if (Textbuffer_write(&buffer, *"-"))
+            return -1;
+    }
+    while (Tokenizer_READ(self, 1) == *"-") {
+        if (Textbuffer_write(&buffer, *"-"))
+            return -1;
+        self->head++;
+    }
+    markup = Textbuffer_render(buffer);
+    if (!markup)
+        return -1;
+    Textbuffer_dealloc(buffer);
+    kwargs = PyDict_New();
+    if (!kwargs)
+        return -1;
+    PyDict_SetItemString(kwargs, "wiki_markup", markup);
+    Py_DECREF(markup);
+    token = PyObject_Call(TagOpenOpen, NOARGS, kwargs);
+    if (!token) {
+        Py_DECREF(kwargs);
+        return -1;
+    }
+    Py_DECREF(kwargs);
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    if (Tokenizer_emit_text(self, *"h"))
+        return -1;
+    if (Tokenizer_emit_text(self, *"r"))
+        return -1;
+    token = PyObject_CallObject(TagCloseSelfclose, NULL);
+    if (!token)
+        return -1;
+    if (Tokenizer_emit(self, token)) {
+        Py_DECREF(token);
+        return -1;
+    }
+    Py_DECREF(token);
+    return 0;
 }
 
 /*
