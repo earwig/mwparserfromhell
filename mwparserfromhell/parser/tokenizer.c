@@ -347,7 +347,7 @@ static void* Tokenizer_fail_route(Tokenizer* self)
 /*
     Write a token to the end of the current token stack.
 */
-static int Tokenizer_emit_FAST(Tokenizer* self, PyObject* token)
+static int Tokenizer_emit(Tokenizer* self, PyObject* token)
 {
     PyObject* instance;
 
@@ -367,7 +367,8 @@ static int Tokenizer_emit_FAST(Tokenizer* self, PyObject* token)
 /*
     Write a token to the end of the current token stack.
 */
-static int Tokenizer_emit(Tokenizer* self, PyObject* token, PyObject* kwargs)
+static int Tokenizer_emit_kwargs(Tokenizer* self, PyObject* token,
+                                 PyObject* kwargs)
 {
     PyObject* instance;
 
@@ -592,7 +593,7 @@ static int Tokenizer_parse_template(Tokenizer* self)
         return -1;
     }
     Py_DECREF(template);
-    if (Tokenizer_emit_FAST(self, TemplateClose))
+    if (Tokenizer_emit(self, TemplateClose))
         return -1;
     return 0;
 }
@@ -621,7 +622,7 @@ static int Tokenizer_parse_argument(Tokenizer* self)
         return -1;
     }
     Py_DECREF(argument);
-    if (Tokenizer_emit_FAST(self, ArgumentClose))
+    if (Tokenizer_emit(self, ArgumentClose))
         return -1;
     return 0;
 }
@@ -720,7 +721,7 @@ static int Tokenizer_handle_template_param(Tokenizer* self)
     }
     else
         self->topstack->context |= LC_TEMPLATE_PARAM_KEY;
-    if (Tokenizer_emit_FAST(self, TemplateParamSeparator))
+    if (Tokenizer_emit(self, TemplateParamSeparator))
         return -1;
     if (Tokenizer_push(self, self->topstack->context))
         return -1;
@@ -744,7 +745,7 @@ static int Tokenizer_handle_template_param_value(Tokenizer* self)
     Py_DECREF(stack);
     self->topstack->context ^= LC_TEMPLATE_PARAM_KEY;
     self->topstack->context |= LC_TEMPLATE_PARAM_VALUE;
-    if (Tokenizer_emit_FAST(self, TemplateParamEquals))
+    if (Tokenizer_emit(self, TemplateParamEquals))
         return -1;
     return 0;
 }
@@ -778,7 +779,7 @@ static int Tokenizer_handle_argument_separator(Tokenizer* self)
 {
     self->topstack->context ^= LC_ARGUMENT_NAME;
     self->topstack->context |= LC_ARGUMENT_DEFAULT;
-    if (Tokenizer_emit_FAST(self, ArgumentSeparator))
+    if (Tokenizer_emit(self, ArgumentSeparator))
         return -1;
     return 0;
 }
@@ -814,7 +815,7 @@ static int Tokenizer_parse_wikilink(Tokenizer* self)
     }
     if (!wikilink)
         return -1;
-    if (Tokenizer_emit_FAST(self, WikilinkOpen)) {
+    if (Tokenizer_emit(self, WikilinkOpen)) {
         Py_DECREF(wikilink);
         return -1;
     }
@@ -823,7 +824,7 @@ static int Tokenizer_parse_wikilink(Tokenizer* self)
         return -1;
     }
     Py_DECREF(wikilink);
-    if (Tokenizer_emit_FAST(self, WikilinkClose))
+    if (Tokenizer_emit(self, WikilinkClose))
         return -1;
     if (self->topstack->context & LC_FAIL_NEXT)
         self->topstack->context ^= LC_FAIL_NEXT;
@@ -837,7 +838,7 @@ static int Tokenizer_handle_wikilink_separator(Tokenizer* self)
 {
     self->topstack->context ^= LC_WIKILINK_TITLE;
     self->topstack->context |= LC_WIKILINK_TEXT;
-    if (Tokenizer_emit_FAST(self, WikilinkSeparator))
+    if (Tokenizer_emit(self, WikilinkSeparator))
         return -1;
     return 0;
 }
@@ -895,7 +896,7 @@ static int Tokenizer_parse_heading(Tokenizer* self)
     }
     PyDict_SetItemString(kwargs, "level", level);
     Py_DECREF(level);
-    if (Tokenizer_emit(self, HeadingStart, kwargs)) {
+    if (Tokenizer_emit_kwargs(self, HeadingStart, kwargs)) {
         Py_DECREF(heading->title);
         free(heading);
         return -1;
@@ -917,7 +918,7 @@ static int Tokenizer_parse_heading(Tokenizer* self)
     }
     Py_DECREF(heading->title);
     free(heading);
-    if (Tokenizer_emit_FAST(self, HeadingEnd))
+    if (Tokenizer_emit(self, HeadingEnd))
         return -1;
     self->global ^= GL_HEADING;
     return 0;
@@ -1000,7 +1001,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
         return 0;                   \
     }
 
-    if (Tokenizer_emit_FAST(self, HTMLEntityStart))
+    if (Tokenizer_emit(self, HTMLEntityStart))
         return -1;
     self->head++;
     this = Tokenizer_READ(self, 0);
@@ -1010,7 +1011,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
     }
     if (this == *"#") {
         numeric = 1;
-        if (Tokenizer_emit_FAST(self, HTMLEntityNumeric))
+        if (Tokenizer_emit(self, HTMLEntityNumeric))
             return -1;
         self->head++;
         this = Tokenizer_READ(self, 0);
@@ -1024,7 +1025,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
             if (!kwargs)
                 return -1;
             PyDict_SetItemString(kwargs, "char", Tokenizer_read(self, 0));
-            if (Tokenizer_emit(self, HTMLEntityHex, kwargs))
+            if (Tokenizer_emit_kwargs(self, HTMLEntityHex, kwargs))
                 return -1;
             self->head++;
         }
@@ -1118,9 +1119,9 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
     }
     PyDict_SetItemString(kwargs, "text", textobj);
     Py_DECREF(textobj);
-    if (Tokenizer_emit(self, Text, kwargs))
+    if (Tokenizer_emit_kwargs(self, Text, kwargs))
         return -1;
-    if (Tokenizer_emit_FAST(self, HTMLEntityEnd))
+    if (Tokenizer_emit(self, HTMLEntityEnd))
         return -1;
     return 0;
 }
@@ -1179,7 +1180,7 @@ static int Tokenizer_parse_comment(Tokenizer* self)
                             Tokenizer_READ(self, 2) == *">") {
             if (Tokenizer_emit_first(self, CommentStart))
                 return -1;
-            if (Tokenizer_emit_FAST(self, CommentEnd))
+            if (Tokenizer_emit(self, CommentEnd))
                 return -1;
             comment = Tokenizer_pop(self);
             if (!comment)
@@ -1352,7 +1353,7 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
     else if (data->context & TAG_ATTR_NAME) {
         if (chunk == *"=") {
             data->context = TAG_ATTR_VALUE | TAG_NOTE_QUOTE;
-            if (Tokenizer_emit_FAST(self, TagAttrEquals))
+            if (Tokenizer_emit(self, TagAttrEquals))
                 return -1;
             return 0;
         }
@@ -1409,7 +1410,7 @@ Tokenizer_handle_tag_close_open(Tokenizer* self, TagData* data, PyObject* cls)
     }
     PyDict_SetItemString(kwargs, "padding", padding);
     Py_DECREF(padding);
-    if (Tokenizer_emit(self, cls, kwargs))
+    if (Tokenizer_emit_kwargs(self, cls, kwargs))
         return -1;
     self->head++;
     return 0;
@@ -1420,7 +1421,7 @@ Tokenizer_handle_tag_close_open(Tokenizer* self, TagData* data, PyObject* cls)
 */
 static int Tokenizer_handle_tag_open_close(Tokenizer* self)
 {
-    if (Tokenizer_emit_FAST(self, TagOpenClose))
+    if (Tokenizer_emit(self, TagOpenClose))
         return -1;
     if (Tokenizer_push(self, LC_TAG_CLOSE))
         return -1;
@@ -1474,7 +1475,7 @@ static PyObject* Tokenizer_handle_tag_close_close(Tokenizer* self)
         return NULL;
     }
     Py_DECREF(closing);
-    if (Tokenizer_emit_FAST(self, TagCloseClose))
+    if (Tokenizer_emit(self, TagCloseClose))
         return NULL;
     return Tokenizer_pop(self);
 }
@@ -1524,7 +1525,7 @@ static PyObject* Tokenizer_handle_single_only_tag_end(Tokenizer* self)
     PyDict_SetItemString(kwargs, "padding", padding);
     PyDict_SetItemString(kwargs, "implicit", Py_True);
     Py_DECREF(padding);
-    if (Tokenizer_emit(self, TagCloseSelfclose, kwargs))
+    if (Tokenizer_emit_kwargs(self, TagCloseSelfclose, kwargs))
         return NULL;
     self->head--;  // Offset displacement done by handle_tag_close_open
     return Tokenizer_pop(self);
@@ -1588,7 +1589,7 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
         TagData_dealloc(data);
         return NULL;
     }
-    if (Tokenizer_emit_FAST(self, TagOpenOpen)) {
+    if (Tokenizer_emit(self, TagOpenOpen)) {
         TagData_dealloc(data);
         return NULL;
     }
@@ -1748,20 +1749,20 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, const char* tag,
     }
     PyDict_SetItemString(kwargs, "wiki_markup", markup);
     Py_DECREF(markup);
-    if (Tokenizer_emit(self, TagOpenOpen, kwargs))
+    if (Tokenizer_emit_kwargs(self, TagOpenOpen, kwargs))
         return -1;
     if (Tokenizer_emit_text(self, tag))
         return -1;
-    if (Tokenizer_emit_FAST(self, TagCloseOpen))
+    if (Tokenizer_emit(self, TagCloseOpen))
         return -1;
     if (Tokenizer_emit_all(self, body))
         return -1;
     Py_DECREF(body);
-    if (Tokenizer_emit_FAST(self, TagOpenClose))
+    if (Tokenizer_emit(self, TagOpenClose))
         return -1;
     if (Tokenizer_emit_text(self, tag))
         return -1;
-    if (Tokenizer_emit_FAST(self, TagCloseClose))
+    if (Tokenizer_emit(self, TagCloseClose))
         return -1;
     return 0;
 }
@@ -1965,11 +1966,11 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
     if (!kwargs)
         return -1;
     PyDict_SetItemString(kwargs, "wiki_markup", markup);
-    if (Tokenizer_emit(self, TagOpenOpen, kwargs))
+    if (Tokenizer_emit_kwargs(self, TagOpenOpen, kwargs))
         return -1;
     if (Tokenizer_emit_text(self, GET_HTML_TAG(code)))
         return -1;
-    if (Tokenizer_emit_FAST(self, TagCloseSelfclose))
+    if (Tokenizer_emit(self, TagCloseSelfclose))
         return -1;
     return 0;
 }
@@ -2023,11 +2024,11 @@ static int Tokenizer_handle_hr(Tokenizer* self)
         return -1;
     PyDict_SetItemString(kwargs, "wiki_markup", markup);
     Py_DECREF(markup);
-    if (Tokenizer_emit(self, TagOpenOpen, kwargs))
+    if (Tokenizer_emit_kwargs(self, TagOpenOpen, kwargs))
         return -1;
     if (Tokenizer_emit_text(self, "hr"))
         return -1;
-    if (Tokenizer_emit_FAST(self, TagCloseSelfclose))
+    if (Tokenizer_emit(self, TagCloseSelfclose))
         return -1;
     return 0;
 }
