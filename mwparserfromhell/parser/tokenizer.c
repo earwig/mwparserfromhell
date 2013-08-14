@@ -325,9 +325,10 @@ static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 */
 static void* Tokenizer_fail_route(Tokenizer* self)
 {
+    int context = self->topstack->context;
     PyObject* stack = Tokenizer_pop(self);
     Py_XDECREF(stack);
-    FAIL_ROUTE();
+    FAIL_ROUTE(context);
     return NULL;
 }
 
@@ -1776,7 +1777,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
                 return -1;
             }
             if (!IS_SINGLE_ONLY(name))
-                FAIL_ROUTE();
+                FAIL_ROUTE(0);
             break;
         }
         Textbuffer_write(&buf, this);
@@ -1823,12 +1824,201 @@ static int Tokenizer_parse_tag(Tokenizer* self)
 }
 
 /*
+    Write the body of a tag and the tokens that should surround it.
+*/
+static int Tokenizer_emit_style_tag(Tokenizer* self, char tag, int ticks,
+                                    PyObject* body)
+{
+    // self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+    // self._emit_text(tag)
+    // self._emit(tokens.TagCloseOpen())
+    // self._emit_all(body)
+    // self._emit(tokens.TagOpenClose())
+    // self._emit_text(tag)
+    // self._emit(tokens.TagCloseClose())
+}
+
+/*
+    Parse wiki-style italics.
+*/
+static int Tokenizer_parse_italics(Tokenizer* self)
+{
+    // reset = self._head
+    // try:
+    //     stack = self._parse(contexts.STYLE_ITALICS)
+    // except BadRoute as route:
+    //     self._head = reset
+    //     if route.context & contexts.STYLE_PASS_AGAIN:
+    //         stack = self._parse(route.context | contexts.STYLE_SECOND_PASS)
+    //     else:
+    //         return self._emit_text("''")
+    // self._emit_style_tag("i", "''", stack)
+}
+
+/*
+    Parse wiki-style bold.
+*/
+static int Tokenizer_parse_bold(Tokenizer* self)
+{
+    // reset = self._head
+    // try:
+    //     stack = self._parse(contexts.STYLE_BOLD)
+    // except BadRoute:
+    //     self._head = reset
+    //     if self._context & contexts.STYLE_SECOND_PASS:
+    //         self._emit_text("'")
+    //         return True  ## we can return 1 for this and -1 for errors (switch case)
+    //     elif self._context & contexts.STYLE_ITALICS:
+    //         self._context |= contexts.STYLE_PASS_AGAIN
+    //         self._emit_text("'''")
+    //     else:
+    //         self._emit_text("'")
+    //         self._parse_italics()
+    // else:
+    //     self._emit_style_tag("b", "'''", stack)
+}
+
+/*
+    Parse wiki-style italics and bold together (i.e., five ticks).
+*/
+static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
+{
+    // reset = self._head
+    // try:
+    //     stack = self._parse(contexts.STYLE_BOLD)
+    // except BadRoute:
+    //     self._head = reset
+    //     try:
+    //         stack = self._parse(contexts.STYLE_ITALICS)
+    //     except BadRoute:
+    //         self._head = reset
+    //         self._emit_text("'''''")
+    //     else:
+    //         reset = self._head
+    //         try:
+    //             stack2 = self._parse(contexts.STYLE_BOLD)
+    //         except BadRoute:
+    //             self._head = reset
+    //             self._emit_text("'''")
+    //             self._emit_style_tag("i", "''", stack)
+    //         else:
+    //             self._push()
+    //             self._emit_style_tag("i", "''", stack)
+    //             self._emit_all(stack2)
+    //             self._emit_style_tag("b", "'''", self._pop())
+    // else:
+    //     reset = self._head
+    //     try:
+    //         stack2 = self._parse(contexts.STYLE_ITALICS)
+    //     except BadRoute:
+    //         self._head = reset
+    //         self._emit_text("''")
+    //         self._emit_style_tag("b", "'''", stack)
+    //     else:
+    //         self._push()
+    //         self._emit_style_tag("b", "'''", stack)
+    //         self._emit_all(stack2)
+    //         self._emit_style_tag("i", "''", self._pop())
+}
+
+/*
+    Parse wiki-style formatting (''/''' for italics/bold).
+*/
+static PyObject* Tokenizer_parse_style(Tokenizer* self)
+{
+    // self._head += 2
+    // ticks = 2
+    // while self._read() == "'":
+    //     self._head += 1
+    //     ticks += 1
+    // italics = self._context & contexts.STYLE_ITALICS
+    // bold = self._context & contexts.STYLE_BOLD
+    // if ticks > 5:
+    //     self._emit_text("'" * (ticks - 5))
+    //     ticks = 5
+    // elif ticks == 4:
+    //     self._emit_text("'")
+    //     ticks = 3
+    // if (italics and ticks in (2, 5)) or (bold and ticks in (3, 5)):
+    //     if ticks == 5:
+    //         self._head -= 3 if italics else 2
+    //     return self._pop()
+    // elif not self._can_recurse():
+    //     if ticks == 3:
+    //         if self._context & contexts.STYLE_SECOND_PASS:
+    //             self._emit_text("'")
+    //             return self._pop()
+    //         self._context |= contexts.STYLE_PASS_AGAIN
+    //     self._emit_text("'" * ticks)
+    // elif ticks == 2:
+    //     self._parse_italics()
+    // elif ticks == 3:
+    //     if self._parse_bold():
+    //         return self._pop()
+    // elif ticks == 5:
+    //     self._parse_italics_and_bold()
+    // self._head -= 1
+    // ## we can return Py_None for non-error empty returns
+}
+
+/*
+    Handle a list marker at the head (#, *, ;, :).
+*/
+static int Tokenizer_handle_list_marker(Tokenizer* self)
+{
+    // markup = self._read()
+    // if markup == ";":
+    //     self._context |= contexts.DL_TERM
+    // self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+    // self._emit_text(get_html_tag(markup))
+    // self._emit(tokens.TagCloseSelfclose())
+}
+
+/*
+    Handle a wiki-style list (#, *, ;, :).
+*/
+static int Tokenizer_handle_list(Tokenizer* self)
+{
+    // self._handle_list_marker()
+    // while self._read(1) in ("#", "*", ";", ":"):
+    //     self._head += 1
+    //     self._handle_list_marker()
+}
+
+/*
+    Handle a wiki-style horizontal rule (----) in the string.
+*/
+static int Tokenizer_handle_hr(Tokenizer* self)
+{
+    // length = 4
+    // self._head += 3
+    // while self._read(1) == "-":
+    //     length += 1
+    //     self._head += 1
+    // self._emit(tokens.TagOpenOpen(wiki_markup="-" * length))
+    // self._emit_text("hr")
+    // self._emit(tokens.TagCloseSelfclose())
+}
+
+/*
+    Handle the term in a description list ('foo' in ';foo:bar').
+*/
+static int Tokenizer_handle_dl_term(Tokenizer* self)
+{
+    // self._context ^= contexts.DL_TERM
+    // if self._read() == ":":
+    //     self._handle_list_marker()
+    // else:
+    //     self._emit_text("\n")
+}
+
+/*
     Handle the end of the stream of wikitext.
 */
 static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
 {
     static int fail_contexts = (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK |
-                                LC_HEADING | LC_COMMENT | LC_TAG);
+                                LC_HEADING | LC_COMMENT | LC_TAG | LC_STYLE);
     static int double_fail = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     PyObject *token, *text, *trash;
     int single;
@@ -1943,7 +2133,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
     static int double_unsafe = (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE);
     int this_context, is_marker, i;
     Py_UNICODE this, next, next_next, last;
-    PyObject* trash;
+    PyObject* temp;
 
     if (push) {
         if (Tokenizer_push(self, context))
@@ -1955,8 +2145,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         if (this_context & unsafe_contexts) {
             if (Tokenizer_verify_safe(self, this_context, this) < 0) {
                 if (this_context & double_unsafe) {
-                    trash = Tokenizer_pop(self);
-                    Py_XDECREF(trash);
+                    temp = Tokenizer_pop(self);
+                    Py_XDECREF(temp);
                 }
                 return Tokenizer_fail_route(self);
             }
@@ -1977,6 +2167,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         if (this == *"")
             return Tokenizer_handle_end(self, this_context);
         next = Tokenizer_READ(self, 1);
+        last = Tokenizer_READ_BACKWARDS(self, 1);
         if (this_context & LC_COMMENT) {
             if (this == next && next == *"-") {
                 if (Tokenizer_READ(self, 2) == *">")
@@ -2030,7 +2221,6 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         else if (this == next && next == *"]" && this_context & LC_WIKILINK)
             return Tokenizer_handle_wikilink_end(self);
         else if (this == *"=" && !(self->global & GL_HEADING)) {
-            last = Tokenizer_READ_BACKWARDS(self, 1);
             if (last == *"\n" || last == *"") {
                 if (Tokenizer_parse_heading(self))
                     return NULL;
@@ -2077,6 +2267,29 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         }
         else if (this == *">" && this_context & LC_TAG_CLOSE)
             return Tokenizer_handle_tag_close_close(self);
+        else if (this == next && next == *"'") {
+            temp = Tokenizer_parse_style(self);
+            if (temp)
+                return temp;
+        }
+        else if (last == *"\n" || last == *"") {
+            if (this == *"#" || this == *"*" || this == *";" || this == *":") {
+                if (Tokenizer_handle_list(self))
+                    return NULL;
+            }
+            else if (this == *"-" && this == next &&
+                     this == Tokenizer_READ(self, 2) &&
+                     this == Tokenizer_READ(self, 3)) {
+                if (Tokenizer_handle_hr(self))
+                    return NULL;
+            }
+            else if (Tokenizer_emit_text(self, this))
+                return NULL;
+        }
+        else if ((this == *"\n" || this == *":") && this_context & LC_DLTERM) {
+            if (Tokenizer_handle_dl_term(self))
+                return NULL;
+        }
         else if (Tokenizer_emit_text(self, this))
             return NULL;
         self->head++;
