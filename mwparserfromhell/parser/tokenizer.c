@@ -1886,6 +1886,7 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, char tag, int ticks,
         return -1;
     }
     Py_DECREF(token);
+    Py_DECREF(body);
     return 0;
 }
 
@@ -1953,42 +1954,82 @@ static int Tokenizer_parse_bold(Tokenizer* self)
 */
 static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
 {
-    // reset = self._head
-    // try:
-    //     stack = self._parse(contexts.STYLE_BOLD)
-    // except BadRoute:
-    //     self._head = reset
-    //     try:
-    //         stack = self._parse(contexts.STYLE_ITALICS)
-    //     except BadRoute:
-    //         self._head = reset
-    //         self._emit_text("'''''")
-    //     else:
-    //         reset = self._head
-    //         try:
-    //             stack2 = self._parse(contexts.STYLE_BOLD)
-    //         except BadRoute:
-    //             self._head = reset
-    //             self._emit_text("'''")
-    //             self._emit_style_tag("i", "''", stack)
-    //         else:
-    //             self._push()
-    //             self._emit_style_tag("i", "''", stack)
-    //             self._emit_all(stack2)
-    //             self._emit_style_tag("b", "'''", self._pop())
-    // else:
-    //     reset = self._head
-    //     try:
-    //         stack2 = self._parse(contexts.STYLE_ITALICS)
-    //     except BadRoute:
-    //         self._head = reset
-    //         self._emit_text("''")
-    //         self._emit_style_tag("b", "'''", stack)
-    //     else:
-    //         self._push()
-    //         self._emit_style_tag("b", "'''", stack)
-    //         self._emit_all(stack2)
-    //         self._emit_style_tag("i", "''", self._pop())
+    Py_ssize_t reset = self->head;
+    PyObject *stack, *stack2;
+
+    stack = Tokenizer_parse(self, LC_STYLE_BOLD, 1);
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
+        self->head = reset;
+        stack = Tokenizer_parse(self, LC_STYLE_ITALICS, 1);
+        if (BAD_ROUTE) {
+            RESET_ROUTE();
+            self->head = reset;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            return Tokenizer_emit_text(self, *"'");
+        }
+        if (!stack)
+            return -1;
+        reset = self->head;
+        stack2 = Tokenizer_parse(self, LC_STYLE_BOLD, 1);
+        if (BAD_ROUTE) {
+            RESET_ROUTE();
+            self->head = reset;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            if (Tokenizer_emit_text(self, *"'"))
+                return -1;
+            return Tokenizer_emit_style_tag(self, *"i", 2, stack);
+        }
+        if (!stack2)
+            return -1;
+        if (Tokenizer_push(self, 0))
+            return -1;
+        if (Tokenizer_emit_style_tag(self, *"i", 2, stack))
+            return -1;
+        if (Tokenizer_emit_all(self, stack2))
+            return -1;
+        Py_DECREF(stack2);
+        stack2 = Tokenizer_pop(self);
+        if (!stack2)
+            return -1;
+        return Tokenizer_emit_style_tag(self, *"b", 3, stack2);
+    }
+    if (!stack)
+        return -1;
+    reset = self->head;
+    stack2 = Tokenizer_parse(self, LC_STYLE_ITALICS, 1);
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
+        self->head = reset;
+        if (Tokenizer_emit_text(self, *"'"))
+            return -1;
+        if (Tokenizer_emit_text(self, *"'"))
+            return -1;
+        return Tokenizer_emit_style_tag(self, *"b", 3, stack);
+    }
+    if (!stack2)
+        return -1;
+    if (Tokenizer_push(self, 0))
+        return -1;
+    if (Tokenizer_emit_style_tag(self, *"b", 3, stack))
+        return -1;
+    if (Tokenizer_emit_all(self, stack2))
+        return -1;
+    Py_DECREF(stack2);
+    stack2 = Tokenizer_pop(self);
+    if (!stack2)
+        return -1;
+    return Tokenizer_emit_style_tag(self, *"i", 2, stack2);
 }
 
 /*
@@ -1996,39 +2037,63 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
 */
 static PyObject* Tokenizer_parse_style(Tokenizer* self)
 {
-    // self._head += 2
-    // ticks = 2
-    // while self._read() == "'":
-    //     self._head += 1
-    //     ticks += 1
-    // italics = self._context & contexts.STYLE_ITALICS
-    // bold = self._context & contexts.STYLE_BOLD
-    // if ticks > 5:
-    //     self._emit_text("'" * (ticks - 5))
-    //     ticks = 5
-    // elif ticks == 4:
-    //     self._emit_text("'")
-    //     ticks = 3
-    // if (italics and ticks in (2, 5)) or (bold and ticks in (3, 5)):
-    //     if ticks == 5:
-    //         self._head -= 3 if italics else 2
-    //     return self._pop()
-    // elif not self._can_recurse():
-    //     if ticks == 3:
-    //         if self._context & contexts.STYLE_SECOND_PASS:
-    //             self._emit_text("'")
-    //             return self._pop()
-    //         self._context |= contexts.STYLE_PASS_AGAIN
-    //     self._emit_text("'" * ticks)
-    // elif ticks == 2:
-    //     self._parse_italics()
-    // elif ticks == 3:
-    //     if self._parse_bold():
-    //         return self._pop()
-    // elif ticks == 5:
-    //     self._parse_italics_and_bold()
-    // self._head -= 1
-    // ## we can return Py_None for non-error empty returns
+    int context = self->topstack->context, ticks = 2, i;
+
+    self->head += 2;
+    while (Tokenizer_READ(self, 0) == *"'") {
+        self->head++;
+        ticks++;
+    }
+    if (ticks > 5) {
+        for (i = 0; i < ticks - 5; i++) {
+            if (Tokenizer_emit_text(self, *"'"))
+                return NULL;
+        }
+        ticks = 5;
+    }
+    else if (ticks == 4) {
+        if (Tokenizer_emit_text(self, *"'"))
+            return NULL;
+        ticks = 3;
+    }
+    if ((context & LC_STYLE_ITALICS && (ticks == 2 || ticks == 5)) ||
+           (context & LC_STYLE_BOLD && (ticks == 3 || ticks == 5))) {
+        if (ticks == 5)
+            self->head -= context & LC_STYLE_ITALICS ? 3 : 2;
+        return Tokenizer_pop(self);
+    }
+    if (!Tokenizer_CAN_RECURSE(self)) {
+        if (ticks == 3) {
+            if (context & LC_STYLE_SECOND_PASS) {
+                if (Tokenizer_emit_text(self, *"'"))
+                    return NULL;
+                return Tokenizer_pop(self);
+            }
+            self->topstack->context |= LC_STYLE_PASS_AGAIN;
+        }
+        for (i = 0; i < ticks; i++) {
+            if (Tokenizer_emit_text(self, *"'"))
+                return NULL;
+        }
+    }
+    else if (ticks == 2) {
+        if (Tokenizer_parse_italics(self))
+            return NULL;
+    }
+    else if (ticks == 3) {
+        switch (Tokenizer_parse_bold(self)) {
+            case 1:
+                return Tokenizer_pop(self);
+            case -1:
+                return NULL;
+        }
+    }
+    else {
+        if (Tokenizer_parse_italics_and_bold(self))
+            return NULL;
+    }
+    self->head--;
+    return Py_None;
 }
 
 /*
@@ -2339,7 +2404,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
             return Tokenizer_handle_tag_close_close(self);
         else if (this == next && next == *"'") {
             temp = Tokenizer_parse_style(self);
-            if (temp)
+            if (temp != Py_None)
                 return temp;
         }
         else if (last == *"\n" || last == *"") {
