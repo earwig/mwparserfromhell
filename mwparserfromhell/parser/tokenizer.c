@@ -347,7 +347,7 @@ static void* Tokenizer_fail_route(Tokenizer* self)
 /*
     Write a token to the end of the current token stack.
 */
-static int Tokenizer_emit(Tokenizer* self, PyObject* token)
+static int Tokenizer_emit_token(Tokenizer* self, PyObject* token, int first)
 {
     PyObject* instance;
 
@@ -356,7 +356,8 @@ static int Tokenizer_emit(Tokenizer* self, PyObject* token)
     instance = PyObject_CallObject(token, NULL);
     if (!instance)
         return -1;
-    if (PyList_Append(self->topstack->stack, instance)) {
+    if (first ? PyList_Insert(self->topstack->stack, 0, instance) :
+                PyList_Append(self->topstack->stack, instance)) {
         Py_DECREF(instance);
         return -1;
     }
@@ -367,8 +368,8 @@ static int Tokenizer_emit(Tokenizer* self, PyObject* token)
 /*
     Write a token to the end of the current token stack.
 */
-static int Tokenizer_emit_kwargs(Tokenizer* self, PyObject* token,
-                                 PyObject* kwargs)
+static int Tokenizer_emit_token_kwargs(Tokenizer* self, PyObject* token,
+                                       PyObject* kwargs, int first)
 {
     PyObject* instance;
 
@@ -381,55 +382,8 @@ static int Tokenizer_emit_kwargs(Tokenizer* self, PyObject* token,
         Py_DECREF(kwargs);
         return -1;
     }
-    if (PyList_Append(self->topstack->stack, instance)) {
-        Py_DECREF(instance);
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    Py_DECREF(instance);
-    Py_DECREF(kwargs);
-    return 0;
-}
-
-/*
-    Write a token to the beginning of the current token stack.
-*/
-static int Tokenizer_emit_first(Tokenizer* self, PyObject* token)
-{
-    PyObject* instance;
-
-    if (Tokenizer_push_textbuffer(self))
-        return -1;
-    instance = PyObject_CallObject(token, NULL);
-    if (!instance)
-        return -1;
-    if (PyList_Insert(self->topstack->stack, 0, instance)) {
-        Py_DECREF(instance);
-        return -1;
-    }
-    Py_DECREF(instance);
-    return 0;
-}
-
-/*
-    Write a token to the beginning of the current token stack, with kwargs.
-    Steals a reference to kwargs.
-*/
-static int Tokenizer_emit_first_kwargs(Tokenizer* self, PyObject* token,
-                                       PyObject* kwargs)
-{
-    PyObject* instance;
-
-    if (Tokenizer_push_textbuffer(self)) {
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    instance = PyObject_Call(token, NOARGS, kwargs);
-    if (!instance) {
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    if (PyList_Insert(self->topstack->stack, 0, instance)) {
+    if (first ? PyList_Insert(self->topstack->stack, 0, instance):
+                PyList_Append(self->topstack->stack, instance)) {
         Py_DECREF(instance);
         Py_DECREF(kwargs);
         return -1;

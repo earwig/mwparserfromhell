@@ -214,12 +214,17 @@ typedef struct {
 } Tokenizer;
 
 
-/* Macros for accessing Tokenizer data: */
+/* Macros related to Tokenizer functions: */
 
 #define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
 #define Tokenizer_READ_BACKWARDS(self, delta) \
                 (*PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, delta)))
 #define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
+
+#define Tokenizer_emit(self, token) Tokenizer_emit_token(self, token, 0)
+#define Tokenizer_emit_first(self, token) Tokenizer_emit_token(self, token, 1)
+#define Tokenizer_emit_kwargs(self, token, kwargs) Tokenizer_emit_token_kwargs(self, token, kwargs, 0)
+#define Tokenizer_emit_first_kwargs(self, token, kwargs) Tokenizer_emit_token_kwargs(self, token, kwargs, 1)
 
 
 /* Macros for accessing HTML tag definitions: */
