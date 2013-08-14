@@ -29,6 +29,7 @@ SOFTWARE.
 static int heading_level_from_context(int n)
 {
     int level;
+
     n /= LC_HEADING_LEVEL_1;
     for (level = 1; n > 1; n >>= 1)
         level++;
@@ -72,6 +73,7 @@ static PyObject* strip_tag_name(PyObject* token)
 static Textbuffer* Textbuffer_new(void)
 {
     Textbuffer* buffer = malloc(sizeof(Textbuffer));
+
     if (!buffer) {
         PyErr_NoMemory();
         return NULL;
@@ -90,6 +92,7 @@ static Textbuffer* Textbuffer_new(void)
 static void Textbuffer_dealloc(Textbuffer* self)
 {
     Textbuffer* next;
+
     while (self) {
         free(self->data);
         next = self->next;
@@ -104,6 +107,7 @@ static void Textbuffer_dealloc(Textbuffer* self)
 static int Textbuffer_write(Textbuffer** this, Py_UNICODE text)
 {
     Textbuffer* self = *this;
+
     if (self->size == TEXTBUFFER_BLOCKSIZE) {
         Textbuffer* new = Textbuffer_new();
         if (!new)
@@ -123,6 +127,7 @@ static PyObject* Textbuffer_render(Textbuffer* self)
 {
     PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
     PyObject *left, *concat;
+
     while (self->next) {
         self = self->next;
         left = PyUnicode_FromUnicode(self->data, self->size);
@@ -208,6 +213,7 @@ static void Tokenizer_dealloc(Tokenizer* self)
 static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 {
     static char* kwlist[] = {NULL};
+
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return -1;
     self->text = Py_None;
@@ -223,6 +229,7 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 static int Tokenizer_push(Tokenizer* self, int context)
 {
     Stack* top = malloc(sizeof(Stack));
+
     if (!top) {
         PyErr_NoMemory();
         return -1;
@@ -246,6 +253,7 @@ static int Tokenizer_push_textbuffer(Tokenizer* self)
 {
     PyObject *text, *kwargs, *token;
     Textbuffer* buffer = self->topstack->textbuffer;
+
     if (buffer->size == 0 && !buffer->next)
         return 0;
     text = Textbuffer_render(buffer);
@@ -280,6 +288,7 @@ static int Tokenizer_push_textbuffer(Tokenizer* self)
 static void Tokenizer_delete_top_of_stack(Tokenizer* self)
 {
     Stack* top = self->topstack;
+
     Py_DECREF(top->stack);
     Textbuffer_dealloc(top->textbuffer);
     self->topstack = top->next;
@@ -293,6 +302,7 @@ static void Tokenizer_delete_top_of_stack(Tokenizer* self)
 static PyObject* Tokenizer_pop(Tokenizer* self)
 {
     PyObject* stack;
+
     if (Tokenizer_push_textbuffer(self))
         return NULL;
     stack = self->topstack->stack;
@@ -309,6 +319,7 @@ static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 {
     PyObject* stack;
     int context;
+
     if (Tokenizer_push_textbuffer(self))
         return NULL;
     stack = self->topstack->stack;
@@ -327,6 +338,7 @@ static void* Tokenizer_fail_route(Tokenizer* self)
 {
     int context = self->topstack->context;
     PyObject* stack = Tokenizer_pop(self);
+
     Py_XDECREF(stack);
     FAIL_ROUTE(context);
     return NULL;
@@ -362,6 +374,21 @@ static int Tokenizer_emit_first(Tokenizer* self, PyObject* token)
 static int Tokenizer_emit_text(Tokenizer* self, Py_UNICODE text)
 {
     return Textbuffer_write(&(self->topstack->textbuffer), text);
+}
+
+/*
+    Write a string of text to the current textbuffer.
+*/
+static int Tokenizer_emit_string(Tokenizer* self, const char* text)
+{
+    int i = 0;
+
+    while (text[i]) {
+        if (Tokenizer_emit_text(self, text[i]))
+            return -1;
+        i++;
+    }
+    return 0;
 }
 
 /*
@@ -428,15 +455,10 @@ static int Tokenizer_emit_all(Tokenizer* self, PyObject* tokenlist)
 static int Tokenizer_emit_text_then_stack(Tokenizer* self, const char* text)
 {
     PyObject* stack = Tokenizer_pop(self);
-    int i = 0;
-    while (1) {
-        if (!text[i])
-            break;
-        if (Tokenizer_emit_text(self, (Py_UNICODE) text[i])) {
-            Py_XDECREF(stack);
-            return -1;
-        }
-        i++;
+
+    if (Tokenizer_emit_string(self, text)) {
+        Py_DECREF(stack);
+        return -1;
     }
     if (stack) {
         if (PyList_GET_SIZE(stack) > 0) {
@@ -457,6 +479,7 @@ static int Tokenizer_emit_text_then_stack(Tokenizer* self, const char* text)
 static PyObject* Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index = self->head + delta;
+
     if (index >= self->length)
         return EMPTY;
     return PyList_GET_ITEM(self->text, index);
@@ -468,6 +491,7 @@ static PyObject* Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 static PyObject* Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index;
+
     if (delta > self->head)
         return EMPTY;
     index = self->head - delta;
@@ -752,7 +776,6 @@ static int Tokenizer_parse_wikilink(Tokenizer* self)
 {
     Py_ssize_t reset;
     PyObject *wikilink, *token;
-    int i;
 
     self->head += 2;
     reset = self->head - 1;
@@ -760,10 +783,8 @@ static int Tokenizer_parse_wikilink(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
-        for (i = 0; i < 2; i++) {
-            if (Tokenizer_emit_text(self, *"["))
-                return -1;
-        }
+        if (Tokenizer_emit_string(self, "[["))
+            return -1;
         return 0;
     }
     if (!wikilink)
@@ -1183,24 +1204,14 @@ static int Tokenizer_parse_comment(Tokenizer* self)
 {
     Py_ssize_t reset = self->head + 3;
     PyObject *token, *comment;
-    int i;
 
     self->head += 4;
     comment = Tokenizer_parse(self, LC_COMMENT, 1);
     if (BAD_ROUTE) {
-        const char* text = "<!--";
         RESET_ROUTE();
         self->head = reset;
-        i = 0;
-        while (1) {
-            if (!text[i])
-                return 0;
-            if (Tokenizer_emit_text(self, (Py_UNICODE) text[i])) {
-                Py_XDECREF(text);
-                return -1;
-            }
-            i++;
-        }
+        if (Tokenizer_emit_string(self, "<!--"))
+            return -1;
         return 0;
     }
     if (!comment)
@@ -1791,8 +1802,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
-        return (Tokenizer_emit_text(self, *"<") ||
-                Tokenizer_emit_text(self, *"/"));
+        return Tokenizer_emit_string(self, "</");
     }
     // Set invalid=True flag of TagOpenOpen
     if (PyObject_SetAttrString(PyList_GET_ITEM(tag, 0), "invalid", Py_True))
@@ -1826,16 +1836,12 @@ static int Tokenizer_parse_tag(Tokenizer* self)
 /*
     Write the body of a tag and the tokens that should surround it.
 */
-static int Tokenizer_emit_style_tag(Tokenizer* self, char tag, int ticks,
-                                    PyObject* body)
+static int Tokenizer_emit_style_tag(Tokenizer* self, const char* tag,
+                                    const char* ticks, PyObject* body)
 {
     PyObject *markup, *kwargs, *token;
-    char chr_markup[4];
-    int i;
 
-    for (i = 0; i < ticks; i++) chr_markup[i] = *"'";
-    chr_markup[ticks] = *"";
-    markup = PyBytes_FromString(chr_markup);
+    markup = PyBytes_FromString(ticks);
     if (!markup)
         return -1;
     kwargs = PyDict_New();
@@ -1856,7 +1862,7 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, char tag, int ticks,
         return -1;
     }
     Py_DECREF(token);
-    if (Tokenizer_emit_text(self, tag))
+    if (Tokenizer_emit_string(self, tag))
         return -1;
     token = PyObject_CallObject(TagCloseOpen, NULL);
     if (!token)
@@ -1876,7 +1882,7 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, char tag, int ticks,
         return -1;
     }
     Py_DECREF(token);
-    if (Tokenizer_emit_text(self, tag))
+    if (Tokenizer_emit_string(self, tag))
         return -1;
     token = PyObject_CallObject(TagCloseClose, NULL);
     if (!token)
@@ -1907,15 +1913,12 @@ static int Tokenizer_parse_italics(Tokenizer* self)
             context = LC_STYLE_ITALICS | LC_STYLE_SECOND_PASS;
             stack = Tokenizer_parse(self, context, 1);
         }
-        else {
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            return Tokenizer_emit_text(self, *"'");
-        }
+        else
+            return Tokenizer_emit_string(self, "''");
     }
     if (!stack)
         return -1;
-    return Tokenizer_emit_style_tag(self, *"i", 2, stack);
+    return Tokenizer_emit_style_tag(self, "i", "''", stack);
 }
 
 /*
@@ -1934,11 +1937,7 @@ static int Tokenizer_parse_bold(Tokenizer* self)
             return Tokenizer_emit_text(self, *"'") ? -1 : 1;
         if (self->topstack->context & LC_STYLE_ITALICS) {
             self->topstack->context |= LC_STYLE_PASS_AGAIN;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            return Tokenizer_emit_text(self, *"'");
+            return Tokenizer_emit_string(self, "'''");
         }
         if (Tokenizer_emit_text(self, *"'"))
             return -1;
@@ -1946,7 +1945,7 @@ static int Tokenizer_parse_bold(Tokenizer* self)
     }
     if (!stack)
         return -1;
-    return Tokenizer_emit_style_tag(self, *"b", 3, stack);
+    return Tokenizer_emit_style_tag(self, "b", "'''", stack);
 }
 
 /*
@@ -1965,15 +1964,7 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
         if (BAD_ROUTE) {
             RESET_ROUTE();
             self->head = reset;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            return Tokenizer_emit_text(self, *"'");
+            return Tokenizer_emit_string(self, "'''''");
         }
         if (!stack)
             return -1;
@@ -1982,19 +1973,15 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
         if (BAD_ROUTE) {
             RESET_ROUTE();
             self->head = reset;
-            if (Tokenizer_emit_text(self, *"'"))
+            if (Tokenizer_emit_string(self, "'''"))
                 return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            if (Tokenizer_emit_text(self, *"'"))
-                return -1;
-            return Tokenizer_emit_style_tag(self, *"i", 2, stack);
+            return Tokenizer_emit_style_tag(self, "i", "''", stack);
         }
         if (!stack2)
             return -1;
         if (Tokenizer_push(self, 0))
             return -1;
-        if (Tokenizer_emit_style_tag(self, *"i", 2, stack))
+        if (Tokenizer_emit_style_tag(self, "i", "''", stack))
             return -1;
         if (Tokenizer_emit_all(self, stack2))
             return -1;
@@ -2002,7 +1989,7 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
         stack2 = Tokenizer_pop(self);
         if (!stack2)
             return -1;
-        return Tokenizer_emit_style_tag(self, *"b", 3, stack2);
+        return Tokenizer_emit_style_tag(self, "b", "'''", stack2);
     }
     if (!stack)
         return -1;
@@ -2011,17 +1998,15 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
-        if (Tokenizer_emit_text(self, *"'"))
+        if (Tokenizer_emit_string(self, "''"))
             return -1;
-        if (Tokenizer_emit_text(self, *"'"))
-            return -1;
-        return Tokenizer_emit_style_tag(self, *"b", 3, stack);
+        return Tokenizer_emit_style_tag(self, "b", "'''", stack);
     }
     if (!stack2)
         return -1;
     if (Tokenizer_push(self, 0))
         return -1;
-    if (Tokenizer_emit_style_tag(self, *"b", 3, stack))
+    if (Tokenizer_emit_style_tag(self, "b", "'''", stack))
         return -1;
     if (Tokenizer_emit_all(self, stack2))
         return -1;
@@ -2029,7 +2014,7 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
     stack2 = Tokenizer_pop(self);
     if (!stack2)
         return -1;
-    return Tokenizer_emit_style_tag(self, *"i", 2, stack2);
+    return Tokenizer_emit_style_tag(self, "i", "''", stack2);
 }
 
 /*
@@ -2103,8 +2088,6 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
 {
     PyObject *markup = Tokenizer_read(self, 0), *kwargs, *token;
     Py_UNICODE code = *PyUnicode_AS_UNICODE(markup);
-    char *html;
-    int i = 0;
 
     if (code == *";")
         self->topstack->context |= LC_DLTERM;
@@ -2123,12 +2106,8 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
-    html = GET_HTML_TAG(code);
-    while (html[i]) {
-        if (Tokenizer_emit_text(self, html[i]))
-            return -1;
-        i++;
-    }
+    if (Tokenizer_emit_string(self, GET_HTML_TAG(code)))
+        return -1;
     token = PyObject_CallObject(TagCloseSelfclose, NULL);
     if (!token)
         return -1;
@@ -2200,9 +2179,7 @@ static int Tokenizer_handle_hr(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
-    if (Tokenizer_emit_text(self, *"h"))
-        return -1;
-    if (Tokenizer_emit_text(self, *"r"))
+    if (Tokenizer_emit_string(self, "hr"))
         return -1;
     token = PyObject_CallObject(TagCloseSelfclose, NULL);
     if (!token)
