@@ -632,14 +632,12 @@ class Tokenizer(object):
         else:
             self._emit_all(tag)
 
-    def _emit_tag_open(self, tag, markup):
-        """Write the three tokens in a tag opening sequence."""
+    def _emit_style_tag(self, tag, markup, body):
+        """Write the body of a tag and the tokens that should surround it."""
         self._emit(tokens.TagOpenOpen(wiki_markup=markup))
         self._emit_text(tag)
         self._emit(tokens.TagCloseOpen())
-
-    def _emit_tag_close(self, tag):
-        """Write the three tokens in a tag closing sequence."""
+        self._emit_all(body)
         self._emit(tokens.TagOpenClose())
         self._emit_text(tag)
         self._emit(tokens.TagCloseClose())
@@ -655,10 +653,7 @@ class Tokenizer(object):
                 stack = self._parse(route.context | contexts.STYLE_SECOND_PASS)
             else:
                 return self._emit_text("''")
-
-        self._emit_tag_open("i", "''")
-        self._emit_all(stack)
-        self._emit_tag_close("i")
+        self._emit_style_tag("i", "''", stack)
 
     def _parse_bold(self):
         """Parse wiki-style bold."""
@@ -677,9 +672,7 @@ class Tokenizer(object):
                 self._emit_text("'")
                 self._parse_italics()
         else:
-            self._emit_tag_open("b", "'''")
-            self._emit_all(stack)
-            self._emit_tag_close("b")
+            self._emit_style_tag("b", "'''", stack)
 
     def _parse_italics_and_bold(self):
         """Parse wiki-style italics and bold together (i.e., five ticks)."""
@@ -700,16 +693,12 @@ class Tokenizer(object):
                 except BadRoute:
                     self._head = reset
                     self._emit_text("'''")
-                    self._emit_tag_open("i", "''")
-                    self._emit_all(stack)
-                    self._emit_tag_close("i")
+                    self._emit_style_tag("i", "''", stack)
                 else:
-                    self._emit_tag_open("b", "'''")
-                    self._emit_tag_open("i", "''")
-                    self._emit_all(stack)
-                    self._emit_tag_close("i")
+                    self._push()
+                    self._emit_style_tag("i", "''", stack)
                     self._emit_all(stack2)
-                    self._emit_tag_close("b")
+                    self._emit_style_tag("b", "'''", self._pop())
         else:
             reset = self._head
             try:
@@ -717,16 +706,12 @@ class Tokenizer(object):
             except BadRoute:
                 self._head = reset
                 self._emit_text("''")
-                self._emit_tag_open("b", "'''")
-                self._emit_all(stack)
-                self._emit_tag_close("b")
+                self._emit_style_tag("b", "'''", stack)
             else:
-                self._emit_tag_open("i", "''")
-                self._emit_tag_open("b", "'''")
-                self._emit_all(stack)
-                self._emit_tag_close("b")
+                self._push()
+                self._emit_style_tag("b", "'''", stack)
                 self._emit_all(stack2)
-                self._emit_tag_close("i")
+                self._emit_style_tag("i", "''", self._pop())
 
     def _parse_style(self):
         """Parse wiki-style formatting (``''``/``'''`` for italics/bold)."""
