@@ -1578,16 +1578,21 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
     while (1) {
         this = Tokenizer_READ(self, 0);
         next = Tokenizer_READ(self, 1);
-        self->head++;
         if (this == *"")
             return Tokenizer_fail_route(self);
         else if (this == *"<" && next == *"/") {
             if (Tokenizer_handle_tag_open_close(self))
                 return NULL;
+            self->head++;
             return Tokenizer_parse(self, 0, 0);
         }
-        if (Tokenizer_emit_char(self, this))
+        else if (this == *"&") {
+            if (Tokenizer_parse_entity(self))
+                return NULL;
+        }
+        else if (Tokenizer_emit_char(self, this))
             return NULL;
+        self->head++;
     }
 }
 

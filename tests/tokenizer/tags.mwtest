@@ -467,6 +467,27 @@ output: [TemplateOpen(), Text(text="t1"), TemplateClose(), Text(text="<nowiki>")
 
 ---
 
+name:   unparsable_entity
+label:  a HTML entity inside unparsable text is still parsed
+input:  "{{t1}}<nowiki>{{t2}}&nbsp;{{t3}}</nowiki>{{t4}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), Text(text="{{t3}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t4"), TemplateClose()]
+
+---
+
+name:   unparsable_entity_incomplete
+label:  an incomplete HTML entity inside unparsable text
+input:  "<nowiki>&</nowiki>"
+output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="&"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
+
+---
+
+name:   unparsable_entity_incomplete_2
+label:  an incomplete HTML entity inside unparsable text
+input:  "<nowiki>&"
+output: [Text(text="<nowiki>&")]
+
+---
+
 name:   single_open_close
 label:  a tag that supports being single; both an open and a close tag
 input:  "foo<li>bar{{baz}}</li>"

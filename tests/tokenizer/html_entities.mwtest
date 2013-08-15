@@ -117,6 +117,20 @@ output: [Text(text="&;")]
 
 ---
 
+name:   invalid_partial_amp_pound
+label:  invalid entities: just an ampersand, pound sign
+input:  "&#"
+output: [Text(text="&#")]
+
+---
+
+name:   invalid_partial_amp_pound_x
+label:  invalid entities: just an ampersand, pound sign, x
+input:  "&#x"
+output: [Text(text="&#x")]
+
+---
+
 name:   invalid_partial_amp_pound_semicolon
 label:  invalid entities: an ampersand, pound sign, and semicolon
 input:  "&#;"

@@ -552,14 +552,17 @@ class Tokenizer(object):
         """Handle the body of an HTML tag that is parser-blacklisted."""
         while True:
             this, next = self._read(), self._read(1)
-            self._head += 1
             if this is self.END:
                 self._fail_route()
             elif this == "<" and next == "/":
                 self._handle_tag_open_close()
+                self._head += 1
                 return self._parse(push=False)
+            elif this == "&":
+                self._parse_entity()
             else:
                 self._emit_text(this)
+            self._head += 1
 
     def _handle_single_only_tag_end(self):
         """Handle the end of an implicitly closing single-only HTML tag."""
