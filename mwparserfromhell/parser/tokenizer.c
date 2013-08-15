@@ -1697,7 +1697,7 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, const char* tag,
 {
     PyObject *markup, *kwargs;
 
-    markup = PyBytes_FromString(ticks);
+    markup = PyUnicode_FromString(ticks);
     if (!markup)
         return -1;
     kwargs = PyDict_New();
