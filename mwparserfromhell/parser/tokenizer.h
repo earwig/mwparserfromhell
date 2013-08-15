@@ -28,6 +28,7 @@ SOFTWARE.
 #include <Python.h>
 #include <math.h>
 #include <structmember.h>
+#include <bytesobject.h>
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
@@ -253,27 +254,18 @@ static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 /* More structs for creating the Tokenizer type: */
 
-static PyMethodDef
-Tokenizer_methods[] = {
+static PyMethodDef Tokenizer_methods[] = {
     {"tokenize", (PyCFunction) Tokenizer_tokenize, METH_VARARGS,
     "Build a list of tokens from a string of wikicode and return it."},
     {NULL}
 };
 
-static PyMemberDef
-Tokenizer_members[] = {
+static PyMemberDef Tokenizer_members[] = {
     {NULL}
 };
 
-static PyMethodDef
-module_methods[] = {
-    {NULL}
-};
-
-static PyTypeObject
-TokenizerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                                      /* ob_size */
+static PyTypeObject TokenizerType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_tokenizer.CTokenizer",                                /* tp_name */
     sizeof(Tokenizer),                                      /* tp_basicsize */
     0,                                                      /* tp_itemsize */
@@ -312,3 +304,12 @@ TokenizerType = {
     0,                                                      /* tp_alloc */
     Tokenizer_new,                                          /* tp_new */
 };
+
+#ifdef IS_PY3K
+static PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    "_tokenizer",
+    "Creates a list of tokens from a string of wikicode.",
+    -1, NULL, NULL, NULL, NULL, NULL
+};
+#endif

@@ -207,7 +207,7 @@ static void Tokenizer_dealloc(Tokenizer* self)
         free(this);
         this = next;
     }
-    self->ob_type->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free((PyObject*) self);
 }
 
 static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
@@ -835,7 +835,11 @@ static int Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
+#ifdef IS_PY3K
+    level = PyLong_FromSsize_t(heading->level);
+#else
     level = PyInt_FromSsize_t(heading->level);
+#endif
     if (!level) {
         Py_DECREF(heading->title);
         free(heading);
@@ -2299,30 +2303,40 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     return Tokenizer_parse(self, 0, 1);
 }
 
-static void load_entitydefs(void)
+static int load_entitydefs(void)
 {
     PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
 
+#ifdef IS_PY3K
+    tempmod = PyImport_ImportModule("html.entities");
+#else
     tempmod = PyImport_ImportModule("htmlentitydefs");
+#endif
     if (!tempmod)
-        return;
+        return -1;
     defmap = PyObject_GetAttrString(tempmod, "entitydefs");
     if (!defmap)
-        return;
+        return -1;
     Py_DECREF(tempmod);
     deflist = PyDict_Keys(defmap);
     if (!deflist)
-        return;
+        return -1;
     Py_DECREF(defmap);
     numdefs = (unsigned) PyList_GET_SIZE(defmap);
     entitydefs = calloc(numdefs + 1, sizeof(char*));
-    for (i = 0; i < numdefs; i++)
+    if (!entitydefs)
+        return -1;
+    for (i = 0; i < numdefs; i++) {
         entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
+        if (!entitydefs[i])
+            return -1;
+    }
     Py_DECREF(deflist);
+    return 0;
 }
 
-static void load_tokens(void)
+static int load_tokens(void)
 {
     PyObject *tempmod, *tokens,
              *globals = PyEval_GetGlobals(),
@@ -2332,12 +2346,12 @@ static void load_tokens(void)
     char *name = "mwparserfromhell.parser";
 
     if (!fromlist || !modname)
-        return;
+        return -1;
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
     if (!tempmod)
-        return;
+        return -1;
     tokens = PyObject_GetAttrString(tempmod, "tokens");
     Py_DECREF(tempmod);
 
@@ -2379,9 +2393,10 @@ static void load_tokens(void)
     TagCloseClose = PyObject_GetAttrString(tokens, "TagCloseClose");
 
     Py_DECREF(tokens);
+    return 0;
 }
 
-static void load_tag_defs(void)
+static int load_tag_defs(void)
 {
     PyObject *tempmod,
              *globals = PyEval_GetGlobals(),
@@ -2391,33 +2406,48 @@ static void load_tag_defs(void)
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
-        return;
+        return -1;
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
     if (!tempmod)
-        return;
+        return -1;
     tag_defs = PyObject_GetAttrString(tempmod, "tag_defs");
     Py_DECREF(tempmod);
+    return 0;
 }
 
-PyMODINIT_FUNC init_tokenizer(void)
+#ifdef IS_PY3K
+    #define INIT_ERROR return NULL
+    PyMODINIT_FUNC PyInit__tokenizer(void)
+#else
+    #define INIT_ERROR return
+    PyMODINIT_FUNC init_tokenizer(void)
+#endif
 {
     PyObject *module;
 
     TokenizerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&TokenizerType) < 0)
-        return;
-    module = Py_InitModule("_tokenizer", module_methods);
+        INIT_ERROR;
+#ifdef IS_PY3K
+    module = PyModule_Create(&module_def);
+#else
+    module = Py_InitModule("_tokenizer", NULL);
+#endif
+    if (!module)
+        INIT_ERROR;
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
     Py_INCREF(Py_True);
     PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
-
     EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
-
-    load_entitydefs();
-    load_tokens();
-    load_tag_defs();
+    if (!EMPTY || !NOARGS)
+        INIT_ERROR;
+    if (load_entitydefs() || load_tokens() || load_tag_defs())
+        INIT_ERROR;
+#ifdef IS_PY3K
+    return module;
+#endif
 }
