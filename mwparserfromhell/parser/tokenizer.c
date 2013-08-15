@@ -1017,7 +1017,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
             self->head++;
             continue;
         }
-        if (i >= 8)
+        if (i >= MAX_ENTITY_SIZE)
             FAIL_ROUTE_AND_EXIT()
         for (j = 0; j < NUM_MARKERS; j++) {
             if (this == *MARKERS[j])
@@ -2332,7 +2332,6 @@ static int load_entitydefs(void)
         if (!string)
             return -1;
         entitydefs[i] = PyBytes_AsString(string);
-        Py_DECREF(string);
 #else
         entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
 #endif
