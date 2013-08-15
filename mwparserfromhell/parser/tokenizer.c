@@ -1646,11 +1646,13 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
             }
             if (!IS_SINGLE_ONLY(name))
                 FAIL_ROUTE(0);
+            Py_DECREF(name);
             break;
         }
         Textbuffer_write(&buf, this);
         pos++;
     }
+    Textbuffer_dealloc(buf);
     if (!BAD_ROUTE) {
         tag = Tokenizer_really_parse_tag(self);
         if (!tag)
@@ -1664,7 +1666,12 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     // Set invalid=True flag of TagOpenOpen
     if (PyObject_SetAttrString(PyList_GET_ITEM(tag, 0), "invalid", Py_True))
         return -1;
-    return Tokenizer_emit_all(self, tag);
+    if (Tokenizer_emit_all(self, tag)) {
+        Py_DECREF(tag);
+        return -1;
+    }
+    Py_DECREF(tag);
+    return 0;
 }
 
 /*
@@ -1685,7 +1692,10 @@ static int Tokenizer_parse_tag(Tokenizer* self)
     if (!tag) {
         return -1;
     }
-    Tokenizer_emit_all(self, tag);
+    if (Tokenizer_emit_all(self, tag)) {
+        Py_DECREF(tag);
+        return -1;
+    }
     Py_DECREF(tag);
     return 0;
 }
