@@ -514,3 +514,10 @@ name:   hr_interruption_long
 label:  a hr that is interrupted, but the first part remains valid because it is long enough
 input:  "----x--"
 output: [TagOpenOpen(wiki_markup="----"), Text(text="hr"), TagCloseSelfclose(), Text(text="x--")]
+
+---
+
+name:   nowiki_cancel
+label:  a nowiki tag before a list causes it to not be parsed
+input:  "<nowiki />* Unordered list"
+output: [TagOpenOpen(), Text(text="nowiki"), TagCloseSelfclose(padding=" "), Text(text="* Unordered list")]
