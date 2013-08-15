@@ -16,6 +16,7 @@ Unreleased
   if you rely on any filter() methods being non-recursive by default.**
 - Added a :py:meth:`.matches` method to :py:class:`~.Wikicode` for
   page/template name comparisons.
+- The C tokenizer extension now works on Python 3 in addition to Python 2.7.
 - Various fixes and cleanup.
 
 v0.2
