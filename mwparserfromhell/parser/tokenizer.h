@@ -252,6 +252,23 @@ static PyObject* Tokenizer_parse(Tokenizer*, int, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 
+/* Macros for Python 2/3 compatibility: */
+
+#ifdef IS_PY3K
+    #define IMPORT_NAME_FUNC  PyUnicode_FromString
+    #define CREATE_MODULE     PyModule_Create(&module_def);
+    #define ENTITYDEFS_MODULE "html.entities"
+    #define INIT_FUNC_NAME    PyInit__tokenizer
+    #define INIT_ERROR        return NULL
+#else
+    #define IMPORT_NAME_FUNC  PyBytes_FromString
+    #define CREATE_MODULE     Py_InitModule("_tokenizer", NULL);
+    #define ENTITYDEFS_MODULE "htmlentitydefs"
+    #define INIT_FUNC_NAME    init_tokenizer
+    #define INIT_ERROR        return
+#endif
+
+
 /* More structs for creating the Tokenizer type: */
 
 static PyMethodDef Tokenizer_methods[] = {

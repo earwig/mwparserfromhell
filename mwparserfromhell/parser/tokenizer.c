@@ -2311,11 +2311,7 @@ static int load_entitydefs(void)
     PyObject *string;
 #endif
 
-#ifdef IS_PY3K
-    tempmod = PyImport_ImportModule("html.entities");
-#else
-    tempmod = PyImport_ImportModule("htmlentitydefs");
-#endif
+    tempmod = PyImport_ImportModule(ENTITYDEFS_MODULE);
     if (!tempmod)
         return -1;
     defmap = PyObject_GetAttrString(tempmod, "entitydefs");
@@ -2353,7 +2349,7 @@ static int load_tokens(void)
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = PyBytes_FromString("tokens");
+             *modname = IMPORT_NAME_FUNC("tokens");
     char *name = "mwparserfromhell.parser";
 
     if (!fromlist || !modname)
@@ -2413,7 +2409,7 @@ static int load_tag_defs(void)
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = PyBytes_FromString("tag_defs");
+             *modname = IMPORT_NAME_FUNC("tag_defs");
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
@@ -2428,24 +2424,14 @@ static int load_tag_defs(void)
     return 0;
 }
 
-#ifdef IS_PY3K
-    #define INIT_ERROR return NULL
-    PyMODINIT_FUNC PyInit__tokenizer(void)
-#else
-    #define INIT_ERROR return
-    PyMODINIT_FUNC init_tokenizer(void)
-#endif
+PyMODINIT_FUNC INIT_FUNC_NAME(void)
 {
     PyObject *module;
 
     TokenizerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&TokenizerType) < 0)
         INIT_ERROR;
-#ifdef IS_PY3K
-    module = PyModule_Create(&module_def);
-#else
-    module = Py_InitModule("_tokenizer", NULL);
-#endif
+    module = CREATE_MODULE;
     if (!module)
         INIT_ERROR;
     Py_INCREF(&TokenizerType);
