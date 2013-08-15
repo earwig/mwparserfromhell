@@ -210,6 +210,19 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertEqual("{{a||{{c|d={{h}}}}}}", code2)
         self.assertRaises(ValueError, code2.remove, "{{h}}", recursive=False)
 
+    def test_matches(self):
+        """test Wikicode.matches()"""
+        code1 = parse("Cleanup")
+        code2 = parse("\nstub<!-- TODO: make more specific -->")
+        self.assertTrue(code1.matches("Cleanup"))
+        self.assertTrue(code1.matches("cleanup"))
+        self.assertTrue(code1.matches("  cleanup\n"))
+        self.assertFalse(code1.matches("CLEANup"))
+        self.assertFalse(code1.matches("Blah"))
+        self.assertTrue(code2.matches("stub"))
+        self.assertTrue(code2.matches("Stub<!-- no, it's fine! -->"))
+        self.assertFalse(code2.matches("StuB"))
+
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""
         def genlist(gen):

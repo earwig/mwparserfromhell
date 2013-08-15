@@ -49,14 +49,16 @@ additional :py:class:`~.Wikicode` objects::
     template
 
 Templates can be easily modified to add, remove, or alter params.
-:py:class:`~.Wikicode` can also be treated like a list with
+:py:class:`~.Wikicode` objects can be treated like lists, with
 :py:meth:`~.Wikicode.append`, :py:meth:`~.Wikicode.insert`,
-:py:meth:`~.Wikicode.remove`, :py:meth:`~.Wikicode.replace`, and more::
+:py:meth:`~.Wikicode.remove`, :py:meth:`~.Wikicode.replace`, and more. They
+also have a :py:meth:`~.Wikicode.matches` method for comparing page or template
+names, which takes care of capitalization and whitespace::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
     >>> for template in code.filter_templates():
-    ...     if template.name == "cleanup" and not template.has_param("date"):
+    ...     if template.name.matches("Cleanup") and not template.has_param("date"):
     ...         template.add("date", "July 2012")
     ...
     >>> print code

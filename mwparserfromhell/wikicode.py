@@ -309,6 +309,21 @@ class Wikicode(StringMixIn):
         callback = lambda self, i: self.nodes.pop(i)
         self._do_search(obj, recursive, callback, self)
 
+    def matches(self, other):
+        """Do a loose equivalency test suitable for comparing page names.
+
+        *other* can be any string-like object, including
+        :py:class:`~.Wikicode`. This operation is symmetric; both sides are
+        adjusted. Specifically, whitespace and markup is stripped and the first
+        letter's case is normalized. Typical usage is
+        ``if template.name.matches("stub"): ...``.
+        """
+        this = self.strip_code().strip()
+        that = parse_anything(other).strip_code().strip()
+        if not this or not that:
+            return this == that
+        return this[0].upper() + this[1:] == that[0].upper() + that[1:]
+
     def ifilter(self, recursive=True, matches=None, flags=FLAGS,
                 forcetype=None):
         """Iterate over nodes in our list matching certain conditions.

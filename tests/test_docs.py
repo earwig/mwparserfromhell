@@ -90,7 +90,7 @@ class TestDocs(unittest.TestCase):
         text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
         code = mwparserfromhell.parse(text)
         for template in code.filter_templates():
-            if template.name == "cleanup" and not template.has_param("date"):
+            if template.name.matches("Cleanup") and not template.has_param("date"):
                 template.add("date", "July 2012")
         res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}"
         self.assertPrint(code, res)

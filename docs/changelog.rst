@@ -14,6 +14,8 @@ Unreleased
 - :py:class:`Wikicode's <.Wikicode>` :py:meth:`.filter` methods are now passed
   *recursive=True* by default instead of *False*. **This is a breaking change
   if you rely on any filter() methods being non-recursive by default.**
+- Added a :py:meth:`.matches` method to :py:class:`~.Wikicode` for
+  page/template name comparisons.
 - Various fixes and cleanup.
 
 v0.2

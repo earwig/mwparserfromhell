@@ -82,13 +82,15 @@ templates manually. This is possible because nodes can contain additional
     template
 
 Templates can be easily modified to add, remove, or alter params. ``Wikicode``
-can also be treated like a list with ``append()``, ``insert()``, ``remove()``,
-``replace()``, and more::
+objects can be treated like lists, with ``append()``, ``insert()``,
+``remove()``, ``replace()``, and more. They also have a ``matches()`` method
+for comparing page or template names, which takes care of capitalization and
+whitespace::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
     >>> for template in code.filter_templates():
-    ...     if template.name == "cleanup" and not template.has_param("date"):
+    ...     if template.name.matches("Cleanup") and not template.has_param("date"):
     ...         template.add("date", "July 2012")
     ...
     >>> print code
