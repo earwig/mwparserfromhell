@@ -2307,6 +2307,9 @@ static int load_entitydefs(void)
 {
     PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
+#ifdef IS_PY3K
+    PyObject *string;
+#endif
 
 #ifdef IS_PY3K
     tempmod = PyImport_ImportModule("html.entities");
@@ -2328,7 +2331,15 @@ static int load_entitydefs(void)
     if (!entitydefs)
         return -1;
     for (i = 0; i < numdefs; i++) {
+#ifdef IS_PY3K
+        string = PyUnicode_AsASCIIString(PyList_GET_ITEM(deflist, i));
+        if (!string)
+            return -1;
+        entitydefs[i] = PyBytes_AsString(string);
+        Py_DECREF(string);
+#else
         entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
+#endif
         if (!entitydefs[i])
             return -1;
     }
