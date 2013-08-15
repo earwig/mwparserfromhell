@@ -255,12 +255,14 @@ static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 /* Macros for Python 2/3 compatibility: */
 
 #ifdef IS_PY3K
+    #define NEW_INT_FUNC      PyLong_FromSsize_t
     #define IMPORT_NAME_FUNC  PyUnicode_FromString
     #define CREATE_MODULE     PyModule_Create(&module_def);
     #define ENTITYDEFS_MODULE "html.entities"
     #define INIT_FUNC_NAME    PyInit__tokenizer
     #define INIT_ERROR        return NULL
 #else
+    #define NEW_INT_FUNC      PyInt_FromSsize_t
     #define IMPORT_NAME_FUNC  PyBytes_FromString
     #define CREATE_MODULE     Py_InitModule("_tokenizer", NULL);
     #define ENTITYDEFS_MODULE "htmlentitydefs"

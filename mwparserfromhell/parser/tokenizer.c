@@ -835,11 +835,7 @@ static int Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
-#ifdef IS_PY3K
-    level = PyLong_FromSsize_t(heading->level);
-#else
-    level = PyInt_FromSsize_t(heading->level);
-#endif
+    level = NEW_INT_FUNC(heading->level);
     if (!level) {
         Py_DECREF(heading->title);
         free(heading);
@@ -2279,7 +2275,11 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject *text, *temp;
 
-    if (!PyArg_ParseTuple(args, "U", &text)) {
+    if (PyArg_ParseTuple(args, "U", &text)) {
+        Py_XDECREF(self->text);
+        self->text = PySequence_Fast(text, "expected a sequence");
+    }
+    else {
         const char* encoded;
         Py_ssize_t size;
         /* Failed to parse a Unicode object; try a string instead. */
@@ -2293,10 +2293,6 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         text = PySequence_Fast(temp, "expected a sequence");
         Py_XDECREF(temp);
         self->text = text;
-    }
-    else {
-        Py_XDECREF(self->text);
-        self->text = PySequence_Fast(text, "expected a sequence");
     }
     self->head = self->global = self->depth = self->cycles = 0;
     self->length = PyList_GET_SIZE(self->text);
