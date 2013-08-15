@@ -28,6 +28,7 @@ SOFTWARE.
 #include <Python.h>
 #include <math.h>
 #include <structmember.h>
+#include <bytesobject.h>
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
@@ -103,54 +104,58 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x00000007
-#define LC_TEMPLATE_NAME        0x00000001
-#define LC_TEMPLATE_PARAM_KEY   0x00000002
-#define LC_TEMPLATE_PARAM_VALUE 0x00000004
+#define LC_TEMPLATE             0x0000007
+#define LC_TEMPLATE_NAME        0x0000001
+#define LC_TEMPLATE_PARAM_KEY   0x0000002
+#define LC_TEMPLATE_PARAM_VALUE 0x0000004
 
-#define LC_ARGUMENT             0x00000018
-#define LC_ARGUMENT_NAME        0x00000008
-#define LC_ARGUMENT_DEFAULT     0x00000010
+#define LC_ARGUMENT             0x0000018
+#define LC_ARGUMENT_NAME        0x0000008
+#define LC_ARGUMENT_DEFAULT     0x0000010
 
-#define LC_WIKILINK             0x00000060
-#define LC_WIKILINK_TITLE       0x00000020
-#define LC_WIKILINK_TEXT        0x00000040
+#define LC_WIKILINK             0x0000060
+#define LC_WIKILINK_TITLE       0x0000020
+#define LC_WIKILINK_TEXT        0x0000040
 
-#define LC_HEADING              0x00001F80
-#define LC_HEADING_LEVEL_1      0x00000080
-#define LC_HEADING_LEVEL_2      0x00000100
-#define LC_HEADING_LEVEL_3      0x00000200
-#define LC_HEADING_LEVEL_4      0x00000400
-#define LC_HEADING_LEVEL_5      0x00000800
-#define LC_HEADING_LEVEL_6      0x00001000
+#define LC_HEADING              0x0001F80
+#define LC_HEADING_LEVEL_1      0x0000080
+#define LC_HEADING_LEVEL_2      0x0000100
+#define LC_HEADING_LEVEL_3      0x0000200
+#define LC_HEADING_LEVEL_4      0x0000400
+#define LC_HEADING_LEVEL_5      0x0000800
+#define LC_HEADING_LEVEL_6      0x0001000
 
-#define LC_COMMENT              0x00002000
+#define LC_TAG                  0x001E000
+#define LC_TAG_OPEN             0x0002000
+#define LC_TAG_ATTR             0x0004000
+#define LC_TAG_BODY             0x0008000
+#define LC_TAG_CLOSE            0x0010000
 
-#define LC_TAG                  0x0003C000
-#define LC_TAG_OPEN             0x00004000
-#define LC_TAG_ATTR             0x00008000
-#define LC_TAG_BODY             0x00010000
-#define LC_TAG_CLOSE            0x00020000
+#define LC_STYLE                0x01E0000
+#define LC_STYLE_ITALICS        0x0020000
+#define LC_STYLE_BOLD           0x0040000
+#define LC_STYLE_PASS_AGAIN     0x0080000
+#define LC_STYLE_SECOND_PASS    0x0100000
 
-#define LC_STYLE                0x003C0000
-#define LC_STYLE_ITALICS        0x00040000
-#define LC_STYLE_BOLD           0x00080000
-#define LC_STYLE_PASS_AGAIN     0x00100000
-#define LC_STYLE_SECOND_PASS    0x00200000
+#define LC_DLTERM               0x0200000
 
-#define LC_DLTERM               0x00400000
-
-#define LC_SAFETY_CHECK         0x1F800000
-#define LC_HAS_TEXT             0x00800000
-#define LC_FAIL_ON_TEXT         0x01000000
-#define LC_FAIL_NEXT            0x02000000
-#define LC_FAIL_ON_LBRACE       0x04000000
-#define LC_FAIL_ON_RBRACE       0x08000000
-#define LC_FAIL_ON_EQUALS       0x10000000
+#define LC_SAFETY_CHECK         0xFC00000
+#define LC_HAS_TEXT             0x0400000
+#define LC_FAIL_ON_TEXT         0x0800000
+#define LC_FAIL_NEXT            0x1000000
+#define LC_FAIL_ON_LBRACE       0x2000000
+#define LC_FAIL_ON_RBRACE       0x4000000
+#define LC_FAIL_ON_EQUALS       0x8000000
 
 /* Global contexts: */
 
 #define GL_HEADING 0x1
+
+/* Aggregate contexts: */
+
+#define AGG_FAIL   (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_TAG | LC_STYLE)
+#define AGG_UNSAFE (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
+#define AGG_DOUBLE (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
 
 /* Tag contexts: */
 
@@ -210,12 +215,17 @@ typedef struct {
 } Tokenizer;
 
 
-/* Macros for accessing Tokenizer data: */
+/* Macros related to Tokenizer functions: */
 
 #define Tokenizer_READ(self, delta) (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
 #define Tokenizer_READ_BACKWARDS(self, delta) \
                 (*PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, delta)))
 #define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
+
+#define Tokenizer_emit(self, token) Tokenizer_emit_token(self, token, 0)
+#define Tokenizer_emit_first(self, token) Tokenizer_emit_token(self, token, 1)
+#define Tokenizer_emit_kwargs(self, token, kwargs) Tokenizer_emit_token_kwargs(self, token, kwargs, 0)
+#define Tokenizer_emit_first_kwargs(self, token, kwargs) Tokenizer_emit_token_kwargs(self, token, kwargs, 1)
 
 
 /* Macros for accessing HTML tag definitions: */
@@ -242,29 +252,39 @@ static PyObject* Tokenizer_parse(Tokenizer*, int, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 
+/* Macros for Python 2/3 compatibility: */
+
+#ifdef IS_PY3K
+    #define NEW_INT_FUNC      PyLong_FromSsize_t
+    #define IMPORT_NAME_FUNC  PyUnicode_FromString
+    #define CREATE_MODULE     PyModule_Create(&module_def);
+    #define ENTITYDEFS_MODULE "html.entities"
+    #define INIT_FUNC_NAME    PyInit__tokenizer
+    #define INIT_ERROR        return NULL
+#else
+    #define NEW_INT_FUNC      PyInt_FromSsize_t
+    #define IMPORT_NAME_FUNC  PyBytes_FromString
+    #define CREATE_MODULE     Py_InitModule("_tokenizer", NULL);
+    #define ENTITYDEFS_MODULE "htmlentitydefs"
+    #define INIT_FUNC_NAME    init_tokenizer
+    #define INIT_ERROR        return
+#endif
+
+
 /* More structs for creating the Tokenizer type: */
 
-static PyMethodDef
-Tokenizer_methods[] = {
+static PyMethodDef Tokenizer_methods[] = {
     {"tokenize", (PyCFunction) Tokenizer_tokenize, METH_VARARGS,
     "Build a list of tokens from a string of wikicode and return it."},
     {NULL}
 };
 
-static PyMemberDef
-Tokenizer_members[] = {
+static PyMemberDef Tokenizer_members[] = {
     {NULL}
 };
 
-static PyMethodDef
-module_methods[] = {
-    {NULL}
-};
-
-static PyTypeObject
-TokenizerType = {
-    PyObject_HEAD_INIT(NULL)
-    0,                                                      /* ob_size */
+static PyTypeObject TokenizerType = {
+    PyVarObject_HEAD_INIT(NULL, 0)
     "_tokenizer.CTokenizer",                                /* tp_name */
     sizeof(Tokenizer),                                      /* tp_basicsize */
     0,                                                      /* tp_itemsize */
@@ -303,3 +323,12 @@ TokenizerType = {
     0,                                                      /* tp_alloc */
     Tokenizer_new,                                          /* tp_new */
 };
+
+#ifdef IS_PY3K
+static PyModuleDef module_def = {
+    PyModuleDef_HEAD_INIT,
+    "_tokenizer",
+    "Creates a list of tokens from a string of wikicode.",
+    -1, NULL, NULL, NULL, NULL, NULL
+};
+#endif
