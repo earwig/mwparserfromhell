@@ -108,8 +108,8 @@ class Wikicode(StringMixIn):
     def _do_search(self, obj, recursive, callback, context, *args, **kwargs):
         """Look within *context* for *obj*, executing *callback* if found.
 
-        If *recursive* is ``True``, we'll look within context and its
-        descendants, otherwise we'll just execute callback. We raise
+        If *recursive* is ``True``, we'll look within *context* and its
+        descendants, otherwise we'll just execute *callback*. We raise
         :py:exc:`ValueError` if *obj* isn't in our node list or context. If
         found, *callback* is passed the context, the index of the node within
         the context, and whatever were passed as ``*args`` and ``**kwargs``.
@@ -375,9 +375,8 @@ class Wikicode(StringMixIn):
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter_headings(recursive=True)
-        filtered = self.filter_headings(recursive=True, matches=matches,
-                                        flags=flags)
+        headings = self.filter_headings()
+        filtered = self.filter_headings(matches=matches, flags=flags)
         if levels:
             filtered = [head for head in filtered if head.level in levels]
 
