@@ -16,11 +16,14 @@ Unreleased
   if you rely on any filter() methods being non-recursive by default.**
 - Added a :py:meth:`.matches` method to :py:class:`~.Wikicode` for
   page/template name comparisons.
-- The *obj* param of :py:meth:`Wikicode.insert_before <.insert_before>`,
-  :py:meth:`~.insert_after`, :py:meth:`~.replace`, and :py:meth:`~.remove` now
-  accepts :py:class:`~.Wikicode` objects and strings representing parts of
-  wikitext, instead of just nodes. These methods also make all possible
-  substitutions instead of just one.
+- The *obj* param of :py:meth:`Wikicode.insert_before() <.insert_before>`,
+  :py:meth:`~.insert_after`, :py:meth:`~.Wikicode.replace`, and
+  :py:meth:`~.Wikicode.remove` now accepts :py:class:`~.Wikicode` objects and
+  strings representing parts of wikitext, instead of just nodes. These methods
+  also make all possible substitutions instead of just one.
+- Renamed :py:meth:`Template.has_param() <.has_param>` to
+  :py:meth:`~.Template.has` for consistency with :py:class:`~.Template`\ 's
+  other methods; :py:meth:`~.has_param` is now an alias.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
 - Various fixes and cleanup.
 

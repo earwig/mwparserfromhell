@@ -90,7 +90,7 @@ whitespace::
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
     >>> for template in code.filter_templates():
-    ...     if template.name.matches("Cleanup") and not template.has_param("date"):
+    ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
     >>> print code

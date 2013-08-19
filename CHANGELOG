@@ -11,6 +11,8 @@ v0.3 (unreleased):
   remove() now accepts other Wikicode objects and strings representing parts of
   wikitext, instead of just nodes. These methods also make all possible
   substitutions instead of just one.
+- Renamed Template.has_param() to has() for consistency with Template's other
+  methods; has_param() is now an alias.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
 - Various fixes and cleanup.
 

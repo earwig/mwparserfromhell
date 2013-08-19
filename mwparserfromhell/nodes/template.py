@@ -164,7 +164,7 @@ class Template(Node):
     def name(self, value):
         self._name = parse_anything(value)
 
-    def has_param(self, name, ignore_empty=True):
+    def has(self, name, ignore_empty=True):
         """Return ``True`` if any parameter in the template is named *name*.
 
         With *ignore_empty*, ``False`` will be returned even if the template
@@ -179,6 +179,9 @@ class Template(Node):
                     continue
                 return True
         return False
+
+    has_param = lambda self, *args, **kwargs: self.has(*args, **kwargs)
+    has_param.__doc__ = "Alias for :py:meth:`has`."
 
     def get(self, name):
         """Get the parameter whose name is *name*.
@@ -226,7 +229,7 @@ class Template(Node):
         name, value = parse_anything(name), parse_anything(value)
         self._surface_escape(value, "|")
 
-        if self.has_param(name):
+        if self.has(name):
             self.remove(name, keep_field=True)
             existing = self.get(name)
             if showkey is not None:
