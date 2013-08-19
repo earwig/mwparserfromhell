@@ -7,6 +7,10 @@ v0.3 (unreleased):
   of False. This is a breaking change if you rely on any filter() methods being
   non-recursive by default.
 - Added a matches() method to Wikicode for page/template name comparisons.
+- The 'obj' param of Wikicode.insert_before(), insert_after(), replace(), and
+  remove() now accepts other Wikicode objects and strings representing parts of
+  wikitext, instead of just nodes. These methods also make all possible
+  substitutions instead of just one.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
 - Various fixes and cleanup.
 
