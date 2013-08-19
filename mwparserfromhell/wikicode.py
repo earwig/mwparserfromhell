@@ -129,10 +129,12 @@ class Wikicode(StringMixIn):
                     i += len(obj.nodes) - 1
             elif recursive:
                 contexts = node.__iternodes__(self._get_all_nodes)
-                for code in {ctx for ctx, child in contexts}:
-                    if code and obj in code:
+                processed = []
+                for code in (ctx for ctx, child in contexts):
+                    if code and code not in processed and obj in code:
                         search = self._do_search(obj, recursive, code, literal)
                         results.extend(search)
+                        processed.append(code)
             i += 1
 
         if not results and not literal and recursive:
