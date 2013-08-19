@@ -30,7 +30,7 @@ into the :py:class`~.Wikicode` tree by the :py:class:`~.Builder`.
 
 from __future__ import unicode_literals
 
-from ..compat import basestring, py3k
+from ..compat import py3k, str
 
 __all__ = ["Token"]
 
@@ -43,7 +43,7 @@ class Token(object):
     def __repr__(self):
         args = []
         for key, value in self._kwargs.items():
-            if isinstance(value, basestring) and len(value) > 100:
+            if isinstance(value, str) and len(value) > 100:
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
                 args.append(key + "=" + repr(value))

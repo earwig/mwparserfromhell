@@ -48,7 +48,7 @@ class Attribute(StringMixIn):
 
     def __unicode__(self):
         base = self.pad_first + str(self.name) + self.pad_before_eq
-        if self.value:
+        if self.value is not None:
             if self.quoted:
                 return base + '="' + self.pad_after_eq + str(self.value) + '"'
             return base + "=" + self.pad_after_eq + str(self.value)
@@ -100,7 +100,7 @@ class Attribute(StringMixIn):
 
     @value.setter
     def value(self, newval):
-        self._value = parse_anything(newval)
+        self._value = None if newval is None else parse_anything(newval)
 
     @quoted.setter
     def quoted(self, value):

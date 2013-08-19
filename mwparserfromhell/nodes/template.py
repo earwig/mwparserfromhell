@@ -26,7 +26,7 @@ import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
-from ..compat import basestring, str
+from ..compat import str
 from ..utils import parse_anything
 
 __all__ = ["Template"]
@@ -84,7 +84,7 @@ class Template(Node):
         replacement = str(HTMLEntity(value=ord(char)))
         for node in code.filter_text(recursive=False):
             if char in node:
-                code.replace(node, node.replace(char, replacement))
+                code.replace(node, node.replace(char, replacement), False)
 
     def _blank_param_value(self, value):
         """Remove the content from *value* while keeping its whitespace.
@@ -170,9 +170,9 @@ class Template(Node):
         With *ignore_empty*, ``False`` will be returned even if the template
         contains a parameter with the name *name*, if the parameter's value
         is empty. Note that a template may have multiple parameters with the
-        same name.
+        same name, but only the last one is read by the MediaWiki parser.
         """
-        name = name.strip() if isinstance(name, basestring) else str(name)
+        name = str(name).strip()
         for param in self.params:
             if param.name.strip() == name:
                 if ignore_empty and not param.value.strip():
@@ -191,7 +191,7 @@ class Template(Node):
         parameters can have the same name, we'll return the last match, since
         the last parameter is the only one read by the MediaWiki parser.
         """
-        name = name.strip() if isinstance(name, basestring) else str(name)
+        name = str(name).strip()
         for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
@@ -294,7 +294,7 @@ class Template(Node):
         the first instance if none have dependents, otherwise the one with
         dependents will be kept).
         """
-        name = name.strip() if isinstance(name, basestring) else str(name)
+        name = str(name).strip()
         removed = False
         to_remove = []
         for i, param in enumerate(self.params):

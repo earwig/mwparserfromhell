@@ -40,6 +40,8 @@ class TestAttribute(TreeEqualityTestCase):
         self.assertEqual(' foo="bar"', str(node2))
         node3 = Attribute(wraptext("a"), wraptext("b"), False, "", " ", "   ")
         self.assertEqual("a =   b", str(node3))
+        node4 = Attribute(wraptext("a"), wrap([]), False, " ", "", " ")
+        self.assertEqual(" a= ", str(node4))
 
     def test_name(self):
         """test getter/setter for the name attribute"""
@@ -56,6 +58,8 @@ class TestAttribute(TreeEqualityTestCase):
         self.assertIs(value, node.value)
         node.value = "{{bar}}"
         self.assertWikicodeEqual(wrap([Template(wraptext("bar"))]), node.value)
+        node.value = None
+        self.assertIs(None, node.value)
 
     def test_quoted(self):
         """test getter/setter for the quoted attribute"""
