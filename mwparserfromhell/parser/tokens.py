@@ -84,6 +84,10 @@ WikilinkOpen = make("WikilinkOpen")                                 # [[
 WikilinkSeparator = make("WikilinkSeparator")                       # |
 WikilinkClose = make("WikilinkClose")                               # ]]
 
+ExternalLinkOpen = make("ExternalLinkOpen")                         # [
+ExternalLinkSeparator = make("ExternalLinkSeparator")               #
+ExternalLinkClose = make("ExternalLinkClose")                       # ]
+
 HTMLEntityStart = make("HTMLEntityStart")                           # &
 HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
 HTMLEntityHex = make("HTMLEntityHex")                               # x
@@ -103,9 +107,5 @@ TagCloseOpen = make("TagCloseOpen")                                 # >
 TagCloseSelfclose = make("TagCloseSelfclose")                       # />
 TagOpenClose = make("TagOpenClose")                                 # </
 TagCloseClose = make("TagCloseClose")                               # >
-
-ExternalLinkOpen = make("ExternalLinkOpen")                         # [
-ExternalLinkSeparator = make("ExternalLinkSeparator")               #
-ExternalLinkClose = make("ExternalLinkClose")                       # ]
 
 del make

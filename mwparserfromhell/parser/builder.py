@@ -142,6 +142,22 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
+    def _handle_external_link(self, token):
+        """Handle when an external link is at the head of the tokens."""
+        brackets, url = token.brackets, None
+        self._push()
+        while self._tokens:
+            token = self._tokens.pop()
+            if isinstance(token, tokens.ExternalLinkSeparator):
+                url = self._pop()
+                self._push()
+            elif isinstance(token, tokens.ExternalLinkClose):
+                if url is not None:
+                    return ExternalLink(url, self._pop(), brackets)
+                return ExternalLink(self._pop(), brackets=brackets)
+            else:
+                self._write(self._handle_token(token))
+
     def _handle_entity(self):
         """Handle a case where an HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
@@ -234,22 +250,6 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
-    def _handle_external_link(self, token):
-        """Handle when an external link is at the head of the tokens."""
-        brackets, url = token.brackets, None
-        self._push()
-        while self._tokens:
-            token = self._tokens.pop()
-            if isinstance(token, tokens.ExternalLinkSeparator):
-                url = self._pop()
-                self._push()
-            elif isinstance(token, tokens.ExternalLinkClose):
-                if url is not None:
-                    return ExternalLink(url, self._pop(), brackets)
-                return ExternalLink(self._pop(), brackets=brackets)
-            else:
-                self._write(self._handle_token(token))
-
     def _handle_token(self, token):
         """Handle a single token."""
         if isinstance(token, tokens.Text):
@@ -260,6 +260,8 @@ class Builder(object):
             return self._handle_argument()
         elif isinstance(token, tokens.WikilinkOpen):
             return self._handle_wikilink()
+        elif isinstance(token, tokens.ExternalLinkOpen):
+            return self._handle_external_link(token)
         elif isinstance(token, tokens.HTMLEntityStart):
             return self._handle_entity()
         elif isinstance(token, tokens.HeadingStart):
@@ -268,8 +270,6 @@ class Builder(object):
             return self._handle_comment()
         elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
-        elif isinstance(token, tokens.ExternalLinkOpen):
-            return self._handle_external_link(token)
 
     def build(self, tokenlist):
         """Build a Wikicode object from a list tokens and return it."""
