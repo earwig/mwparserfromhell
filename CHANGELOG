@@ -1,8 +1,10 @@
 v0.3 (unreleased):
 
-- Added complete support for HTML Tags, along with appropriate unit tests. This
-  includes forms like <ref>foo</ref>, <ref name="bar"/>, and wiki-markup tags
-  like bold ('''), italics (''), and lists (*, #, ; and :).
+- Added complete support for HTML Tags, including forms like <ref>foo</ref>,
+  <ref name="bar"/>, and wiki-markup tags like bold ('''), italics (''), and
+  lists (*, #, ; and :).
+- Added support for ExternalLinks (http://example.com/ and
+  [http://example.com/ Example]).
 - Wikicode's filter methods are now passed 'recursive=True' by default instead
   of False. This is a breaking change if you rely on any filter() methods being
   non-recursive by default.
