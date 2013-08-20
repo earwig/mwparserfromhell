@@ -104,4 +104,8 @@ TagCloseSelfclose = make("TagCloseSelfclose")                       # />
 TagOpenClose = make("TagOpenClose")                                 # </
 TagCloseClose = make("TagCloseClose")                               # >
 
+ExternalLinkOpen = make("ExternalLinkOpen")                         # [
+ExternalLinkSeparator = make("ExternalLinkSeparator")               #
+ExternalLinkClose = make("ExternalLinkClose")                       # ]
+
 del make
