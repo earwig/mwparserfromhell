@@ -30,6 +30,7 @@ from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
 agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
+agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, True, a, b, c)
 agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, True, a, b, c)
 
 class TestTag(TreeEqualityTestCase):
@@ -223,6 +224,92 @@ class TestTag(TreeEqualityTestCase):
         parsed = wrap([Text("ref "), Template(wraptext("ignore me"))])
         self.assertWikicodeEqual(parsed, node.closing_tag)
         self.assertEqual("<ref>foobar</ref {{ignore me}}>", node)
+
+    def test_has(self):
+        """test Tag.has()"""
+        node = Tag(wraptext("ref"), wraptext("cite"), [agen("name", "foo")])
+        self.assertTrue(node.has("name"))
+        self.assertTrue(node.has("  name  "))
+        self.assertTrue(node.has(wraptext("name")))
+        self.assertFalse(node.has("Name"))
+        self.assertFalse(node.has("foo"))
+
+        attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
+                 agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+        node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
+        self.assertTrue(node2.has("id"))
+        self.assertTrue(node2.has("class"))
+        self.assertTrue(node2.has(attrs[1].pad_first + str(attrs[1].name) +
+                                  attrs[1].pad_before_eq))
+        self.assertTrue(node2.has(attrs[3]))
+        self.assertTrue(node2.has(str(attrs[3])))
+        self.assertFalse(node2.has("idclass"))
+        self.assertFalse(node2.has("id class"))
+        self.assertFalse(node2.has("id=foo"))
+
+    def test_get(self):
+        """test Tag.get()"""
+        attrs = [agen("name", "foo")]
+        node = Tag(wraptext("ref"), wraptext("cite"), attrs)
+        self.assertIs(attrs[0], node.get("name"))
+        self.assertIs(attrs[0], node.get("  name  "))
+        self.assertIs(attrs[0], node.get(wraptext("name")))
+        self.assertRaises(ValueError, node.get, "Name")
+        self.assertRaises(ValueError, node.get, "foo")
+
+        attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
+                 agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+        node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
+        self.assertIs(attrs[0], node2.get("id"))
+        self.assertIs(attrs[1], node2.get("class"))
+        self.assertIs(attrs[1], node2.get(
+            attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq))
+        self.assertIs(attrs[3], node2.get(attrs[3]))
+        self.assertIs(attrs[3], node2.get(str(attrs[3])))
+        self.assertIs(attrs[3], node2.get(" foo"))
+        self.assertRaises(ValueError, node2.get, "idclass")
+        self.assertRaises(ValueError, node2.get, "id class")
+        self.assertRaises(ValueError, node2.get, "id=foo")
+
+    def test_add(self):
+        """test Tag.add()"""
+        node = Tag(wraptext("ref"), wraptext("cite"))
+        node.add("name", "value")
+        node.add("name", "value", quoted=False)
+        node.add("name")
+        node.add(1, False)
+        node.add("style", "{{foobar}}")
+        node.add("name", "value", True, "\n", " ", "   ")
+        attr1 = ' name="value"'
+        attr2 = " name=value"
+        attr3 = " name"
+        attr4 = ' 1="False"'
+        attr5 = ' style="{{foobar}}"'
+        attr6 = '\nname =   "value"'
+        self.assertEqual(attr1, node.attributes[0])
+        self.assertEqual(attr2, node.attributes[1])
+        self.assertEqual(attr3, node.attributes[2])
+        self.assertEqual(attr4, node.attributes[3])
+        self.assertEqual(attr5, node.attributes[4])
+        self.assertEqual(attr6, node.attributes[5])
+        self.assertEqual(attr6, node.get("name"))
+        self.assertWikicodeEqual(wrap([Template(wraptext("foobar"))]),
+                                 node.attributes[4].value)
+        self.assertEqual("".join(("<ref", attr1, attr2, attr3, attr4, attr5,
+                                  attr6, ">cite</ref>")), node)
+
+    def test_remove(self):
+        """test Tag.remove()"""
+        attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
+                 agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+        node = Tag(wraptext("div"), attrs=attrs, self_closing=True)
+        node.remove("class")
+        self.assertEqual('<div id="foo" foo="bar" foo  \n />', node)
+        node.remove("foo")
+        self.assertEqual('<div id="foo"/>', node)
+        self.assertRaises(ValueError, node.remove, "foo")
+        node.remove("id")
+        self.assertEqual('<div/>', node)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
