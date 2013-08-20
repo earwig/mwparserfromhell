@@ -23,6 +23,7 @@
 from __future__ import unicode_literals
 
 from . import Node, Text
+from .extras import Attribute
 from ..compat import str
 from ..tag_defs import is_visible
 from ..utils import parse_anything
@@ -216,3 +217,56 @@ class Tag(Node):
     @closing_tag.setter
     def closing_tag(self, value):
         self._closing_tag = parse_anything(value)
+
+    def has(self, name):
+        """Return whether any attribute in the tag has the given *name*.
+
+        Note that a tag may have multiple attributes with the same name, but
+        only the last one is read by the MediaWiki parser.
+        """
+        for attr in self.attributes:
+            if attr.name == name.strip():
+                return True
+        return False
+
+    def get(self, name):
+        """Get the attribute with the given *name*.
+
+        The returned object is a :py:class:`~.Attribute` instance. Raises
+        :py:exc:`ValueError` if no attribute has this name. Since multiple
+        attributes can have the same name, we'll return the last match, since
+        all but the last are ignored by the MediaWiki parser.
+        """
+        for attr in reversed(self.attributes):
+            if attr.name == name.strip():
+                return attr
+        raise ValueError(name)
+
+    def add(self, name, value=None, quoted=True, pad_first=" ",
+            pad_before_eq="", pad_after_eq=""):
+        """Add an attribute with the given *name* and *value*.
+
+        *name* and *value* can be anything parasable by
+        :py:func:`.utils.parse_anything`; *value* can be omitted if the
+        attribute is valueless. *quoted* is a bool telling whether to wrap the
+        *value* in double quotes (this is recommended). *pad_first*,
+        *pad_before_eq*, and *pad_after_eq* are whitespace used as padding
+        before the name, before the equal sign (or after the name if no value),
+        and after the equal sign (ignored if no value), respectively.
+        """
+        if value is not None:
+            value = parse_anything(value)
+        attr = Attribute(parse_anything(name), value, quoted)
+        attr.pad_first = pad_first
+        attr.pad_before_eq = pad_before_eq
+        attr.pad_after_eq = pad_after_eq
+        self.attributes.append(attr)
+        return attr
+
+    def remove(self, name):
+        """Remove all attributes with the given *name*."""
+        attrs = [attr for attr in self.attributes if attr.name == name.strip()]
+        if not attrs:
+            raise ValueError(name)
+        for attr in attrs:
+            self.attributes.remove(attr)
