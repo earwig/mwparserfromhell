@@ -47,12 +47,13 @@ class Attribute(StringMixIn):
         self._pad_after_eq = pad_after_eq
 
     def __unicode__(self):
-        base = self.pad_first + str(self.name) + self.pad_before_eq
+        result = self.pad_first + str(self.name) + self.pad_before_eq
         if self.value is not None:
+            result += "=" + self.pad_after_eq
             if self.quoted:
-                return base + '="' + self.pad_after_eq + str(self.value) + '"'
-            return base + "=" + self.pad_after_eq + str(self.value)
-        return base
+                return result + '"' + str(self.value) + '"'
+            return result + str(self.value)
+        return result
 
     def _set_padding(self, attr, value):
         """Setter for the value of a padding attribute."""

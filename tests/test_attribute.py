@@ -38,6 +38,8 @@ class TestAttribute(TreeEqualityTestCase):
         self.assertEqual(" foo", str(node))
         node2 = Attribute(wraptext("foo"), wraptext("bar"))
         self.assertEqual(' foo="bar"', str(node2))
+        node3 = Attribute(wraptext("a"), wraptext("b"), True, "", " ", "   ")
+        self.assertEqual('a =   "b"', str(node3))
         node3 = Attribute(wraptext("a"), wraptext("b"), False, "", " ", "   ")
         self.assertEqual("a =   b", str(node3))
         node4 = Attribute(wraptext("a"), wrap([]), False, " ", "", " ")
