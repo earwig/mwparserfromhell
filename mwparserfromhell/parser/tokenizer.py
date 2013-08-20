@@ -311,6 +311,11 @@ class Tokenizer(object):
         self._head += 1
         return self._pop()
 
+    def _parse_external_link(self, brackets):
+        """Parse an external link at the head of the wikicode string."""
+        self._emit_text(self._read())
+        # raise NotImplementedError()
+
     def _parse_heading(self):
         """Parse a section heading at the head of the wikicode string."""
         self._global |= contexts.GL_HEADING
@@ -898,8 +903,8 @@ class Tokenizer(object):
                     return self._handle_argument_end()
                 else:
                     self._emit_text("}")
-            elif this == next == "[":
-                if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
+            elif this == next == "[" and self._can_recurse():
+                if not self._context & contexts.INVALID_LINK:
                     self._parse_wikilink()
                 else:
                     self._emit_text("[")
@@ -907,6 +912,11 @@ class Tokenizer(object):
                 self._handle_wikilink_separator()
             elif this == next == "]" and self._context & contexts.WIKILINK:
                 return self._handle_wikilink_end()
+            elif this == "[" and not self._context & contexts.INVALID_LINK:  ## or this == ":"
+                if self._can_recurse():
+                    self._parse_external_link(brackets=this == "[")
+                else:
+                    self._emit_text("[")
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
@@ -928,8 +938,8 @@ class Tokenizer(object):
                     self._handle_tag_open_close()
                 else:
                     self._handle_invalid_tag_start()
-            elif this == "<":
-                if not self._context & contexts.TAG_CLOSE and self._can_recurse():
+            elif this == "<" and not self._context & contexts.TAG_CLOSE:
+                if self._can_recurse():
                     self._parse_tag()
                 else:
                     self._emit_text("<")

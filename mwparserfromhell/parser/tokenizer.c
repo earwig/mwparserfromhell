@@ -2192,9 +2192,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
             if (Tokenizer_emit_char(self, this))
                 return NULL;
         }
-        else if (this == next && next == *"[") {
-            if (!(this_context & LC_WIKILINK_TITLE) &&
-                                                Tokenizer_CAN_RECURSE(self)) {
+        else if (this == next && next == *"[" && Tokenizer_CAN_RECURSE(self)) {
+            if (!(this_context & AGG_INVALID_LINK)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
             }
@@ -2243,9 +2242,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
                     return NULL;
             }
         }
-        else if (this == *"<") {
-            if (!(this_context & LC_TAG_CLOSE) &&
-                                                Tokenizer_CAN_RECURSE(self)) {
+        else if (this == *"<" && !(this_context & LC_TAG_CLOSE)) {
+            if (Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_tag(self))
                     return NULL;
             }
@@ -2388,6 +2386,11 @@ static int load_tokens(void)
     WikilinkOpen = PyObject_GetAttrString(tokens, "WikilinkOpen");
     WikilinkSeparator = PyObject_GetAttrString(tokens, "WikilinkSeparator");
     WikilinkClose = PyObject_GetAttrString(tokens, "WikilinkClose");
+
+    ExternalLinkOpen = PyObject_GetAttrString(tokens, "ExternalLinkOpen");
+    ExternalLinkSeparator = PyObject_GetAttrString(tokens,
+                                                   "ExternalLinkSeparator");
+    ExternalLinkClose = PyObject_GetAttrString(tokens, "ExternalLinkClose");
 
     HTMLEntityStart = PyObject_GetAttrString(tokens, "HTMLEntityStart");
     HTMLEntityNumeric = PyObject_GetAttrString(tokens, "HTMLEntityNumeric");

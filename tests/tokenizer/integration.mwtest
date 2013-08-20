@@ -12,6 +12,13 @@ output: [TemplateOpen(), ArgumentOpen(), ArgumentOpen(), Text(text="foo"), Argum
 
 ---
 
+name:   link_in_template_name
+label:  a wikilink inside a template name, which breaks the template
+input:  "{{foo[[bar]]}}"
+output: [Text(text="{{foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="}}")]
+
+---
+
 name:   rich_heading
 label:  a heading with templates/wikilinks in it
 input:  "== Head{{ing}} [[with]] {{{funky|{{stuf}}}}} =="
