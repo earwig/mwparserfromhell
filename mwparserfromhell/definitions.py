@@ -27,7 +27,7 @@ from __future__ import unicode_literals
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
            "is_single_only", "is_scheme"]
 
-URL_SCHEMES = {
+URI_SCHEMES = {
     # [mediawiki/core.git]/includes/DefaultSettings.php @ 374a0ad943
     "http": True, "https": True, "ftp": True, "ftps": True, "ssh": True,
     "sftp": True, "irc": True, "ircs": True, "xmpp": False, "sip": False,
@@ -83,6 +83,7 @@ def is_single_only(tag):
 
 def is_scheme(scheme, slashes=True):
     """Return whether *scheme* is valid for external links."""
+    scheme = scheme.lower()
     if slashes:
-        return scheme in URL_SCHEMES
-    return scheme in URL_SCHEMES and not URL_SCHEMES[scheme]
+        return scheme in URI_SCHEMES
+    return scheme in URI_SCHEMES and not URI_SCHEMES[scheme]
