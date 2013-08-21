@@ -25,9 +25,9 @@
 from __future__ import unicode_literals
 
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
-           "is_single_only", "is_protocol"]
+           "is_single_only", "is_scheme"]
 
-URL_PROTOCOLS = {
+URL_SCHEMES = {
     # [mediawiki/core.git]/includes/DefaultSettings.php @ 374a0ad943
     "http": True, "https": True, "ftp": True, "ftps": True, "ssh": True,
     "sftp": True, "irc": True, "ircs": True, "xmpp": False, "sip": False,
@@ -81,8 +81,8 @@ def is_single_only(tag):
     """Return whether or not the given *tag* must exist without a close tag."""
     return tag.lower() in SINGLE_ONLY
 
-def is_protocol(protocol, slashes=True):
-    """Return whether *protcol* is valid for external links."""
+def is_scheme(scheme, slashes=True):
+    """Return whether *scheme* is valid for external links."""
     if slashes:
-        return protocol in URL_PROTOCOLS
-    return protocol in URL_PROTOCOLS and not URL_PROTOCOLS[protocol]
+        return scheme in URL_SCHEMES
+    return scheme in URL_SCHEMES and not URL_SCHEMES[scheme]
