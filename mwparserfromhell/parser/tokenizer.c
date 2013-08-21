@@ -37,12 +37,12 @@ static int heading_level_from_context(int n)
 }
 
 /*
-    Call the given function in tag_defs, using 'tag' as a parameter, and return
-    its output as a bool.
+    Call the given function in definitions.py, using 'tag' as a parameter, and
+    return its output as a bool.
 */
-static int call_tag_def_func(const char* funcname, PyObject* tag)
+static int call_def_func(const char* funcname, PyObject* tag)
 {
-    PyObject* func = PyObject_GetAttrString(tag_defs, funcname);
+    PyObject* func = PyObject_GetAttrString(definitions, funcname);
     PyObject* result = PyObject_CallFunctionObjArgs(func, tag, NULL);
     int ans = (result == Py_True) ? 1 : 0;
 
@@ -2416,13 +2416,13 @@ static int load_tokens(void)
     return 0;
 }
 
-static int load_tag_defs(void)
+static int load_definitions(void)
 {
     PyObject *tempmod,
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("tag_defs");
+             *modname = IMPORT_NAME_FUNC("definitions");
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
@@ -2432,7 +2432,7 @@ static int load_tag_defs(void)
     Py_DECREF(fromlist);
     if (!tempmod)
         return -1;
-    tag_defs = PyObject_GetAttrString(tempmod, "tag_defs");
+    definitions = PyObject_GetAttrString(tempmod, "definitions");
     Py_DECREF(tempmod);
     return 0;
 }
@@ -2455,7 +2455,7 @@ PyMODINIT_FUNC INIT_FUNC_NAME(void)
     NOARGS = PyTuple_New(0);
     if (!EMPTY || !NOARGS)
         INIT_ERROR;
-    if (load_entitydefs() || load_tokens() || load_tag_defs())
+    if (load_entitydefs() || load_tokens() || load_definitions())
         INIT_ERROR;
 #ifdef IS_PY3K
     return module;

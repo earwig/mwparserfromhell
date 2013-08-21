@@ -62,7 +62,7 @@ static char** entitydefs;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;
-static PyObject* tag_defs;
+static PyObject* definitions;
 
 
 /* Tokens: */
@@ -241,9 +241,9 @@ typedef struct {
 /* Macros for accessing HTML tag definitions: */
 
 #define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
-#define IS_PARSABLE(tag) (call_tag_def_func("is_parsable", tag))
-#define IS_SINGLE(tag) (call_tag_def_func("is_single", tag))
-#define IS_SINGLE_ONLY(tag) (call_tag_def_func("is_single_only", tag))
+#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag))
+#define IS_SINGLE(tag) (call_def_func("is_single", tag))
+#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag))
 
 
 /* Function prototypes: */

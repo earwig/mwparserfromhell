@@ -20,7 +20,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Contains data regarding certain HTML tags."""
+"""Contains data about certain markup, like HTML tags and external links."""
 
 from __future__ import unicode_literals
 

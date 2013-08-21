@@ -25,7 +25,7 @@ from __future__ import unicode_literals
 from . import Node, Text
 from .extras import Attribute
 from ..compat import str
-from ..tag_defs import is_visible
+from ..definitions import is_visible
 from ..utils import parse_anything
 
 __all__ = ["Tag"]
@@ -152,7 +152,7 @@ class Tag(Node):
         This makes the tag look like a lone close tag. It is technically
         invalid and is only parsable Wikicode when the tag itself is
         single-only, like ``<br>`` and ``<img>``. See
-        :py:func:`.tag_defs.is_single_only`.
+        :py:func:`.definitions.is_single_only`.
         """
         return self._invalid
 
@@ -161,7 +161,7 @@ class Tag(Node):
         """Whether the tag is implicitly self-closing, with no ending slash.
 
         This is only possible for specific "single" tags like ``<br>`` and
-        ``<li>``. See :py:func:`.tag_defs.is_single`. This field only has an
+        ``<li>``. See :py:func:`.definitions.is_single`. This field only has an
         effect if :py:attr:`self_closing` is also ``True``.
         """
         return self._implicit

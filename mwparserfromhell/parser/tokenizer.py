@@ -26,7 +26,7 @@ import re
 
 from . import contexts, tokens
 from ..compat import htmlentities
-from ..tag_defs import get_html_tag, is_parsable, is_single, is_single_only
+from ..definitions import get_html_tag, is_parsable, is_single, is_single_only
 
 __all__ = ["Tokenizer"]
 
@@ -60,7 +60,7 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
-               ":", "/", "-", "\n", END]
+               ":", "/", "-", "\n", START, END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
@@ -311,10 +311,30 @@ class Tokenizer(object):
         self._head += 1
         return self._pop()
 
+    def _really_parse_external_link(self, brackets):
+        """Really parse an external link."""
+        # link = self._parse(contexts.EXT_LINK_URL)
+        raise BadRoute()
+
     def _parse_external_link(self, brackets):
         """Parse an external link at the head of the wikicode string."""
-        self._emit_text(self._read())
-        # raise NotImplementedError()
+        reset = self._head
+        self._head += 1
+        try:
+            bad_context = self._context & contexts.INVALID_LINK
+            if bad_context or not self._can_recurse():
+                raise BadRoute()
+            link = self._really_parse_external_link(brackets)
+        except BadRoute:
+            self._head = reset
+            if not brackets and self._context & contexts.DL_TERM:
+                self._handle_dl_term()
+            else:
+                self._emit_text(self._read())
+        else:
+            self._emit(tokens.ExternalLinkOpen(brackets))
+            self._emit_all(link)
+            self._emit(tokens.ExternalLinkClose())
 
     def _parse_heading(self):
         """Parse a section heading at the head of the wikicode string."""
@@ -912,11 +932,10 @@ class Tokenizer(object):
                 self._handle_wikilink_separator()
             elif this == next == "]" and self._context & contexts.WIKILINK:
                 return self._handle_wikilink_end()
-            elif this == "[" and not self._context & contexts.INVALID_LINK:  ## or this == ":"
-                if self._can_recurse():
-                    self._parse_external_link(brackets=this == "[")
-                else:
-                    self._emit_text("[")
+            elif this == "[":
+                self._parse_external_link(True)
+            elif this == ":" and self._read(-1) not in self.MARKERS:
+                self._parse_external_link(False)
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
