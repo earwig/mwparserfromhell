@@ -25,7 +25,17 @@
 from __future__ import unicode_literals
 
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
-           "is_single_only"]
+           "is_single_only", "is_protocol"]
+
+URL_PROTOCOLS = {
+    # [mediawiki/core.git]/includes/DefaultSettings.php @ 374a0ad943
+    "http": True, "https": True, "ftp": True, "ftps": True, "ssh": True,
+    "sftp": True, "irc": True, "ircs": True, "xmpp": False, "sip": False,
+    "sips": False, "gopher": True, "telnet": True, "nntp": True,
+    "worldwind": True, "mailto": False, "tel": False, "sms": False,
+    "news": False, "svn": True, "git": True, "mms": True, "bitcoin": False,
+    "magnet": False, "urn": False, "geo": False
+}
 
 PARSER_BLACKLIST = [
     # enwiki extensions @ 2013-06-28
@@ -70,3 +80,9 @@ def is_single(tag):
 def is_single_only(tag):
     """Return whether or not the given *tag* must exist without a close tag."""
     return tag.lower() in SINGLE_ONLY
+
+def is_protocol(protocol, slashes=True):
+    """Return whether *protcol* is valid for external links."""
+    if slashes:
+        return protocol in URL_PROTOCOLS
+    return protocol in URL_PROTOCOLS and not URL_PROTOCOLS[protocol]
