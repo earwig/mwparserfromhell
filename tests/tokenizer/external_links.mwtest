@@ -146,9 +146,9 @@ output: [ExternalLinkOpen(brackets=True), Text(text="http://example.(com)"), Ext
 ---
 
 name:   brackets_open_bracket_inside
-label:  an open bracket inside a bracket-enclosed link that causes it to switch to the title context abruptly
+label:  an open bracket inside a bracket-enclosed link that is also included
 input:  "[http://foobar[baz.com Example]"
-output: [ExternalLinkOpen(brackets=True), Text(text="http://foobar"), ExternalLinkSeparator(), Text(text="[baz.com Example"), ExternalLinkClose()]
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foobar[baz.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
 
 ---
 
