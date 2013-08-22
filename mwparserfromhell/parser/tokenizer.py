@@ -835,12 +835,16 @@ class Tokenizer(object):
         context = self._context
         if context & contexts.FAIL_NEXT:
             return False
-        if context & contexts.WIKILINK_TITLE:
-            if this == "]" or this == "{":
+        if context & contexts.WIKILINK:
+            if context & contexts.WIKILINK_TEXT:
+                return not (this == self._read(1) == "[")
+            elif this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
             elif this == "\n" or this == "[" or this == "}":
                 return False
             return True
+        elif context & contexts.EXT_LINK_TITLE:
+            return this != "\n"
         elif context & contexts.TEMPLATE_NAME:
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
@@ -936,6 +940,8 @@ class Tokenizer(object):
                 self._parse_external_link(True)
             elif this == ":" and self._read(-1) not in self.MARKERS:
                 self._parse_external_link(False)
+            elif this == "]" and self._context & contexts.EXT_LINK_TITLE:
+                return self._pop()
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()

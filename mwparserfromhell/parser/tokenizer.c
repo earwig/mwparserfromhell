@@ -2050,18 +2050,17 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
     if (context & LC_FAIL_NEXT) {
         return -1;
     }
-    if (context & LC_WIKILINK_TITLE) {
-        if (data == *"]" || data == *"{")
+    if (context & LC_WIKILINK) {
+        if (context & LC_WIKILINK_TEXT)
+            return (data == *"[" && Tokenizer_READ(self, 1) == *"[") ? -1 : 0;
+        else if (data == *"]" || data == *"{")
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == *"\n" || data == *"[" || data == *"}")
             return -1;
         return 0;
     }
-    if (context & LC_TAG_CLOSE) {
-        if (data == *"<")
-            return -1;
-        return 0;
-    }
+    if (context & LC_TAG_CLOSE)
+        return (data == *"<") ? -1 : 0;
     if (context & LC_TEMPLATE_NAME) {
         if (data == *"{" || data == *"}" || data == *"[") {
             self->topstack->context |= LC_FAIL_NEXT;
