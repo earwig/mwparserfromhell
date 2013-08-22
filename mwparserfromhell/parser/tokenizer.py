@@ -342,10 +342,10 @@ class Tokenizer(object):
         valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
         scheme = []
         try:
-            # Ugly, but we have to backtrack through the textbuffer looking for
-            # our scheme since it was just parsed as text:
-            for i in range(-1, -len(self._textbuffer) - 1, -1):
-                for char in reversed(self._textbuffer[i]):
+            # We have to backtrack through the textbuffer looking for our
+            # scheme since it was just parsed as text:
+            for chunk in reversed(self._textbuffer):
+                for char in reversed(chunk):
                     if char.isspace() or char in self.MARKERS:
                         raise StopIteration()
                     if char not in valid:
@@ -369,7 +369,7 @@ class Tokenizer(object):
         if "(" in this and ")" in punct:
             punct = punct[:-1]  # ')' is not longer valid punctuation
         if this.endswith(punct):
-            for i in range(-1, -len(this) - 1, -1):
+            for i in reversed(range(-len(this), 0)):
                 if i == -len(this) or this[i - 1] not in punct:
                     break
             stripped = this[:i]
@@ -403,7 +403,7 @@ class Tokenizer(object):
                     self._fail_route()
                 return self._pop(), tail, -1
             elif this == next == "{" and self._can_recurse():
-                if not brackets and tail:
+                if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_template_or_argument()
@@ -415,7 +415,7 @@ class Tokenizer(object):
             elif this == "]":
                 return self._pop(), tail, 0 if brackets else -1
             elif this == "&":
-                if not brackets and tail:
+                if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_entity()
