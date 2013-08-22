@@ -312,65 +312,67 @@ class Tokenizer(object):
         self._head += 1
         return self._pop()
 
-    def _really_parse_external_link(self, brackets):
-        """Really parse an external link."""
-        scheme_valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
-        if brackets:
-            self._push(contexts.EXT_LINK_URI)
-            if self._read() == self._read(1) == "/":
-                self._emit_text("//")
-                self._head += 2
-            else:
-                scheme = ""
-                while all(char in scheme_valid for char in self._read()):
-                    scheme += self._read()
-                    self._emit_text(self._read())
-                    self._head += 1
-                if self._read() != ":":
-                    self._fail_route()
-                self._emit_text(":")
-                self._head += 1
-                slashes = self._read() == self._read(1) == "/"
-                if slashes:
-                    self._emit_text("//")
-                    self._head += 2
-                if not is_scheme(scheme, slashes):
-                    self._fail_route()
+    def _parse_bracketed_uri_scheme(self):
+        """Parse the URI scheme of a bracket-enclosed external link."""
+        self._push(contexts.EXT_LINK_URI)
+        if self._read() == self._read(1) == "/":
+            self._emit_text("//")
+            self._head += 2
         else:
-            scheme = []
-            try:
-                # Ugly, but we have to backtrack through the textbuffer looking
-                # for our scheme since it was just parsed as text:
-                for i in range(-1, -len(self._textbuffer) - 1, -1):
-                    for char in reversed(self._textbuffer[i]):
-                        if char.isspace() or char in self.MARKERS:
-                            raise StopIteration()
-                        if char not in scheme_valid:
-                            raise BadRoute()
-                        scheme.append(char)
-            except StopIteration:
-                pass
-            scheme = "".join(reversed(scheme))
-            slashes = self._read() == self._read(1) == "/"
-            if not is_scheme(scheme, slashes):
-                raise BadRoute()
-            # Remove the scheme from the textbuffer, now that it's part of the
-            # external link:
-            length = len(scheme)
-            while length:
-                if length < len(self._textbuffer[-1]):
-                    self._textbuffer[-1] = self._textbuffer[-1][:-length]
-                    break
-                length -= len(self._textbuffer[-1])
-                self._textbuffer.pop()
-            self._push(contexts.EXT_LINK_URI)
-            self._emit_text(scheme)
+            valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+            all_valid = lambda: all(char in valid for char in self._read())
+            scheme = ""
+            while self._read() is not self.END and all_valid():
+                scheme += self._read()
+                self._emit_text(self._read())
+                self._head += 1
+            if self._read() != ":":
+                self._fail_route()
             self._emit_text(":")
+            self._head += 1
+            slashes = self._read() == self._read(1) == "/"
             if slashes:
                 self._emit_text("//")
                 self._head += 2
-            parentheses = False
+            if not is_scheme(scheme, slashes):
+                self._fail_route()
 
+    def _parse_free_uri_scheme(self):
+        """Parse the URI scheme of a free (no brackets) external link."""
+        valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+        scheme = []
+        try:
+            # Ugly, but we have to backtrack through the textbuffer looking for
+            # our scheme since it was just parsed as text:
+            for i in range(-1, -len(self._textbuffer) - 1, -1):
+                for char in reversed(self._textbuffer[i]):
+                    if char.isspace() or char in self.MARKERS:
+                        raise StopIteration()
+                    if char not in valid:
+                        raise BadRoute()
+                    scheme.append(char)
+        except StopIteration:
+            pass
+        scheme = "".join(reversed(scheme))
+        slashes = self._read() == self._read(1) == "/"
+        if not is_scheme(scheme, slashes):
+            raise BadRoute()
+        parentheses = False
+        self._push(contexts.EXT_LINK_URI)
+        self._emit_text(scheme)
+        self._emit_text(":")
+        if slashes:
+            self._emit_text("//")
+            self._head += 2
+
+    def _really_parse_external_link(self, brackets):
+        """Really parse an external link."""
+        if brackets:
+            self._parse_bracketed_uri_scheme()
+        else:
+            self._parse_free_uri_scheme()
+        if self._read() in self.MARKERS or self._read()[0].isspace():            ## Should actually check for valid chars
+            self._fail_route()
         while True:
             this, next = self._read(), self._read(1)
             if this is self.END or this == "\n":
@@ -404,6 +406,16 @@ class Tokenizer(object):
                 self._emit_text(this)
             self._head += 1
 
+    def _remove_uri_scheme_from_textbuffer(self, scheme):
+        """Remove the URI scheme of a new external link from the textbuffer."""
+        length = len(scheme)
+        while length:
+            if length < len(self._textbuffer[-1]):
+                self._textbuffer[-1] = self._textbuffer[-1][:-length]
+                break
+            length -= len(self._textbuffer[-1])
+            self._textbuffer.pop()
+
     def _parse_external_link(self, brackets):
         """Parse an external link at the head of the wikicode string."""
         reset = self._head
@@ -420,6 +432,9 @@ class Tokenizer(object):
             else:
                 self._emit_text(self._read())
         else:
+            if not brackets:
+                scheme = link[0].text.split(":", 1)[0]
+                self._remove_uri_scheme_from_textbuffer(scheme)
             self._emit(tokens.ExternalLinkOpen(brackets=brackets))
             self._emit_all(link)
             self._emit(tokens.ExternalLinkClose())
