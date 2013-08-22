@@ -357,7 +357,6 @@ class Tokenizer(object):
         slashes = self._read() == self._read(1) == "/"
         if not is_scheme(scheme, slashes):
             raise BadRoute()
-        parentheses = False
         self._push(contexts.EXT_LINK_URI)
         self._emit_text(scheme)
         self._emit_text(":")
@@ -365,43 +364,75 @@ class Tokenizer(object):
             self._emit_text("//")
             self._head += 2
 
+    def _handle_free_link_text(self, punct, tail, this):
+        """Handle text in a free ext link, including trailing punctuation."""
+        if "(" in this and ")" in punct:
+            punct = punct[:-1]  # ')' is not longer valid punctuation
+        if this.endswith(punct):
+            for i in range(-1, -len(this) - 1, -1):
+                if i == -len(this) or this[i - 1] not in punct:
+                    break
+            stripped = this[:i]
+            if stripped and tail:
+                self._emit_text(tail)
+                tail = ""
+            tail += this[i:]
+            this = stripped
+        elif tail:
+            self._emit_text(tail)
+            tail = ""
+        self._emit_text(this)
+        return punct, tail
+
     def _really_parse_external_link(self, brackets):
         """Really parse an external link."""
         if brackets:
             self._parse_bracketed_uri_scheme()
+            invalid = ("\n", " ", "]")
         else:
             self._parse_free_uri_scheme()
-        if self._read() in self.MARKERS or self._read()[0].isspace():            ## Should actually check for valid chars
+            invalid = ("\n", " ", "[", "]")
+            punct = tuple(",;\.:!?)")
+        if self._read() is self.END or self._read()[0] in invalid:
             self._fail_route()
+        tail = ""
         while True:
             this, next = self._read(), self._read(1)
             if this is self.END or this == "\n":
                 if brackets:
                     self._fail_route()
-                self._head -= 1
-                return self._pop(), None
+                return self._pop(), tail, -1
             elif this == next == "{" and self._can_recurse():
+                if not brackets and tail:
+                    self._emit_text(tail)
+                    tail = ""
                 self._parse_template_or_argument()
-            elif this == "&":
-                self._parse_entity()
-            elif this == "]":
-                if not brackets:
-                    self._head -= 1
-                return self._pop(), None
-            elif this == "(" and not brackets and not parentheses:
-                parentheses = True
-                self._emit_text(this)
-            elif " " in this:                                                    ## Should be a more general whitespace check
-                before, after = this.split(" ", 1)
-                self._emit_text(before)
+            elif this == "[":
                 if brackets:
+                    self._emit_text("[")
+                else:
+                    return self._pop(), tail, -1
+            elif this == "]":
+                return self._pop(), tail, 0 if brackets else -1
+            elif this == "&":
+                if not brackets and tail:
+                    self._emit_text(tail)
+                    tail = ""
+                self._parse_entity()
+            elif " " in this:
+                before, after = this.split(" ", 1)
+                if brackets:
+                    self._emit_text(before)
                     self._emit(tokens.ExternalLinkSeparator())
                     self._emit_text(after)
                     self._context ^= contexts.EXT_LINK_URI
                     self._context |= contexts.EXT_LINK_TITLE
                     self._head += 1
-                    return self._parse(push=False), None
-                return self._pop(), " " + after
+                    return self._parse(push=False), None, 0
+                punct, tail = self._handle_free_link_text(punct, tail, before)
+                return self._pop(), tail + " " + after, 0
+            elif not brackets:
+                punct, tail = self._handle_free_link_text(punct, tail, this)
             else:
                 self._emit_text(this)
             self._head += 1
@@ -424,7 +455,7 @@ class Tokenizer(object):
             bad_context = self._context & contexts.INVALID_LINK
             if bad_context or not self._can_recurse():
                 raise BadRoute()
-            link, extra = self._really_parse_external_link(brackets)
+            link, extra, delta = self._really_parse_external_link(brackets)
         except BadRoute:
             self._head = reset
             if not brackets and self._context & contexts.DL_TERM:
@@ -438,6 +469,7 @@ class Tokenizer(object):
             self._emit(tokens.ExternalLinkOpen(brackets=brackets))
             self._emit_all(link)
             self._emit(tokens.ExternalLinkClose())
+            self._head += delta
             if extra:
                 self._emit_text(extra)
 
