@@ -432,6 +432,13 @@ output: [Text(text="[http://")]
 
 ---
 
+name:   incomplete_bracket
+label:  just an open bracket
+input:  "["
+output: [Text(text="[")]
+
+---
+
 name:   incomplete_scheme_colon
 label:  a free link with just a scheme and a colon
 input:  "http:"
@@ -447,6 +454,13 @@ output: [Text(text="http://")]
 ---
 
 name:   brackets_scheme_but_no_url
+label:  brackets around a scheme and a colon
+input:  "[mailto:]"
+output: [Text(text="[mailto:]")]
+
+---
+
+name:   brackets_scheme_slashes_but_no_url
 label:  brackets around a scheme, colon, and slashes
 input:  "[http://]"
 output: [Text(text="[http://]")]
