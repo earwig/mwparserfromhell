@@ -24,6 +24,20 @@ SOFTWARE.
 #include "tokenizer.h"
 
 /*
+    Determine whether the given Py_UNICODE is a marker.
+*/
+static int is_marker(Py_UNICODE this)
+{
+    int i;
+
+    for (i = 0; i < NUM_MARKERS; i++) {
+        if (*MARKERS[i] == this)
+            return 1;
+    }
+    return 0;
+}
+
+/*
     Given a context, return the heading level encoded within it.
 */
 static int heading_level_from_context(int n)
@@ -37,13 +51,13 @@ static int heading_level_from_context(int n)
 }
 
 /*
-    Call the given function in definitions.py, using 'tag' as a parameter, and
-    return its output as a bool.
+    Call the given function in definitions.py, using 'input' as a parameter,
+    and return its output as a bool.
 */
-static int call_def_func(const char* funcname, PyObject* tag)
+static int call_def_func(const char* funcname, PyObject* input)
 {
     PyObject* func = PyObject_GetAttrString(definitions, funcname);
-    PyObject* result = PyObject_CallFunctionObjArgs(func, tag, NULL);
+    PyObject* result = PyObject_CallFunctionObjArgs(func, input, NULL);
     int ans = (result == Py_True) ? 1 : 0;
 
     Py_DECREF(func);
@@ -1238,15 +1252,8 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
 static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 {
     Py_UNICODE next = Tokenizer_READ(self, 1);
-    int i, is_marker = 0;
 
-    for (i = 0; i < NUM_MARKERS; i++) {
-        if (*MARKERS[i] == text) {
-            is_marker = 1;
-            break;
-        }
-    }
-    if (!is_marker || !Tokenizer_CAN_RECURSE(self))
+    if (!is_marker(text) || !Tokenizer_CAN_RECURSE(self))
         return Tokenizer_emit_char(self, text);
     else if (text == next && next == *"{")
         return Tokenizer_parse_template_or_argument(self);
@@ -1264,17 +1271,11 @@ static int
 Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
 {
     PyObject *trash;
-    int first_time, i, is_marker = 0, escaped;
+    int first_time, escaped;
 
     if (data->context & TAG_NAME) {
         first_time = !(data->context & TAG_NOTE_SPACE);
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == chunk) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (is_marker || (Py_UNICODE_ISSPACE(chunk) && first_time)) {
+        if (is_marker(chunk) || (Py_UNICODE_ISSPACE(chunk) && first_time)) {
             // Tags must start with text, not spaces
             Tokenizer_fail_route(self);
             return 0;
@@ -1623,7 +1624,6 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     Textbuffer* buf;
     PyObject *name, *tag;
     Py_UNICODE this;
-    int is_marker, i;
 
     self->head += 2;
     buf = Textbuffer_new();
@@ -1631,14 +1631,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
         return -1;
     while (1) {
         this = Tokenizer_READ(self, pos);
-        is_marker = 0;
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == this) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (is_marker) {
+        if (is_marker(this)) {
             name = Textbuffer_render(buf);
             if (!name) {
                 Textbuffer_dealloc(buf);
@@ -2047,9 +2040,8 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
 */
 static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 {
-    if (context & LC_FAIL_NEXT) {
+    if (context & LC_FAIL_NEXT)
         return -1;
-    }
     if (context & LC_WIKILINK) {
         if (context & LC_WIKILINK_TEXT)
             return (data == *"[" && Tokenizer_READ(self, 1) == *"[") ? -1 : 0;
@@ -2059,6 +2051,8 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
             return -1;
         return 0;
     }
+    if (context & LC_EXT_LINK_TITLE)
+        return (data == *"\n") ? -1 : 0;
     if (context & LC_TAG_CLOSE)
         return (data == *"<") ? -1 : 0;
     if (context & LC_TEMPLATE_NAME) {
@@ -2125,7 +2119,7 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 */
 static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 {
-    int this_context, is_marker, i;
+    int this_context;
     Py_UNICODE this, next, next_next, last;
     PyObject* temp;
 
@@ -2145,14 +2139,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
                 return Tokenizer_fail_route(self);
             }
         }
-        is_marker = 0;
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == this) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (!is_marker) {
+        if (!is_marker(this)) {
             if (Tokenizer_emit_char(self, this))
                 return NULL;
             self->head++;
@@ -2205,6 +2192,16 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         }
         else if (this == next && next == *"]" && this_context & LC_WIKILINK)
             return Tokenizer_handle_wikilink_end(self);
+        // else if (this == *"[") {
+        //     if (Tokenizer_parse_external_link(self, 1))
+        //         return NULL;
+        // }
+        // else if (this == *":" && !is_marker(last)) {
+        //     if (Tokenizer_parse_external_link(self, 0))
+        //         return NULL;
+        // }
+        // else if (this == *"]" && this_context & LC_EXT_LINK_TITLE)
+        //     return Tokenizer_pop(self);
         else if (this == *"=" && !(self->global & GL_HEADING)) {
             if (last == *"\n" || last == *"") {
                 if (Tokenizer_parse_heading(self))

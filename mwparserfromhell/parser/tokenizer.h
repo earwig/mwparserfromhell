@@ -238,12 +238,13 @@ typedef struct {
 #define Tokenizer_emit_first_kwargs(self, token, kwargs) Tokenizer_emit_token_kwargs(self, token, kwargs, 1)
 
 
-/* Macros for accessing HTML tag definitions: */
+/* Macros for accessing definitions: */
 
 #define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
 #define IS_PARSABLE(tag) (call_def_func("is_parsable", tag))
 #define IS_SINGLE(tag) (call_def_func("is_single", tag))
 #define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag))
+#define IS_SCHEME(scheme) (call_def_func("is_scheme", scheme))
 
 
 /* Function prototypes: */
