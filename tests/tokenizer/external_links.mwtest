@@ -287,15 +287,15 @@ output: [Text(text="//example.com")]
 
 name:   no_scheme_but_colon
 label:  no scheme in a free link, but a colon
-input:  ":example.com"
-output: [Text(text=":example.com")]
+input:  " :example.com"
+output: [Text(text=" :example.com")]
 
 ---
 
 name:   no_scheme_but_colon_and_slashes
 label:  no scheme in a free link, but a colon and slashes
-input:  "://example.com"
-output: [Text(text="://example.com")]
+input:  " ://example.com"
+output: [Text(text=" ://example.com")]
 
 ---
 
