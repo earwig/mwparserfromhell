@@ -91,8 +91,8 @@ output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com"), Exte
 
 name:   colons_after
 label:  colons after a free link that are excluded
-input:  "http://example.com/foo:bar:::baz:::"
-output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo:bar:::baz"), ExternalLinkClose(), Text(text=":::")]
+input:  "http://example.com/foo:bar.:;baz!?,"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo:bar.:;baz"), ExternalLinkClose(), Text(text="!?,")]
 
 ---
 
@@ -126,8 +126,8 @@ output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com."), Exte
 
 name:   brackets_colons_after
 label:  colons after a bracket-enclosed link that are included
-input:  "[http://example.com/foo:bar:::baz::: Example]"
-output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo:bar:::baz:::"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+input:  "[http://example.com/foo:bar.:;baz!?, Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo:bar.:;baz!?,"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
 
 ---
 
