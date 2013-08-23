@@ -122,7 +122,7 @@ static PyObject* TagCloseClose;
 #define LC_WIKILINK_TEXT        0x00000040
 
 #define LC_EXT_LINK             0x00000380
-#define LC_EXT_LINK_URL         0x00000080
+#define LC_EXT_LINK_URI         0x00000080
 #define LC_EXT_LINK_TITLE       0x00000100
 #define LC_EXT_LINK_BRACKETS    0x00000200
 
@@ -165,7 +165,7 @@ static PyObject* TagCloseClose;
 #define AGG_FAIL         (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_TAG | LC_STYLE)
 #define AGG_UNSAFE       (LC_TEMPLATE_NAME | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
 #define AGG_DOUBLE       (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
-#define AGG_INVALID_LINK (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK | LC_EXT_LINK_URL)
+#define AGG_INVALID_LINK (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK | LC_EXT_LINK_URI)
 
 /* Tag contexts: */
 
@@ -241,10 +241,10 @@ typedef struct {
 /* Macros for accessing definitions: */
 
 #define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
-#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag))
-#define IS_SINGLE(tag) (call_def_func("is_single", tag))
-#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag))
-#define IS_SCHEME(scheme) (call_def_func("is_scheme", scheme))
+#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL))
+#define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL))
+#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL))
+#define IS_SCHEME(scheme, slashes) (call_def_func("is_scheme", scheme, slashes))
 
 
 /* Function prototypes: */
