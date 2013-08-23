@@ -258,6 +258,7 @@ static void TagData_dealloc(TagData*);
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static void Tokenizer_dealloc(Tokenizer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
+static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
 static PyObject* Tokenizer_parse(Tokenizer*, int, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
