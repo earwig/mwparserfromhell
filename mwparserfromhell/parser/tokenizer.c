@@ -100,7 +100,7 @@ static Textbuffer* Textbuffer_new(void)
         PyErr_NoMemory();
         return NULL;
     }
-    buffer->next = NULL;
+    buffer->prev = buffer->next = NULL;
     return buffer;
 }
 
@@ -128,6 +128,7 @@ static int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
         if (!new)
             return -1;
         new->next = self;
+        self->prev = new;
         *this = self = new;
     }
     self->data[self->size++] = code;
@@ -435,19 +436,33 @@ static int Tokenizer_emit_text(Tokenizer* self, const char* text)
     Write the contents of another textbuffer to the current textbuffer,
     deallocating it in the process.
 */
-static int Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer)
+static int
+Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
 {
     Textbuffer *original = buffer;
     int i;
 
-    while (buffer) {
-        for (i = 0; i < buffer->size; i++) {
-            if (Tokenizer_emit_char(self, buffer->data[i])) {
-                Textbuffer_dealloc(original);
-                return -1;
+    if (reverse) {
+        do {
+            for (i = buffer->size - 1; i >= 0; i--) {
+                if (Tokenizer_emit_char(self, buffer->data[i])) {
+                    Textbuffer_dealloc(original);
+                    return -1;
+                }
             }
-        }
-        buffer = buffer->next;
+        } while ((buffer = buffer->next));
+    }
+    else {
+        while (buffer->next)
+            buffer = buffer->next;
+        do {
+            for (i = 0; i < buffer->size; i++) {
+                if (Tokenizer_emit_char(self, buffer->data[i])) {
+                    Textbuffer_dealloc(original);
+                    return -1;
+                }
+            }
+        } while ((buffer = buffer->prev));
     }
     Textbuffer_dealloc(original);
     return 0;
@@ -933,7 +948,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     // it was just parsed as text:
     temp_buffer = self->topstack->textbuffer;
     while (temp_buffer) {
-        for (i = temp_buffer->size - 1; i >= 0; i++) {
+        for (i = temp_buffer->size - 1; i >= 0; i--) {
             chunk = temp_buffer->data[i];
             if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
                 goto end_of_loop;
@@ -971,7 +986,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
-    if (Tokenizer_emit_textbuffer(self, scheme_buffer))
+    if (Tokenizer_emit_textbuffer(self, scheme_buffer, 1))
         return -1;
     if (Tokenizer_emit_char(self, *":"))
         return -1;
@@ -990,16 +1005,18 @@ static int
 Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
                                 Textbuffer** tail, Py_UNICODE this)
 {
-    #define PUSH_TAIL_BUFFER(tail, error)          \
-        if ((tail)->size || (tail)->next) {        \
-            Tokenizer_emit_textbuffer(self, tail); \
-            tail = Textbuffer_new();               \
-            if (!(tail))                           \
-                return error;                      \
+    #define PUSH_TAIL_BUFFER(tail, error)             \
+        if ((tail)->size || (tail)->next) {           \
+            Tokenizer_emit_textbuffer(self, tail, 0); \
+            tail = Textbuffer_new();                  \
+            if (!(tail))                              \
+                return error;                         \
         }
 
-    if (this == *"(" && !(*parens))
+    if (this == *"(" && !(*parens)) {
         *parens = 1;
+        PUSH_TAIL_BUFFER(*tail, -1)
+    }
     else if (this == *"," || this == *";" || this == *"\\" || this == *"." ||
              this == *":" || this == *"!" || this == *"?" ||
              (!(*parens) && this == *")"))
@@ -1141,6 +1158,7 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
         link = Tokenizer_really_parse_external_link(self, brackets, &extra);
     }
     if (BAD_ROUTE) {
+        RESET_ROUTE();
         self->head = reset;
         Textbuffer_dealloc(extra);
         if (!brackets && self->topstack->context & LC_DLTERM)
@@ -1180,7 +1198,7 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
         return -1;
     }
     if (extra->size || extra->next)
-        return Tokenizer_emit_textbuffer(self, extra);
+        return Tokenizer_emit_textbuffer(self, extra, 0);
     return 0;
 }
 

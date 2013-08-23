@@ -165,7 +165,7 @@ static PyObject* TagCloseClose;
 #define AGG_FAIL         (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_HEADING | LC_TAG | LC_STYLE)
 #define AGG_UNSAFE       (LC_TEMPLATE_NAME | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
 #define AGG_DOUBLE       (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
-#define AGG_INVALID_LINK (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK | LC_EXT_LINK_URI)
+#define AGG_INVALID_LINK (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK | LC_EXT_LINK)
 
 /* Tag contexts: */
 
@@ -184,6 +184,7 @@ static PyObject* TagCloseClose;
 struct Textbuffer {
     Py_ssize_t size;
     Py_UNICODE* data;
+    struct Textbuffer* prev;
     struct Textbuffer* next;
 };
 
