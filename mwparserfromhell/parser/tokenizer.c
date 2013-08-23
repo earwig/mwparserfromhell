@@ -80,7 +80,7 @@ static PyObject* strip_tag_name(PyObject* token)
     Py_DECREF(text);
     if (!rstripped)
         return NULL;
-    lowered = PyObject_CallMethod(rstripped, "rstrip", NULL);
+    lowered = PyObject_CallMethod(rstripped, "lower", NULL);
     Py_DECREF(rstripped);
     return lowered;
 }
@@ -998,24 +998,14 @@ Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
                 return error;                      \
         }
 
-    // punct = tuple(",;\.:!?)")
-    // if "(" in this and ")" in punct:
-    //     punct = punct[:-1]  # ')' is not longer valid punctuation
-    // if this.endswith(punct):
-    //     for i in reversed(range(-len(this), 0)):
-    //         if i == -len(this) or this[i - 1] not in punct:
-    //             break
-    //     stripped = this[:i]
-    //     if stripped and tail:
-    //         self._emit_text(tail)
-    //         tail = ""
-    //     tail += this[i:]
-    //     this = stripped
-    // elif tail:
-    //     self._emit_text(tail)
-    //     tail = ""
-    // self._emit_text(this)
-    // return punct, tail
+    if (this == *"(" && !(*parens))
+        *parens = 1;
+    else if (this == *"," || this == *";" || this == *"\\" || this == *"." ||
+             this == *":" || this == *"!" || this == *"?" ||
+             (!(*parens) && this == *")"))
+        return Textbuffer_write(tail, this);
+    else
+        PUSH_TAIL_BUFFER(*tail, -1)
     return Tokenizer_emit_char(self, this);
 }
 
@@ -1102,14 +1092,31 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
 static int
 Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
 {
-    // scheme = link[0].text.split(":", 1)[0]
-    // length = len(scheme)
-    // while length:
-    //     if length < len(self._textbuffer[-1]):
-    //         self._textbuffer[-1] = self._textbuffer[-1][:-length]
-    //         break
-    //     length -= len(self._textbuffer[-1])
-    //     self._textbuffer.pop()
+    PyObject *text = PyObject_GetAttrString(PyList_GET_ITEM(link, 0), "text"),
+             *split, *scheme;
+    Py_ssize_t length;
+    Textbuffer* temp;
+
+    if (!text)
+        return -1;
+    split = PyObject_CallMethod(text, "split", "si", ":", 1);
+    Py_DECREF(text);
+    if (!split)
+        return -1;
+    scheme = PyList_GET_ITEM(split, 0);
+    length = PyUnicode_GET_SIZE(scheme);
+    while (length) {
+        temp = self->topstack->textbuffer;
+        if (length <= temp->size) {
+            temp->size -= length;
+            break;
+        }
+        length -= temp->size;
+        self->topstack->textbuffer = temp->next;
+        free(temp->data);
+        free(temp);
+    }
+    Py_DECREF(split);
     return 0;
 }
 
