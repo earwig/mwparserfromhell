@@ -1005,12 +1005,13 @@ static int
 Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
                                 Textbuffer** tail, Py_UNICODE this)
 {
-    #define PUSH_TAIL_BUFFER(tail, error)             \
-        if ((tail)->size || (tail)->next) {           \
-            Tokenizer_emit_textbuffer(self, tail, 0); \
-            tail = Textbuffer_new();                  \
-            if (!(tail))                              \
-                return error;                         \
+    #define PUSH_TAIL_BUFFER(tail, error)                 \
+        if ((tail)->size || (tail)->next) {               \
+            if (Tokenizer_emit_textbuffer(self, tail, 0)) \
+                return error;                             \
+            tail = Textbuffer_new();                      \
+            if (!(tail))                                  \
+                return error;                             \
         }
 
     if (this == *"(" && !(*parens)) {
@@ -1172,6 +1173,7 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
     if (!brackets) {
         if (Tokenizer_remove_uri_scheme_from_textbuffer(self, link)) {
             Textbuffer_dealloc(extra);
+            Py_DECREF(link);
             return -1;
         }
     }
@@ -1199,6 +1201,7 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
     }
     if (extra->size || extra->next)
         return Tokenizer_emit_textbuffer(self, extra, 0);
+    Textbuffer_dealloc(extra);
     return 0;
 }
 
