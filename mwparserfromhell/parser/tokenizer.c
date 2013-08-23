@@ -51,13 +51,14 @@ static int heading_level_from_context(int n)
 }
 
 /*
-    Call the given function in definitions.py, using 'in1' and 'in2' as
+    Call the given function in definitions.py, using 'in1', 'in2', and 'in3' as
     parameters, and return its output as a bool.
 */
-static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2)
+static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2,
+                         PyObject* in3)
 {
     PyObject* func = PyObject_GetAttrString(definitions, funcname);
-    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, NULL);
+    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, in3, NULL);
     int ans = (result == Py_True) ? 1 : 0;
 
     Py_DECREF(func);
@@ -427,6 +428,28 @@ static int Tokenizer_emit_text(Tokenizer* self, const char* text)
             return -1;
         i++;
     }
+    return 0;
+}
+
+/*
+    Write the contents of another textbuffer to the current textbuffer,
+    deallocating it in the process.
+*/
+static int Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer)
+{
+    Textbuffer *original = buffer;
+    int i;
+
+    while (buffer) {
+        for (i = 0; i < buffer->size; i++) {
+            if (Tokenizer_emit_char(self, buffer->data[i])) {
+                Textbuffer_dealloc(original);
+                return -1;
+            }
+        }
+        buffer = buffer->next;
+    }
+    Textbuffer_dealloc(original);
     return 0;
 }
 
@@ -883,7 +906,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(buffer);
         if (!scheme)
             return -1;
-        if (!IS_SCHEME(scheme, slashes ? Py_True : Py_False)) {
+        if (!IS_SCHEME(scheme, slashes, 0)) {
             Py_DECREF(scheme);
             Tokenizer_fail_route(self);
             return 0;
@@ -900,7 +923,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
 {
     static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
     Textbuffer *scheme_buffer = Textbuffer_new(), *temp_buffer;
-    PyObject *temp, *reversed, *scheme;
+    PyObject *scheme;
     Py_UNICODE chunk;
     int slashes, i, j;
 
@@ -930,21 +953,14 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         temp_buffer = temp_buffer->next;
     }
     end_of_loop:
-    temp = Textbuffer_render(scheme_buffer);
-    if (!temp) {
-        Textbuffer_dealloc(scheme_buffer);
-        return -1;
-    }
-    reversed = PyDict_GetItemString(PyEval_GetBuiltins(), "reversed");
-    scheme = PyObject_CallFunctionObjArgs(reversed, temp, NULL);
-    Py_DECREF(temp);
+    scheme = Textbuffer_render(scheme_buffer);
     if (!scheme) {
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
     slashes = (Tokenizer_READ(self, 0) == *"/" &&
                Tokenizer_READ(self, 1) == *"/");
-    if (!IS_SCHEME(scheme, slashes ? Py_True : Py_False)) {
+    if (!IS_SCHEME(scheme, slashes, 1)) {
         Py_DECREF(scheme);
         Textbuffer_dealloc(scheme_buffer);
         FAIL_ROUTE(0);
@@ -955,16 +971,8 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
-    while (temp_buffer) {
-        for (i = 0; i < temp_buffer->size; i++) {
-            if (Tokenizer_emit_char(self, temp_buffer->data[i])) {
-                Textbuffer_dealloc(scheme_buffer);
-                return -1;
-            }
-        }
-        temp_buffer = temp_buffer->next;
-    }
-    Textbuffer_dealloc(scheme_buffer);
+    if (Tokenizer_emit_textbuffer(self, scheme_buffer))
+        return -1;
     if (Tokenizer_emit_char(self, *":"))
         return -1;
     if (slashes) {
@@ -972,15 +980,25 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
             return -1;
         self->head += 2;
     }
+    return 0;
 }
 
 /*
     Handle text in a free external link, including trailing punctuation.
 */
 static int
-Tokenizer_handle_free_link_text(Tokenizer* self, PyObject** punct,
+Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
                                 Textbuffer** tail, Py_UNICODE this)
 {
+    #define PUSH_TAIL_BUFFER(tail, error)          \
+        if ((tail)->size || (tail)->next) {        \
+            Tokenizer_emit_textbuffer(self, tail); \
+            tail = Textbuffer_new();               \
+            if (!(tail))                           \
+                return error;                      \
+        }
+
+    // punct = tuple(",;\.:!?)")
     // if "(" in this and ")" in punct:
     //     punct = punct[:-1]  # ')' is not longer valid punctuation
     // if this.endswith(punct):
@@ -998,7 +1016,7 @@ Tokenizer_handle_free_link_text(Tokenizer* self, PyObject** punct,
     //     tail = ""
     // self._emit_text(this)
     // return punct, tail
-    return 0;
+    return Tokenizer_emit_char(self, this);
 }
 
 /*
@@ -1006,63 +1024,76 @@ Tokenizer_handle_free_link_text(Tokenizer* self, PyObject** punct,
 */
 static PyObject*
 Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
-                                     char** extra)
+                                     Textbuffer** extra)
 {
-    // if brackets:
-    //     self._parse_bracketed_uri_scheme()
-    //     invalid = ("\n", " ", "]")
-    // else:
-    //     self._parse_free_uri_scheme()
-    //     invalid = ("\n", " ", "[", "]")
-    //     punct = tuple(",;\.:!?)")
-    // if self._read() is self.END or self._read()[0] in invalid:
-    //     self._fail_route()
-    // tail = ""
-    // while True:
-    //     this, next = self._read(), self._read(1)
-    //     if this is self.END or this == "\n":
-    //         if brackets:
-    //             self._fail_route()
-    //         self.head -= 1
-    //         return self._pop(), tail
-    //     elif this == next == "{" and self._can_recurse():
-    //         if tail:
-    //             self._emit_text(tail)
-    //             tail = ""
-    //         self._parse_template_or_argument()
-    //     elif this == "[":
-    //         if brackets:
-    //             self._emit_text("[")
-    //         else:
-    //             self._head -= 1
-    //             return self._pop(), tail
-    //     elif this == "]":
-    //         if not brackets:
-    //             self._head -= 1
-    //         return self._pop(), tail
-    //     elif this == "&":
-    //         if tail:
-    //             self._emit_text(tail)
-    //             tail = ""
-    //         self._parse_entity()
-    //     elif " " in this:
-    //         before, after = this.split(" ", 1)
-    //         if brackets:
-    //             self._emit_text(before)
-    //             self._emit(tokens.ExternalLinkSeparator())
-    //             self._emit_text(after)
-    //             self._context ^= contexts.EXT_LINK_URI
-    //             self._context |= contexts.EXT_LINK_TITLE
-    //             self._head += 1
-    //             return self._parse(push=False), None
-    //         punct, tail = self._handle_free_link_text(punct, tail, before)
-    //         return self._pop(), tail + " " + after
-    //     elif not brackets:
-    //         punct, tail = self._handle_free_link_text(punct, tail, this)
-    //     else:
-    //         self._emit_text(this)
-    //     self._head += 1
-    return NULL;
+    Py_UNICODE this, next;
+    int parens = 0;
+
+    if (brackets ? Tokenizer_parse_bracketed_uri_scheme(self) :
+                   Tokenizer_parse_free_uri_scheme(self))
+        return NULL;
+    if (BAD_ROUTE)
+        return NULL;
+    this = Tokenizer_READ(self, 0);
+    if (this == *"" || this == *"\n" || this == *" " || this == *"]")
+        return Tokenizer_fail_route(self);
+    if (!brackets && this == *"[")
+        return Tokenizer_fail_route(self);
+    while (1) {
+        this = Tokenizer_READ(self, 0);
+        next = Tokenizer_READ(self, 1);
+        if (this == *"" || this == *"\n") {
+            if (brackets)
+                return Tokenizer_fail_route(self);
+            self->head--;
+            return Tokenizer_pop(self);
+        }
+        if (this == *"{" && next == *"{" && Tokenizer_CAN_RECURSE(self)) {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_template_or_argument(self))
+                return NULL;
+        }
+        else if (this == *"[") {
+            if (!brackets) {
+                self->head--;
+                return Tokenizer_pop(self);
+            }
+            if (Tokenizer_emit_char(self, *"["))
+                return NULL;
+        }
+        else if (this == *"]") {
+            if (!brackets)
+                self->head--;
+            return Tokenizer_pop(self);
+        }
+        else if (this == *"&") {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_entity(self))
+                return NULL;
+        }
+        else if (this == *" ") {
+            if (brackets) {
+                if (Tokenizer_emit(self, ExternalLinkSeparator))
+                    return NULL;
+                self->topstack->context ^= LC_EXT_LINK_URI;
+                self->topstack->context |= LC_EXT_LINK_TITLE;
+                self->head++;
+                return Tokenizer_parse(self, 0, 0);
+            }
+            if (Textbuffer_write(extra, *" "))
+                return NULL;
+            return Tokenizer_pop(self);
+        }
+        else if (!brackets) {
+            if (Tokenizer_handle_free_link_text(self, &parens, extra, this))
+                return NULL;
+        }
+        else {
+            if (Tokenizer_emit_char(self, this))
+                return NULL;
+        }
+        self->head++;
+    }
 }
 
 /*
@@ -1089,45 +1120,60 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
 {
     Py_ssize_t reset = self->head;
     PyObject *link, *kwargs;
-    char* extra;
+    Textbuffer *extra;
 
     self->head++;
-    if (self->topstack->context & AGG_INVALID_LINK || !(Tokenizer_CAN_RECURSE(self))) {
+    #define INVALID_CONTEXT self->topstack->context & AGG_INVALID_LINK
+    if (INVALID_CONTEXT || !(Tokenizer_CAN_RECURSE(self))) {
         FAIL_ROUTE(0);
     }
-    else
+    else {
+        extra = Textbuffer_new();
+        if (!extra)
+            return -1;
         link = Tokenizer_really_parse_external_link(self, brackets, &extra);
+    }
     if (BAD_ROUTE) {
         self->head = reset;
+        Textbuffer_dealloc(extra);
         if (!brackets && self->topstack->context & LC_DLTERM)
             return Tokenizer_handle_dl_term(self);
         return Tokenizer_emit_char(self, Tokenizer_READ(self, 0));
     }
-    if (!link)
+    if (!link) {
+        Textbuffer_dealloc(extra);
         return -1;
+    }
     if (!brackets) {
-        if (Tokenizer_remove_uri_scheme_from_textbuffer(self, link))
+        if (Tokenizer_remove_uri_scheme_from_textbuffer(self, link)) {
+            Textbuffer_dealloc(extra);
             return -1;
+        }
     }
     kwargs = PyDict_New();
     if (!kwargs) {
+        Textbuffer_dealloc(extra);
         Py_DECREF(link);
         return -1;
     }
     PyDict_SetItemString(kwargs, "brackets", brackets ? Py_True : Py_False);
     if (Tokenizer_emit_kwargs(self, ExternalLinkOpen, kwargs)) {
+        Textbuffer_dealloc(extra);
         Py_DECREF(link);
         return -1;
     }
     if (Tokenizer_emit_all(self, link)) {
+        Textbuffer_dealloc(extra);
         Py_DECREF(link);
         return -1;
     }
     Py_DECREF(link);
-    if (Tokenizer_emit(self, ExternalLinkClose))
+    if (Tokenizer_emit(self, ExternalLinkClose)) {
+        Textbuffer_dealloc(extra);
         return -1;
-    if (extra)
-        return Tokenizer_emit_text(self, extra);
+    }
+    if (extra->size || extra->next)
+        return Tokenizer_emit_textbuffer(self, extra);
     return 0;
 }
 

@@ -241,10 +241,11 @@ typedef struct {
 /* Macros for accessing definitions: */
 
 #define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
-#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL))
-#define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL))
-#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL))
-#define IS_SCHEME(scheme, slashes) (call_def_func("is_scheme", scheme, slashes))
+#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL, NULL))
+#define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL, NULL))
+#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL, NULL))
+#define IS_SCHEME(scheme, slashes, reverse) \
+    (call_def_func("is_scheme", scheme, slashes ? Py_True : Py_False, reverse ? Py_True : Py_False))
 
 
 /* Function prototypes: */
@@ -258,6 +259,7 @@ static void TagData_dealloc(TagData*);
 static PyObject* Tokenizer_new(PyTypeObject*, PyObject*, PyObject*);
 static void Tokenizer_dealloc(Tokenizer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
+static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
 static PyObject* Tokenizer_parse(Tokenizer*, int, int);

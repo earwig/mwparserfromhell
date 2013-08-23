@@ -81,8 +81,10 @@ def is_single_only(tag):
     """Return whether or not the given *tag* must exist without a close tag."""
     return tag.lower() in SINGLE_ONLY
 
-def is_scheme(scheme, slashes=True):
+def is_scheme(scheme, slashes=True, reverse=False):
     """Return whether *scheme* is valid for external links."""
+    if reverse:  # Convenience for C
+        scheme = scheme[::-1]
     scheme = scheme.lower()
     if slashes:
         return scheme in URI_SCHEMES
