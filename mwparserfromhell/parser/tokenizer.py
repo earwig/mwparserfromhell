@@ -424,7 +424,8 @@ class Tokenizer(object):
                 if brackets:
                     self._emit_text(before)
                     self._emit(tokens.ExternalLinkSeparator())
-                    self._emit_text(after)
+                    if after:
+                        self._emit_text(after)
                     self._context ^= contexts.EXT_LINK_URI
                     self._context |= contexts.EXT_LINK_TITLE
                     self._head += 1

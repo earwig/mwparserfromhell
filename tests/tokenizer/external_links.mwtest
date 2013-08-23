@@ -15,7 +15,7 @@ output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), Exte
 name:   brackets_space
 label:  basic external link in brackets, with a space after
 input:  "[http://example.com/ ]"
-output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkSeparator(), Text(text=""), ExternalLinkClose()]
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkSeparator(), ExternalLinkClose()]
 
 ---
 
