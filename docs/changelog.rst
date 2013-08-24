@@ -4,8 +4,8 @@ Changelog
 v0.3
 ----
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...develop>`__):
+`Released August 24, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...v0.3>`__):
 
 - Added complete support for HTML :py:class:`Tags <.Tag>`, including forms like
   ``<ref>foo</ref>``, ``<ref name="bar"/>``, and wiki-markup tags like bold

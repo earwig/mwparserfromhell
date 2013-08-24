@@ -1,4 +1,4 @@
-v0.3 (unreleased):
+v0.3 (released August 24, 2013):
 
 - Added complete support for HTML Tags, including forms like <ref>foo</ref>,
   <ref name="bar"/>, and wiki-markup tags like bold ('''), italics (''), and
