@@ -1143,28 +1143,29 @@ Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
 */
 static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
 {
+    #define INVALID_CONTEXT self->topstack->context & AGG_INVALID_LINK
+    #define NOT_A_LINK                                        \
+        if (!brackets && self->topstack->context & LC_DLTERM) \
+            return Tokenizer_handle_dl_term(self);            \
+        return Tokenizer_emit_char(self, Tokenizer_READ(self, 0))
+
     Py_ssize_t reset = self->head;
     PyObject *link, *kwargs;
-    Textbuffer *extra;
+    Textbuffer *extra = 0;
 
-    self->head++;
-    #define INVALID_CONTEXT self->topstack->context & AGG_INVALID_LINK
     if (INVALID_CONTEXT || !(Tokenizer_CAN_RECURSE(self))) {
-        FAIL_ROUTE(0);
+        NOT_A_LINK;
     }
-    else {
-        extra = Textbuffer_new();
-        if (!extra)
-            return -1;
-        link = Tokenizer_really_parse_external_link(self, brackets, &extra);
-    }
+    extra = Textbuffer_new();
+    if (!extra)
+        return -1;
+    self->head++;
+    link = Tokenizer_really_parse_external_link(self, brackets, &extra);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
         Textbuffer_dealloc(extra);
-        if (!brackets && self->topstack->context & LC_DLTERM)
-            return Tokenizer_handle_dl_term(self);
-        return Tokenizer_emit_char(self, Tokenizer_READ(self, 0));
+        NOT_A_LINK;
     }
     if (!link) {
         Textbuffer_dealloc(extra);
