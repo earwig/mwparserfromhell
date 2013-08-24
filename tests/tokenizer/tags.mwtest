@@ -355,6 +355,20 @@ output: [Text(text="junk <ref>bar</span>")]
 
 ---
 
+name:   incomplete_unclosed_close
+label:  incomplete tags: an unclosed close tag
+input:  "junk </"
+output: [Text(text="junk </")]
+
+---
+
+name:   incomplete_unclosed_close_text
+label:  incomplete tags: an unclosed close tag, with text
+input:  "junk </br"
+output: [Text(text="junk </br")]
+
+---
+
 name:   incomplete_close
 label:  incomplete tags: a close tag
 input:  "junk </ref>"
@@ -548,6 +562,13 @@ name:   single_only_double
 label:  a tag that can only be single; a tag with backslashes at the beginning and end
 input:  "foo</br/>bar{{baz}}"
 output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_close_attribute
+label:  a tag that can only be single; presented as a close tag with an attribute
+input:  "</br id="break">"
+output: [TagOpenOpen(invalid=True), Text(text="br"), TagAttrStart(pad_first=" ", pad_after_eq="", pad_before_eq=""), Text(text="id"), TagAttrEquals(), TagAttrQuote(), Text(text="break"), TagCloseSelfclose(padding="", implicit=True)]
 
 ---
 
