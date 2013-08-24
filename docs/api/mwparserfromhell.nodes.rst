@@ -25,6 +25,14 @@ nodes Package
     :undoc-members:
     :show-inheritance:
 
+:mod:`external_link` Module
+---------------------------
+
+.. automodule:: mwparserfromhell.nodes.external_link
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`heading` Module
 ---------------------
 

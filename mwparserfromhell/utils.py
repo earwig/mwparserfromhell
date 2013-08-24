@@ -33,7 +33,7 @@ from .smart_list import SmartList
 
 __all__ = ["parse_anything"]
 
-def parse_anything(value):
+def parse_anything(value, context=0):
     """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
 
     This differs from :py:meth:`.Parser.parse` in that we accept more than just
@@ -44,6 +44,12 @@ def parse_anything(value):
     on-the-fly by various methods of :py:class:`~.Wikicode` and others like
     :py:class:`~.Template`, such as :py:meth:`wikicode.insert()
     <.Wikicode.insert>` or setting :py:meth:`template.name <.Template.name>`.
+
+    If given, *context* will be passed as a starting context to the parser.
+    This is helpful when this function is used inside node attribute setters.
+    For example, :py:class:`~.ExternalLink`\ 's :py:attr:`~.ExternalLink.url`
+    setter sets *context* to :py:mod:`contexts.EXT_LINK_URI <.contexts>` to
+    prevent the URL itself from becoming an :py:class:`~.ExternalLink`.
     """
     from .parser import Parser
     from .wikicode import Wikicode
@@ -53,17 +59,17 @@ def parse_anything(value):
     elif isinstance(value, Node):
         return Wikicode(SmartList([value]))
     elif isinstance(value, str):
-        return Parser(value).parse()
+        return Parser().parse(value, context)
     elif isinstance(value, bytes):
-        return Parser(value.decode("utf8")).parse()
+        return Parser().parse(value.decode("utf8"), context)
     elif isinstance(value, int):
-        return Parser(str(value)).parse()
+        return Parser().parse(str(value), context)
     elif value is None:
         return Wikicode(SmartList())
     try:
         nodelist = SmartList()
         for item in value:
-            nodelist += parse_anything(item).nodes
+            nodelist += parse_anything(item, context).nodes
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value).__name__, value))

@@ -24,6 +24,20 @@ SOFTWARE.
 #include "tokenizer.h"
 
 /*
+    Determine whether the given Py_UNICODE is a marker.
+*/
+static int is_marker(Py_UNICODE this)
+{
+    int i;
+
+    for (i = 0; i < NUM_MARKERS; i++) {
+        if (*MARKERS[i] == this)
+            return 1;
+    }
+    return 0;
+}
+
+/*
     Given a context, return the heading level encoded within it.
 */
 static int heading_level_from_context(int n)
@@ -37,13 +51,14 @@ static int heading_level_from_context(int n)
 }
 
 /*
-    Call the given function in tag_defs, using 'tag' as a parameter, and return
-    its output as a bool.
+    Call the given function in definitions.py, using 'in1', 'in2', and 'in3' as
+    parameters, and return its output as a bool.
 */
-static int call_tag_def_func(const char* funcname, PyObject* tag)
+static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2,
+                         PyObject* in3)
 {
-    PyObject* func = PyObject_GetAttrString(tag_defs, funcname);
-    PyObject* result = PyObject_CallFunctionObjArgs(func, tag, NULL);
+    PyObject* func = PyObject_GetAttrString(definitions, funcname);
+    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, in3, NULL);
     int ans = (result == Py_True) ? 1 : 0;
 
     Py_DECREF(func);
@@ -65,7 +80,7 @@ static PyObject* strip_tag_name(PyObject* token)
     Py_DECREF(text);
     if (!rstripped)
         return NULL;
-    lowered = PyObject_CallMethod(rstripped, "rstrip", NULL);
+    lowered = PyObject_CallMethod(rstripped, "lower", NULL);
     Py_DECREF(rstripped);
     return lowered;
 }
@@ -85,7 +100,7 @@ static Textbuffer* Textbuffer_new(void)
         PyErr_NoMemory();
         return NULL;
     }
-    buffer->next = NULL;
+    buffer->prev = buffer->next = NULL;
     return buffer;
 }
 
@@ -113,10 +128,10 @@ static int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
         if (!new)
             return -1;
         new->next = self;
+        self->prev = new;
         *this = self = new;
     }
-    self->data[self->size] = code;
-    self->size++;
+    self->data[self->size++] = code;
     return 0;
 }
 
@@ -345,7 +360,7 @@ static void* Tokenizer_fail_route(Tokenizer* self)
 }
 
 /*
-    Write a token to the end of the current token stack.
+    Write a token to the current token stack.
 */
 static int Tokenizer_emit_token(Tokenizer* self, PyObject* token, int first)
 {
@@ -366,7 +381,8 @@ static int Tokenizer_emit_token(Tokenizer* self, PyObject* token, int first)
 }
 
 /*
-    Write a token to the end of the current token stack.
+    Write a token to the current token stack, with kwargs. Steals a reference
+    to kwargs.
 */
 static int Tokenizer_emit_token_kwargs(Tokenizer* self, PyObject* token,
                                        PyObject* kwargs, int first)
@@ -413,6 +429,42 @@ static int Tokenizer_emit_text(Tokenizer* self, const char* text)
             return -1;
         i++;
     }
+    return 0;
+}
+
+/*
+    Write the contents of another textbuffer to the current textbuffer,
+    deallocating it in the process.
+*/
+static int
+Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
+{
+    Textbuffer *original = buffer;
+    int i;
+
+    if (reverse) {
+        do {
+            for (i = buffer->size - 1; i >= 0; i--) {
+                if (Tokenizer_emit_char(self, buffer->data[i])) {
+                    Textbuffer_dealloc(original);
+                    return -1;
+                }
+            }
+        } while ((buffer = buffer->next));
+    }
+    else {
+        while (buffer->next)
+            buffer = buffer->next;
+        do {
+            for (i = 0; i < buffer->size; i++) {
+                if (Tokenizer_emit_char(self, buffer->data[i])) {
+                    Textbuffer_dealloc(original);
+                    return -1;
+                }
+            }
+        } while ((buffer = buffer->prev));
+    }
+    Textbuffer_dealloc(original);
     return 0;
 }
 
@@ -805,6 +857,353 @@ static PyObject* Tokenizer_handle_wikilink_end(Tokenizer* self)
     PyObject* stack = Tokenizer_pop(self);
     self->head += 1;
     return stack;
+}
+
+/*
+    Parse the URI scheme of a bracket-enclosed external link.
+*/
+static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
+{
+    static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
+    Textbuffer* buffer;
+    PyObject* scheme;
+    Py_UNICODE this;
+    int slashes, i;
+
+    if (Tokenizer_push(self, LC_EXT_LINK_URI))
+        return -1;
+    if (Tokenizer_READ(self, 0) == *"/" && Tokenizer_READ(self, 1) == *"/") {
+        if (Tokenizer_emit_text(self, "//"))
+            return -1;
+        self->head += 2;
+    }
+    else {
+        buffer = Textbuffer_new();
+        if (!buffer)
+            return -1;
+        while ((this = Tokenizer_READ(self, 0)) != *"") {
+            i = 0;
+            while (1) {
+                if (!valid[i])
+                    goto end_of_loop;
+                if (this == valid[i])
+                    break;
+                i++;
+            }
+            Textbuffer_write(&buffer, this);
+            if (Tokenizer_emit_char(self, this)) {
+                Textbuffer_dealloc(buffer);
+                return -1;
+            }
+            self->head++;
+        }
+        end_of_loop:
+        if (this != *":") {
+            Textbuffer_dealloc(buffer);
+            Tokenizer_fail_route(self);
+            return 0;
+        }
+        if (Tokenizer_emit_char(self, *":")) {
+            Textbuffer_dealloc(buffer);
+            return -1;
+        }
+        self->head++;
+        slashes = (Tokenizer_READ(self, 0) == *"/" &&
+                   Tokenizer_READ(self, 1) == *"/");
+        if (slashes) {
+            if (Tokenizer_emit_text(self, "//")) {
+                Textbuffer_dealloc(buffer);
+                return -1;
+            }
+            self->head += 2;
+        }
+        scheme = Textbuffer_render(buffer);
+        Textbuffer_dealloc(buffer);
+        if (!scheme)
+            return -1;
+        if (!IS_SCHEME(scheme, slashes, 0)) {
+            Py_DECREF(scheme);
+            Tokenizer_fail_route(self);
+            return 0;
+        }
+        Py_DECREF(scheme);
+    }
+    return 0;
+}
+
+/*
+    Parse the URI scheme of a free (no brackets) external link.
+*/
+static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
+{
+    static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
+    Textbuffer *scheme_buffer = Textbuffer_new(), *temp_buffer;
+    PyObject *scheme;
+    Py_UNICODE chunk;
+    int slashes, i, j;
+
+    if (!scheme_buffer)
+        return -1;
+    // We have to backtrack through the textbuffer looking for our scheme since
+    // it was just parsed as text:
+    temp_buffer = self->topstack->textbuffer;
+    while (temp_buffer) {
+        for (i = temp_buffer->size - 1; i >= 0; i--) {
+            chunk = temp_buffer->data[i];
+            if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
+                goto end_of_loop;
+            j = 0;
+            while (1) {
+                if (!valid[j]) {
+                    Textbuffer_dealloc(scheme_buffer);
+                    FAIL_ROUTE(0);
+                    return 0;
+                }
+                if (chunk == valid[j])
+                    break;
+                j++;
+            }
+            Textbuffer_write(&scheme_buffer, chunk);
+        }
+        temp_buffer = temp_buffer->next;
+    }
+    end_of_loop:
+    scheme = Textbuffer_render(scheme_buffer);
+    if (!scheme) {
+        Textbuffer_dealloc(scheme_buffer);
+        return -1;
+    }
+    slashes = (Tokenizer_READ(self, 0) == *"/" &&
+               Tokenizer_READ(self, 1) == *"/");
+    if (!IS_SCHEME(scheme, slashes, 1)) {
+        Py_DECREF(scheme);
+        Textbuffer_dealloc(scheme_buffer);
+        FAIL_ROUTE(0);
+        return 0;
+    }
+    Py_DECREF(scheme);
+    if (Tokenizer_push(self, LC_EXT_LINK_URI)) {
+        Textbuffer_dealloc(scheme_buffer);
+        return -1;
+    }
+    if (Tokenizer_emit_textbuffer(self, scheme_buffer, 1))
+        return -1;
+    if (Tokenizer_emit_char(self, *":"))
+        return -1;
+    if (slashes) {
+        if (Tokenizer_emit_text(self, "//"))
+            return -1;
+        self->head += 2;
+    }
+    return 0;
+}
+
+/*
+    Handle text in a free external link, including trailing punctuation.
+*/
+static int
+Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
+                                Textbuffer** tail, Py_UNICODE this)
+{
+    #define PUSH_TAIL_BUFFER(tail, error)                 \
+        if ((tail)->size || (tail)->next) {               \
+            if (Tokenizer_emit_textbuffer(self, tail, 0)) \
+                return error;                             \
+            tail = Textbuffer_new();                      \
+            if (!(tail))                                  \
+                return error;                             \
+        }
+
+    if (this == *"(" && !(*parens)) {
+        *parens = 1;
+        PUSH_TAIL_BUFFER(*tail, -1)
+    }
+    else if (this == *"," || this == *";" || this == *"\\" || this == *"." ||
+             this == *":" || this == *"!" || this == *"?" ||
+             (!(*parens) && this == *")"))
+        return Textbuffer_write(tail, this);
+    else
+        PUSH_TAIL_BUFFER(*tail, -1)
+    return Tokenizer_emit_char(self, this);
+}
+
+/*
+    Really parse an external link.
+*/
+static PyObject*
+Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
+                                     Textbuffer** extra)
+{
+    Py_UNICODE this, next;
+    int parens = 0;
+
+    if (brackets ? Tokenizer_parse_bracketed_uri_scheme(self) :
+                   Tokenizer_parse_free_uri_scheme(self))
+        return NULL;
+    if (BAD_ROUTE)
+        return NULL;
+    this = Tokenizer_READ(self, 0);
+    if (this == *"" || this == *"\n" || this == *" " || this == *"]")
+        return Tokenizer_fail_route(self);
+    if (!brackets && this == *"[")
+        return Tokenizer_fail_route(self);
+    while (1) {
+        this = Tokenizer_READ(self, 0);
+        next = Tokenizer_READ(self, 1);
+        if (this == *"" || this == *"\n") {
+            if (brackets)
+                return Tokenizer_fail_route(self);
+            self->head--;
+            return Tokenizer_pop(self);
+        }
+        if (this == *"{" && next == *"{" && Tokenizer_CAN_RECURSE(self)) {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_template_or_argument(self))
+                return NULL;
+        }
+        else if (this == *"[") {
+            if (!brackets) {
+                self->head--;
+                return Tokenizer_pop(self);
+            }
+            if (Tokenizer_emit_char(self, *"["))
+                return NULL;
+        }
+        else if (this == *"]") {
+            if (!brackets)
+                self->head--;
+            return Tokenizer_pop(self);
+        }
+        else if (this == *"&") {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_entity(self))
+                return NULL;
+        }
+        else if (this == *" ") {
+            if (brackets) {
+                if (Tokenizer_emit(self, ExternalLinkSeparator))
+                    return NULL;
+                self->topstack->context ^= LC_EXT_LINK_URI;
+                self->topstack->context |= LC_EXT_LINK_TITLE;
+                self->head++;
+                return Tokenizer_parse(self, 0, 0);
+            }
+            if (Textbuffer_write(extra, *" "))
+                return NULL;
+            return Tokenizer_pop(self);
+        }
+        else if (!brackets) {
+            if (Tokenizer_handle_free_link_text(self, &parens, extra, this))
+                return NULL;
+        }
+        else {
+            if (Tokenizer_emit_char(self, this))
+                return NULL;
+        }
+        self->head++;
+    }
+}
+
+/*
+    Remove the URI scheme of a new external link from the textbuffer.
+*/
+static int
+Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
+{
+    PyObject *text = PyObject_GetAttrString(PyList_GET_ITEM(link, 0), "text"),
+             *split, *scheme;
+    Py_ssize_t length;
+    Textbuffer* temp;
+
+    if (!text)
+        return -1;
+    split = PyObject_CallMethod(text, "split", "si", ":", 1);
+    Py_DECREF(text);
+    if (!split)
+        return -1;
+    scheme = PyList_GET_ITEM(split, 0);
+    length = PyUnicode_GET_SIZE(scheme);
+    while (length) {
+        temp = self->topstack->textbuffer;
+        if (length <= temp->size) {
+            temp->size -= length;
+            break;
+        }
+        length -= temp->size;
+        self->topstack->textbuffer = temp->next;
+        free(temp->data);
+        free(temp);
+    }
+    Py_DECREF(split);
+    return 0;
+}
+
+/*
+    Parse an external link at the head of the wikicode string.
+*/
+static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
+{
+    #define INVALID_CONTEXT self->topstack->context & AGG_INVALID_LINK
+    #define NOT_A_LINK                                        \
+        if (!brackets && self->topstack->context & LC_DLTERM) \
+            return Tokenizer_handle_dl_term(self);            \
+        return Tokenizer_emit_char(self, Tokenizer_READ(self, 0))
+
+    Py_ssize_t reset = self->head;
+    PyObject *link, *kwargs;
+    Textbuffer *extra = 0;
+
+    if (INVALID_CONTEXT || !(Tokenizer_CAN_RECURSE(self))) {
+        NOT_A_LINK;
+    }
+    extra = Textbuffer_new();
+    if (!extra)
+        return -1;
+    self->head++;
+    link = Tokenizer_really_parse_external_link(self, brackets, &extra);
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
+        self->head = reset;
+        Textbuffer_dealloc(extra);
+        NOT_A_LINK;
+    }
+    if (!link) {
+        Textbuffer_dealloc(extra);
+        return -1;
+    }
+    if (!brackets) {
+        if (Tokenizer_remove_uri_scheme_from_textbuffer(self, link)) {
+            Textbuffer_dealloc(extra);
+            Py_DECREF(link);
+            return -1;
+        }
+    }
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Textbuffer_dealloc(extra);
+        Py_DECREF(link);
+        return -1;
+    }
+    PyDict_SetItemString(kwargs, "brackets", brackets ? Py_True : Py_False);
+    if (Tokenizer_emit_kwargs(self, ExternalLinkOpen, kwargs)) {
+        Textbuffer_dealloc(extra);
+        Py_DECREF(link);
+        return -1;
+    }
+    if (Tokenizer_emit_all(self, link)) {
+        Textbuffer_dealloc(extra);
+        Py_DECREF(link);
+        return -1;
+    }
+    Py_DECREF(link);
+    if (Tokenizer_emit(self, ExternalLinkClose)) {
+        Textbuffer_dealloc(extra);
+        return -1;
+    }
+    if (extra->size || extra->next)
+        return Tokenizer_emit_textbuffer(self, extra, 0);
+    Textbuffer_dealloc(extra);
+    return 0;
 }
 
 /*
@@ -1238,15 +1637,8 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
 static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 {
     Py_UNICODE next = Tokenizer_READ(self, 1);
-    int i, is_marker = 0;
 
-    for (i = 0; i < NUM_MARKERS; i++) {
-        if (*MARKERS[i] == text) {
-            is_marker = 1;
-            break;
-        }
-    }
-    if (!is_marker || !Tokenizer_CAN_RECURSE(self))
+    if (!is_marker(text) || !Tokenizer_CAN_RECURSE(self))
         return Tokenizer_emit_char(self, text);
     else if (text == next && next == *"{")
         return Tokenizer_parse_template_or_argument(self);
@@ -1264,17 +1656,11 @@ static int
 Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
 {
     PyObject *trash;
-    int first_time, i, is_marker = 0, escaped;
+    int first_time, escaped;
 
     if (data->context & TAG_NAME) {
         first_time = !(data->context & TAG_NOTE_SPACE);
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == chunk) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (is_marker || (Py_UNICODE_ISSPACE(chunk) && first_time)) {
+        if (is_marker(chunk) || (Py_UNICODE_ISSPACE(chunk) && first_time)) {
             // Tags must start with text, not spaces
             Tokenizer_fail_route(self);
             return 0;
@@ -1623,7 +2009,6 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     Textbuffer* buf;
     PyObject *name, *tag;
     Py_UNICODE this;
-    int is_marker, i;
 
     self->head += 2;
     buf = Textbuffer_new();
@@ -1631,14 +2016,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
         return -1;
     while (1) {
         this = Tokenizer_READ(self, pos);
-        is_marker = 0;
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == this) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (is_marker) {
+        if (is_marker(this)) {
             name = Textbuffer_render(buf);
             if (!name) {
                 Textbuffer_dealloc(buf);
@@ -1985,9 +2363,9 @@ static int Tokenizer_handle_hr(Tokenizer* self)
         self->head++;
     }
     markup = Textbuffer_render(buffer);
+    Textbuffer_dealloc(buffer);
     if (!markup)
         return -1;
-    Textbuffer_dealloc(buffer);
     kwargs = PyDict_New();
     if (!kwargs)
         return -1;
@@ -2047,21 +2425,21 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
 */
 static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 {
-    if (context & LC_FAIL_NEXT) {
+    if (context & LC_FAIL_NEXT)
         return -1;
-    }
-    if (context & LC_WIKILINK_TITLE) {
-        if (data == *"]" || data == *"{")
+    if (context & LC_WIKILINK) {
+        if (context & LC_WIKILINK_TEXT)
+            return (data == *"[" && Tokenizer_READ(self, 1) == *"[") ? -1 : 0;
+        else if (data == *"]" || data == *"{")
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == *"\n" || data == *"[" || data == *"}")
             return -1;
         return 0;
     }
-    if (context & LC_TAG_CLOSE) {
-        if (data == *"<")
-            return -1;
-        return 0;
-    }
+    if (context & LC_EXT_LINK_TITLE)
+        return (data == *"\n") ? -1 : 0;
+    if (context & LC_TAG_CLOSE)
+        return (data == *"<") ? -1 : 0;
     if (context & LC_TEMPLATE_NAME) {
         if (data == *"{" || data == *"}" || data == *"[") {
             self->topstack->context |= LC_FAIL_NEXT;
@@ -2126,7 +2504,7 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 */
 static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 {
-    int this_context, is_marker, i;
+    int this_context;
     Py_UNICODE this, next, next_next, last;
     PyObject* temp;
 
@@ -2146,14 +2524,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
                 return Tokenizer_fail_route(self);
             }
         }
-        is_marker = 0;
-        for (i = 0; i < NUM_MARKERS; i++) {
-            if (*MARKERS[i] == this) {
-                is_marker = 1;
-                break;
-            }
-        }
-        if (!is_marker) {
+        if (!is_marker(this)) {
             if (Tokenizer_emit_char(self, this))
                 return NULL;
             self->head++;
@@ -2192,9 +2563,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
             if (Tokenizer_emit_char(self, this))
                 return NULL;
         }
-        else if (this == next && next == *"[") {
-            if (!(this_context & LC_WIKILINK_TITLE) &&
-                                                Tokenizer_CAN_RECURSE(self)) {
+        else if (this == next && next == *"[" && Tokenizer_CAN_RECURSE(self)) {
+            if (!(this_context & AGG_INVALID_LINK)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
             }
@@ -2207,6 +2577,16 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         }
         else if (this == next && next == *"]" && this_context & LC_WIKILINK)
             return Tokenizer_handle_wikilink_end(self);
+        else if (this == *"[") {
+            if (Tokenizer_parse_external_link(self, 1))
+                return NULL;
+        }
+        else if (this == *":" && !is_marker(last)) {
+            if (Tokenizer_parse_external_link(self, 0))
+                return NULL;
+        }
+        else if (this == *"]" && this_context & LC_EXT_LINK_TITLE)
+            return Tokenizer_pop(self);
         else if (this == *"=" && !(self->global & GL_HEADING)) {
             if (last == *"\n" || last == *"") {
                 if (Tokenizer_parse_heading(self))
@@ -2243,9 +2623,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
                     return NULL;
             }
         }
-        else if (this == *"<") {
-            if (!(this_context & LC_TAG_CLOSE) &&
-                                                Tokenizer_CAN_RECURSE(self)) {
+        else if (this == *"<" && !(this_context & LC_TAG_CLOSE)) {
+            if (Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_tag(self))
                     return NULL;
             }
@@ -2289,8 +2668,9 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject *text, *temp;
+    int context = 0;
 
-    if (PyArg_ParseTuple(args, "U", &text)) {
+    if (PyArg_ParseTuple(args, "U|i", &text, &context)) {
         Py_XDECREF(self->text);
         self->text = PySequence_Fast(text, "expected a sequence");
     }
@@ -2299,7 +2679,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         Py_ssize_t size;
         /* Failed to parse a Unicode object; try a string instead. */
         PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "s#", &encoded, &size))
+        if (!PyArg_ParseTuple(args, "s#|i", &encoded, &size, &context))
             return NULL;
         temp = PyUnicode_FromStringAndSize(encoded, size);
         if (!text)
@@ -2311,7 +2691,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     }
     self->head = self->global = self->depth = self->cycles = 0;
     self->length = PyList_GET_SIZE(self->text);
-    return Tokenizer_parse(self, 0, 1);
+    return Tokenizer_parse(self, context, 1);
 }
 
 static int load_entitydefs(void)
@@ -2389,6 +2769,11 @@ static int load_tokens(void)
     WikilinkSeparator = PyObject_GetAttrString(tokens, "WikilinkSeparator");
     WikilinkClose = PyObject_GetAttrString(tokens, "WikilinkClose");
 
+    ExternalLinkOpen = PyObject_GetAttrString(tokens, "ExternalLinkOpen");
+    ExternalLinkSeparator = PyObject_GetAttrString(tokens,
+                                                   "ExternalLinkSeparator");
+    ExternalLinkClose = PyObject_GetAttrString(tokens, "ExternalLinkClose");
+
     HTMLEntityStart = PyObject_GetAttrString(tokens, "HTMLEntityStart");
     HTMLEntityNumeric = PyObject_GetAttrString(tokens, "HTMLEntityNumeric");
     HTMLEntityHex = PyObject_GetAttrString(tokens, "HTMLEntityHex");
@@ -2413,13 +2798,13 @@ static int load_tokens(void)
     return 0;
 }
 
-static int load_tag_defs(void)
+static int load_definitions(void)
 {
     PyObject *tempmod,
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("tag_defs");
+             *modname = IMPORT_NAME_FUNC("definitions");
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
@@ -2429,7 +2814,7 @@ static int load_tag_defs(void)
     Py_DECREF(fromlist);
     if (!tempmod)
         return -1;
-    tag_defs = PyObject_GetAttrString(tempmod, "tag_defs");
+    definitions = PyObject_GetAttrString(tempmod, "definitions");
     Py_DECREF(tempmod);
     return 0;
 }
@@ -2452,7 +2837,7 @@ PyMODINIT_FUNC INIT_FUNC_NAME(void)
     NOARGS = PyTuple_New(0);
     if (!EMPTY || !NOARGS)
         INIT_ERROR;
-    if (load_entitydefs() || load_tokens() || load_tag_defs())
+    if (load_entitydefs() || load_tokens() || load_definitions())
         INIT_ERROR;
 #ifdef IS_PY3K
     return module;

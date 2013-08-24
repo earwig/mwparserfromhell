@@ -26,7 +26,8 @@ import re
 
 from . import contexts, tokens
 from ..compat import htmlentities
-from ..tag_defs import get_html_tag, is_parsable, is_single, is_single_only
+from ..definitions import (get_html_tag, is_parsable, is_single,
+                           is_single_only, is_scheme)
 
 __all__ = ["Tokenizer"]
 
@@ -60,7 +61,7 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
-               ":", "/", "-", "\n", END]
+               ":", "/", "-", "\n", START, END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
@@ -310,6 +311,168 @@ class Tokenizer(object):
         """Handle the end of a wikilink at the head of the string."""
         self._head += 1
         return self._pop()
+
+    def _parse_bracketed_uri_scheme(self):
+        """Parse the URI scheme of a bracket-enclosed external link."""
+        self._push(contexts.EXT_LINK_URI)
+        if self._read() == self._read(1) == "/":
+            self._emit_text("//")
+            self._head += 2
+        else:
+            valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+            all_valid = lambda: all(char in valid for char in self._read())
+            scheme = ""
+            while self._read() is not self.END and all_valid():
+                scheme += self._read()
+                self._emit_text(self._read())
+                self._head += 1
+            if self._read() != ":":
+                self._fail_route()
+            self._emit_text(":")
+            self._head += 1
+            slashes = self._read() == self._read(1) == "/"
+            if slashes:
+                self._emit_text("//")
+                self._head += 2
+            if not is_scheme(scheme, slashes):
+                self._fail_route()
+
+    def _parse_free_uri_scheme(self):
+        """Parse the URI scheme of a free (no brackets) external link."""
+        valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+        scheme = []
+        try:
+            # We have to backtrack through the textbuffer looking for our
+            # scheme since it was just parsed as text:
+            for chunk in reversed(self._textbuffer):
+                for char in reversed(chunk):
+                    if char.isspace() or char in self.MARKERS:
+                        raise StopIteration()
+                    if char not in valid:
+                        raise BadRoute()
+                    scheme.append(char)
+        except StopIteration:
+            pass
+        scheme = "".join(reversed(scheme))
+        slashes = self._read() == self._read(1) == "/"
+        if not is_scheme(scheme, slashes):
+            raise BadRoute()
+        self._push(contexts.EXT_LINK_URI)
+        self._emit_text(scheme)
+        self._emit_text(":")
+        if slashes:
+            self._emit_text("//")
+            self._head += 2
+
+    def _handle_free_link_text(self, punct, tail, this):
+        """Handle text in a free ext link, including trailing punctuation."""
+        if "(" in this and ")" in punct:
+            punct = punct[:-1]  # ')' is not longer valid punctuation
+        if this.endswith(punct):
+            for i in reversed(range(-len(this), 0)):
+                if i == -len(this) or this[i - 1] not in punct:
+                    break
+            stripped = this[:i]
+            if stripped and tail:
+                self._emit_text(tail)
+                tail = ""
+            tail += this[i:]
+            this = stripped
+        elif tail:
+            self._emit_text(tail)
+            tail = ""
+        self._emit_text(this)
+        return punct, tail
+
+    def _really_parse_external_link(self, brackets):
+        """Really parse an external link."""
+        if brackets:
+            self._parse_bracketed_uri_scheme()
+            invalid = ("\n", " ", "]")
+        else:
+            self._parse_free_uri_scheme()
+            invalid = ("\n", " ", "[", "]")
+            punct = tuple(",;\.:!?)")
+        if self._read() is self.END or self._read()[0] in invalid:
+            self._fail_route()
+        tail = ""
+        while True:
+            this, next = self._read(), self._read(1)
+            if this is self.END or this == "\n":
+                if brackets:
+                    self._fail_route()
+                return self._pop(), tail, -1
+            elif this == next == "{" and self._can_recurse():
+                if tail:
+                    self._emit_text(tail)
+                    tail = ""
+                self._parse_template_or_argument()
+            elif this == "[":
+                if brackets:
+                    self._emit_text("[")
+                else:
+                    return self._pop(), tail, -1
+            elif this == "]":
+                return self._pop(), tail, 0 if brackets else -1
+            elif this == "&":
+                if tail:
+                    self._emit_text(tail)
+                    tail = ""
+                self._parse_entity()
+            elif " " in this:
+                before, after = this.split(" ", 1)
+                if brackets:
+                    self._emit_text(before)
+                    self._emit(tokens.ExternalLinkSeparator())
+                    if after:
+                        self._emit_text(after)
+                    self._context ^= contexts.EXT_LINK_URI
+                    self._context |= contexts.EXT_LINK_TITLE
+                    self._head += 1
+                    return self._parse(push=False), None, 0
+                punct, tail = self._handle_free_link_text(punct, tail, before)
+                return self._pop(), tail + " " + after, 0
+            elif not brackets:
+                punct, tail = self._handle_free_link_text(punct, tail, this)
+            else:
+                self._emit_text(this)
+            self._head += 1
+
+    def _remove_uri_scheme_from_textbuffer(self, scheme):
+        """Remove the URI scheme of a new external link from the textbuffer."""
+        length = len(scheme)
+        while length:
+            if length < len(self._textbuffer[-1]):
+                self._textbuffer[-1] = self._textbuffer[-1][:-length]
+                break
+            length -= len(self._textbuffer[-1])
+            self._textbuffer.pop()
+
+    def _parse_external_link(self, brackets):
+        """Parse an external link at the head of the wikicode string."""
+        reset = self._head
+        self._head += 1
+        try:
+            bad_context = self._context & contexts.INVALID_LINK
+            if bad_context or not self._can_recurse():
+                raise BadRoute()
+            link, extra, delta = self._really_parse_external_link(brackets)
+        except BadRoute:
+            self._head = reset
+            if not brackets and self._context & contexts.DL_TERM:
+                self._handle_dl_term()
+            else:
+                self._emit_text(self._read())
+        else:
+            if not brackets:
+                scheme = link[0].text.split(":", 1)[0]
+                self._remove_uri_scheme_from_textbuffer(scheme)
+            self._emit(tokens.ExternalLinkOpen(brackets=brackets))
+            self._emit_all(link)
+            self._emit(tokens.ExternalLinkClose())
+            self._head += delta
+            if extra:
+                self._emit_text(extra)
 
     def _parse_heading(self):
         """Parse a section heading at the head of the wikicode string."""
@@ -810,12 +973,16 @@ class Tokenizer(object):
         context = self._context
         if context & contexts.FAIL_NEXT:
             return False
-        if context & contexts.WIKILINK_TITLE:
-            if this == "]" or this == "{":
+        if context & contexts.WIKILINK:
+            if context & contexts.WIKILINK_TEXT:
+                return not (this == self._read(1) == "[")
+            elif this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
             elif this == "\n" or this == "[" or this == "}":
                 return False
             return True
+        elif context & contexts.EXT_LINK_TITLE:
+            return this != "\n"
         elif context & contexts.TEMPLATE_NAME:
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
@@ -898,8 +1065,8 @@ class Tokenizer(object):
                     return self._handle_argument_end()
                 else:
                     self._emit_text("}")
-            elif this == next == "[":
-                if not self._context & contexts.WIKILINK_TITLE and self._can_recurse():
+            elif this == next == "[" and self._can_recurse():
+                if not self._context & contexts.INVALID_LINK:
                     self._parse_wikilink()
                 else:
                     self._emit_text("[")
@@ -907,6 +1074,12 @@ class Tokenizer(object):
                 self._handle_wikilink_separator()
             elif this == next == "]" and self._context & contexts.WIKILINK:
                 return self._handle_wikilink_end()
+            elif this == "[":
+                self._parse_external_link(True)
+            elif this == ":" and self._read(-1) not in self.MARKERS:
+                self._parse_external_link(False)
+            elif this == "]" and self._context & contexts.EXT_LINK_TITLE:
+                return self._pop()
             elif this == "=" and not self._global & contexts.GL_HEADING:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
@@ -928,8 +1101,8 @@ class Tokenizer(object):
                     self._handle_tag_open_close()
                 else:
                     self._handle_invalid_tag_start()
-            elif this == "<":
-                if not self._context & contexts.TAG_CLOSE and self._can_recurse():
+            elif this == "<" and not self._context & contexts.TAG_CLOSE:
+                if self._can_recurse():
                     self._parse_tag()
                 else:
                     self._emit_text("<")
@@ -952,8 +1125,9 @@ class Tokenizer(object):
                 self._emit_text(this)
             self._head += 1
 
-    def tokenize(self, text):
+    def tokenize(self, text, context=0):
         """Build a list of tokens from a string of wikicode and return it."""
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
-        return self._parse()
+        self._head = self._global = self._depth = self._cycles = 0
+        return self._parse(context)

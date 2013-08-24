@@ -24,8 +24,8 @@ from __future__ import unicode_literals
 import re
 
 from .compat import maxsize, py3k, str
-from .nodes import (Argument, Comment, Heading, HTMLEntity, Node, Tag,
-                    Template, Text, Wikilink)
+from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
+                    Node, Tag, Template, Text, Wikilink)
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -509,6 +509,6 @@ class Wikicode(StringMixIn):
         return "\n".join(self._get_tree(self, [], marker, 0))
 
 Wikicode._build_filter_methods(
-    arguments=Argument, comments=Comment, headings=Heading,
-    html_entities=HTMLEntity, tags=Tag, templates=Template, text=Text,
-    wikilinks=Wikilink)
+    arguments=Argument, comments=Comment, external_links=ExternalLink,
+    headings=Heading, html_entities=HTMLEntity, tags=Tag, templates=Template,
+    text=Text, wikilinks=Wikilink)

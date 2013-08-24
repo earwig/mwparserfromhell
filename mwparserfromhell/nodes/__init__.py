@@ -69,6 +69,7 @@ from . import extras
 from .text import Text
 from .argument import Argument
 from .comment import Comment
+from .external_link import ExternalLink
 from .heading import Heading
 from .html_entity import HTMLEntity
 from .tag import Tag

@@ -1,0 +1,473 @@
+name:   basic
+label:  basic external link
+input:  "http://example.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/"), ExternalLinkClose()]
+
+---
+
+name:   basic_brackets
+label:  basic external link in brackets
+input:  "[http://example.com/]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkClose()]
+
+---
+
+name:   brackets_space
+label:  basic external link in brackets, with a space after
+input:  "[http://example.com/ ]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkSeparator(), ExternalLinkClose()]
+
+---
+
+name:   brackets_title
+label:  basic external link in brackets, with a title
+input:  "[http://example.com/ Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   brackets_multiword_title
+label:  basic external link in brackets, with a multi-word title
+input:  "[http://example.com/ Example Web Page]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkSeparator(), Text(text="Example Web Page"), ExternalLinkClose()]
+
+---
+
+name:   brackets_adjacent
+label:  three adjacent bracket-enclosed external links
+input:  "[http://foo.com/ Foo][http://bar.com/ Bar]\n[http://baz.com/ Baz]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo.com/"), ExternalLinkSeparator(), Text(text="Foo"), ExternalLinkClose(), ExternalLinkOpen(brackets=True), Text(text="http://bar.com/"), ExternalLinkSeparator(), Text(text="Bar"), ExternalLinkClose(), Text(text="\n"), ExternalLinkOpen(brackets=True), Text(text="http://baz.com/"), ExternalLinkSeparator(), Text(text="Baz"), ExternalLinkClose()]
+
+---
+
+name:   brackets_newline_before
+label:  bracket-enclosed link with a newline before the title
+input:  "[http://example.com/ \nExample]"
+output: [Text(text="["), ExternalLinkOpen(brackets=False), Text(text="http://example.com/"), ExternalLinkClose(), Text(text=" \nExample]")]
+
+---
+
+name:   brackets_newline_inside
+label:  bracket-enclosed link with a newline in the title
+input:  "[http://example.com/ Example \nWeb Page]"
+output: [Text(text="["), ExternalLinkOpen(brackets=False), Text(text="http://example.com/"), ExternalLinkClose(), Text(text=" Example \nWeb Page]")]
+
+---
+
+name:   brackets_newline_after
+label:  bracket-enclosed link with a newline after the title
+input:  "[http://example.com/ Example\n]"
+output: [Text(text="["), ExternalLinkOpen(brackets=False), Text(text="http://example.com/"), ExternalLinkClose(), Text(text=" Example\n]")]
+
+---
+
+name:   brackets_space_before
+label:  bracket-enclosed link with a space before the URL
+input:  "[ http://example.com Example]"
+output: [Text(text="[ "), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text=" Example]")]
+
+---
+
+name:   brackets_title_like_url
+label:  bracket-enclosed link with a title that looks like a URL
+input:  "[http://example.com http://example.com]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkSeparator(), Text(text="http://example.com"), ExternalLinkClose()]
+
+---
+
+name:   brackets_recursive
+label:  bracket-enclosed link with a bracket-enclosed link as the title
+input:  "[http://example.com [http://example.com]]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkSeparator(), Text(text="[http://example.com"), ExternalLinkClose(), Text(text="]")]
+
+---
+
+name:   period_after
+label:  a period after a free link that is excluded
+input:  "http://example.com."
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text=".")]
+
+---
+
+name:   colons_after
+label:  colons after a free link that are excluded
+input:  "http://example.com/foo:bar.:;baz!?,"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo:bar.:;baz"), ExternalLinkClose(), Text(text="!?,")]
+
+---
+
+name:   close_paren_after_excluded
+label:  a closing parenthesis after a free link that is excluded
+input:  "http://example.)com)"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.)com"), ExternalLinkClose(), Text(text=")")]
+
+---
+
+name:   close_paren_after_included
+label:  a closing parenthesis after a free link that is included because of an opening parenthesis in the URL
+input:  "http://example.(com)"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.(com)"), ExternalLinkClose()]
+
+---
+
+name:   open_bracket_inside
+label:  an open bracket inside a free link that causes it to be ended abruptly
+input:  "http://foobar[baz.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foobar"), ExternalLinkClose(), Text(text="[baz.com")]
+
+---
+
+name:   brackets_period_after
+label:  a period after a bracket-enclosed link that is included
+input:  "[http://example.com. Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com."), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   brackets_colons_after
+label:  colons after a bracket-enclosed link that are included
+input:  "[http://example.com/foo:bar.:;baz!?, Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo:bar.:;baz!?,"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   brackets_close_paren_after_included
+label:  a closing parenthesis after a bracket-enclosed link that is included
+input:  "[http://example.)com) Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.)com)"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   brackets_close_paren_after_included_2
+label:  a closing parenthesis after a bracket-enclosed link that is also included
+input:  "[http://example.(com) Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.(com)"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   brackets_open_bracket_inside
+label:  an open bracket inside a bracket-enclosed link that is also included
+input:  "[http://foobar[baz.com Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foobar[baz.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   adjacent_space
+label:  two free links separated by a space
+input:  "http://example.com http://example.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text=" "), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose()]
+
+---
+
+name:   adjacent_newline
+label:  two free links separated by a newline
+input:  "http://example.com\nhttp://example.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text="\n"), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose()]
+
+---
+
+name:   adjacent_close_bracket
+label:  two free links separated by a close bracket
+input:  "http://example.com]http://example.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text="]"), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose()]
+
+---
+
+name:   html_entity_in_url
+label:  a HTML entity parsed correctly inside a free link
+input:  "http://exa&nbsp;mple.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://exa"), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), Text(text="mple.com/"), ExternalLinkClose()]
+
+---
+
+name:   template_in_url
+label:  a template parsed correctly inside a free link
+input:  "http://exa{{template}}mple.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://exa"), TemplateOpen(), Text(text="template"), TemplateClose(), Text(text="mple.com/"), ExternalLinkClose()]
+
+---
+
+name:   argument_in_url
+label:  an argument parsed correctly inside a free link
+input:  "http://exa{{{argument}}}mple.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://exa"), ArgumentOpen(), Text(text="argument"), ArgumentClose(), Text(text="mple.com/"), ExternalLinkClose()]
+
+---
+
+name:   wikilink_in_url
+label:  a wikilink that destroys a free link
+input:  "http://exa[[wikilink]]mple.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://exa"), ExternalLinkClose(), WikilinkOpen(), Text(text="wikilink"), WikilinkClose(), Text(text="mple.com/")]
+
+---
+
+name:   external_link_in_url
+label:  a bracketed link that destroys a free link
+input:  "http://exa[http://example.com/]mple.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://exa"), ExternalLinkClose(), ExternalLinkOpen(brackets=True), Text(text="http://example.com/"), ExternalLinkClose(), Text(text="mple.com/")]
+
+---
+
+name:   spaces_padding
+label:  spaces padding a free link
+input:  "   http://example.com   "
+output: [Text(text="   "), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text="   ")]
+
+---
+
+name:   text_and_spaces_padding
+label:  text and spaces padding a free link
+input:  "x   http://example.com   x"
+output: [Text(text="x   "), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), Text(text="   x")]
+
+---
+
+name:   template_before
+label:  a template before a free link
+input:  "{{foo}}http://example.com"
+output: [TemplateOpen(), Text(text="foo"), TemplateClose(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose()]
+
+---
+
+name:   spaces_padding_no_slashes
+label:  spaces padding a free link with no slashes after the colon
+input:  "   mailto:example@example.com   "
+output: [Text(text="   "), ExternalLinkOpen(brackets=False), Text(text="mailto:example@example.com"), ExternalLinkClose(), Text(text="   ")]
+
+---
+
+name:   text_and_spaces_padding_no_slashes
+label:  text and spaces padding a free link with no slashes after the colon
+input:  "x   mailto:example@example.com   x"
+output: [Text(text="x   "), ExternalLinkOpen(brackets=False), Text(text="mailto:example@example.com"), ExternalLinkClose(), Text(text="   x")]
+
+---
+
+name:   template_before_no_slashes
+label:  a template before a free link with no slashes after the colon
+input:  "{{foo}}mailto:example@example.com"
+output: [TemplateOpen(), Text(text="foo"), TemplateClose(), ExternalLinkOpen(brackets=False), Text(text="mailto:example@example.com"), ExternalLinkClose()]
+
+---
+
+name:   no_slashes
+label:  a free link with no slashes after the colon
+input:  "mailto:example@example.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="mailto:example@example.com"), ExternalLinkClose()]
+
+---
+
+name:   slashes_optional
+label:  a free link using a scheme that doesn't need slashes, but has them anyway
+input:  "mailto://example@example.com"
+output: [ExternalLinkOpen(brackets=False), Text(text="mailto://example@example.com"), ExternalLinkClose()]
+
+---
+
+name:   short
+label:  a very short free link
+input:  "mailto://abc"
+output: [ExternalLinkOpen(brackets=False), Text(text="mailto://abc"), ExternalLinkClose()]
+
+---
+
+name:   slashes_missing
+label:  slashes missing from a free link with a scheme that requires them
+input:  "http:example@example.com"
+output: [Text(text="http:example@example.com")]
+
+---
+
+name:   no_scheme_but_slashes
+label:  no scheme in a free link, but slashes (protocol-relative free links are not supported)
+input:  "//example.com"
+output: [Text(text="//example.com")]
+
+---
+
+name:   no_scheme_but_colon
+label:  no scheme in a free link, but a colon
+input:  " :example.com"
+output: [Text(text=" :example.com")]
+
+---
+
+name:   no_scheme_but_colon_and_slashes
+label:  no scheme in a free link, but a colon and slashes
+input:  " ://example.com"
+output: [Text(text=" ://example.com")]
+
+---
+
+name:   fake_scheme_no_slashes
+label:  a nonexistent scheme in a free link, without slashes
+input:  "fake:example.com"
+output: [Text(text="fake:example.com")]
+
+---
+
+name:   fake_scheme_slashes
+label:  a nonexistent scheme in a free link, with slashes
+input:  "fake://example.com"
+output: [Text(text="fake://example.com")]
+
+---
+
+name:   fake_scheme_brackets_no_slashes
+label:  a nonexistent scheme in a bracketed link, without slashes
+input:  "[fake:example.com]"
+output: [Text(text="[fake:example.com]")]
+
+---
+
+name:   fake_scheme_brackets_slashes
+label:  #=a nonexistent scheme in a bracketed link, with slashes
+input:  "[fake://example.com]"
+output: [Text(text="[fake://example.com]")]
+
+---
+
+name:   interrupted_scheme
+label:  an otherwise valid scheme with something in the middle of it, in a free link
+input:  "ht?tp://example.com"
+output: [Text(text="ht?tp://example.com")]
+
+---
+
+name:   interrupted_scheme_brackets
+label:  an otherwise valid scheme with something in the middle of it, in a bracketed link
+input:  "[ht?tp://example.com]"
+output: [Text(text="[ht?tp://example.com]")]
+
+---
+
+name:   no_slashes_brackets
+label:  no slashes after the colon in a bracketed link
+input:  "[mailto:example@example.com Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="mailto:example@example.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   space_before_no_slashes_brackets
+label:  a space before a bracketed link with no slashes after the colon
+input:  "[ mailto:example@example.com Example]"
+output: [Text(text="[ "), ExternalLinkOpen(brackets=False), Text(text="mailto:example@example.com"), ExternalLinkClose(), Text(text=" Example]")]
+
+---
+
+name:   slashes_optional_brackets
+label:  a bracketed link using a scheme that doesn't need slashes, but has them anyway
+input:  "[mailto://example@example.com Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="mailto://example@example.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   short_brackets
+label:  a very short link in brackets
+input:  "[mailto://abc Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="mailto://abc"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   slashes_missing_brackets
+label:  slashes missing from a scheme that requires them in a bracketed link
+input:  "[http:example@example.com Example]"
+output: [Text(text="[http:example@example.com Example]")]
+
+---
+
+name:   protcol_relative
+label:  a protocol-relative link (in brackets)
+input:  "[//example.com Example]"
+output: [ExternalLinkOpen(brackets=True), Text(text="//example.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+
+---
+
+name:   scheme_missing_but_colon_brackets
+label:  scheme missing from a bracketed link, but with a colon
+input:  "[:example.com Example]"
+output: [Text(text="[:example.com Example]")]
+
+---
+
+name:   scheme_missing_but_colon_slashes_brackets
+label:  scheme missing from a bracketed link, but with a colon and slashes
+input:  "[://example.com Example]"
+output: [Text(text="[://example.com Example]")]
+
+---
+
+name:   unclosed_protocol_relative
+label:  an unclosed protocol-relative bracketed link
+input:  "[//example.com"
+output: [Text(text="[//example.com")]
+
+---
+
+name:   space_before_protcol_relative
+label:  a space before a protocol-relative bracketed link
+input:  "[ //example.com]"
+output: [Text(text="[ //example.com]")]
+
+---
+
+name:   unclosed_just_scheme
+label:  an unclosed bracketed link, ending after the scheme
+input:  "[http"
+output: [Text(text="[http")]
+
+---
+
+name:   unclosed_scheme_colon
+label:  an unclosed bracketed link, ending after the colon
+input:  "[http:"
+output: [Text(text="[http:")]
+
+---
+
+name:   unclosed_scheme_colon_slashes
+label:  an unclosed bracketed link, ending after the slashes
+input:  "[http://"
+output: [Text(text="[http://")]
+
+---
+
+name:   incomplete_bracket
+label:  just an open bracket
+input:  "["
+output: [Text(text="[")]
+
+---
+
+name:   incomplete_scheme_colon
+label:  a free link with just a scheme and a colon
+input:  "http:"
+output: [Text(text="http:")]
+
+---
+
+name:   incomplete_scheme_colon_slashes
+label:  a free link with just a scheme, colon, and slashes
+input:  "http://"
+output: [Text(text="http://")]
+
+---
+
+name:   brackets_scheme_but_no_url
+label:  brackets around a scheme and a colon
+input:  "[mailto:]"
+output: [Text(text="[mailto:]")]
+
+---
+
+name:   brackets_scheme_slashes_but_no_url
+label:  brackets around a scheme, colon, and slashes
+input:  "[http://]"
+output: [Text(text="[http://]")]
+
+---
+
+name:   brackets_scheme_title_but_no_url
+label:  brackets around a scheme, colon, and slashes, with a title
+input:  "[http:// Example]"
+output: [Text(text="[http:// Example]")]

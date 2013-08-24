@@ -20,12 +20,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Contains data regarding certain HTML tags."""
+"""Contains data about certain markup, like HTML tags and external links."""
 
 from __future__ import unicode_literals
 
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
-           "is_single_only"]
+           "is_single_only", "is_scheme"]
+
+URI_SCHEMES = {
+    # [mediawiki/core.git]/includes/DefaultSettings.php @ 374a0ad943
+    "http": True, "https": True, "ftp": True, "ftps": True, "ssh": True,
+    "sftp": True, "irc": True, "ircs": True, "xmpp": False, "sip": False,
+    "sips": False, "gopher": True, "telnet": True, "nntp": True,
+    "worldwind": True, "mailto": False, "tel": False, "sms": False,
+    "news": False, "svn": True, "git": True, "mms": True, "bitcoin": False,
+    "magnet": False, "urn": False, "geo": False
+}
 
 PARSER_BLACKLIST = [
     # enwiki extensions @ 2013-06-28
@@ -70,3 +80,12 @@ def is_single(tag):
 def is_single_only(tag):
     """Return whether or not the given *tag* must exist without a close tag."""
     return tag.lower() in SINGLE_ONLY
+
+def is_scheme(scheme, slashes=True, reverse=False):
+    """Return whether *scheme* is valid for external links."""
+    if reverse:  # Convenience for C
+        scheme = scheme[::-1]
+    scheme = scheme.lower()
+    if slashes:
+        return scheme in URI_SCHEMES
+    return scheme in URI_SCHEMES and not URI_SCHEMES[scheme]

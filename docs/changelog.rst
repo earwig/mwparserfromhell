@@ -7,10 +7,11 @@ v0.3
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...develop>`__):
 
-- Added complete support for HTML :py:class:`Tags <.Tag>`, along with
-  appropriate unit tests. This includes forms like ``<ref>foo</ref>``,
-  ``<ref name="bar"/>``, and wiki-markup tags like bold (``'''``), italics
-  (``''``), and lists (``*``, ``#``, ``;`` and ``:``).
+- Added complete support for HTML :py:class:`Tags <.Tag>`, including forms like
+  ``<ref>foo</ref>``, ``<ref name="bar"/>``, and wiki-markup tags like bold
+  (``'''``), italics (``''``), and lists (``*``, ``#``, ``;`` and ``:``).
+- Added support for :py:class:`.ExternalLink`\ s (``http://example.com/`` and
+  ``[http://example.com/ Example]``).
 - :py:class:`Wikicode's <.Wikicode>` :py:meth:`.filter` methods are now passed
   *recursive=True* by default instead of *False*. **This is a breaking change
   if you rely on any filter() methods being non-recursive by default.**
@@ -25,7 +26,7 @@ Unreleased
   :py:meth:`~.Template.has` for consistency with :py:class:`~.Template`\ 's
   other methods; :py:meth:`~.has_param` is now an alias.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
-- Various fixes and cleanup.
+- Various bugfixes, internal changes, and cleanup.
 
 v0.2
 ----

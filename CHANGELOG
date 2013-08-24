@@ -1,8 +1,10 @@
 v0.3 (unreleased):
 
-- Added complete support for HTML Tags, along with appropriate unit tests. This
-  includes forms like <ref>foo</ref>, <ref name="bar"/>, and wiki-markup tags
-  like bold ('''), italics (''), and lists (*, #, ; and :).
+- Added complete support for HTML Tags, including forms like <ref>foo</ref>,
+  <ref name="bar"/>, and wiki-markup tags like bold ('''), italics (''), and
+  lists (*, #, ; and :).
+- Added support for ExternalLinks (http://example.com/ and
+  [http://example.com/ Example]).
 - Wikicode's filter methods are now passed 'recursive=True' by default instead
   of False. This is a breaking change if you rely on any filter() methods being
   non-recursive by default.
@@ -14,7 +16,7 @@ v0.3 (unreleased):
 - Renamed Template.has_param() to has() for consistency with Template's other
   methods; has_param() is now an alias.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
-- Various fixes and cleanup.
+- Various bugfixes, internal changes, and cleanup.
 
 v0.2 (released June 20, 2013):
 

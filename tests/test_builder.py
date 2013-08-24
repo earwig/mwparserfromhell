@@ -23,8 +23,8 @@
 from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
-                                    Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
+                                    HTMLEntity, Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
 from mwparserfromhell.parser import tokens
 from mwparserfromhell.parser.builder import Builder
@@ -146,6 +146,48 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.Text(text="baz"), tokens.Text(text="biz"),
               tokens.WikilinkClose()],
              wrap([Wikilink(wraptext("foo", "bar"), wraptext("baz", "biz"))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
+
+    def test_external_link(self):
+        """tests for building ExternalLink nodes"""
+        tests = [
+            ([tokens.ExternalLinkOpen(brackets=False),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"),
+                                brackets=False)])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"))])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkSeparator(), tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"), wrap([]))])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkSeparator(), tokens.Text(text="Example"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"),
+                                wraptext("Example"))])),
+
+            ([tokens.ExternalLinkOpen(brackets=False),
+              tokens.Text(text="http://example"), tokens.Text(text=".com/foo"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example", ".com/foo"),
+                                brackets=False)])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example"), tokens.Text(text=".com/foo"),
+              tokens.ExternalLinkSeparator(), tokens.Text(text="Example"),
+              tokens.Text(text=" Web Page"), tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example", ".com/foo"),
+                                wraptext("Example", " Web Page"))])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))

@@ -46,16 +46,15 @@ class Parser(object):
     :py:class:`~.Node`\ s by the :py:class:`~.Builder`.
     """
 
-    def __init__(self, text):
-        self.text = text
+    def __init__(self):
         if use_c and CTokenizer:
             self._tokenizer = CTokenizer()
         else:
             self._tokenizer = Tokenizer()
         self._builder = Builder()
 
-    def parse(self):
-        """Return a string as a parsed :py:class:`~.Wikicode` object tree."""
-        tokens = self._tokenizer.tokenize(self.text)
+    def parse(self, text, context=0):
+        """Parse *text*, returning a :py:class:`~.Wikicode` object tree."""
+        tokens = self._tokenizer.tokenize(text, context)
         code = self._builder.build(tokens)
         return code
