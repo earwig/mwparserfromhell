@@ -276,6 +276,7 @@ class TestWikicode(TreeEqualityTestCase):
             self.assertEqual(["{{{e}}}"], get_filter("arguments"))
             self.assertIs(code.get(4), get_filter("arguments")[0])
             self.assertEqual([], get_filter("comments"))
+            self.assertEqual([], get_filter("external_links"))
             self.assertEqual([], get_filter("headings"))
             self.assertEqual([], get_filter("html_entities"))
             self.assertEqual([], get_filter("tags"))

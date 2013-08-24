@@ -85,7 +85,8 @@ class ExternalLink(Node):
 
     @url.setter
     def url(self, value):
-        self._url = parse_anything(value)
+        from ..parser import contexts
+        self._url = parse_anything(value, contexts.EXT_LINK_URI)
 
     @title.setter
     def title(self, value):
