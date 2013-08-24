@@ -548,3 +548,10 @@ name:   single_only_double
 label:  a tag that can only be single; a tag with backslashes at the beginning and end
 input:  "foo</br/>bar{{baz}}"
 output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   capitalization
+label:  caps should be ignored within tag names
+input:  "<NoWiKi>{{test}}</nOwIkI>"
+output: [TagOpenOpen(), Text(text="NoWiKi"), TagCloseOpen(padding=""), Text(text="{{test}}"), TagOpenClose(), Text(text="nOwIkI"), TagCloseClose()]
