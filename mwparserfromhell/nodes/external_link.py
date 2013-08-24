@@ -53,16 +53,20 @@ class ExternalLink(Node):
                 yield self.title, child
 
     def __strip__(self, normalize, collapse):
-        if self.title.strip():
-            return self.title.strip_code(normalize, collapse)
-        return None
+        if self.brackets:
+            if self.title:
+                return self.title.strip_code(normalize, collapse)
+            return None
+        return self.url.strip_code(normalize, collapse)
 
     def __showtree__(self, write, get, mark):
-        write("[")
+        if self.brackets:
+            write("[")
         get(self.url)
         if self.title is not None:
             get(self.title)
-        write("]")
+        if self.brackets:
+            write("]")
 
     @property
     def url(self):
@@ -85,10 +89,7 @@ class ExternalLink(Node):
 
     @title.setter
     def title(self, value):
-        if value is None:
-            self._title = None
-        else:
-            self._title = parse_anything(value)
+        self._title = None if value is None else parse_anything(value)
 
     @brackets.setter
     def brackets(self, value):
