@@ -2667,8 +2667,9 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject *text, *temp;
+    int context = 0;
 
-    if (PyArg_ParseTuple(args, "U", &text)) {
+    if (PyArg_ParseTuple(args, "U|i", &text, &context)) {
         Py_XDECREF(self->text);
         self->text = PySequence_Fast(text, "expected a sequence");
     }
@@ -2677,7 +2678,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         Py_ssize_t size;
         /* Failed to parse a Unicode object; try a string instead. */
         PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "s#", &encoded, &size))
+        if (!PyArg_ParseTuple(args, "s#|i", &encoded, &size, &context))
             return NULL;
         temp = PyUnicode_FromStringAndSize(encoded, size);
         if (!text)
@@ -2689,7 +2690,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     }
     self->head = self->global = self->depth = self->cycles = 0;
     self->length = PyList_GET_SIZE(self->text);
-    return Tokenizer_parse(self, 0, 1);
+    return Tokenizer_parse(self, context, 1);
 }
 
 static int load_entitydefs(void)

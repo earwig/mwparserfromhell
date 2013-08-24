@@ -26,7 +26,7 @@ Unreleased
   :py:meth:`~.Template.has` for consistency with :py:class:`~.Template`\ 's
   other methods; :py:meth:`~.has_param` is now an alias.
 - The C tokenizer extension now works on Python 3 in addition to Python 2.7.
-- Various fixes and cleanup.
+- Various bugfixes, internal changes, and cleanup.
 
 v0.2
 ----

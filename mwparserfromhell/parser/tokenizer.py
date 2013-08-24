@@ -1125,8 +1125,9 @@ class Tokenizer(object):
                 self._emit_text(this)
             self._head += 1
 
-    def tokenize(self, text):
+    def tokenize(self, text, context=0):
         """Build a list of tokens from a string of wikicode and return it."""
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
-        return self._parse()
+        self._head = self._global = self._depth = self._cycles = 0
+        return self._parse(context)

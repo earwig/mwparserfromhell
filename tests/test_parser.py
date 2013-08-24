@@ -36,9 +36,9 @@ class TestParser(TreeEqualityTestCase):
     def test_use_c(self):
         """make sure the correct tokenizer is used"""
         if parser.use_c:
-            self.assertTrue(parser.Parser(None)._tokenizer.USES_C)
+            self.assertTrue(parser.Parser()._tokenizer.USES_C)
             parser.use_c = False
-        self.assertFalse(parser.Parser(None)._tokenizer.USES_C)
+        self.assertFalse(parser.Parser()._tokenizer.USES_C)
 
     def test_parsing(self):
         """integration test for parsing overall"""
@@ -59,7 +59,7 @@ class TestParser(TreeEqualityTestCase):
                 ]))
             ])
         ])
-        actual = parser.Parser(text).parse()
+        actual = parser.Parser().parse(text)
         self.assertWikicodeEqual(expected, actual)
 
 if __name__ == "__main__":

@@ -70,7 +70,7 @@ class ExternalLink(Node):
 
     @property
     def url(self):
-        """The url of the link target, as a :py:class:`~.Wikicode` object."""
+        """The URL of the link target, as a :py:class:`~.Wikicode` object."""
         return self._url
 
     @property
