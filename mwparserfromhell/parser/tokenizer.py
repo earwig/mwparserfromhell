@@ -35,6 +35,7 @@ class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
 
     def __init__(self, context=0):
+        super(BadRoute, self).__init__()
         self.context = context
 
 

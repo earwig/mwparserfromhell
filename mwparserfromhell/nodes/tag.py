@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from . import Node, Text
+from . import Node
 from .extras import Attribute
 from ..compat import str
 from ..definitions import is_visible
