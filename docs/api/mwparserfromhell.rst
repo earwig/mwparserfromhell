@@ -30,6 +30,12 @@ mwparserfromhell Package
     :members:
     :undoc-members:
 
+:mod:`definitions` Module
+-------------------------
+
+.. automodule:: mwparserfromhell.definitions
+    :members:
+
 :mod:`utils` Module
 -------------------
 

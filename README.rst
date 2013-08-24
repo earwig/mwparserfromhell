@@ -9,7 +9,8 @@ mwparserfromhell
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
 wikicode. It supports Python 2 and Python 3.
 
-Developed by Earwig_ with help from `Σ`_.
+Developed by Earwig_ with help from `Σ`_. Full documentation is available on
+ReadTheDocs_.
 
 Installation
 ------------
@@ -18,7 +19,7 @@ The easiest way to install the parser is through the `Python Package Index`_,
 so you can install the latest release with ``pip install mwparserfromhell``
 (`get pip`_). Alternatively, get the latest development version::
 
-    git clone git://github.com/earwig/mwparserfromhell.git
+    git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
     python setup.py install
 
@@ -59,13 +60,20 @@ For example::
     >>> print template.get("eggs").value
     spam
 
-Since every node you reach is also a ``Wikicode`` object, it's trivial to get
-nested templates::
+Since nodes can contain other nodes, getting nested templates is trivial::
+
+    >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
+    >>> mwparserfromhell.parse(text).filter_templates()
+    ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
+
+You can also pass ``recursive=False`` to ``filter_templates()`` and explore
+templates manually. This is possible because nodes can contain additional
+``Wikicode`` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    >>> print code.filter_templates()
+    >>> print code.filter_templates(recursive=False)
     ['{{foo|this {{includes a|template}}}}']
-    >>> foo = code.filter_templates()[0]
+    >>> foo = code.filter_templates(recursive=False)[0]
     >>> print foo.get(1).value
     this {{includes a|template}}
     >>> print foo.get(1).value.filter_templates()[0]
@@ -73,21 +81,16 @@ nested templates::
     >>> print foo.get(1).value.filter_templates()[0].get(1).value
     template
 
-Additionally, you can include nested templates in ``filter_templates()`` by
-passing ``recursive=True``::
-
-    >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
-    >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
-    ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
-
 Templates can be easily modified to add, remove, or alter params. ``Wikicode``
-can also be treated like a list with ``append()``, ``insert()``, ``remove()``,
-``replace()``, and more::
+objects can be treated like lists, with ``append()``, ``insert()``,
+``remove()``, ``replace()``, and more. They also have a ``matches()`` method
+for comparing page or template names, which takes care of capitalization and
+whitespace::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
     >>> for template in code.filter_templates():
-    ...     if template.name == "cleanup" and not template.has_param("date"):
+    ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
     >>> print code
@@ -142,6 +145,7 @@ following code (via the API_)::
         return mwparserfromhell.parse(text)
 
 .. _MediaWiki:              http://mediawiki.org
+.. _ReadTheDocs:            http://mwparserfromhell.readthedocs.org
 .. _Earwig:                 http://en.wikipedia.org/wiki/User:The_Earwig
 .. _Σ:                      http://en.wikipedia.org/wiki/User:%CE%A3
 .. _Python Package Index:   http://pypi.python.org

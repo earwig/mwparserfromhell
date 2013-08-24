@@ -44,8 +44,8 @@ class TestTokens(unittest.TestCase):
 
         self.assertEqual("bar", token2.foo)
         self.assertEqual(123, token2.baz)
-        self.assertRaises(KeyError, lambda: token1.foo)
-        self.assertRaises(KeyError, lambda: token2.bar)
+        self.assertFalse(token1.foo)
+        self.assertFalse(token2.bar)
 
         token1.spam = "eggs"
         token2.foo = "ham"
@@ -53,7 +53,7 @@ class TestTokens(unittest.TestCase):
 
         self.assertEqual("eggs", token1.spam)
         self.assertEqual("ham", token2.foo)
-        self.assertRaises(KeyError, lambda: token2.baz)
+        self.assertFalse(token2.baz)
         self.assertRaises(KeyError, delattr, token2, "baz")
 
     def test_repr(self):

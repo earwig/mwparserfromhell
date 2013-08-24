@@ -1,10 +1,38 @@
 Changelog
 =========
 
+v0.3
+----
+
+`Released August 24, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.2...v0.3>`__):
+
+- Added complete support for HTML :py:class:`Tags <.Tag>`, including forms like
+  ``<ref>foo</ref>``, ``<ref name="bar"/>``, and wiki-markup tags like bold
+  (``'''``), italics (``''``), and lists (``*``, ``#``, ``;`` and ``:``).
+- Added support for :py:class:`.ExternalLink`\ s (``http://example.com/`` and
+  ``[http://example.com/ Example]``).
+- :py:class:`Wikicode's <.Wikicode>` :py:meth:`.filter` methods are now passed
+  *recursive=True* by default instead of *False*. **This is a breaking change
+  if you rely on any filter() methods being non-recursive by default.**
+- Added a :py:meth:`.matches` method to :py:class:`~.Wikicode` for
+  page/template name comparisons.
+- The *obj* param of :py:meth:`Wikicode.insert_before() <.insert_before>`,
+  :py:meth:`~.insert_after`, :py:meth:`~.Wikicode.replace`, and
+  :py:meth:`~.Wikicode.remove` now accepts :py:class:`~.Wikicode` objects and
+  strings representing parts of wikitext, instead of just nodes. These methods
+  also make all possible substitutions instead of just one.
+- Renamed :py:meth:`Template.has_param() <.has_param>` to
+  :py:meth:`~.Template.has` for consistency with :py:class:`~.Template`\ 's
+  other methods; :py:meth:`~.has_param` is now an alias.
+- The C tokenizer extension now works on Python 3 in addition to Python 2.7.
+- Various bugfixes, internal changes, and cleanup.
+
 v0.2
 ----
 
-19da4d2144_ to master_ (released June 20, 2013)
+`Released June 20, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.1.1...v0.2>`__):
 
 - The parser now fully supports Python 3 in addition to Python 2.7.
 - Added a C tokenizer extension that is significantly faster than its Python
@@ -38,7 +66,8 @@ v0.2
 v0.1.1
 ------
 
-ba94938fe8_ to 19da4d2144_ (released September 21, 2012)
+`Released September 21, 2012 <https://github.com/earwig/mwparserfromhell/tree/v0.1.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.1...v0.1.1>`__):
 
 - Added support for :py:class:`Comments <.Comment>` (``<!-- foo -->``) and
   :py:class:`Wikilinks <.Wikilink>` (``[[foo]]``).
@@ -51,8 +80,6 @@ ba94938fe8_ to 19da4d2144_ (released September 21, 2012)
 v0.1
 ----
 
-ba94938fe8_ (released August 23, 2012)
+`Released August 23, 2012 <https://github.com/earwig/mwparserfromhell/tree/v0.1>`_:
 
-.. _master:     https://github.com/earwig/mwparserfromhell/tree/v0.2
-.. _19da4d2144: https://github.com/earwig/mwparserfromhell/tree/v0.1.1
-.. _ba94938fe8: https://github.com/earwig/mwparserfromhell/tree/v0.1
+- Initial release.

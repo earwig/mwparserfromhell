@@ -36,18 +36,34 @@ class Attribute(StringMixIn):
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quoted=True):
+    def __init__(self, name, value=None, quoted=True, pad_first=" ",
+                 pad_before_eq="", pad_after_eq=""):
         super(Attribute, self).__init__()
         self._name = name
         self._value = value
         self._quoted = quoted
+        self._pad_first = pad_first
+        self._pad_before_eq = pad_before_eq
+        self._pad_after_eq = pad_after_eq
 
     def __unicode__(self):
-        if self.value:
+        result = self.pad_first + str(self.name) + self.pad_before_eq
+        if self.value is not None:
+            result += "=" + self.pad_after_eq
             if self.quoted:
-                return str(self.name) + '="' + str(self.value) + '"'
-            return str(self.name) + "=" + str(self.value)
-        return str(self.name)
+                return result + '"' + str(self.value) + '"'
+            return result + str(self.value)
+        return result
+
+    def _set_padding(self, attr, value):
+        """Setter for the value of a padding attribute."""
+        if not value:
+            setattr(self, attr, "")
+        else:
+            value = str(value)
+            if not value.isspace():
+                raise ValueError("padding must be entirely whitespace")
+            setattr(self, attr, value)
 
     @property
     def name(self):
@@ -64,14 +80,41 @@ class Attribute(StringMixIn):
         """Whether the attribute's value is quoted with double quotes."""
         return self._quoted
 
+    @property
+    def pad_first(self):
+        """Spacing to insert right before the attribute."""
+        return self._pad_first
+
+    @property
+    def pad_before_eq(self):
+        """Spacing to insert right before the equal sign."""
+        return self._pad_before_eq
+
+    @property
+    def pad_after_eq(self):
+        """Spacing to insert right after the equal sign."""
+        return self._pad_after_eq
+
     @name.setter
-    def name(self, newval):
-        self._name = parse_anything(newval)
+    def name(self, value):
+        self._name = parse_anything(value)
 
     @value.setter
     def value(self, newval):
-        self._value = parse_anything(newval)
+        self._value = None if newval is None else parse_anything(newval)
 
     @quoted.setter
-    def quoted(self, newval):
-        self._quoted = bool(newval)
+    def quoted(self, value):
+        self._quoted = bool(value)
+
+    @pad_first.setter
+    def pad_first(self, value):
+        self._set_padding("_pad_first", value)
+
+    @pad_before_eq.setter
+    def pad_before_eq(self, value):
+        self._set_padding("_pad_before_eq", value)
+
+    @pad_after_eq.setter
+    def pad_after_eq(self, value):
+        self._set_padding("_pad_after_eq", value)

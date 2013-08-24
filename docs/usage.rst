@@ -27,13 +27,20 @@ some extra methods. For example::
     >>> print template.get("eggs").value
     spam
 
-Since every node you reach is also a :py:class:`~.Wikicode` object, it's
-trivial to get nested templates::
+Since nodes can contain other nodes, getting nested templates is trivial::
+
+    >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
+    >>> mwparserfromhell.parse(text).filter_templates()
+    ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
+
+You can also pass *recursive=False* to :py:meth:`~.filter_templates` and
+explore templates manually. This is possible because nodes can contain
+additional :py:class:`~.Wikicode` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    >>> print code.filter_templates()
+    >>> print code.filter_templates(recursive=False)
     ['{{foo|this {{includes a|template}}}}']
-    >>> foo = code.filter_templates()[0]
+    >>> foo = code.filter_templates(recursive=False)[0]
     >>> print foo.get(1).value
     this {{includes a|template}}
     >>> print foo.get(1).value.filter_templates()[0]
@@ -41,22 +48,17 @@ trivial to get nested templates::
     >>> print foo.get(1).value.filter_templates()[0].get(1).value
     template
 
-Additionally, you can include nested templates in :py:meth:`~.filter_templates`
-by passing *recursive=True*::
-
-    >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
-    >>> mwparserfromhell.parse(text).filter_templates(recursive=True)
-    ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
-
 Templates can be easily modified to add, remove, or alter params.
-:py:class:`~.Wikicode` can also be treated like a list with
+:py:class:`~.Wikicode` objects can be treated like lists, with
 :py:meth:`~.Wikicode.append`, :py:meth:`~.Wikicode.insert`,
-:py:meth:`~.Wikicode.remove`, :py:meth:`~.Wikicode.replace`, and more::
+:py:meth:`~.Wikicode.remove`, :py:meth:`~.Wikicode.replace`, and more. They
+also have a :py:meth:`~.Wikicode.matches` method for comparing page or template
+names, which takes care of capitalization and whitespace::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
     >>> for template in code.filter_templates():
-    ...     if template.name == "cleanup" and not template.has_param("date"):
+    ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
     >>> print code

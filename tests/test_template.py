@@ -115,23 +115,23 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual([], node1.params)
         self.assertIs(plist, node2.params)
 
-    def test_has_param(self):
-        """test Template.has_param()"""
+    def test_has(self):
+        """test Template.has()"""
         node1 = Template(wraptext("foobar"))
         node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("\nabc ", "def")])
         node3 = Template(wraptext("foo"),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
         node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
-        self.assertFalse(node1.has_param("foobar"))
-        self.assertTrue(node2.has_param(1))
-        self.assertTrue(node2.has_param("abc"))
-        self.assertFalse(node2.has_param("def"))
-        self.assertTrue(node3.has_param("1"))
-        self.assertTrue(node3.has_param(" b "))
-        self.assertFalse(node4.has_param("b"))
-        self.assertTrue(node3.has_param("b", False))
-        self.assertTrue(node4.has_param("b", False))
+        self.assertFalse(node1.has("foobar"))
+        self.assertTrue(node2.has(1))
+        self.assertTrue(node2.has("abc"))
+        self.assertFalse(node2.has("def"))
+        self.assertTrue(node3.has("1"))
+        self.assertTrue(node3.has(" b "))
+        self.assertFalse(node4.has("b"))
+        self.assertTrue(node3.has("b", False))
+        self.assertTrue(node4.has("b", False))
 
     def test_get(self):
         """test Template.get()"""

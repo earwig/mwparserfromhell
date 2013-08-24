@@ -29,16 +29,13 @@ from mwparserfromhell.compat import py3k
 with open("README.rst") as fp:
     long_docs = fp.read()
 
-# builder = Extension("mwparserfromhell.parser._builder",
-#                     sources = ["mwparserfromhell/parser/builder.c"])
-
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources = ["mwparserfromhell/parser/tokenizer.c"])
 
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
-    ext_modules = [] if py3k else [tokenizer],
+    ext_modules = [tokenizer],
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",
@@ -50,13 +47,13 @@ setup(
     keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license = "MIT License",
     classifiers = [
-        "Development Status :: 3 - Alpha",
+        "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 2.7",
-        "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.3",
         "Topic :: Text Processing :: Markup"
     ],
 )

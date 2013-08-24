@@ -12,6 +12,13 @@ output: [TemplateOpen(), ArgumentOpen(), ArgumentOpen(), Text(text="foo"), Argum
 
 ---
 
+name:   link_in_template_name
+label:  a wikilink inside a template name, which breaks the template
+input:  "{{foo[[bar]]}}"
+output: [Text(text="{{foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="}}")]
+
+---
+
 name:   rich_heading
 label:  a heading with templates/wikilinks in it
 input:  "== Head{{ing}} [[with]] {{{funky|{{stuf}}}}} =="
@@ -33,6 +40,13 @@ output: [Text(text="&n"), CommentStart(), Text(text="foo"), CommentEnd(), Text(t
 
 ---
 
+name:   rich_tags
+label:  a HTML tag with tons of other things in it
+input:  "{{dubious claim}}<ref name={{abc}}   foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}} \n mno =  "{{p}} [[q]] {{r}}">[[Source]]</ref>"
+output: [TemplateOpen(), Text(text="dubious claim"), TemplateClose(), TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TemplateOpen(), Text(text="abc"), TemplateClose(), TagAttrStart(pad_first="   ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(), Text(text="bar "), TemplateOpen(), Text(text="baz"), TemplateClose(), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="abc"), TagAttrEquals(), TemplateOpen(), Text(text="de"), TemplateClose(), Text(text="f"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="ghi"), TagAttrEquals(), Text(text="j"), TemplateOpen(), Text(text="k"), TemplateClose(), TemplateOpen(), Text(text="l"), TemplateClose(), TagAttrStart(pad_first=" \n ", pad_before_eq=" ", pad_after_eq="  "), Text(text="mno"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="p"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="q"), WikilinkClose(), Text(text=" "), TemplateOpen(), Text(text="r"), TemplateClose(), TagCloseOpen(padding=""), WikilinkOpen(), Text(text="Source"), WikilinkClose(), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
 name:   wildcard
 label:  a wildcard assortment of various things
 input:  "{{{{{{{{foo}}bar|baz=biz}}buzz}}usr|{{bin}}}}"
@@ -44,3 +58,17 @@ name:   wildcard_redux
 label:  an even wilder assortment of various things
 input:  "{{a|b|{{c|[[d]]{{{e}}}}}}}[[f|{{{g}}}<!--h-->]]{{i|j=&nbsp;}}"
 output: [TemplateOpen(), Text(text="a"), TemplateParamSeparator(), Text(text="b"), TemplateParamSeparator(), TemplateOpen(), Text(text="c"), TemplateParamSeparator(), WikilinkOpen(), Text(text="d"), WikilinkClose(), ArgumentOpen(), Text(text="e"), ArgumentClose(), TemplateClose(), TemplateClose(), WikilinkOpen(), Text(text="f"), WikilinkSeparator(), ArgumentOpen(), Text(text="g"), ArgumentClose(), CommentStart(), Text(text="h"), CommentEnd(), WikilinkClose(), TemplateOpen(), Text(text="i"), TemplateParamSeparator(), Text(text="j"), TemplateParamEquals(), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), TemplateClose()]
+
+---
+
+name:   link_inside_dl
+label:  an external link inside a def list, such that the external link is parsed
+input:  ";;;mailto:example"
+output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), ExternalLinkOpen(brackets=False), Text(text="mailto:example"), ExternalLinkClose()]
+
+---
+
+name:   link_inside_dl_2
+label:  an external link inside a def list, such that the external link is not parsed
+input:  ";;;malito:example"
+output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="malito"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="example")]

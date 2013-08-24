@@ -24,8 +24,8 @@ from __future__ import unicode_literals
 
 from . import tokens
 from ..compat import str
-from ..nodes import (Argument, Comment, Heading, HTMLEntity, Tag, Template,
-                     Text, Wikilink)
+from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
+                     Template, Text, Wikilink)
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
@@ -83,7 +83,7 @@ class Builder(object):
                                     tokens.TemplateClose)):
                 self._tokens.append(token)
                 value = self._pop()
-                if not key:
+                if key is None:
                     key = self._wrap([Text(str(default))])
                 return Parameter(key, value, showkey)
             else:
@@ -142,6 +142,22 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
+    def _handle_external_link(self, token):
+        """Handle when an external link is at the head of the tokens."""
+        brackets, url = token.brackets, None
+        self._push()
+        while self._tokens:
+            token = self._tokens.pop()
+            if isinstance(token, tokens.ExternalLinkSeparator):
+                url = self._pop()
+                self._push()
+            elif isinstance(token, tokens.ExternalLinkClose):
+                if url is not None:
+                    return ExternalLink(url, self._pop(), brackets)
+                return ExternalLink(self._pop(), brackets=brackets)
+            else:
+                self._write(self._handle_token(token))
+
     def _handle_entity(self):
         """Handle a case where an HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
@@ -170,7 +186,7 @@ class Builder(object):
                 self._write(self._handle_token(token))
 
     def _handle_comment(self):
-        """Handle a case where a hidden comment is at the head of the tokens."""
+        """Handle a case where an HTML comment is at the head of the tokens."""
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -180,7 +196,7 @@ class Builder(object):
             else:
                 self._write(self._handle_token(token))
 
-    def _handle_attribute(self):
+    def _handle_attribute(self, start):
         """Handle a case where a tag attribute is at the head of the tokens."""
         name, quoted = None, False
         self._push()
@@ -191,37 +207,46 @@ class Builder(object):
                 self._push()
             elif isinstance(token, tokens.TagAttrQuote):
                 quoted = True
-            elif isinstance(token, (tokens.TagAttrStart,
-                                    tokens.TagCloseOpen)):
+            elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
+                                    tokens.TagCloseSelfclose)):
                 self._tokens.append(token)
-                if name is not None:
-                    return Attribute(name, self._pop(), quoted)
-                return Attribute(self._pop(), quoted=quoted)
+                if name:
+                    value = self._pop()
+                else:
+                    name, value = self._pop(), None
+                return Attribute(name, value, quoted, start.pad_first,
+                                 start.pad_before_eq, start.pad_after_eq)
             else:
                 self._write(self._handle_token(token))
 
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
-        type_, showtag = token.type, token.showtag
-        attrs = []
+        close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
+        implicit, attrs, contents, closing_tag = False, [], None, None
+        wiki_markup, invalid = token.wiki_markup, token.invalid or False
         self._push()
         while self._tokens:
             token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrStart):
-                attrs.append(self._handle_attribute())
+                attrs.append(self._handle_attribute(token))
             elif isinstance(token, tokens.TagCloseOpen):
-                open_pad = token.padding
+                padding = token.padding or ""
                 tag = self._pop()
                 self._push()
-            elif isinstance(token, tokens.TagCloseSelfclose):
-                tag = self._pop()
-                return Tag(type_, tag, attrs=attrs, showtag=showtag,
-                           self_closing=True, open_padding=token.padding)
             elif isinstance(token, tokens.TagOpenClose):
                 contents = self._pop()
-            elif isinstance(token, tokens.TagCloseClose):
-                return Tag(type_, tag, contents, attrs, showtag, False,
-                           open_pad, token.padding)
+                self._push()
+            elif isinstance(token, close_tokens):
+                if isinstance(token, tokens.TagCloseSelfclose):
+                    tag = self._pop()
+                    self_closing = True
+                    padding = token.padding or ""
+                    implicit = token.implicit or False
+                else:
+                    self_closing = False
+                    closing_tag = self._pop()
+                return Tag(tag, contents, attrs, wiki_markup, self_closing,
+                           invalid, implicit, padding, closing_tag)
             else:
                 self._write(self._handle_token(token))
 
@@ -235,6 +260,8 @@ class Builder(object):
             return self._handle_argument()
         elif isinstance(token, tokens.WikilinkOpen):
             return self._handle_wikilink()
+        elif isinstance(token, tokens.ExternalLinkOpen):
+            return self._handle_external_link(token)
         elif isinstance(token, tokens.HTMLEntityStart):
             return self._handle_entity()
         elif isinstance(token, tokens.HeadingStart):

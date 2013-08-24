@@ -23,8 +23,8 @@
 from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
-                                    Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
+                                    HTMLEntity, Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
 from mwparserfromhell.parser import tokens
 from mwparserfromhell.parser.builder import Builder
@@ -71,6 +71,14 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TemplateClose()],
              wrap([Template(wraptext("foo"), params=[
                  Parameter(wraptext("bar"), wraptext("baz"))])])),
+
+            ([tokens.TemplateOpen(), tokens.TemplateParamSeparator(),
+              tokens.TemplateParamSeparator(), tokens.TemplateParamEquals(),
+              tokens.TemplateParamSeparator(), tokens.TemplateClose()],
+             wrap([Template(wrap([]), params=[
+                 Parameter(wraptext("1"), wrap([]), showkey=False),
+                 Parameter(wrap([]), wrap([]), showkey=True),
+                 Parameter(wraptext("2"), wrap([]), showkey=False)])])),
 
             ([tokens.TemplateOpen(), tokens.Text(text="foo"),
               tokens.TemplateParamSeparator(), tokens.Text(text="bar"),
@@ -142,6 +150,48 @@ class TestBuilder(TreeEqualityTestCase):
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
 
+    def test_external_link(self):
+        """tests for building ExternalLink nodes"""
+        tests = [
+            ([tokens.ExternalLinkOpen(brackets=False),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"),
+                                brackets=False)])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"))])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkSeparator(), tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"), wrap([]))])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example.com/"),
+              tokens.ExternalLinkSeparator(), tokens.Text(text="Example"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example.com/"),
+                                wraptext("Example"))])),
+
+            ([tokens.ExternalLinkOpen(brackets=False),
+              tokens.Text(text="http://example"), tokens.Text(text=".com/foo"),
+              tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example", ".com/foo"),
+                                brackets=False)])),
+
+            ([tokens.ExternalLinkOpen(brackets=True),
+              tokens.Text(text="http://example"), tokens.Text(text=".com/foo"),
+              tokens.ExternalLinkSeparator(), tokens.Text(text="Example"),
+              tokens.Text(text=" Web Page"), tokens.ExternalLinkClose()],
+             wrap([ExternalLink(wraptext("http://example", ".com/foo"),
+                                wraptext("Example", " Web Page"))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
+
     def test_html_entity(self):
         """tests for building HTMLEntity nodes"""
         tests = [
@@ -186,6 +236,129 @@ class TestBuilder(TreeEqualityTestCase):
             ([tokens.CommentStart(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.CommentEnd()],
              wrap([Comment(wraptext("spam", "eggs"))])),
+        ]
+        for test, valid in tests:
+            self.assertWikicodeEqual(valid, self.builder.build(test))
+
+    def test_tag(self):
+        """tests for building Tag nodes"""
+        tests = [
+            # <ref></ref>
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
+              tokens.TagCloseOpen(padding=""), tokens.TagOpenClose(),
+              tokens.Text(text="ref"), tokens.TagCloseClose()],
+             wrap([Tag(wraptext("ref"), wrap([]),
+                       closing_tag=wraptext("ref"))])),
+
+            # <ref name></ref>
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
+              tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="name"), tokens.TagCloseOpen(padding=""),
+              tokens.TagOpenClose(), tokens.Text(text="ref"),
+              tokens.TagCloseClose()],
+             wrap([Tag(wraptext("ref"), wrap([]),
+                      attrs=[Attribute(wraptext("name"))])])),
+
+            # <ref name="abc" />
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
+              tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="name"), tokens.TagAttrEquals(),
+              tokens.TagAttrQuote(), tokens.Text(text="abc"),
+              tokens.TagCloseSelfclose(padding=" ")],
+             wrap([Tag(wraptext("ref"),
+                       attrs=[Attribute(wraptext("name"), wraptext("abc"))],
+                       self_closing=True, padding=" ")])),
+
+            # <br/>
+            ([tokens.TagOpenOpen(), tokens.Text(text="br"),
+              tokens.TagCloseSelfclose(padding="")],
+             wrap([Tag(wraptext("br"), self_closing=True)])),
+
+            # <li>
+            ([tokens.TagOpenOpen(), tokens.Text(text="li"),
+              tokens.TagCloseSelfclose(padding="", implicit=True)],
+             wrap([Tag(wraptext("li"), self_closing=True, implicit=True)])),
+
+            # </br>
+            ([tokens.TagOpenOpen(invalid=True), tokens.Text(text="br"),
+              tokens.TagCloseSelfclose(padding="", implicit=True)],
+             wrap([Tag(wraptext("br"), self_closing=True, invalid=True,
+                       implicit=True)])),
+
+            # </br/>
+            ([tokens.TagOpenOpen(invalid=True), tokens.Text(text="br"),
+              tokens.TagCloseSelfclose(padding="")],
+             wrap([Tag(wraptext("br"), self_closing=True, invalid=True)])),
+
+            # <ref name={{abc}}   foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}}
+            #      mno =  "{{p}} [[q]] {{r}}">[[Source]]</ref>
+            ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
+              tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="name"), tokens.TagAttrEquals(),
+              tokens.TemplateOpen(), tokens.Text(text="abc"),
+              tokens.TemplateClose(),
+              tokens.TagAttrStart(pad_first="   ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="foo"), tokens.TagAttrEquals(),
+              tokens.TagAttrQuote(), tokens.Text(text="bar "),
+              tokens.TemplateOpen(), tokens.Text(text="baz"),
+              tokens.TemplateClose(),
+              tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="abc"), tokens.TagAttrEquals(),
+              tokens.TemplateOpen(), tokens.Text(text="de"),
+              tokens.TemplateClose(), tokens.Text(text="f"),
+              tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
+                                  pad_after_eq=""),
+              tokens.Text(text="ghi"), tokens.TagAttrEquals(),
+              tokens.Text(text="j"), tokens.TemplateOpen(),
+              tokens.Text(text="k"), tokens.TemplateClose(),
+              tokens.TemplateOpen(), tokens.Text(text="l"),
+              tokens.TemplateClose(),
+              tokens.TagAttrStart(pad_first=" \n ", pad_before_eq=" ",
+                                  pad_after_eq="  "),
+              tokens.Text(text="mno"), tokens.TagAttrEquals(),
+              tokens.TagAttrQuote(), tokens.TemplateOpen(),
+              tokens.Text(text="p"), tokens.TemplateClose(),
+              tokens.Text(text=" "), tokens.WikilinkOpen(),
+              tokens.Text(text="q"), tokens.WikilinkClose(),
+              tokens.Text(text=" "), tokens.TemplateOpen(),
+              tokens.Text(text="r"), tokens.TemplateClose(),
+              tokens.TagCloseOpen(padding=""), tokens.WikilinkOpen(),
+              tokens.Text(text="Source"), tokens.WikilinkClose(),
+              tokens.TagOpenClose(), tokens.Text(text="ref"),
+              tokens.TagCloseClose()],
+             wrap([Tag(wraptext("ref"), wrap([Wikilink(wraptext("Source"))]), [
+                    Attribute(wraptext("name"),
+                              wrap([Template(wraptext("abc"))]), False),
+                    Attribute(wraptext("foo"), wrap([Text("bar "),
+                              Template(wraptext("baz"))]), pad_first="   "),
+                    Attribute(wraptext("abc"), wrap([Template(wraptext("de")),
+                              Text("f")]), False),
+                    Attribute(wraptext("ghi"), wrap([Text("j"),
+                              Template(wraptext("k")),
+                              Template(wraptext("l"))]), False),
+                    Attribute(wraptext("mno"), wrap([Template(wraptext("p")),
+                              Text(" "), Wikilink(wraptext("q")), Text(" "),
+                              Template(wraptext("r"))]), True, " \n ", " ",
+                              "  ")])])),
+
+            # "''italic text''"
+            ([tokens.TagOpenOpen(wiki_markup="''"), tokens.Text(text="i"),
+              tokens.TagCloseOpen(), tokens.Text(text="italic text"),
+              tokens.TagOpenClose(), tokens.Text(text="i"),
+              tokens.TagCloseClose()],
+             wrap([Tag(wraptext("i"), wraptext("italic text"),
+                       wiki_markup="''")])),
+
+            # * bullet
+            ([tokens.TagOpenOpen(wiki_markup="*"), tokens.Text(text="li"),
+              tokens.TagCloseSelfclose(), tokens.Text(text=" bullet")],
+             wrap([Tag(wraptext("li"), wiki_markup="*", self_closing=True),
+                   Text(" bullet")])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))

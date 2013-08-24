@@ -1,0 +1,578 @@
+name:   basic
+label:  a basic tag with an open and close
+input:  "<ref></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   basic_selfclosing
+label:  a basic self-closing tag
+input:  "<ref/>"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   content
+label:  a tag with some content in the middle
+input:  "<ref>this is a reference</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), Text(text="this is a reference"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   padded_open
+label:  a tag with some padding in the open tag
+input:  "<ref ></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=" "), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   padded_close
+label:  a tag with some padding in the close tag
+input:  "<ref></ref >"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+
+---
+
+name:   padded_selfclosing
+label:  a self-closing tag with padding
+input:  "<ref />"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseSelfclose(padding=" ")]
+
+---
+
+name:   attribute
+label:  a tag with a single attribute
+input:  "<ref name></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_value
+label:  a tag with a single attribute with a value
+input:  "<ref name=foo></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_quoted
+label:  a tag with a single quoted attribute
+input:  "<ref name="foo bar"></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_hyphen
+label:  a tag with a single attribute, containing a hyphen
+input:  "<ref name=foo-bar></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_quoted_hyphen
+label:  a tag with a single quoted attribute, containing a hyphen
+input:  "<ref name="foo-bar"></ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo-bar"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   attribute_selfclosing
+label:  a self-closing tag with a single attribute
+input:  "<ref name/>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   attribute_selfclosing_value
+label:  a self-closing tag with a single attribute with a value
+input:  "<ref name=foo/>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="foo"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   attribute_selfclosing_value_quoted
+label:  a self-closing tag with a single quoted attribute
+input:  "<ref name="foo"/>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="foo"), TagCloseSelfclose(padding="")]
+
+---
+
+name:   nested_tag
+label:  a tag nested within the attributes of another
+input:  "<ref name=<span style="color: red;">foo</span>>citation</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   nested_tag_quoted
+label:  a tag nested within the attributes of another, quoted
+input:  "<ref name="<span style="color: red;">foo</span>">citation</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), TagAttrQuote(), Text(text="color: red;"), TagCloseOpen(padding=""), Text(text="foo"), TagOpenClose(), Text(text="span"), TagCloseClose(), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   nested_troll_tag
+label:  a bogus tag that appears to be nested within the attributes of another
+input:  "<ref name=</ ><//>>citation</ref>"
+output: [Text(text="<ref name=</ ><//>>citation</ref>")]
+
+---
+
+name:   nested_troll_tag_quoted
+label:  a bogus tag that appears to be nested within the attributes of another, quoted
+input:  "<ref name="</ ><//>">citation</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(), Text(text="</ ><//>"), TagCloseOpen(padding=""), Text(text="citation"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   invalid_space_begin_open
+label:  invalid tag: a space at the beginning of the open tag
+input:  "< ref>test</ref>"
+output: [Text(text="< ref>test</ref>")]
+
+---
+
+name:   invalid_space_begin_close
+label:  invalid tag: a space at the beginning of the close tag
+input:  "<ref>test</ ref>"
+output: [Text(text="<ref>test</ ref>")]
+
+---
+
+name:   valid_space_end
+label:  valid tag: spaces at the ends of both the open and close tags
+input:  "<ref >test</ref >"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=" "), Text(text="test"), TagOpenClose(), Text(text="ref "), TagCloseClose()]
+
+---
+
+name:   invalid_template_ends
+label:  invalid tag: a template at the ends of both the open and close tags
+input:  "<ref {{foo}}>test</ref {{foo}}>"
+output: [Text(text="<ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">")]
+
+---
+
+name:   invalid_template_ends_nospace
+label:  invalid tag: a template at the ends of both the open and close tags, without spacing
+input:  "<ref {{foo}}>test</ref{{foo}}>"
+output: [Text(text="<ref "), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">")]
+
+---
+
+name:   valid_template_end_open
+label:  valid tag: a template at the end of the open tag
+input:  "<ref {{foo}}>test</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   valid_template_end_open_space_end_close
+label:  valid tag: a template at the end of the open tag; whitespace at the end of the close tag
+input:  "<ref {{foo}}>test</ref\n>"
+output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding=""), Text(text="test"), TagOpenClose(), Text(text="ref\n"), TagCloseClose()]
+
+---
+
+name:   invalid_template_end_open_nospace
+label:  invalid tag: a template at the end of the open tag, without spacing
+input:  "<ref{{foo}}>test</ref>"
+output: [Text(text="<ref"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text=">test</ref>")]
+
+---
+
+name:   invalid_template_start_close
+label:  invalid tag: a template at the beginning of the close tag
+input:  "<ref>test</{{foo}}ref>"
+output: [Text(text="<ref>test</"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="ref>")]
+
+---
+
+name:   invalid_template_start_open
+label:  invalid tag: a template at the beginning of the open tag
+input:  "<{{foo}}ref>test</ref>"
+output: [Text(text="<"), TemplateOpen(), Text(text="foo"), TemplateClose(), Text(text="ref>test</ref>")]
+
+---
+
+name:   unclosed_quote
+label:  a quoted attribute that is never closed
+input:  "<span style="foobar>stuff</span>"
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foobar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
+name:   fake_quote
+label:  a fake quoted attribute
+input:  "<span style="foo"bar>stuff</span>"
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo\"bar"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
+name:   fake_quote_complex
+label:  a fake quoted attribute, with spaces and templates and links
+input:  "<span style="foo {{bar}}\n[[baz]]"buzz >stuff</span>"
+output: [TagOpenOpen(), Text(text="span"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"foo"), TagAttrStart(pad_first=" ", pad_before_eq="\n", pad_after_eq=""), TemplateOpen(), Text(text="bar"), TemplateClose(), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), WikilinkOpen(), Text(text="baz"), WikilinkClose(), Text(text="\"buzz"), TagCloseOpen(padding=""), Text(text="stuff"), TagOpenClose(), Text(text="span"), TagCloseClose()]
+
+---
+
+name:   incomplete_lbracket
+label:  incomplete tags: just a left bracket
+input:  "<"
+output: [Text(text="<")]
+
+---
+
+name:   incomplete_lbracket_junk
+label:  incomplete tags: just a left bracket, surrounded by stuff
+input:  "foo<bar"
+output: [Text(text="foo<bar")]
+
+---
+
+name:   incomplete_unclosed_open
+label:  incomplete tags: an unclosed open tag
+input:  "junk <ref"
+output: [Text(text="junk <ref")]
+
+---
+
+name:   incomplete_unclosed_open_space
+label:  incomplete tags: an unclosed open tag, space
+input:  "junk <ref "
+output: [Text(text="junk <ref ")]
+
+---
+
+name:   incomplete_unclosed_open_unnamed_attr
+label:  incomplete tags: an unclosed open tag, unnamed attribute
+input:  "junk <ref name"
+output: [Text(text="junk <ref name")]
+
+---
+
+name:   incomplete_unclosed_open_attr_equals
+label:  incomplete tags: an unclosed open tag, attribute, equal sign
+input:  "junk <ref name="
+output: [Text(text="junk <ref name=")]
+
+---
+
+name:   incomplete_unclosed_open_attr_equals_quoted
+label:  incomplete tags: an unclosed open tag, attribute, equal sign, quote
+input:  "junk <ref name=""
+output: [Text(text="junk <ref name=\"")]
+
+---
+
+name:   incomplete_unclosed_open_attr
+label:  incomplete tags: an unclosed open tag, attribute with a key/value
+input:  "junk <ref name=foo"
+output: [Text(text="junk <ref name=foo")]
+
+---
+
+name:   incomplete_unclosed_open_attr_quoted
+label:  incomplete tags: an unclosed open tag, attribute with a key/value, quoted
+input:  "junk <ref name="foo""
+output: [Text(text="junk <ref name=\"foo\"")]
+
+---
+
+name:   incomplete_open
+label:  incomplete tags: an open tag
+input:  "junk <ref>"
+output: [Text(text="junk <ref>")]
+
+---
+
+name:   incomplete_open_unnamed_attr
+label:  incomplete tags: an open tag, unnamed attribute
+input:  "junk <ref name>"
+output: [Text(text="junk <ref name>")]
+
+---
+
+name:   incomplete_open_attr_equals
+label:  incomplete tags: an open tag, attribute, equal sign
+input:  "junk <ref name=>"
+output: [Text(text="junk <ref name=>")]
+
+---
+
+name:   incomplete_open_attr
+label:  incomplete tags: an open tag, attribute with a key/value
+input:  "junk <ref name=foo>"
+output: [Text(text="junk <ref name=foo>")]
+
+---
+
+name:   incomplete_open_attr_quoted
+label:  incomplete tags: an open tag, attribute with a key/value, quoted
+input:  "junk <ref name="foo">"
+output: [Text(text="junk <ref name=\"foo\">")]
+
+---
+
+name:   incomplete_open_text
+label:  incomplete tags: an open tag, text
+input:  "junk <ref>foo"
+output: [Text(text="junk <ref>foo")]
+
+---
+
+name:   incomplete_open_attr_text
+label:  incomplete tags: an open tag, attribute with a key/value, text
+input:  "junk <ref name=foo>bar"
+output: [Text(text="junk <ref name=foo>bar")]
+
+---
+
+name:   incomplete_open_text_lbracket
+label:  incomplete tags: an open tag, text, left open bracket
+input:  "junk <ref>bar<"
+output: [Text(text="junk <ref>bar<")]
+
+---
+
+name:   incomplete_open_text_lbracket_slash
+label:  incomplete tags: an open tag, text, left bracket, slash
+input:  "junk <ref>bar</"
+output: [Text(text="junk <ref>bar</")]
+
+---
+
+name:   incomplete_open_text_unclosed_close
+label:  incomplete tags: an open tag, text, unclosed close
+input:  "junk <ref>bar</ref"
+output: [Text(text="junk <ref>bar</ref")]
+
+---
+
+name:   incomplete_open_text_wrong_close
+label:  incomplete tags: an open tag, text, wrong close
+input:  "junk <ref>bar</span>"
+output: [Text(text="junk <ref>bar</span>")]
+
+---
+
+name:   incomplete_unclosed_close
+label:  incomplete tags: an unclosed close tag
+input:  "junk </"
+output: [Text(text="junk </")]
+
+---
+
+name:   incomplete_unclosed_close_text
+label:  incomplete tags: an unclosed close tag, with text
+input:  "junk </br"
+output: [Text(text="junk </br")]
+
+---
+
+name:   incomplete_close
+label:  incomplete tags: a close tag
+input:  "junk </ref>"
+output: [Text(text="junk </ref>")]
+
+---
+
+name:   incomplete_no_tag_name_open
+label:  incomplete tags: no tag name within brackets; just an open
+input:  "junk <>"
+output: [Text(text="junk <>")]
+
+---
+
+name:   incomplete_no_tag_name_selfclosing
+label:  incomplete tags: no tag name within brackets; self-closing
+input:  "junk < />"
+output: [Text(text="junk < />")]
+
+---
+
+name:   incomplete_no_tag_name_open_close
+label:  incomplete tags: no tag name within brackets; open and close
+input:  "junk <></>"
+output: [Text(text="junk <></>")]
+
+---
+
+name:   backslash_premature_before
+label:  a backslash before a quote before a space
+input:  "<foo attribute="this is\\" quoted">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\" quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_premature_after
+label:  a backslash before a quote after a space
+input:  "<foo attribute="this is \\"quoted">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is \\\"quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_premature_middle
+label:  a backslash before a quote in the middle of a word
+input:  "<foo attribute="this i\\"s quoted">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this i\\\"s quoted"), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_adjacent
+label:  escaped quotes next to unescaped quotes
+input:  "<foo attribute="\\"this is quoted\\"">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\\"this is quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_endquote
+label:  backslashes before the end quote, causing the attribute to become unquoted
+input:  "<foo attribute="this_is quoted\\">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), Text(text="\"this_is"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_double
+label:  two adjacent backslashes, which do *not* affect the quote
+input:  "<foo attribute="this is\\\\" quoted">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_triple
+label:  three adjacent backslashes, which do *not* affect the quote
+input:  "<foo attribute="this is\\\\\\" quoted">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="this is\\\\\\"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="quoted\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   backslash_unaffecting
+label:  backslashes near quotes, but not immediately adjacent, thus having no effect
+input:  "<foo attribute="\\quote\\d" also="quote\\d\\">blah</foo>"
+output: [TagOpenOpen(), Text(text="foo"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attribute"), TagAttrEquals(), TagAttrQuote(), Text(text="\\quote\\d"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="also"), TagAttrEquals(), Text(text="\"quote\\d\\\""), TagCloseOpen(padding=""), Text(text="blah"), TagOpenClose(), Text(text="foo"), TagCloseClose()]
+
+---
+
+name:   unparsable
+label:  a tag that should not be put through the normal parser
+input:  "{{t1}}<nowiki>{{t2}}</nowiki>{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_complex
+label:  a tag that should not be put through the normal parser; lots of stuff inside
+input:  "{{t1}}<pre>{{t2}}\n==Heading==\nThis is some text with a [[page|link]].</pre>{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="pre"), TagCloseOpen(padding=""), Text(text="{{t2}}\n==Heading==\nThis is some text with a [[page|link]]."), TagOpenClose(), Text(text="pre"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_attributed
+label:  a tag that should not be put through the normal parser; parsed attributes
+input:  "{{t1}}<nowiki attr=val attr2="{{val2}}">{{t2}}</nowiki>{{t3}}"
+output: [TemplateOpen(), Text(text=u't1'), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_incomplete
+label:  a tag that should not be put through the normal parser; incomplete
+input:  "{{t1}}<nowiki>{{t2}}{{t3}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), Text(text="<nowiki>"), TemplateOpen(), Text(text="t2"), TemplateClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+
+---
+
+name:   unparsable_entity
+label:  a HTML entity inside unparsable text is still parsed
+input:  "{{t1}}<nowiki>{{t2}}&nbsp;{{t3}}</nowiki>{{t4}}"
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="{{t2}}"), HTMLEntityStart(), Text(text="nbsp"), HTMLEntityEnd(), Text(text="{{t3}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t4"), TemplateClose()]
+
+---
+
+name:   unparsable_entity_incomplete
+label:  an incomplete HTML entity inside unparsable text
+input:  "<nowiki>&</nowiki>"
+output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="&"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
+
+---
+
+name:   unparsable_entity_incomplete_2
+label:  an incomplete HTML entity inside unparsable text
+input:  "<nowiki>&"
+output: [Text(text="<nowiki>&")]
+
+---
+
+name:   single_open_close
+label:  a tag that supports being single; both an open and a close tag
+input:  "foo<li>bar{{baz}}</li>"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseOpen(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenClose(), Text(text="li"), TagCloseClose()]
+
+---
+
+name:   single_open
+label:  a tag that supports being single; just an open tag
+input:  "foo<li>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_selfclose
+label:  a tag that supports being single; a self-closing tag
+input:  "foo<li/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_close
+label:  a tag that supports being single; just a close tag
+input:  "foo</li>bar{{baz}}"
+output: [Text(text="foo</li>bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_open_close
+label:  a tag that can only be single; both an open and a close tag
+input:  "foo<br>bar{{baz}}</br>"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose(), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True)]
+
+---
+
+name:   single_only_open
+label:  a tag that can only be single; just an open tag
+input:  "foo<br>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_selfclose
+label:  a tag that can only be single; a self-closing tag
+input:  "foo<br/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_close
+label:  a tag that can only be single; just a close tag
+input:  "foo</br>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding="", implicit=True), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_double
+label:  a tag that can only be single; a tag with backslashes at the beginning and end
+input:  "foo</br/>bar{{baz}}"
+output: [Text(text="foo"), TagOpenOpen(invalid=True), Text(text="br"), TagCloseSelfclose(padding=""), Text(text="bar"), TemplateOpen(), Text(text="baz"), TemplateClose()]
+
+---
+
+name:   single_only_close_attribute
+label:  a tag that can only be single; presented as a close tag with an attribute
+input:  "</br id="break">"
+output: [TagOpenOpen(invalid=True), Text(text="br"), TagAttrStart(pad_first=" ", pad_after_eq="", pad_before_eq=""), Text(text="id"), TagAttrEquals(), TagAttrQuote(), Text(text="break"), TagCloseSelfclose(padding="", implicit=True)]
+
+---
+
+name:   capitalization
+label:  caps should be ignored within tag names
+input:  "<NoWiKi>{{test}}</nOwIkI>"
+output: [TagOpenOpen(), Text(text="NoWiKi"), TagCloseOpen(padding=""), Text(text="{{test}}"), TagOpenClose(), Text(text="nOwIkI"), TagCloseClose()]

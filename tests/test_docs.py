@@ -61,36 +61,36 @@ class TestDocs(unittest.TestCase):
 
     def test_readme_2(self):
         """test a block of example code in the README"""
-        code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-        if py3k:
-            self.assertPrint(code.filter_templates(),
-                             "['{{foo|this {{includes a|template}}}}']")
-        else:
-            self.assertPrint(code.filter_templates(),
-                             "[u'{{foo|this {{includes a|template}}}}']")
-        foo = code.filter_templates()[0]
-        self.assertPrint(foo.get(1).value, "this {{includes a|template}}")
-        self.assertPrint(foo.get(1).value.filter_templates()[0],
-                         "{{includes a|template}}")
-        self.assertPrint(foo.get(1).value.filter_templates()[0].get(1).value,
-                         "template")
-
-    def test_readme_3(self):
-        """test a block of example code in the README"""
         text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
-        temps = mwparserfromhell.parse(text).filter_templates(recursive=True)
+        temps = mwparserfromhell.parse(text).filter_templates()
         if py3k:
             res = "['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']"
         else:
             res = "[u'{{foo|{{bar}}={{baz|{{spam}}}}}}', u'{{bar}}', u'{{baz|{{spam}}}}', u'{{spam}}']"
         self.assertPrint(temps, res)
 
+    def test_readme_3(self):
+        """test a block of example code in the README"""
+        code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
+        if py3k:
+            self.assertPrint(code.filter_templates(recursive=False),
+                             "['{{foo|this {{includes a|template}}}}']")
+        else:
+            self.assertPrint(code.filter_templates(recursive=False),
+                             "[u'{{foo|this {{includes a|template}}}}']")
+        foo = code.filter_templates(recursive=False)[0]
+        self.assertPrint(foo.get(1).value, "this {{includes a|template}}")
+        self.assertPrint(foo.get(1).value.filter_templates()[0],
+                         "{{includes a|template}}")
+        self.assertPrint(foo.get(1).value.filter_templates()[0].get(1).value,
+                         "template")
+
     def test_readme_4(self):
         """test a block of example code in the README"""
         text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
         code = mwparserfromhell.parse(text)
         for template in code.filter_templates():
-            if template.name == "cleanup" and not template.has_param("date"):
+            if template.name.matches("Cleanup") and not template.has("date"):
                 template.add("date", "July 2012")
         res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}"
         self.assertPrint(code, res)
