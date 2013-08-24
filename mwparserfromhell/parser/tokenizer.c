@@ -2016,7 +2016,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
         return -1;
     while (1) {
         this = Tokenizer_READ(self, pos);
-        if (is_marker(this)) {
+        if (Py_UNICODE_ISSPACE(this) || is_marker(this)) {
             name = Textbuffer_render(buf);
             if (!name) {
                 Textbuffer_dealloc(buf);
@@ -2031,16 +2031,15 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
         pos++;
     }
     Textbuffer_dealloc(buf);
-    if (!BAD_ROUTE) {
+    if (!BAD_ROUTE)
         tag = Tokenizer_really_parse_tag(self);
-        if (!tag)
-            return -1;
-    }
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
         return Tokenizer_emit_text(self, "</");
     }
+    if (!tag)
+        return -1;
     // Set invalid=True flag of TagOpenOpen
     if (PyObject_SetAttrString(PyList_GET_ITEM(tag, 0), "invalid", Py_True))
         return -1;
@@ -2615,14 +2614,10 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
         }
         else if (this == *"<" && next == *"/" &&
                                             Tokenizer_READ(self, 2) != *"") {
-            if (this_context & LC_TAG_BODY) {
-                if (Tokenizer_handle_tag_open_close(self))
-                    return NULL;
-            }
-            else {
-                if (Tokenizer_handle_invalid_tag_start(self))
-                    return NULL;
-            }
+            if (this_context & LC_TAG_BODY ?
+                Tokenizer_handle_tag_open_close(self) :
+                Tokenizer_handle_invalid_tag_start(self))
+                return NULL;
         }
         else if (this == *"<" && !(this_context & LC_TAG_CLOSE)) {
             if (Tokenizer_CAN_RECURSE(self)) {
