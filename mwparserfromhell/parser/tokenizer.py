@@ -823,7 +823,8 @@ class Tokenizer(object):
         except BadRoute as route:
             self._head = reset
             if route.context & contexts.STYLE_PASS_AGAIN:
-                stack = self._parse(route.context | contexts.STYLE_SECOND_PASS)
+                new_ctx = contexts.STYLE_ITALICS | contexts.STYLE_SECOND_PASS
+                stack = self._parse(new_ctx)
             else:
                 return self._emit_text("''")
         self._emit_style_tag("i", "''", stack)
@@ -912,7 +913,8 @@ class Tokenizer(object):
                 if self._context & contexts.STYLE_SECOND_PASS:
                     self._emit_text("'")
                     return self._pop()
-                self._context |= contexts.STYLE_PASS_AGAIN
+                if self._context & contexts.STYLE_ITALICS:
+                    self._context |= contexts.STYLE_PASS_AGAIN
             self._emit_text("'" * ticks)
         elif ticks == 2:
             self._parse_italics()

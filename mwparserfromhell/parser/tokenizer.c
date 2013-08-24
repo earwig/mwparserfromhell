@@ -2272,7 +2272,8 @@ static PyObject* Tokenizer_parse_style(Tokenizer* self)
                     return NULL;
                 return Tokenizer_pop(self);
             }
-            self->topstack->context |= LC_STYLE_PASS_AGAIN;
+            if (context & LC_STYLE_ITALICS)
+                self->topstack->context |= LC_STYLE_PASS_AGAIN;
         }
         for (i = 0; i < ticks; i++) {
             if (Tokenizer_emit_char(self, *"'"))
