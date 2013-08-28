@@ -135,3 +135,18 @@ name:   comment_inside_link
 label:  an HTML comment inside an external link
 input:  "http://example.com/foo<!--comment-->bar"
 output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo"), CommentStart(), Text(text="comment"), CommentEnd(), Text(text="bar"), ExternalLinkClose()]
+
+---
+
+name:   bracketed_link_inside_template
+label:  a bracketed external link nested inside a template, before the end
+input:  "{{URL|[http://example.com}}]"
+output: [Text(text="{{URL|"), ExternalLinkOpen(brackets=True), Text(text="http://example.com}}"), ExternalLinkClose()]
+
+
+---
+
+name:   comment_inside_bracketed_link
+label:  an HTML comment inside a bracketed external link
+input:  "[http://example.com/foo<!--comment-->bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo"), CommentStart(), Text(text="comment"), CommentEnd(), Text(text="bar"), ExternalLinkClose()]
