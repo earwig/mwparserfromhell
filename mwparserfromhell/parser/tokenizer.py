@@ -315,7 +315,7 @@ class Tokenizer(object):
 
     def _parse_bracketed_uri_scheme(self):
         """Parse the URI scheme of a bracket-enclosed external link."""
-        self._push(contexts.EXT_LINK_URI)
+        self._push(self._context | contexts.EXT_LINK_URI)
         if self._read() == self._read(1) == "/":
             self._emit_text("//")
             self._head += 2
@@ -358,7 +358,7 @@ class Tokenizer(object):
         slashes = self._read() == self._read(1) == "/"
         if not is_scheme(scheme, slashes):
             raise BadRoute()
-        self._push(contexts.EXT_LINK_URI)
+        self._push(self._context | contexts.EXT_LINK_URI)
         self._emit_text(scheme)
         self._emit_text(":")
         if slashes:
@@ -385,6 +385,21 @@ class Tokenizer(object):
         self._emit_text(this)
         return punct, tail
 
+    def _is_free_link_end(self, this, next):
+        """Return whether the current head is the end of a free link."""
+        # Built from _parse()'s end sentinels:
+        after, ctx = self._read(2), self._context
+        return (this is self.END or this in ("\n", "[", "]") or
+                this == "|" and ctx & contexts.TEMPLATE or
+                this == "=" and ctx & contexts.TEMPLATE_PARAM_KEY or
+                this == next == "}" and ctx & contexts.TEMPLATE or
+                this == next == after == "}" and ctx & contexts.ARGUMENT or
+                this == "=" and ctx & contexts.HEADING or
+                this == "<" and next == "/" and after is not self.END or
+                this == "<" and next != "!" and not ctx & contexts.TAG_CLOSE or
+                this == ">" and ctx & contexts.TAG_CLOSE or
+                this == next == "'")
+
     def _really_parse_external_link(self, brackets):
         """Really parse an external link."""
         if brackets:
@@ -399,27 +414,28 @@ class Tokenizer(object):
         tail = ""
         while True:
             this, next = self._read(), self._read(1)
-            if this is self.END or this == "\n":
-                if brackets:
-                    self._fail_route()
+            if not brackets and self._is_free_link_end(this, next):
                 return self._pop(), tail, -1
+            elif this is self.END or this == "\n":
+                self._fail_route()
             elif this == next == "{" and self._can_recurse():
                 if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_template_or_argument()
-            elif this == "[":
-                if brackets:
-                    self._emit_text("[")
-                else:
-                    return self._pop(), tail, -1
             elif this == "]":
-                return self._pop(), tail, 0 if brackets else -1
+                return self._pop(), tail, 0
             elif this == "&":
                 if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_entity()
+            elif (this == "<" and next == "!" and self._read(2) ==
+                  self._read(3) == "-"):
+                if tail:
+                    self._emit_text(tail)
+                    tail = ""
+                self._parse_comment()
             elif " " in this:
                 before, after = this.split(" ", 1)
                 if brackets:
