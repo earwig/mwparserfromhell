@@ -72,3 +72,81 @@ name:   link_inside_dl_2
 label:  an external link inside a def list, such that the external link is not parsed
 input:  ";;;malito:example"
 output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="malito"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="example")]
+
+---
+
+name:   link_inside_template
+label:  an external link nested inside a template, before the end
+input:  "{{URL|http://example.com}}"
+output: [TemplateOpen(), Text(text="URL"), TemplateParamSeparator(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), TemplateClose()]
+
+---
+
+name:   link_inside_template_2
+label:  an external link nested inside a template, before a separator
+input:  "{{URL|http://example.com|foobar}}"
+output: [TemplateOpen(), Text(text="URL"), TemplateParamSeparator(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), TemplateParamSeparator(), Text(text="foobar"), TemplateClose()]
+
+---
+
+name:   link_inside_template_3
+label:  an external link nested inside a template, before an equal sign
+input:  "{{URL|http://example.com=foobar}}"
+output: [TemplateOpen(), Text(text="URL"), TemplateParamSeparator(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), TemplateParamEquals(), Text(text="foobar"), TemplateClose()]
+
+---
+
+name:   link_inside_argument
+label:  an external link nested inside an argument
+input:  "{{{URL|http://example.com}}}"
+output: [ArgumentOpen(), Text(text="URL"), ArgumentSeparator(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), ArgumentClose()]
+
+---
+
+name:   link_inside_heading
+label:  an external link nested inside a heading
+input:  "==http://example.com=="
+output: [HeadingStart(level=2), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), HeadingEnd()]
+
+---
+
+name:   link_inside_tag_body
+label:  an external link nested inside the body of a tag
+input:  "<ref>http://example.com</ref>"
+output: [TagOpenOpen(), Text(text="ref"), TagCloseOpen(padding=""), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+
+---
+
+name:   link_inside_tag_style
+label:  an external link nested inside style tags
+input:  "''http://example.com''"
+output: [TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   style_tag_inside_link
+label:  style tags disrupting an external link
+input:  "http://example.com/foo''bar''"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo"), ExternalLinkClose(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   comment_inside_link
+label:  an HTML comment inside an external link
+input:  "http://example.com/foo<!--comment-->bar"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo"), CommentStart(), Text(text="comment"), CommentEnd(), Text(text="bar"), ExternalLinkClose()]
+
+---
+
+name:   bracketed_link_inside_template
+label:  a bracketed external link nested inside a template, before the end
+input:  "{{URL|[http://example.com}}]"
+output: [Text(text="{{URL|"), ExternalLinkOpen(brackets=True), Text(text="http://example.com}}"), ExternalLinkClose()]
+
+
+---
+
+name:   comment_inside_bracketed_link
+label:  an HTML comment inside a bracketed external link
+input:  "[http://example.com/foo<!--comment-->bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo"), CommentStart(), Text(text="comment"), CommentEnd(), Text(text="bar"), ExternalLinkClose()]

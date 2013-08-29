@@ -409,7 +409,7 @@ class Wikicode(StringMixIn):
 
         Each section contains all of its subsections. If *levels* is given, it
         should be a iterable of integers; only sections whose heading levels
-        are within it will be returned.If *matches* is given, it should be a
+        are within it will be returned. If *matches* is given, it should be a
         regex to be matched against the titles of section headings; only
         sections whose headings match the regex will be included. *flags* can
         be used to override the default regex flags (see :py:meth:`ifilter`) if

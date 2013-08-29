@@ -9,8 +9,8 @@ mwparserfromhell
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
 wikicode. It supports Python 2 and Python 3.
 
-Developed by Earwig_ with help from `Σ`_. Full documentation is available on
-ReadTheDocs_.
+Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
+Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.
 
 Installation
 ------------
@@ -148,6 +148,8 @@ following code (via the API_)::
 .. _ReadTheDocs:            http://mwparserfromhell.readthedocs.org
 .. _Earwig:                 http://en.wikipedia.org/wiki/User:The_Earwig
 .. _Σ:                      http://en.wikipedia.org/wiki/User:%CE%A3
+.. _Legoktm:                http://en.wikipedia.org/wiki/User:Legoktm
+.. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _Python Package Index:   http://pypi.python.org
 .. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 .. _get pip:                http://pypi.python.org/pypi/pip
