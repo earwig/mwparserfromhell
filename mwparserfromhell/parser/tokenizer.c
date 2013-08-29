@@ -870,7 +870,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
     Py_UNICODE this;
     int slashes, i;
 
-    if (Tokenizer_push(self, LC_EXT_LINK_URI))
+    if (Tokenizer_push(self, self->topstack->context | LC_EXT_LINK_URI))
         return -1;
     if (Tokenizer_READ(self, 0) == *"/" && Tokenizer_READ(self, 1) == *"/") {
         if (Tokenizer_emit_text(self, "//"))
@@ -982,7 +982,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         return 0;
     }
     Py_DECREF(scheme);
-    if (Tokenizer_push(self, LC_EXT_LINK_URI)) {
+    if (Tokenizer_push(self, self->topstack->context | LC_EXT_LINK_URI)) {
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
@@ -1028,6 +1028,29 @@ Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
 }
 
 /*
+    Return whether the current head is the end of a free link.
+*/
+static int
+Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
+{
+    // Built from Tokenizer_parse()'s end sentinels:
+    Py_UNICODE after = Tokenizer_READ(self, 2);
+    int ctx = self->topstack->context;
+
+    return ((this == *"" || this == *"\n" || this == *"[" || this == *"]") ||
+            (this == *"|" && ctx & LC_TEMPLATE) ||
+            (this == *"=" && ctx & LC_TEMPLATE_PARAM_KEY) ||
+            (this == *"}" && next == *"}" && ctx & LC_TEMPLATE) ||
+            (this == *"}" && next == *"}" && after == *"}"
+                          && ctx & LC_ARGUMENT) ||
+            (this == *"=" && ctx & LC_HEADING) ||
+            (this == *"<" && next == *"/" && after != *"") ||
+            (this == *"<" && next != *"!" && !(ctx & LC_TAG_CLOSE)) ||
+            (this == *">" && ctx & LC_TAG_CLOSE) ||
+            (this == *"'" && next == *"'"));
+}
+
+/*
     Really parse an external link.
 */
 static PyObject*
@@ -1050,33 +1073,29 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
     while (1) {
         this = Tokenizer_READ(self, 0);
         next = Tokenizer_READ(self, 1);
-        if (this == *"" || this == *"\n") {
-            if (brackets)
-                return Tokenizer_fail_route(self);
+        if (!brackets && Tokenizer_is_free_link(self, this, next)) {
             self->head--;
             return Tokenizer_pop(self);
         }
-        if (this == *"{" && next == *"{" && Tokenizer_CAN_RECURSE(self)) {
+        else if (this == *"" || this == *"\n")
+            return Tokenizer_fail_route(self);
+        else if (this == *"{" && next == *"{" && Tokenizer_CAN_RECURSE(self)) {
             PUSH_TAIL_BUFFER(*extra, NULL)
             if (Tokenizer_parse_template_or_argument(self))
                 return NULL;
         }
-        else if (this == *"[") {
-            if (!brackets) {
-                self->head--;
-                return Tokenizer_pop(self);
-            }
-            if (Tokenizer_emit_char(self, *"["))
-                return NULL;
-        }
-        else if (this == *"]") {
-            if (!brackets)
-                self->head--;
+        else if (this == *"]")
             return Tokenizer_pop(self);
-        }
         else if (this == *"&") {
             PUSH_TAIL_BUFFER(*extra, NULL)
             if (Tokenizer_parse_entity(self))
+                return NULL;
+        }
+        else if (this == *"<" && next == *"!"
+                 && Tokenizer_READ(self, 2) == *"-"
+                 && Tokenizer_READ(self, 3) == *"-") {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_comment(self))
                 return NULL;
         }
         else if (this == *" ") {
