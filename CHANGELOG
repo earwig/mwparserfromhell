@@ -1,3 +1,8 @@
+v0.3.1 (released August 29, 2013):
+
+- Fixed a parser bug involving URLs nested inside other markup.
+- Fixed some typos.
+
 v0.3 (released August 24, 2013):
 
 - Added complete support for HTML Tags, including forms like <ref>foo</ref>,

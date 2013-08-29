@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.3.1
+------
+
+`Released August 29, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.3.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3...v0.3.1>`__):
+
+- Fixed a parser bug involving URLs nested inside other markup.
+- Fixed some typos.
+
 v0.3
 ----
 
