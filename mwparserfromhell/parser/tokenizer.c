@@ -870,7 +870,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
     Py_UNICODE this;
     int slashes, i;
 
-    if (Tokenizer_push(self, self->topstack->context | LC_EXT_LINK_URI))
+    if (Tokenizer_push(self, LC_EXT_LINK_URI))
         return -1;
     if (Tokenizer_READ(self, 0) == *"/" && Tokenizer_READ(self, 1) == *"/") {
         if (Tokenizer_emit_text(self, "//"))

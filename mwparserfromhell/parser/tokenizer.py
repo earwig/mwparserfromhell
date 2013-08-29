@@ -315,7 +315,7 @@ class Tokenizer(object):
 
     def _parse_bracketed_uri_scheme(self):
         """Parse the URI scheme of a bracket-enclosed external link."""
-        self._push(self._context | contexts.EXT_LINK_URI)
+        self._push(contexts.EXT_LINK_URI)
         if self._read() == self._read(1) == "/":
             self._emit_text("//")
             self._head += 2
