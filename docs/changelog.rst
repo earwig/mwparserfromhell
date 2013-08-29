@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.4
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.1...develop>`__):
+
+- Added support for Python 3.2 (along with current support for 3.3 and 2.7).
+
 v0.3.1
 ------
 

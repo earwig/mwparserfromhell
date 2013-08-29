@@ -25,7 +25,7 @@ from sys import getdefaultencoding
 from types import GeneratorType
 import unittest
 
-from mwparserfromhell.compat import bytes, py3k, str
+from mwparserfromhell.compat import bytes, py3k, py32, str
 from mwparserfromhell.string_mixin import StringMixIn
 
 from .compat import range
@@ -52,8 +52,10 @@ class TestStringMixIn(unittest.TestCase):
             "rsplit", "rstrip", "split", "splitlines", "startswith", "strip",
             "swapcase", "title", "translate", "upper", "zfill"]
         if py3k:
-            methods.extend(["casefold", "format_map", "isidentifier",
-                            "isprintable", "maketrans"])
+            if not py32:
+                methods.append("casefold")
+            methods.extend(["format_map", "isidentifier", "isprintable",
+                            "maketrans"])
         else:
             methods.append("decode")
         for meth in methods:
@@ -325,7 +327,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("", str15.lower())
         self.assertEqual("foobar", str16.lower())
         self.assertEqual("ß", str22.lower())
-        if py3k:
+        if py3k and not py32:
             self.assertEqual("", str15.casefold())
             self.assertEqual("foobar", str16.casefold())
             self.assertEqual("ss", str22.casefold())
