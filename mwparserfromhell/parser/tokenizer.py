@@ -389,16 +389,13 @@ class Tokenizer(object):
         """Return whether the current head is the end of a free link."""
         # Built from _parse()'s end sentinels:
         after, ctx = self._read(2), self._context
-        return (this is self.END or this in ("\n", "[", "]") or
-                this == "|" and ctx & contexts.TEMPLATE or
-                this == "=" and ctx & contexts.TEMPLATE_PARAM_KEY or
-                this == next == "}" and ctx & contexts.TEMPLATE or
-                this == next == after == "}" and ctx & contexts.ARGUMENT or
-                this == "=" and ctx & contexts.HEADING or
-                this == "<" and next == "/" and after is not self.END or
-                this == "<" and next != "!" and not ctx & contexts.TAG_CLOSE or
-                this == ">" and ctx & contexts.TAG_CLOSE or
-                this == next == "'")
+        equal_sign_contexts = contexts.TEMPLATE_PARAM_KEY | contexts.HEADING
+        return (this in (self.END, "\n", "[", "]", "<", ">") or
+                this == next == "'" or
+                (this == "|" and ctx & contexts.TEMPLATE) or
+                (this == "=" and ctx & equal_sign_contexts) or
+                (this == next == "}" and ctx & contexts.TEMPLATE) or
+                (this == next == after == "}" and ctx & contexts.ARGUMENT))
 
     def _really_parse_external_link(self, brackets):
         """Really parse an external link."""
@@ -414,18 +411,7 @@ class Tokenizer(object):
         tail = ""
         while True:
             this, next = self._read(), self._read(1)
-            if not brackets and self._is_free_link_end(this, next):
-                return self._pop(), tail, -1
-            elif this is self.END or this == "\n":
-                self._fail_route()
-            elif this == next == "{" and self._can_recurse():
-                if tail:
-                    self._emit_text(tail)
-                    tail = ""
-                self._parse_template_or_argument()
-            elif this == "]":
-                return self._pop(), tail, 0
-            elif this == "&":
+            if this == "&":
                 if tail:
                     self._emit_text(tail)
                     tail = ""
@@ -436,6 +422,17 @@ class Tokenizer(object):
                     self._emit_text(tail)
                     tail = ""
                 self._parse_comment()
+            elif not brackets and self._is_free_link_end(this, next):
+                return self._pop(), tail, -1
+            elif this is self.END or this == "\n":
+                self._fail_route()
+            elif this == next == "{" and self._can_recurse():
+                if tail:
+                    self._emit_text(tail)
+                    tail = ""
+                self._parse_template_or_argument()
+            elif this == "]":
+                return self._pop(), tail, 0
             elif " " in this:
                 before, after = this.split(" ", 1)
                 if brackets:

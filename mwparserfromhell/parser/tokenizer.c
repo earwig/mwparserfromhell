@@ -1037,17 +1037,12 @@ Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
     Py_UNICODE after = Tokenizer_READ(self, 2);
     int ctx = self->topstack->context;
 
-    return ((this == *"" || this == *"\n" || this == *"[" || this == *"]") ||
-            (this == *"|" && ctx & LC_TEMPLATE) ||
-            (this == *"=" && ctx & LC_TEMPLATE_PARAM_KEY) ||
-            (this == *"}" && next == *"}" && ctx & LC_TEMPLATE) ||
-            (this == *"}" && next == *"}" && after == *"}"
-                          && ctx & LC_ARGUMENT) ||
-            (this == *"=" && ctx & LC_HEADING) ||
-            (this == *"<" && next == *"/" && after != *"") ||
-            (this == *"<" && next != *"!" && !(ctx & LC_TAG_CLOSE)) ||
-            (this == *">" && ctx & LC_TAG_CLOSE) ||
-            (this == *"'" && next == *"'"));
+    return (this == *"" || this == *"\n" || this == *"[" || this == *"]" ||
+        this == *"<" || this == *">"  || (this == *"'" && next == *"'") ||
+        (this == *"|" && ctx & LC_TEMPLATE) ||
+        (this == *"=" && ctx & (LC_TEMPLATE_PARAM_KEY | LC_HEADING)) ||
+        (this == *"}" && next == *"}" &&
+            (ctx & LC_TEMPLATE || (after == *"}" && ctx & LC_ARGUMENT))));
 }
 
 /*
@@ -1073,7 +1068,19 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
     while (1) {
         this = Tokenizer_READ(self, 0);
         next = Tokenizer_READ(self, 1);
-        if (!brackets && Tokenizer_is_free_link(self, this, next)) {
+        if (this == *"&") {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_entity(self))
+                return NULL;
+        }
+        else if (this == *"<" && next == *"!"
+                 && Tokenizer_READ(self, 2) == *"-"
+                 && Tokenizer_READ(self, 3) == *"-") {
+            PUSH_TAIL_BUFFER(*extra, NULL)
+            if (Tokenizer_parse_comment(self))
+                return NULL;
+        }
+        else if (!brackets && Tokenizer_is_free_link(self, this, next)) {
             self->head--;
             return Tokenizer_pop(self);
         }
@@ -1086,18 +1093,6 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
         }
         else if (this == *"]")
             return Tokenizer_pop(self);
-        else if (this == *"&") {
-            PUSH_TAIL_BUFFER(*extra, NULL)
-            if (Tokenizer_parse_entity(self))
-                return NULL;
-        }
-        else if (this == *"<" && next == *"!"
-                 && Tokenizer_READ(self, 2) == *"-"
-                 && Tokenizer_READ(self, 3) == *"-") {
-            PUSH_TAIL_BUFFER(*extra, NULL)
-            if (Tokenizer_parse_comment(self))
-                return NULL;
-        }
         else if (this == *" ") {
             if (brackets) {
                 if (Tokenizer_emit(self, ExternalLinkSeparator))
