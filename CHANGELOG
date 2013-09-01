@@ -1,6 +1,8 @@
 v0.4 (unreleased):
 
 - Added support for Python 3.2 (along with current support for 3.3 and 2.7).
+- Renamed Template.remove()'s first argument from 'name' to 'param', which now
+  accepts Parameter objects in addition to parameter name strings.
 
 v0.3.1 (released August 29, 2013):
 
