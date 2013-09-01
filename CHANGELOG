@@ -1,4 +1,4 @@
-v0.4 (unreleased):
+v0.3.2 (released September 1, 2013):
 
 - Added support for Python 3.2 (along with current support for 3.3 and 2.7).
 - Renamed Template.remove()'s first argument from 'name' to 'param', which now
