@@ -1,6 +1,17 @@
 Changelog
 =========
 
+v0.3.2
+------
+
+`Released September 1, 2013 <https://github.com/earwig/mwparserfromhell/tree/v0.3.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.1...v0.3.2>`__):
+
+- Added support for Python 3.2 (along with current support for 3.3 and 2.7).
+- Renamed :py:meth:`.Template.remove`\ 's first argument from *name* to
+  *param*, which now accepts :py:class:`.Parameter` objects in addition to
+  parameter name strings.
+
 v0.3.1
 ------
 

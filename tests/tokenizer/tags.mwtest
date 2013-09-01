@@ -470,7 +470,7 @@ output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(t
 name:   unparsable_attributed
 label:  a tag that should not be put through the normal parser; parsed attributes
 input:  "{{t1}}<nowiki attr=val attr2="{{val2}}">{{t2}}</nowiki>{{t3}}"
-output: [TemplateOpen(), Text(text=u't1'), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
+output: [TemplateOpen(), Text(text="t1"), TemplateClose(), TagOpenOpen(), Text(text="nowiki"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr"), TagAttrEquals(), Text(text="val"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="attr2"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="val2"), TemplateClose(), TagCloseOpen(padding=""), Text(text="{{t2}}"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), TemplateOpen(), Text(text="t3"), TemplateClose()]
 
 ---
 

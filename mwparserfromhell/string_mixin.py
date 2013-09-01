@@ -27,7 +27,7 @@ interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
 
 from __future__ import unicode_literals
 
-from .compat import py3k, str
+from .compat import py3k, py32, str
 
 __all__ = ["StringMixIn"]
 
@@ -125,7 +125,7 @@ class StringMixIn(object):
     def capitalize(self):
         return self.__unicode__().capitalize()
 
-    if py3k:
+    if py3k and not py32:
         @inheritdoc
         def casefold(self):
             return self.__unicode__().casefold()
@@ -288,7 +288,7 @@ class StringMixIn(object):
     def rpartition(self, sep):
         return self.__unicode__().rpartition(sep)
 
-    if py3k:
+    if py3k and not py32:
         @inheritdoc
         def rsplit(self, sep=None, maxsplit=None):
             kwargs = {}
@@ -310,7 +310,7 @@ class StringMixIn(object):
     def rstrip(self, chars=None):
         return self.__unicode__().rstrip(chars)
 
-    if py3k:
+    if py3k and not py32:
         @inheritdoc
         def split(self, sep=None, maxsplit=None):
             kwargs = {}

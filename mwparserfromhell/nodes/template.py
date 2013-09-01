@@ -150,6 +150,16 @@ class Template(Node):
                 return False
         return True
 
+    def _remove_exact(self, needle, keep_field):
+        """Remove a specific parameter, *needle*, from the template."""
+        for i, param in enumerate(self.params):
+            if param is needle:
+                if keep_field or not self._remove_without_field(param, i):
+                    self._blank_param_value(param.value)
+                else:
+                    self.params.pop(i)
+                return
+
     @property
     def name(self):
         """The name of the template, as a :py:class:`~.Wikicode` object."""
@@ -180,7 +190,8 @@ class Template(Node):
                 return True
         return False
 
-    has_param = lambda self, *args, **kwargs: self.has(*args, **kwargs)
+    has_param = lambda self, name, ignore_empty=True: \
+                self.has(name, ignore_empty)
     has_param.__doc__ = "Alias for :py:meth:`has`."
 
     def get(self, name):
@@ -280,8 +291,12 @@ class Template(Node):
             self.params.append(param)
         return param
 
-    def remove(self, name, keep_field=False):
-        """Remove a parameter from the template whose name is *name*.
+    def remove(self, param, keep_field=False):
+        """Remove a parameter from the template, identified by *param*.
+
+        If *param* is a :py:class:`.Parameter` object, it will be matched
+        exactly, otherwise it will be treated like the *name* argument to
+        :py:meth:`has` and :py:meth:`get`.
 
         If *keep_field* is ``True``, we will keep the parameter's name, but
         blank its value. Otherwise, we will remove the parameter completely
@@ -289,12 +304,14 @@ class Template(Node):
         from ``{{foo|bar|baz}}`` is unsafe because ``{{foo|baz}}`` is not what
         we expected, so ``{{foo||baz}}`` will be produced instead).
 
-        If the parameter shows up multiple times in the template, we will
-        remove all instances of it (and keep one if *keep_field* is ``True`` -
-        the first instance if none have dependents, otherwise the one with
-        dependents will be kept).
+        If the parameter shows up multiple times in the template and *param* is
+        not a :py:class:`.Parameter` object, we will remove all instances of it
+        (and keep only one if *keep_field* is ``True`` - the first instance if
+        none have dependents, otherwise the one with dependents will be kept).
         """
-        name = str(name).strip()
+        if isinstance(param, Parameter):
+            return self._remove_exact(param, keep_field)
+        name = str(param).strip()
         removed = False
         to_remove = []
         for i, param in enumerate(self.params):
@@ -304,15 +321,15 @@ class Template(Node):
                         self._blank_param_value(param.value)
                         keep_field = False
                     else:
-                        to_remove.append(param)
+                        to_remove.append(i)
                 else:
                     if self._remove_without_field(param, i):
-                        to_remove.append(param)
+                        to_remove.append(i)
                     else:
                         self._blank_param_value(param.value)
                 if not removed:
                     removed = True
         if not removed:
             raise ValueError(name)
-        for param in to_remove:
-            self.params.remove(param)
+        for i in reversed(to_remove):
+            self.params.pop(i)
