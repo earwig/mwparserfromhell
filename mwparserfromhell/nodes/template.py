@@ -331,5 +331,5 @@ class Template(Node):
                     removed = True
         if not removed:
             raise ValueError(name)
-        for i, index in enumerate(to_remove):
-            self.params.pop(index - i)  # Note the shift when we remove a param
+        for i in reversed(to_remove):
+            self.params.pop(i)
