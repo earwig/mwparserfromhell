@@ -316,12 +316,12 @@ class TestTemplate(TreeEqualityTestCase):
     def test_remove(self):
         """test Template.remove()"""
         node1 = Template(wraptext("foobar"))
-        node2 = Template(wraptext("foo"), [pgenh("1", "bar"),
-                                           pgens("abc", "def")])
-        node3 = Template(wraptext("foo"), [pgenh("1", "bar"),
-                                           pgens("abc", "def")])
-        node4 = Template(wraptext("foo"), [pgenh("1", "bar"),
-                                           pgenh("2", "baz")])
+        node2 = Template(wraptext("foo"),
+            [pgenh("1", "bar"), pgens("abc", "def")])
+        node3 = Template(wraptext("foo"),
+            [pgenh("1", "bar"), pgens("abc", "def")])
+        node4 = Template(wraptext("foo"),
+            [pgenh("1", "bar"), pgenh("2", "baz")])
         node5 = Template(wraptext("foo"), [
             pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
         node6 = Template(wraptext("foo"), [
@@ -334,6 +334,44 @@ class TestTemplate(TreeEqualityTestCase):
             pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
         node10 = Template(wraptext("foo"), [
             pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node11 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node12 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node13 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node14 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node15 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node16 = Template(wraptext("foo"), [
+            pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
+        node17 = Template(wraptext("foo"), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node18 = Template(wraptext("foo"), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node19 = Template(wraptext("foo"), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node20 = Template(wraptext("foo"), [
+            pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
+        node21 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
+        node22 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
+        node23 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
+        node24 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
+        node25 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
+        node26 = Template(wraptext("foo"), [
+            pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
+            pgens("a", "b")])
 
         node2.remove("1")
         node2.remove("abc")
@@ -346,6 +384,22 @@ class TestTemplate(TreeEqualityTestCase):
         node8.remove(1, keep_field=False)
         node9.remove(1, keep_field=True)
         node10.remove(1, keep_field=False)
+        node11.remove(node11.params[0], keep_field=False)
+        node12.remove(node12.params[0], keep_field=True)
+        node13.remove(node13.params[1], keep_field=False)
+        node14.remove(node14.params[1], keep_field=True)
+        node15.remove(node15.params[2], keep_field=False)
+        node16.remove(node16.params[2], keep_field=True)
+        node17.remove(node17.params[0], keep_field=False)
+        node18.remove(node18.params[0], keep_field=True)
+        node19.remove(node19.params[1], keep_field=False)
+        node20.remove(node20.params[1], keep_field=True)
+        node21.remove("a", keep_field=False)
+        node22.remove("a", keep_field=True)
+        node23.remove(node23.params[0], keep_field=False)
+        node24.remove(node24.params[0], keep_field=True)
+        node25.remove(node25.params[3], keep_field=False)
+        node26.remove(node26.params[3], keep_field=True)
 
         self.assertRaises(ValueError, node1.remove, 1)
         self.assertRaises(ValueError, node1.remove, "a")
@@ -359,6 +413,22 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{foo|2=c}}", node8)
         self.assertEqual("{{foo||c}}", node9)
         self.assertEqual("{{foo||c}}", node10)
+        self.assertEqual("{{foo|b=c|a =d}}", node11)
+        self.assertEqual("{{foo| a=|b=c|a =d}}", node12)
+        self.assertEqual("{{foo| a=b|a =d}}", node13)
+        self.assertEqual("{{foo| a=b|b=|a =d}}", node14)
+        self.assertEqual("{{foo| a=b|b=c}}", node15)
+        self.assertEqual("{{foo| a=b|b=c|a =}}", node16)
+        self.assertEqual("{{foo|b|c}}", node17)
+        self.assertEqual("{{foo|1  =|b|c}}", node18)
+        self.assertEqual("{{foo|1  =a||c}}", node19)
+        self.assertEqual("{{foo|1  =a||c}}", node20)
+        self.assertEqual("{{foo|c=d|e=f}}", node21)
+        self.assertEqual("{{foo|a=|c=d|e=f}}", node22)
+        self.assertEqual("{{foo|c=d|e=f|a=b|a=b}}", node23)
+        self.assertEqual("{{foo|a=|c=d|e=f|a=b|a=b}}", node24)
+        self.assertEqual("{{foo|a=b|c=d|e=f|a=b}}", node25)
+        self.assertEqual("{{foo|a=b|c=d|e=f|a=|a=b}}", node26)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
