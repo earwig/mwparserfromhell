@@ -1,6 +1,16 @@
 Changelog
 =========
 
+v0.4
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.2...develop>`__):
+
+- The *matches* argument of :py:class:`Wikicode's <.Wikicode>`
+  :py:meth:`.filter` methods now accepts a function (taking one argument, a
+  :py:class:`.Node`, and returning a bool) in addition to a regex.
+
 v0.3.2
 ------
 

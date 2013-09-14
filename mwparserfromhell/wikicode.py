@@ -378,17 +378,21 @@ class Wikicode(StringMixIn):
         """Iterate over nodes in our list matching certain conditions.
 
         If *recursive* is ``True``, we will iterate over our children and all
-        descendants of our children, otherwise just our immediate children. If
-        *matches* is given, we will only yield the nodes that match the given
-        regular expression (with :py:func:`re.search`). The default flags used
-        are :py:const:`re.IGNORECASE`, :py:const:`re.DOTALL`, and
-        :py:const:`re.UNICODE`, but custom flags can be specified by passing
-        *flags*. If *forcetype* is given, only nodes that are instances of this
-        type are yielded.
+        of their descendants, otherwise just our immediate children. If
+        *forcetype* is given, only nodes that are instances of this type are
+        yielded. *matches* can be used to further restrict the nodes, either as
+        a function (taking a single :py:class:`.Node` and returning a boolean)
+        or a regular expression (matched against the node's string
+        representation with :py:func:`re.search`). If *matches* is a regex, the
+        flags passed to :py:func:`re.search` are :py:const:`re.IGNORECASE`,
+        :py:const:`re.DOTALL`, and :py:const:`re.UNICODE`, but custom flags can
+        be specified by passing *flags*.
         """
+        if matches and not callable(matches):
+            pat, matches = matches, lambda obj: re.search(pat, str(obj), flags)
         for node in (self._get_all_nodes(self) if recursive else self.nodes):
             if not forcetype or isinstance(node, forcetype):
-                if not matches or re.search(matches, str(node), flags):
+                if not matches or matches(node):
                     yield node
 
     def filter(self, recursive=True, matches=None, flags=FLAGS,

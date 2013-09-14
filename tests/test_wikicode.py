@@ -256,7 +256,7 @@ class TestWikicode(TreeEqualityTestCase):
         def genlist(gen):
             self.assertIsInstance(gen, GeneratorType)
             return list(gen)
-        ifilter = lambda code: (lambda **kw: genlist(code.ifilter(**kw)))
+        ifilter = lambda code: (lambda *a, **k: genlist(code.ifilter(*a, **k)))
 
         code = parse("a{{b}}c[[d]]{{{e}}}{{f}}[[g]]")
         for func in (code.filter, ifilter(code)):
@@ -292,21 +292,27 @@ class TestWikicode(TreeEqualityTestCase):
                               "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
                              func(recursive=True, forcetype=Template))
 
-        code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}")
+        code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}{{barfoo}}")
         for func in (code3.filter, ifilter(code3)):
-            self.assertEqual(["{{foobar}}", "{{FOO}}"], func(recursive=False, matches=r"foo"))
+            self.assertEqual(["{{foobar}}", "{{barfoo}}"],
+                             func(False, matches=lambda node: "foo" in node))
+            self.assertEqual(["{{foobar}}", "{{FOO}}", "{{barfoo}}"],
+                             func(False, matches=r"foo"))
             self.assertEqual(["{{foobar}}", "{{FOO}}"],
-                             func(recursive=False, matches=r"^{{foo.*?}}"))
+                             func(matches=r"^{{foo.*?}}"))
             self.assertEqual(["{{foobar}}"],
-                             func(recursive=False, matches=r"^{{foo.*?}}", flags=re.UNICODE))
-            self.assertEqual(["{{baz}}", "{{bz}}"], func(recursive=False, matches=r"^{{b.*?z"))
-            self.assertEqual(["{{baz}}"], func(recursive=False, matches=r"^{{b.+?z}}"))
+                             func(matches=r"^{{foo.*?}}", flags=re.UNICODE))
+            self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
+            self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
 
         self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
                          code2.filter_templates(recursive=False))
         self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
                           "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
                          code2.filter_templates(recursive=True))
+
+        self.assertEqual(["{{foobar}}"], code3.filter_templates(
+            matches=lambda node: node.name.matches("Foobar")))
         self.assertEqual(["{{baz}}", "{{bz}}"],
                          code3.filter_templates(matches=r"^{{b.*?z"))
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z"))
