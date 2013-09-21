@@ -2,6 +2,8 @@ v0.4 (unreleased):
 
 - The 'matches' argument of Wikicode's filter methods now accepts a function
   (taking one argument, a Node, and returning a bool) in addition to a regex.
+- Wikicode.matches() now accepts a tuple of strings/Wikicode objects instead of
+  just a single string or Wikicode.
 
 v0.3.2 (released September 1, 2013):
 

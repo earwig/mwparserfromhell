@@ -362,16 +362,22 @@ class Wikicode(StringMixIn):
         """Do a loose equivalency test suitable for comparing page names.
 
         *other* can be any string-like object, including
-        :py:class:`~.Wikicode`. This operation is symmetric; both sides are
-        adjusted. Specifically, whitespace and markup is stripped and the first
-        letter's case is normalized. Typical usage is
+        :py:class:`~.Wikicode`, or a tuple of these. This operation is
+        symmetric; both sides are adjusted. Specifically, whitespace and markup
+        is stripped and the first letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
+        cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
+                            if a and b else a == b)
         this = self.strip_code().strip()
+        if isinstance(other, tuple):
+            for obj in other:
+                that = parse_anything(obj).strip_code().strip()
+                if cmp(this, that):
+                    return True
+            return False
         that = parse_anything(other).strip_code().strip()
-        if not this or not that:
-            return this == that
-        return this[0].upper() + this[1:] == that[0].upper() + that[1:]
+        return cmp(this, that)
 
     def ifilter(self, recursive=True, matches=None, flags=FLAGS,
                 forcetype=None):

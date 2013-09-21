@@ -242,6 +242,7 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.matches()"""
         code1 = parse("Cleanup")
         code2 = parse("\nstub<!-- TODO: make more specific -->")
+        code3 = parse("")
         self.assertTrue(code1.matches("Cleanup"))
         self.assertTrue(code1.matches("cleanup"))
         self.assertTrue(code1.matches("  cleanup\n"))
@@ -250,6 +251,13 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertTrue(code2.matches("stub"))
         self.assertTrue(code2.matches("Stub<!-- no, it's fine! -->"))
         self.assertFalse(code2.matches("StuB"))
+        self.assertTrue(code1.matches(("cleanup", "stub")))
+        self.assertTrue(code2.matches(("cleanup", "stub")))
+        self.assertFalse(code2.matches(("StuB", "sTUb", "foobar")))
+        self.assertTrue(code2.matches(("StuB", "sTUb", "foo", "bar", "Stub")))
+        self.assertTrue(code3.matches(""))
+        self.assertTrue(code3.matches("<!-- nothing -->"))
+        self.assertTrue(code3.matches(("a", "b", "")))
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""

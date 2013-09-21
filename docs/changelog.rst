@@ -10,6 +10,9 @@ Unreleased
 - The *matches* argument of :py:class:`Wikicode's <.Wikicode>`
   :py:meth:`.filter` methods now accepts a function (taking one argument, a
   :py:class:`.Node`, and returning a bool) in addition to a regex.
+- :py:meth:`.Wikicode.matches` now accepts a tuple of
+  strings/:py:class:`.Wikicode` objects instead of just a single string or
+  :py:class:`.Wikicode`.
 
 v0.3.2
 ------
