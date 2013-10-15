@@ -17,6 +17,7 @@ Unreleased
 - :py:meth:`.Wikicode.matches` now accepts a tuple of
   strings/:py:class:`.Wikicode` objects instead of just a single string or
   :py:class:`.Wikicode`.
+- C code cleanup and speed improvements.
 
 v0.3.2
 ------

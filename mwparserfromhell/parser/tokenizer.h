@@ -41,9 +41,9 @@ SOFTWARE.
 #define HEXDIGITS "0123456789abcdefABCDEF"
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-static const char* MARKERS[] = {
-    "{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";", ":", "/",
-    "-", "\n", ""};
+static const char MARKERS[] = {
+    '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
+    '-', '\n', '\0'};
 
 #define NUM_MARKERS 18
 #define TEXTBUFFER_BLOCKSIZE 1024
@@ -241,7 +241,7 @@ typedef struct {
 
 /* Macros for accessing definitions: */
 
-#define GET_HTML_TAG(markup) (markup == *":" ? "dd" : markup == *";" ? "dt" : "li")
+#define GET_HTML_TAG(markup) (markup == ':' ? "dd" : markup == ';' ? "dt" : "li")
 #define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL, NULL))
 #define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL, NULL))
 #define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL, NULL))
