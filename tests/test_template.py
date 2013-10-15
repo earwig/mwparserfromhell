@@ -123,15 +123,15 @@ class TestTemplate(TreeEqualityTestCase):
         node3 = Template(wraptext("foo"),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
         node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
-        self.assertFalse(node1.has("foobar"))
-        self.assertTrue(node2.has(1))
-        self.assertTrue(node2.has("abc"))
-        self.assertFalse(node2.has("def"))
-        self.assertTrue(node3.has("1"))
-        self.assertTrue(node3.has(" b "))
-        self.assertFalse(node4.has("b"))
-        self.assertTrue(node3.has("b", False))
+        self.assertFalse(node1.has("foobar", False))
+        self.assertTrue(node2.has(1, False))
+        self.assertTrue(node2.has("abc", False))
+        self.assertFalse(node2.has("def", False))
+        self.assertTrue(node3.has("1", False))
+        self.assertTrue(node3.has(" b ", False))
         self.assertTrue(node4.has("b", False))
+        self.assertTrue(node3.has("b", True))
+        self.assertFalse(node4.has("b", True))
 
     def test_get(self):
         """test Template.get()"""
@@ -223,6 +223,7 @@ class TestTemplate(TreeEqualityTestCase):
                                           pgenh("1", "c"), pgenh("2", "d")])
         node40 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
                                           pgens("f", "g")])
+        node41 = Template(wraptext("a"), [pgenh("1", "")])
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -266,6 +267,7 @@ class TestTemplate(TreeEqualityTestCase):
         node38.add("1", "e")
         node39.add("1", "e")
         node40.add("d", "h", before="b")
+        node41.add(1, "b")
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -312,6 +314,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a|1=e|x=y|2=d}}", node38)
         self.assertEqual("{{a|x=y|e|d}}", node39)
         self.assertEqual("{{a|b=c|d=h|f=g}}", node40)
+        self.assertEqual("{{a|b}}", node41)
 
     def test_remove(self):
         """test Template.remove()"""
