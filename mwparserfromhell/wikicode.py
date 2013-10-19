@@ -370,7 +370,7 @@ class Wikicode(StringMixIn):
         cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
                             if a and b else a == b)
         this = self.strip_code().strip()
-        if isinstance(other, tuple):
+        if isinstance(other, (tuple, list)):
             for obj in other:
                 that = parse_anything(obj).strip_code().strip()
                 if cmp(this, that):
