@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,7 +39,7 @@ setup(
     test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",
-    author_email = "ben.kurtovic@verizon.net",
+    author_email = "ben.kurtovic@gmail.com",
     url = "https://github.com/earwig/mwparserfromhell",
     description = "MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description = long_docs,
