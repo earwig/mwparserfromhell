@@ -434,34 +434,31 @@ class Wikicode(StringMixIn):
         """
         if matches:
             matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter_headings()
-        filtered = self.filter_headings(matches=matches, flags=flags)
+        headings = self.filter_headings(recursive=False, matches=matches,
+                                        flags=flags)
         if levels:
-            filtered = [head for head in filtered if head.level in levels]
+            headings = [head for head in headings if head.level in levels]
 
-        if matches or include_lead is False or (not include_lead and levels):
-            buffers = []
-        else:
-            buffers = [(maxsize, 0)]
         sections = []
-        i = 0
-        while i < len(self.nodes):
-            if self.nodes[i] in headings:
-                this = self.nodes[i].level
-                for (level, start) in buffers:
-                    if this <= level:
-                        sections.append(Wikicode(self.nodes[start:i]))
-                buffers = [buf for buf in buffers if buf[0] < this]
-                if self.nodes[i] in filtered:
-                    if not include_headings:
-                        i += 1
-                        if i >= len(self.nodes):
-                            break
-                    buffers.append((this, i))
-            i += 1
-        for (level, start) in buffers:
-            if start != i:
-                sections.append(Wikicode(self.nodes[start:i]))
+        if include_lead or not (include_lead is not None or matches or levels):
+            iterator = self.ifilter_headings(recursive=False)
+            try:
+                first = self.index(next(iterator))
+                sections.append(Wikicode(self.nodes[:first]))
+            except StopIteration:  # No headings in page
+                sections.append(Wikicode(self.nodes[:]))
+
+        for heading in headings:
+            start = self.index(heading)
+            i = start + 1
+            if not include_headings:
+                start += 1
+            while i < len(self.nodes):
+                node = self.nodes[i]
+                if isinstance(node, Heading) and node.level <= heading.level:
+                    break
+                i += 1
+            sections.append(Wikicode(self.nodes[start:i]))
         return sections
 
     def strip_code(self, normalize=True, collapse=True):

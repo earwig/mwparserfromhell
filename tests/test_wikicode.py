@@ -351,12 +351,12 @@ class TestWikicode(TreeEqualityTestCase):
         p4_III = "== Section III ==\n" + p4_IIIA
         page4 = parse(p4_lead + p4_I + p4_II + p4_III)
 
-        self.assertEqual([], page1.get_sections())
+        self.assertEqual([""], page1.get_sections())
         self.assertEqual(["", "==Heading=="], page2.get_sections())
         self.assertEqual(["", "===Heading===\nFoo bar baz\n====Gnidaeh====\n",
                           "====Gnidaeh====\n"], page3.get_sections())
-        self.assertEqual([p4_lead, p4_IA, p4_I, p4_IB, p4_IB1, p4_II,
-                          p4_IIIA1a, p4_III, p4_IIIA, p4_IIIA2, p4_IIIA2ai1],
+        self.assertEqual([p4_lead, p4_I, p4_IA, p4_IB, p4_IB1, p4_II,
+                          p4_III, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1],
                          page4.get_sections())
 
         self.assertEqual(["====Gnidaeh====\n"], page3.get_sections(levels=[4]))
@@ -370,22 +370,27 @@ class TestWikicode(TreeEqualityTestCase):
                          page3.get_sections(include_lead=False))
 
         self.assertEqual([p4_IB1, p4_IIIA2], page4.get_sections(levels=[4]))
-        self.assertEqual([""], page2.get_sections(include_headings=False))
+        self.assertEqual(["", ""], page2.get_sections(include_headings=False))
         self.assertEqual(["\nSection I.B.1 body.\n\n&bull;Some content.\n\n",
                           "\nEven more text.\n" + p4_IIIA2ai1],
                          page4.get_sections(levels=[4],
                                             include_headings=False))
 
         self.assertEqual([], page4.get_sections(matches=r"body"))
-        self.assertEqual([p4_IA, p4_I, p4_IB, p4_IB1],
+        self.assertEqual([p4_I, p4_IA, p4_IB, p4_IB1],
                          page4.get_sections(matches=r"Section\sI[.\s].*?"))
-        self.assertEqual([p4_IA, p4_IIIA1a, p4_IIIA, p4_IIIA2, p4_IIIA2ai1],
+        self.assertEqual([p4_IA, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1],
                          page4.get_sections(matches=r".*?a.*?"))
         self.assertEqual([p4_IIIA1a, p4_IIIA2ai1],
                          page4.get_sections(matches=r".*?a.*?", flags=re.U))
         self.assertEqual(["\nMore text.\n", "\nAn invalid section!"],
                          page4.get_sections(matches=r".*?a.*?", flags=re.U,
                                             include_headings=False))
+
+        sections = page2.get_sections(include_headings=False)
+        sections[0].append("Lead!\n")
+        sections[1].append("\nFirst section!")
+        self.assertEqual("Lead!\n==Heading==\nFirst section!", page2)
 
         page5 = parse("X\n== Foo ==\nBar\n== Baz ==\nBuzz")
         section = page5.get_sections(matches="Foo")[0]
