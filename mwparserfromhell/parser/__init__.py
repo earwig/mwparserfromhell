@@ -53,8 +53,12 @@ class Parser(object):
             self._tokenizer = Tokenizer()
         self._builder = Builder()
 
-    def parse(self, text, context=0):
-        """Parse *text*, returning a :py:class:`~.Wikicode` object tree."""
-        tokens = self._tokenizer.tokenize(text, context)
+    def parse(self, text, context=0, skip_style_tags=False):
+        """Parse *text*, returning a :py:class:`~.Wikicode` object tree.
+
+        If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
+        parsed, but instead be treated as plain text.
+        """
+        tokens = self._tokenizer.tokenize(text, context, skip_style_tags)
         code = self._builder.build(tokens)
         return code

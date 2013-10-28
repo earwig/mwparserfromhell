@@ -223,6 +223,7 @@ typedef struct {
     int global;             /* global context */
     int depth;              /* stack recursion depth */
     int cycles;             /* total number of stack recursions */
+    int skip_style_tags;    /* temporary fix for the sometimes broken tag parser */
 } Tokenizer;
 
 

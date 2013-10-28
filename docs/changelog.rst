@@ -19,6 +19,10 @@ Unreleased
 - :py:meth:`.Wikicode.matches` now accepts a tuple or list of
   strings/:py:class:`.Wikicode` objects instead of just a single string or
   :py:class:`.Wikicode`.
+- Given the frequency of issues with the (admittedly insufficient) tag parser,
+  there's a temporary *skip_style_tags* argument to
+  :py:meth:`~mwparserfromhell.parse` that ignores ``''`` and ``'''`` until
+  these issues are corrected.
 - C code cleanup and speed improvements.
 
 v0.3.2

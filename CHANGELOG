@@ -9,6 +9,9 @@ v0.4 (unreleased):
 - Wikicode.get_sections() now returns sections in the correct order.
 - Wikicode.matches() now accepts a tuple or list of strings/Wikicode objects
   instead of just a single string or Wikicode.
+- Given the frequency of issues with the (admittedly insufficient) tag parser,
+  there's a temporary skip_style_tags argument to parse() that ignores '' and
+  ''' until these issues are corrected.
 - C code cleanup and speed improvements.
 
 v0.3.2 (released September 1, 2013):

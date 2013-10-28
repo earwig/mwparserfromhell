@@ -1124,7 +1124,7 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
-            elif this == next == "'":
+            elif this == next == "'" and not self._skip_style_tags:
                 result = self._parse_style()
                 if result is not None:
                     return result
@@ -1141,8 +1141,9 @@ class Tokenizer(object):
                 self._emit_text(this)
             self._head += 1
 
-    def tokenize(self, text, context=0):
+    def tokenize(self, text, context=0, skip_style_tags=False):
         """Build a list of tokens from a string of wikicode and return it."""
+        self._skip_style_tags = skip_style_tags
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
         self._head = self._global = self._depth = self._cycles = 0
