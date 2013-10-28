@@ -5,6 +5,7 @@ v0.4 (unreleased):
   is a breaking change if you rely on the default behavior.
 - The 'matches' argument of Wikicode's filter methods now accepts a function
   (taking one argument, a Node, and returning a bool) in addition to a regex.
+- Re-added 'flat' argument to Wikicode.get_sections().
 - Wikicode.get_sections() now returns sections in the correct order.
 - Wikicode.matches() now accepts a tuple or list of strings/Wikicode objects
   instead of just a single string or Wikicode.

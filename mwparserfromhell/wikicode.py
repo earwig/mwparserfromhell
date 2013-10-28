@@ -409,7 +409,7 @@ class Wikicode(StringMixIn):
         """
         return list(self.ifilter(recursive, matches, flags, forcetype))
 
-    def get_sections(self, levels=None, matches=None, flags=FLAGS,
+    def get_sections(self, levels=None, matches=None, flags=FLAGS, flat=False,
                      include_lead=None, include_headings=True):
         """Return a list of sections within the page.
 
@@ -417,13 +417,13 @@ class Wikicode(StringMixIn):
         node list (implemented using :py:class:`~.SmartList`) so that changes
         to sections are reflected in the parent Wikicode object.
 
-        Each section contains all of its subsections. If *levels* is given, it
-        should be a iterable of integers; only sections whose heading levels
-        are within it will be returned. If *matches* is given, it should be a
-        regex to be matched against the titles of section headings; only
-        sections whose headings match the regex will be included. *flags* can
-        be used to override the default regex flags (see :py:meth:`ifilter`) if
-        *matches* is used.
+        Each section contains all of its subsections, unless *flat* is
+        ``True``. If *levels* is given, it should be a iterable of integers;
+        only sections whose heading levels are within it will be returned. If
+        *matches* is given, it should be a regex to be matched against the
+        titles of section headings; only sections whose headings match the
+        regex will be included. *flags* can be used to override the default
+        regex flags (see :py:meth:`ifilter`) if *matches* is used.
 
         If *include_lead* is ``True``, the first, lead section (without a
         heading) will be included in the list; ``False`` will not include it;
@@ -455,8 +455,9 @@ class Wikicode(StringMixIn):
                 start += 1
             while i < len(self.nodes):
                 node = self.nodes[i]
-                if isinstance(node, Heading) and node.level <= heading.level:
-                    break
+                if isinstance(node, Heading):
+                    if flat or node.level <= heading.level:
+                        break
                 i += 1
             sections.append(Wikicode(self.nodes[start:i]))
         return sections

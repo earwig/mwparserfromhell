@@ -362,14 +362,22 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertEqual(["====Gnidaeh====\n"], page3.get_sections(levels=[4]))
         self.assertEqual(["===Heading===\nFoo bar baz\n====Gnidaeh====\n"],
                          page3.get_sections(levels=(2, 3)))
+        self.assertEqual(["===Heading===\nFoo bar baz\n"],
+                         page3.get_sections(levels=(2, 3), flat=True))
         self.assertEqual([], page3.get_sections(levels=[0]))
         self.assertEqual(["", "====Gnidaeh====\n"],
                          page3.get_sections(levels=[4], include_lead=True))
         self.assertEqual(["===Heading===\nFoo bar baz\n====Gnidaeh====\n",
                           "====Gnidaeh====\n"],
                          page3.get_sections(include_lead=False))
+        self.assertEqual(["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"],
+                         page3.get_sections(flat=True, include_lead=False))
 
         self.assertEqual([p4_IB1, p4_IIIA2], page4.get_sections(levels=[4]))
+        self.assertEqual([p4_IA, p4_IB, p4_IIIA], page4.get_sections(levels=[3]))
+        self.assertEqual([p4_IA, "=== Section I.B ===\n",
+                          "=== Section III.A ===\nText.\n"],
+                         page4.get_sections(levels=[3], flat=True))
         self.assertEqual(["", ""], page2.get_sections(include_headings=False))
         self.assertEqual(["\nSection I.B.1 body.\n\n&bull;Some content.\n\n",
                           "\nEven more text.\n" + p4_IIIA2ai1],
