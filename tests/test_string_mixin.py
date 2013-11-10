@@ -59,8 +59,8 @@ class TestStringMixIn(unittest.TestCase):
         else:
             methods.append("decode")
         for meth in methods:
-            expected = getattr(str, meth).__doc__
-            actual = getattr(StringMixIn, meth).__doc__
+            expected = getattr("foo", meth).__doc__
+            actual = getattr(_FakeString("foo"), meth).__doc__
             self.assertEqual(expected, actual)
 
     def test_types(self):
@@ -109,12 +109,12 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str1 < str4)
         self.assertTrue(str1 <= str4)
 
-        self.assertTrue(str1 > str5)
-        self.assertTrue(str1 >= str5)
-        self.assertFalse(str1 == str5)
-        self.assertTrue(str1 != str5)
-        self.assertFalse(str1 < str5)
-        self.assertFalse(str1 <= str5)
+        self.assertFalse(str5 > str1)
+        self.assertFalse(str5 >= str1)
+        self.assertFalse(str5 == str1)
+        self.assertTrue(str5 != str1)
+        self.assertTrue(str5 < str1)
+        self.assertTrue(str5 <= str1)
 
     def test_other_magics(self):
         """test other magically implemented features, like len() and iter()"""

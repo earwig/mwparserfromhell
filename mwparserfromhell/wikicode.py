@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 import re
 
-from .compat import maxsize, py3k, str
+from .compat import py3k, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
 from .string_mixin import StringMixIn
