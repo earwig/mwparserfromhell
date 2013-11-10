@@ -376,7 +376,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEqual(actual, str25.rsplit(" ", 3))
-        if py3k:
+        if py3k and not py32:
             actual = ["   this is a", "sentence", "with", "whitespace"]
             self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
@@ -394,7 +394,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEqual(actual, str25.split(" ", 3))
-        if py3k:
+        if py3k and not py32:
             actual = ["this", "is", "a", "sentence with  whitespace "]
             self.assertEqual(actual, str25.split(maxsplit=3))
 
