@@ -92,6 +92,23 @@ class Wikicode(StringMixIn):
             return False
         return obj in nodes
 
+    def _prepare_search(self, obj):
+        """Prepare a new search by calculating the exact parameters.
+
+        *obj*, which may be anything passable to :py:func:`.parse_anything`, is
+        converted to either a single :py:class:`.Node` or a
+        :py:class:`.Wikicode` of multiple nodes. *literal* is a boolean;
+        ``True`` if we are searching for an exact match with ``is`` or
+        ``False`` if we are searching for equality with ``==``.
+        """
+        literal = isinstance(obj, (Node, Wikicode))
+        obj = parse_anything(obj)
+        if not obj or obj not in self:
+            raise ValueError(obj)
+        if len(obj.nodes) == 1:
+            obj = obj.get(0)
+        return obj, literal
+
     def _do_search(self, obj, recursive, context=None, literal=None):
         """Return some info about the location of *obj* within *context*.
 
@@ -105,14 +122,8 @@ class Wikicode(StringMixIn):
         """
         if not context:
             context = self
-            literal = isinstance(obj, (Node, Wikicode))
-            obj = parse_anything(obj)
-            if not obj or obj not in self:
-                raise ValueError(obj)
-            if len(obj.nodes) == 1:
-                obj = obj.get(0)
-
-        compare = lambda a, b: (a is b) if literal else (a == b)
+            obj, literal = self._prepare_search(obj)
+        compare = (lambda a, b: a is b) if literal else (lambda a, b: a == b)
         results = []
         i = 0
         while i < len(context.nodes):
@@ -127,7 +138,7 @@ class Wikicode(StringMixIn):
                     nodes = list(context.nodes[i:i + len(obj.nodes)])
                     results.append((Wikicode, context, nodes))
                     i += len(obj.nodes) - 1
-            elif recursive:
+            elif recursive and not isinstance(node, Text) and obj in node:
                 contexts = node.__iternodes__(self._get_all_nodes)
                 processed = []
                 for code in (ctx for ctx, child in contexts):
