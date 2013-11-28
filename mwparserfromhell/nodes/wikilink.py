@@ -41,13 +41,10 @@ class Wikilink(Node):
             return "[[" + str(self.title) + "|" + str(self.text) + "]]"
         return "[[" + str(self.title) + "]]"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.title):
-            yield self.title, child
+    def __children__(self):
+        yield self.title
         if self.text is not None:
-            for child in getter(self.text):
-                yield self.text, child
+            yield self.text
 
     def __strip__(self, normalize, collapse):
         if self.text is not None:

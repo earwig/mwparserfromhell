@@ -39,10 +39,8 @@ class Heading(Node):
     def __unicode__(self):
         return ("=" * self.level) + str(self.title) + ("=" * self.level)
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.title):
-            yield self.title, child
+    def __children__(self):
+        yield self.title
 
     def __strip__(self, normalize, collapse):
         return self.title.strip_code(normalize, collapse)

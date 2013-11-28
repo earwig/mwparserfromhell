@@ -42,21 +42,21 @@ class Node(StringMixIn):
 
     :py:meth:`__unicode__` must be overridden. It should return a ``unicode``
     or (``str`` in py3k) representation of the node. If the node contains
-    :py:class:`~.Wikicode` objects inside of it, :py:meth:`__iternodes__`
-    should be overridden to yield tuples of (``wikicode``,
-    ``node_in_wikicode``) for each node in each wikicode, as well as the node
-    itself (``None``, ``self``). If the node is printable, :py:meth:`__strip__`
-    should be overridden to return the printable version of the node - it does
-    not have to be a string, but something that can be converted to a string
-    with ``str()``. Finally, :py:meth:`__showtree__` can be overridden to build
-    a nice tree representation of the node, if desired, for
+    :py:class:`~.Wikicode` objects inside of it, :py:meth:`__children__`
+    should be a generator that iterates over them. If the node is printable
+    (shown when the page is rendered), :py:meth:`__strip__` should return its
+    printable version, stripping out any formatting marks. It does not have to
+    return a string, but something that can be converted to a string with
+    ``str()``. Finally, :py:meth:`__showtree__` can be overridden to build a
+    nice tree representation of the node, if desired, for
     :py:meth:`~.Wikicode.get_tree`.
     """
     def __unicode__(self):
         raise NotImplementedError()
 
-    def __iternodes__(self, getter):
-        yield None, self
+    def __children__(self):
+        return  # Funny generator-that-yields-nothing syntax
+        yield
 
     def __strip__(self, normalize, collapse):
         return None

@@ -51,16 +51,12 @@ class Template(Node):
         else:
             return "{{" + str(self.name) + "}}"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.name):
-            yield self.name, child
+    def __children__(self):
+        yield self.name
         for param in self.params:
             if param.showkey:
-                for child in getter(param.name):
-                    yield param.name, child
-            for child in getter(param.value):
-                yield param.value, child
+                yield param.name
+            yield param.value
 
     def __showtree__(self, write, get, mark):
         write("{{")

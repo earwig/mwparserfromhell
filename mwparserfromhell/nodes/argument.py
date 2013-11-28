@@ -42,13 +42,10 @@ class Argument(Node):
             return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.name):
-            yield self.name, child
+    def __children__(self):
+        yield self.name
         if self.default is not None:
-            for child in getter(self.default):
-                yield self.default, child
+            yield self.default
 
     def __strip__(self, normalize, collapse):
         if self.default is not None:

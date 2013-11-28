@@ -44,13 +44,10 @@ class ExternalLink(Node):
             return "[" + str(self.url) + "]"
         return str(self.url)
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.url):
-            yield self.url, child
+    def __children__(self):
+        yield self.url
         if self.title is not None:
-            for child in getter(self.title):
-                yield self.title, child
+            yield self.title
 
     def __strip__(self, normalize, collapse):
         if self.brackets:
