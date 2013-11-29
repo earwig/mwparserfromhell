@@ -32,15 +32,6 @@ from mwparserfromhell.wikicode import Wikicode
 wrap = lambda L: Wikicode(SmartList(L))
 wraptext = lambda *args: wrap([Text(t) for t in args])
 
-def getnodes(code):
-    """Iterate over all child nodes of a given parent node.
-
-    Imitates Wikicode._get_all_nodes().
-    """
-    for node in code.nodes:
-        for context, child in node.__iternodes__(getnodes):
-            yield child
-
 class TreeEqualityTestCase(TestCase):
     """A base test case with support for comparing the equality of node trees.
 

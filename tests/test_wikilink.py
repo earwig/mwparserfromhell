@@ -26,7 +26,7 @@ import unittest
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Text, Wikilink
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 class TestWikilink(TreeEqualityTestCase):
     """Test cases for the Wikilink node."""
@@ -38,20 +38,15 @@ class TestWikilink(TreeEqualityTestCase):
         node2 = Wikilink(wraptext("foo"), wraptext("bar"))
         self.assertEqual("[[foo|bar]]", str(node2))
 
-    def test_iternodes(self):
-        """test Wikilink.__iternodes__()"""
-        node1n1 = Text("foobar")
-        node2n1, node2n2, node2n3 = Text("foo"), Text("bar"), Text("baz")
-        node1 = Wikilink(wrap([node1n1]))
-        node2 = Wikilink(wrap([node2n1]), wrap([node2n2, node2n3]))
-        gen1 = node1.__iternodes__(getnodes)
-        gen2 = node2.__iternodes__(getnodes)
-        self.assertEqual((None, node1), next(gen1))
-        self.assertEqual((None, node2), next(gen2))
-        self.assertEqual((node1.title, node1n1), next(gen1))
-        self.assertEqual((node2.title, node2n1), next(gen2))
-        self.assertEqual((node2.text, node2n2), next(gen2))
-        self.assertEqual((node2.text, node2n3), next(gen2))
+    def test_children(self):
+        """test Wikilink.__children__()"""
+        node1 = Wikilink(wraptext("foobar"))
+        node2 = Wikilink(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
+        gen1 = node1.__children__()
+        gen2 = node2.__children__()
+        self.assertEqual(node1.title, next(gen1))
+        self.assertEqual(node2.title, next(gen2))
+        self.assertEqual(node2.text, next(gen2))
         self.assertRaises(StopIteration, next, gen1)
         self.assertRaises(StopIteration, next, gen2)
 

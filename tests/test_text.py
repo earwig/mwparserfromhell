@@ -36,11 +36,10 @@ class TestText(unittest.TestCase):
         node2 = Text("fóóbar")
         self.assertEqual("fóóbar", str(node2))
 
-    def test_iternodes(self):
-        """test Text.__iternodes__()"""
+    def test_children(self):
+        """test Text.__children__()"""
         node = Text("foobar")
-        gen = node.__iternodes__(None)
-        self.assertEqual((None, node), next(gen))
+        gen = node.__children__()
         self.assertRaises(StopIteration, next, gen)
 
     def test_strip(self):
