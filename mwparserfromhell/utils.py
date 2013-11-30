@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-This module contains accessory functions that wrap around existing ones to
-provide additional functionality.
+This module contains accessory functions for other parts of the library. Parser
+users generally won't need stuff from here.
 """
 
 from __future__ import unicode_literals
@@ -31,7 +31,16 @@ from .compat import bytes, str
 from .nodes import Node
 from .smart_list import SmartList
 
-__all__ = ["parse_anything"]
+__all__ = ["get_children", "parse_anything"]
+
+def get_children(node, contexts=False, parent=None):
+    """Iterate over all child :py:class:`.Node`\ s of a given *node*."""
+    ## DON'T MAKE THIS RECURSIVE, USE A STACK!
+    yield (parent, node) if contexts else node
+    for code in node.__children__():
+        for descendant in code.nodes:
+            for child in get_children(descendant, contexts, code):
+                yield child
 
 def parse_anything(value, context=0):
     """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.

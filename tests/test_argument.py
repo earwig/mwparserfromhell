@@ -44,9 +44,9 @@ class TestArgument(TreeEqualityTestCase):
         node2 = Argument(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
         gen1 = node1.__children__()
         gen2 = node2.__children__()
-        self.assertIs(node1.name, gen1)
-        self.assertIs(node2.name, gen2)
-        self.assertIs(node2.default, gen2)
+        self.assertIs(node1.name, next(gen1))
+        self.assertIs(node2.name, next(gen2))
+        self.assertIs(node2.default, next(gen2))
         self.assertRaises(StopIteration, next, gen1)
         self.assertRaises(StopIteration, next, gen2)
 
