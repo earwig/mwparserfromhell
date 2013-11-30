@@ -26,7 +26,7 @@ import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
-from ..compat import str
+from ..compat import range, str
 from ..utils import parse_anything
 
 __all__ = ["Template"]

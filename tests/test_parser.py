@@ -24,11 +24,11 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell import parser
+from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import Tag, Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
-from .compat import range
 
 class TestParser(TreeEqualityTestCase):
     """Tests for the Parser class itself, which tokenizes and builds nodes."""

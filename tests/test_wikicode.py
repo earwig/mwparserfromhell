@@ -26,12 +26,12 @@ import re
 from types import GeneratorType
 import unittest
 
+from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Node, Tag, Template, Text, Wikilink)
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
-from mwparserfromhell.compat import py3k, str
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 

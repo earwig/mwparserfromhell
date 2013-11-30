@@ -25,7 +25,7 @@ from math import log
 import re
 
 from . import contexts, tokens
-from ..compat import htmlentities
+from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
 

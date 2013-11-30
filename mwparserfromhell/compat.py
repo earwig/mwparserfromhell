@@ -16,12 +16,14 @@ py32 = py3k and sys.version_info.minor == 2
 if py3k:
     bytes = bytes
     str = str
+    range = xrange
     maxsize = sys.maxsize
     import html.entities as htmlentities
 
 else:
     bytes = str
     str = unicode
+    range = range
     maxsize = sys.maxint
     import htmlentitydefs as htmlentities
 
