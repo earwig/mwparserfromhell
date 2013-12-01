@@ -21,7 +21,6 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from collections import deque
 from itertools import chain
 import re
 
@@ -254,7 +253,7 @@ class Wikicode(StringMixIn):
                     if equivalent(obj, child):
                         return i
             elif equivalent(obj, node):
-                    return i
+                return i
         raise ValueError(obj)
 
     def insert(self, index, value):
