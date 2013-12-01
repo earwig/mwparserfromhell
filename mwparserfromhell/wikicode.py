@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from collections import deque
 from itertools import chain
 import re
 
@@ -28,7 +29,7 @@ from .compat import py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
 from .string_mixin import StringMixIn
-from .utils import get_children, parse_anything
+from .utils import parse_anything
 
 __all__ = ["Wikicode"]
 
@@ -51,6 +52,15 @@ class Wikicode(StringMixIn):
 
     def __unicode__(self):
         return "".join([str(node) for node in self.nodes])
+
+    @staticmethod
+    def _get_children(node, contexts=False, parent=None):
+        """Iterate over all child :py:class:`.Node`\ s of a given *node*."""
+        yield (parent, node) if contexts else node
+        for code in node.__children__():
+            for child in code.nodes:
+                for result in Wikicode._get_children(child, contexts, code):
+                    yield result
 
     @staticmethod
     def _slice_replace(code, index, old, new):
@@ -76,7 +86,7 @@ class Wikicode(StringMixIn):
             if not recursive:
                 return self, mkslice(self.index(obj))
             for i, node in enumerate(self.nodes):
-                for context, child in get_children(node, contexts=True):
+                for context, child in self._get_children(node, contexts=True):
                     if obj is child:
                         if not context:
                             context = self
@@ -240,7 +250,7 @@ class Wikicode(StringMixIn):
         equivalent = (lambda o, n: o is n) if strict else (lambda o, n: o == n)
         for i, node in enumerate(self.nodes):
             if recursive:
-                for child in get_children(node):
+                for child in self._get_children(node):
                     if equivalent(obj, child):
                         return i
             elif equivalent(obj, node):
@@ -405,7 +415,8 @@ class Wikicode(StringMixIn):
         if matches and not callable(matches):
             pat, matches = matches, lambda obj: re.search(pat, str(obj), flags)
         if recursive:
-            nodes = chain.from_iterable(get_children(n) for n in self.nodes)
+            getter = self._get_children
+            nodes = chain.from_iterable(getter(n) for n in self.nodes)
         else:
             nodes = self.nodes
         for node in nodes:
