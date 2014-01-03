@@ -10,8 +10,8 @@ types are meant to be imported directly from within the parser's modules.
 
 import sys
 
-py3k = sys.version_info.major == 3
-py32 = py3k and sys.version_info.minor == 2
+py3k = sys.version_info[0] == 3
+py32 = py3k and sys.version_info[1] == 2
 
 if py3k:
     bytes = bytes
