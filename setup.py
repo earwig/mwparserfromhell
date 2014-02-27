@@ -23,9 +23,9 @@
 
 import sys
 
-if (sys.version_info[0] == 2 and sys.version_info[1] < 7) or \
+if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
    (sys.version_info[1] == 3 and sys.version_info[1] < 2):
-    raise Exception('mwparserfromhell needs Python 2.7+ or 3.2+')
+    raise Exception('mwparserfromhell needs Python 2.6+ or 3.2+')
 
 from setuptools import setup, find_packages, Extension
 
@@ -42,7 +42,8 @@ setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer],
-    test_suite = "tests",
+    tests_require = ['unittest2py3k' if py3k else 'unittest2'],
+    test_suite = "discover_tests",
     version = __version__,
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",
@@ -58,6 +59,7 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
+        "Programming Language :: Python :: 2.6",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.2",

@@ -620,7 +620,7 @@ class Tokenizer(object):
         self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
             pad_before_eq=buf["before_eq"], pad_after_eq=buf["after_eq"]))
         self._emit_all(self._pop())
-        data.padding_buffer = {key: "" for key in data.padding_buffer}
+        data.padding_buffer = dict((key, "") for key in data.padding_buffer)
 
     def _handle_tag_space(self, data, text):
         """Handle whitespace (*text*) inside of an HTML open tag."""

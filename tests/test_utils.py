@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+import unittest2
 
 from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.utils import parse_anything
@@ -59,4 +59,4 @@ class TestUtils(TreeEqualityTestCase):
         self.assertRaises(ValueError, parse_anything, ["foo", [object]])
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

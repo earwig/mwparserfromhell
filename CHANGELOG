@@ -1,5 +1,6 @@
 v0.4 (unreleased):
 
+- Added support for Python 2.6.
 - Template.has() is now passed 'ignore_empty=False' by default instead of True.
   This fixes a bug when adding parameters to templates with empty fields, and
   is a breaking change if you rely on the default behavior.

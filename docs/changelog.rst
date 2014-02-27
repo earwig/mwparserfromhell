@@ -7,6 +7,7 @@ v0.4
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.2...develop>`__):
 
+- Added support for Python 2.6.
 - :py:meth:`.Template.has` is now passed *ignore_empty=False* by default
   instead of *True*. This fixes a bug when adding parameters to templates with
   empty fields, **and is a breaking change if you rely on the default

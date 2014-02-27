@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from unittest import TestCase
+from unittest2 import TestCase
 
 from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,

@@ -23,7 +23,7 @@
 from __future__ import unicode_literals
 from sys import getdefaultencoding
 from types import GeneratorType
-import unittest
+import unittest2
 
 from mwparserfromhell.compat import bytes, py3k, py32, range, str
 from mwparserfromhell.string_mixin import StringMixIn
@@ -36,7 +36,7 @@ class _FakeString(StringMixIn):
         return self._data
 
 
-class TestStringMixIn(unittest.TestCase):
+class TestStringMixIn(unittest2.TestCase):
     """Test cases for the StringMixIn class."""
 
     def test_docs(self):
@@ -432,4 +432,4 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("000123", str12.zfill(6))
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

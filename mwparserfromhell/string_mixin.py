@@ -32,6 +32,15 @@ from .compat import bytes, py3k, str
 
 __all__ = ["StringMixIn"]
 
+def inheritdoc(method):
+    """Set __doc__ of *method* to __doc__ of *method* in its parent class.
+
+    Since this is used on :py:class:`~.StringMixIn`, the "parent class" used is
+    ``str``. This function can be used as a decorator.
+    """
+    method.__doc__ = getattr(str, method.__name__).__doc__
+    return method
+
 class StringMixIn(object):
     """Implement the interface for ``unicode``/``str`` in a dynamic manner.
 
@@ -99,8 +108,20 @@ class StringMixIn(object):
     def __contains__(self, item):
         return str(item) in self.__unicode__()
 
+    @inheritdoc
+    def encode(self, encoding=None, errors=None):
+        if encoding is None:
+            encoding = getdefaultencoding()
+        args = [encoding]
+        if errors is not None:
+            args.append(errors)
+        return self.__unicode__().encode(*args)
+
     def __getattr__(self, attr):
         return getattr(self.__unicode__(), attr)
 
     if py3k:
         maketrans = str.maketrans  # Static method can't rely on __getattr__
+
+
+del inheritdoc
