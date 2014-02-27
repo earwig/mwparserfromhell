@@ -42,7 +42,7 @@ setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer],
-    tests_require = ['unittest2'],
+    tests_require = ['unittest2py3k' if py3k else 'unittest2'],
     test_suite = "discover_tests",
     version = __version__,
     author = "Ben Kurtovic",
