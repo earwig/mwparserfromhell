@@ -35,7 +35,7 @@ class _TestParseError(Exception):
 class TokenizerTestCase(object):
     """A base test case for tokenizers, whose tests are loaded dynamically.
 
-    Subclassed along with unittest.TestCase to form TestPyTokenizer and
+    Subclassed along with unittest2.TestCase to form TestPyTokenizer and
     TestCTokenizer. Tests are loaded dynamically from files in the 'tokenizer'
     directory.
     """
@@ -121,7 +121,7 @@ class TokenizerTestCase(object):
         if len(sys.argv) > 2 and sys.argv[1] == "--use":
             for name in sys.argv[2:]:
                 load_file(path.join(directory, name + extension))
-            sys.argv = [sys.argv[0]]  # So unittest doesn't try to load these
+            sys.argv = [sys.argv[0]]  # So unittest2 doesn't try to load these
             cls.skip_others = True
         else:
             for filename in listdir(directory):

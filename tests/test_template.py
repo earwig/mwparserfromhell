@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+import unittest2
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
@@ -428,4 +428,4 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{foo|a=b|c=d|e=f|a=|a=b}}", node26)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

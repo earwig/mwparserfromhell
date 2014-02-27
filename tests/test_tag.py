@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+import unittest2
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Tag, Template, Text
@@ -305,4 +305,4 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual('<div/>', node)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

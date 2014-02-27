@@ -22,14 +22,14 @@
 
 from __future__ import print_function, unicode_literals
 import json
-import unittest
+import unittest2
 
 import mwparserfromhell
 from mwparserfromhell.compat import py3k, str
 
 from .compat import StringIO, urlencode, urlopen
 
-class TestDocs(unittest.TestCase):
+class TestDocs(unittest2.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""
 
     def assertPrint(self, input, output):
@@ -128,4 +128,4 @@ class TestDocs(unittest.TestCase):
         self.assertEqual(expected, actual)
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

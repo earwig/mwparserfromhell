@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from functools import partial
 import re
 from types import GeneratorType
-import unittest
+import unittest2
 
 from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
@@ -432,4 +432,4 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertEqual(expected.expandtabs(4), code.get_tree())
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)

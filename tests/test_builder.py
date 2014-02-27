@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+import unittest2
 
 from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
                                     HTMLEntity, Tag, Template, Text, Wikilink)
@@ -417,4 +417,4 @@ class TestBuilder(TreeEqualityTestCase):
         self.assertWikicodeEqual(valid, self.builder.build(test))
 
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest2.main(verbosity=2)
