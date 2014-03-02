@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import py3k, range
 from mwparserfromhell.smart_list import SmartList, _ListProxy
 
-class TestSmartList(unittest2.TestCase):
+class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
 
     def _test_get_set_del_item(self, builder):
@@ -387,4 +391,4 @@ class TestSmartList(unittest2.TestCase):
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)

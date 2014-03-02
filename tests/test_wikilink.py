@@ -21,7 +21,11 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Text, Wikilink
@@ -99,4 +103,4 @@ class TestWikilink(TreeEqualityTestCase):
         self.assertIs(None, node2.text)
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)

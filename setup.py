@@ -30,7 +30,7 @@ if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
 from setuptools import setup, find_packages, Extension
 
 from mwparserfromhell import __version__
-from mwparserfromhell.compat import py3k
+from mwparserfromhell.compat import py26, py3k
 
 with open("README.rst") as fp:
     long_docs = fp.read()
@@ -42,8 +42,8 @@ setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer],
-    tests_require = ['unittest2py3k' if py3k else 'unittest2'],
-    test_suite = "discover_tests",
+    tests_require = ["unittest2"] if py26 else [],
+    test_suite = "tests.discover",
     version = __version__,
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",

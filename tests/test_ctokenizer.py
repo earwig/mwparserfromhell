@@ -21,7 +21,11 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 try:
     from mwparserfromhell.parser._tokenizer import CTokenizer
@@ -30,8 +34,8 @@ except ImportError:
 
 from ._test_tokenizer import TokenizerTestCase
 
-@unittest2.skipUnless(CTokenizer, "C tokenizer not available")
-class TestCTokenizer(TokenizerTestCase, unittest2.TestCase):
+@unittest.skipUnless(CTokenizer, "C tokenizer not available")
+class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
     """Test cases for the C tokenizer."""
 
     @classmethod
@@ -45,4 +49,4 @@ class TestCTokenizer(TokenizerTestCase, unittest2.TestCase):
             self.assertTrue(CTokenizer().USES_C)
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)

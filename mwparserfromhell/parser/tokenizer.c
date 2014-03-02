@@ -440,7 +440,7 @@ static int
 Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
 {
     Textbuffer *original = buffer;
-    int i;
+    long i;
 
     if (reverse) {
         do {
@@ -940,7 +940,8 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     Textbuffer *scheme_buffer = Textbuffer_new(), *temp_buffer;
     PyObject *scheme;
     Py_UNICODE chunk;
-    int slashes, i, j;
+    long i;
+    int slashes, j;
 
     if (!scheme_buffer)
         return -1;
@@ -1296,8 +1297,8 @@ static int Tokenizer_parse_heading(Tokenizer* self)
 */
 static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self)
 {
-    Py_ssize_t reset = self->head, best;
-    int i, current, level, diff;
+    Py_ssize_t reset = self->head;
+    int best, i, current, level, diff;
     HeadingData *after, *heading;
     PyObject *stack;
 

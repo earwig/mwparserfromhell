@@ -28,7 +28,7 @@ interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
 from __future__ import unicode_literals
 from sys import getdefaultencoding
 
-from .compat import bytes, py3k, str
+from .compat import bytes, py26, py3k, str
 
 __all__ = ["StringMixIn"]
 
@@ -108,20 +108,20 @@ class StringMixIn(object):
     def __contains__(self, item):
         return str(item) in self.__unicode__()
 
-    @inheritdoc
-    def encode(self, encoding=None, errors=None):
-        if encoding is None:
-            encoding = getdefaultencoding()
-        args = [encoding]
-        if errors is not None:
-            args.append(errors)
-        return self.__unicode__().encode(*args)
-
     def __getattr__(self, attr):
         return getattr(self.__unicode__(), attr)
 
     if py3k:
         maketrans = str.maketrans  # Static method can't rely on __getattr__
+
+    if py26:
+        @inheritdoc
+        def encode(self, encoding=None, errors=None):
+            if encoding is None:
+                encoding = getdefaultencoding()
+            if errors is not None:
+                return self.__unicode__().encode(encoding, errors)
+            return self.__unicode__().encode(encoding)
 
 
 del inheritdoc

@@ -21,13 +21,17 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.parser.tokenizer import Tokenizer
 
 from ._test_tokenizer import TokenizerTestCase
 
-class TestPyTokenizer(TokenizerTestCase, unittest2.TestCase):
+class TestPyTokenizer(TokenizerTestCase, unittest.TestCase):
     """Test cases for the Python tokenizer."""
 
     @classmethod
@@ -41,4 +45,4 @@ class TestPyTokenizer(TokenizerTestCase, unittest2.TestCase):
             self.assertFalse(Tokenizer().USES_C)
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)

@@ -21,7 +21,11 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell import parser
 from mwparserfromhell.compat import range
@@ -86,4 +90,4 @@ class TestParser(TreeEqualityTestCase):
         parser.use_c = restore
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)

@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest2
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser import tokens
 
-class TestTokens(unittest2.TestCase):
+class TestTokens(unittest.TestCase):
     """Test cases for the Token class and its subclasses."""
 
     def test_issubclass(self):
@@ -105,4 +109,4 @@ class TestTokens(unittest2.TestCase):
             self.assertEqual(token, eval(repr(token), vars(tokens)))
 
 if __name__ == "__main__":
-    unittest2.main(verbosity=2)
+    unittest.main(verbosity=2)
