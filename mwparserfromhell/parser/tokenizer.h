@@ -121,40 +121,39 @@ static PyObject* TagCloseClose;
 #define LC_WIKILINK_TITLE       0x00000020
 #define LC_WIKILINK_TEXT        0x00000040
 
-#define LC_EXT_LINK             0x00000380
+#define LC_EXT_LINK             0x00000180
 #define LC_EXT_LINK_URI         0x00000080
 #define LC_EXT_LINK_TITLE       0x00000100
-#define LC_EXT_LINK_BRACKETS    0x00000200
 
-#define LC_HEADING              0x0000FC00
-#define LC_HEADING_LEVEL_1      0x00000400
-#define LC_HEADING_LEVEL_2      0x00000800
-#define LC_HEADING_LEVEL_3      0x00001000
-#define LC_HEADING_LEVEL_4      0x00002000
-#define LC_HEADING_LEVEL_5      0x00004000
-#define LC_HEADING_LEVEL_6      0x00008000
+#define LC_HEADING              0x00007E00
+#define LC_HEADING_LEVEL_1      0x00000200
+#define LC_HEADING_LEVEL_2      0x00000400
+#define LC_HEADING_LEVEL_3      0x00000800
+#define LC_HEADING_LEVEL_4      0x00001000
+#define LC_HEADING_LEVEL_5      0x00002000
+#define LC_HEADING_LEVEL_6      0x00004000
 
-#define LC_TAG                  0x000F0000
-#define LC_TAG_OPEN             0x00010000
-#define LC_TAG_ATTR             0x00020000
-#define LC_TAG_BODY             0x00040000
-#define LC_TAG_CLOSE            0x00080000
+#define LC_TAG                  0x00078000
+#define LC_TAG_OPEN             0x00008000
+#define LC_TAG_ATTR             0x00010000
+#define LC_TAG_BODY             0x00020000
+#define LC_TAG_CLOSE            0x00040000
 
-#define LC_STYLE                0x00F00000
-#define LC_STYLE_ITALICS        0x00100000
-#define LC_STYLE_BOLD           0x00200000
-#define LC_STYLE_PASS_AGAIN     0x00400000
-#define LC_STYLE_SECOND_PASS    0x00800000
+#define LC_STYLE                0x00780000
+#define LC_STYLE_ITALICS        0x00080000
+#define LC_STYLE_BOLD           0x00100000
+#define LC_STYLE_PASS_AGAIN     0x00200000
+#define LC_STYLE_SECOND_PASS    0x00400000
 
-#define LC_DLTERM               0x01000000
+#define LC_DLTERM               0x00800000
 
-#define LC_SAFETY_CHECK         0x7E000000
-#define LC_HAS_TEXT             0x02000000
-#define LC_FAIL_ON_TEXT         0x04000000
-#define LC_FAIL_NEXT            0x08000000
-#define LC_FAIL_ON_LBRACE       0x10000000
-#define LC_FAIL_ON_RBRACE       0x20000000
-#define LC_FAIL_ON_EQUALS       0x40000000
+#define LC_SAFETY_CHECK         0x3F000000
+#define LC_HAS_TEXT             0x01000000
+#define LC_FAIL_ON_TEXT         0x02000000
+#define LC_FAIL_NEXT            0x04000000
+#define LC_FAIL_ON_LBRACE       0x08000000
+#define LC_FAIL_ON_RBRACE       0x10000000
+#define LC_FAIL_ON_EQUALS       0x20000000
 
 /* Global contexts: */
 
@@ -163,9 +162,10 @@ static PyObject* TagCloseClose;
 /* Aggregate contexts: */
 
 #define AGG_FAIL         (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_HEADING | LC_TAG | LC_STYLE)
-#define AGG_UNSAFE       (LC_TEMPLATE_NAME | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
+#define AGG_UNSAFE       (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
 #define AGG_DOUBLE       (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
-#define AGG_INVALID_LINK (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK | LC_EXT_LINK)
+#define AGG_NO_WIKILINKS (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK_URI)
+#define AGG_NO_EXT_LINKS (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK)
 
 /* Tag contexts: */
 

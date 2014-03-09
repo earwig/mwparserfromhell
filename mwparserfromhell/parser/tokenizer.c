@@ -1158,7 +1158,7 @@ Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
 */
 static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
 {
-    #define INVALID_CONTEXT self->topstack->context & AGG_INVALID_LINK
+    #define INVALID_CONTEXT self->topstack->context & AGG_NO_EXT_LINKS
     #define NOT_A_LINK                                        \
         if (!brackets && self->topstack->context & LC_DLTERM) \
             return Tokenizer_handle_dl_term(self);            \
@@ -2440,10 +2440,8 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
 {
     if (context & LC_FAIL_NEXT)
         return -1;
-    if (context & LC_WIKILINK) {
-        if (context & LC_WIKILINK_TEXT)
-            return (data == '[' && Tokenizer_READ(self, 1) == '[') ? -1 : 0;
-        else if (data == ']' || data == '{')
+    if (context & LC_WIKILINK_TITLE) {
+        if (data == ']' || data == '{')
             self->topstack->context |= LC_FAIL_NEXT;
         else if (data == '\n' || data == '[' || data == '}')
             return -1;
@@ -2577,7 +2575,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
                 return NULL;
         }
         else if (this == next && next == '[' && Tokenizer_CAN_RECURSE(self)) {
-            if (!(this_context & AGG_INVALID_LINK)) {
+            if (!(this_context & AGG_NO_WIKILINKS)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;
             }

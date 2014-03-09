@@ -467,7 +467,7 @@ class Tokenizer(object):
         reset = self._head
         self._head += 1
         try:
-            bad_context = self._context & contexts.INVALID_LINK
+            bad_context = self._context & contexts.NO_EXT_LINKS
             if bad_context or not self._can_recurse():
                 raise BadRoute()
             link, extra, delta = self._really_parse_external_link(brackets)
@@ -990,10 +990,8 @@ class Tokenizer(object):
         context = self._context
         if context & contexts.FAIL_NEXT:
             return False
-        if context & contexts.WIKILINK:
-            if context & contexts.WIKILINK_TEXT:
-                return not (this == self._read(1) == "[")
-            elif this == "]" or this == "{":
+        if context & contexts.WIKILINK_TITLE:
+            if this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
             elif this == "\n" or this == "[" or this == "}":
                 return False
@@ -1083,7 +1081,7 @@ class Tokenizer(object):
                 else:
                     self._emit_text("}")
             elif this == next == "[" and self._can_recurse():
-                if not self._context & contexts.INVALID_LINK:
+                if not self._context & contexts.NO_WIKILINKS:
                     self._parse_wikilink()
                 else:
                     self._emit_text("[")

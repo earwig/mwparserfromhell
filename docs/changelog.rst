@@ -24,6 +24,7 @@ Unreleased
   there's a temporary *skip_style_tags* argument to
   :py:meth:`~mwparserfromhell.parse` that ignores ``''`` and ``'''`` until
   these issues are corrected.
+- Fixed a parser bug involving nested wikilinks and external links.
 - C code cleanup and speed improvements.
 
 v0.3.2
