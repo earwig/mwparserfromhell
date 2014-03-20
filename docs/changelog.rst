@@ -15,8 +15,8 @@ Unreleased
 - The *matches* argument of :py:class:`Wikicode's <.Wikicode>`
   :py:meth:`.filter` methods now accepts a function (taking one argument, a
   :py:class:`.Node`, and returning a bool) in addition to a regex.
-- Re-added *flat* argument to :py:meth:`.Wikicode.get_sections`.
-- :py:meth:`.Wikicode.get_sections` now returns sections in the correct order.
+- Re-added *flat* argument to :py:meth:`.Wikicode.get_sections`, fixed the
+  order in which it returns sections, and made it faster.
 - :py:meth:`.Wikicode.matches` now accepts a tuple or list of
   strings/:py:class:`.Wikicode` objects instead of just a single string or
   :py:class:`.Wikicode`.

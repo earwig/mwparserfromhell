@@ -68,6 +68,41 @@ class Wikicode(StringMixIn):
         substring = "".join(nodes).replace(old, new)
         code.nodes[index] = parse_anything(substring).nodes
 
+    @staticmethod
+    def _build_matcher(matches, flags):
+        """Helper for :py:meth:`_indexed_ifilter` and others.
+
+        If *matches* is a function, return it. If it's a regex, return a
+        wrapper around it that can be called with a node to do a search. If
+        it's ``None``, return a function that always returns ``True``.
+        """
+        if matches:
+            if callable(matches):
+                return matches
+            return lambda obj: re.search(matches, str(obj), flags)  # r
+        return lambda obj: True
+
+    def _indexed_ifilter(self, recursive=True, matches=None, flags=FLAGS,
+                         forcetype=None):
+        """Iterate over nodes and their corresponding indices in the node list.
+
+        The arguments are interpreted as for :py:meth:`ifilter`. For each tuple
+        ``(i, node)`` yielded by this method, ``self.index(node) == i``. Note
+        that if *recursive* is ``True``, ``self.nodes[i]`` might not be the
+        node itself, but will still contain it.
+        """
+        match = self._build_matcher(matches, flags)
+        if recursive:
+            def getter(i, node):
+                for ch in self._get_children(node):
+                    yield (i, ch)
+            inodes = chain(*(getter(i, n) for i, n in enumerate(self.nodes)))
+        else:
+            inodes = enumerate(self.nodes)
+        for i, node in inodes:
+            if (not forcetype or isinstance(node, forcetype)) and match(node):
+                yield (i, node)
+
     def _do_strong_search(self, obj, recursive=True):
         """Search for the specific element *obj* within the node list.
 
@@ -411,17 +446,8 @@ class Wikicode(StringMixIn):
         :py:const:`re.DOTALL`, and :py:const:`re.UNICODE`, but custom flags can
         be specified by passing *flags*.
         """
-        if matches and not callable(matches):
-            pat, matches = matches, lambda obj: re.search(pat, str(obj), flags)
-        if recursive:
-            getter = self._get_children
-            nodes = chain.from_iterable(getter(n) for n in self.nodes)
-        else:
-            nodes = self.nodes
-        for node in nodes:
-            if not forcetype or isinstance(node, forcetype):
-                if not matches or matches(node):
-                    yield node
+        return (node for i, node in
+                self._indexed_ifilter(recursive, matches, flags, forcetype))
 
     def filter(self, recursive=True, matches=None, flags=FLAGS,
                forcetype=None):
@@ -442,10 +468,10 @@ class Wikicode(StringMixIn):
         Each section contains all of its subsections, unless *flat* is
         ``True``. If *levels* is given, it should be a iterable of integers;
         only sections whose heading levels are within it will be returned. If
-        *matches* is given, it should be a regex to be matched against the
-        titles of section headings; only sections whose headings match the
-        regex will be included. *flags* can be used to override the default
-        regex flags (see :py:meth:`ifilter`) if *matches* is used.
+        *matches* is given, it should be either a function or a regex; only
+        sections whose headings match it (without the surrounding equal signs)
+        will be included. *flags* can be used to override the default regex
+        flags (see :py:meth:`ifilter`) if a regex *matches* is used.
 
         If *include_lead* is ``True``, the first, lead section (without a
         heading) will be included in the list; ``False`` will not include it;
@@ -454,35 +480,48 @@ class Wikicode(StringMixIn):
         :py:class:`~.Heading` object will be included; otherwise, this is
         skipped.
         """
-        if matches:
-            matches = r"^(=+?)\s*" + matches + r"\s*\1$"
-        headings = self.filter_headings(recursive=False, matches=matches,
-                                        flags=flags)
-        if levels:
-            headings = [head for head in headings if head.level in levels]
+        title_matcher = self._build_matcher(matches, flags)
+        matcher = lambda heading: (title_matcher(heading.title) and
+                                   (not levels or heading.level in levels))
+        iheadings = self._indexed_ifilter(recursive=False, forcetype=Heading)
+        sections = []  # Tuples of (index_of_first_node, section)
+        open_headings = [] # Tuples of (index, heading), where index and
+                           # heading.level are both monotonically increasing
 
-        sections = []
+        # Add the lead section if appropriate:
         if include_lead or not (include_lead is not None or matches or levels):
-            iterator = self.ifilter_headings(recursive=False)
+            itr = self._indexed_ifilter(recursive=False, forcetype=Heading)
             try:
-                first = self.index(next(iterator))
-                sections.append(Wikicode(self.nodes[:first]))
+                first = next(itr)[0]
+                sections.append((0, Wikicode(self.nodes[:first])))
             except StopIteration:  # No headings in page
-                sections.append(Wikicode(self.nodes[:]))
+                sections.append((0, Wikicode(self.nodes[:])))
 
-        for heading in headings:
-            start = self.index(heading)
-            i = start + 1
-            if not include_headings:
-                start += 1
-            while i < len(self.nodes):
-                node = self.nodes[i]
-                if isinstance(node, Heading):
-                    if flat or node.level <= heading.level:
+        # Iterate over headings, adding sections to the list as they end:
+        for i, heading in iheadings:
+            if flat:  # With flat, all sections close at the next heading
+                newly_closed, open_headings = open_headings, []
+            else:  # Otherwise, figure out which sections have closed, if any
+                closed_start_index = len(open_headings)
+                for j, (start, last_heading) in enumerate(open_headings):
+                    if heading.level <= last_heading.level:
+                        closed_start_index = j
                         break
-                i += 1
-            sections.append(Wikicode(self.nodes[start:i]))
-        return sections
+                newly_closed = open_headings[closed_start_index:]
+                del open_headings[closed_start_index:]
+            for start, closed_heading in newly_closed:
+                if matcher(closed_heading):
+                    sections.append((start, Wikicode(self.nodes[start:i])))
+            start = i if include_headings else (i + 1)
+            open_headings.append((start, heading))
+
+        # Add any remaining open headings to the list of sections:
+        for start, heading in open_headings:
+            if matcher(heading):
+                sections.append((start, Wikicode(self.nodes[start:])))
+
+        # Ensure that earlier sections are earlier in the returned list:
+        return [section for i, section in sorted(sections)]
 
     def strip_code(self, normalize=True, collapse=True):
         """Return a rendered string without unprintable code such as templates.
