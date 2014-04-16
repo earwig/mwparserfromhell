@@ -527,11 +527,11 @@ class Wikicode(StringMixIn):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
-        :py:meth:`~.Node.__showtree__` method of :py:class:`~.Node` objects,
-        which generally return a subset of their nodes or ``None``. For
-        example, templates and tags are removed completely, links are stripped
-        to just their display part, headings are stripped to just their title.
-        If *normalize* is ``True``, various things may be done to strip code
+        :py:meth:`~.Node.__strip__` method of :py:class:`~.Node` objects, which
+        generally return a subset of their nodes or ``None``. For example,
+        templates and tags are removed completely, links are stripped to just
+        their display part, headings are stripped to just their title. If
+        *normalize* is ``True``, various things may be done to strip code
         further, such as converting HTML entities like ``&Sigma;``, ``&#931;``,
         and ``&#x3a3;`` to ``Σ``. If *collapse* is ``True``, we will try to
         remove excess whitespace as well (three or more newlines are converted
