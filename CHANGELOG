@@ -1,6 +1,6 @@
 v0.4 (unreleased):
 
--
+- Added a script to test for memory leaks in scripts/memtest.py.
 
 v0.3.3 (released April 22, 2014):
 

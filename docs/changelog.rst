@@ -7,7 +7,7 @@ v0.4
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...develop>`__):
 
--
+- Added a script to test for memory leaks in :file:`scripts/memtest.py`.
 
 v0.3.3
 ------
