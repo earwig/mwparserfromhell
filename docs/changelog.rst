@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.4
-----
+v0.3.3
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.2...develop>`__):
+`Released April 22, 2014 <https://github.com/earwig/mwparserfromhell/tree/v0.3.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.2...v0.3.3>`__):
 
 - Added support for Python 2.6 and 3.4.
 - :py:meth:`.Template.has` is now passed *ignore_empty=False* by default
@@ -22,8 +22,8 @@ Unreleased
   :py:class:`.Wikicode`.
 - Given the frequency of issues with the (admittedly insufficient) tag parser,
   there's a temporary *skip_style_tags* argument to
-  :py:meth:`~mwparserfromhell.parse` that ignores ``''`` and ``'''`` until
-  these issues are corrected.
+  :py:meth:`~.Parser.parse` that ignores ``''`` and ``'''`` until these issues
+  are corrected.
 - Fixed a parser bug involving nested wikilinks and external links.
 - C code cleanup and speed improvements.
 

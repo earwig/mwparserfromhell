@@ -1,4 +1,4 @@
-v0.4 (unreleased):
+v0.3.3 (released April 22, 2014):
 
 - Added support for Python 2.6 and 3.4.
 - Template.has() is now passed 'ignore_empty=False' by default instead of True.
