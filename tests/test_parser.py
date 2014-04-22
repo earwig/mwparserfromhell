@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,24 +21,30 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell import parser
-from mwparserfromhell.nodes import Template, Text, Wikilink
+from mwparserfromhell.compat import range
+from mwparserfromhell.nodes import Tag, Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
-from .compat import range
 
 class TestParser(TreeEqualityTestCase):
     """Tests for the Parser class itself, which tokenizes and builds nodes."""
 
     def test_use_c(self):
         """make sure the correct tokenizer is used"""
+        restore = parser.use_c
         if parser.use_c:
             self.assertTrue(parser.Parser()._tokenizer.USES_C)
             parser.use_c = False
         self.assertFalse(parser.Parser()._tokenizer.USES_C)
+        parser.use_c = restore
 
     def test_parsing(self):
         """integration test for parsing overall"""
@@ -61,6 +67,27 @@ class TestParser(TreeEqualityTestCase):
         ])
         actual = parser.Parser().parse(text)
         self.assertWikicodeEqual(expected, actual)
+
+    def test_skip_style_tags(self):
+        """test Parser.parse(skip_style_tags=True)"""
+        def test():
+            with_style = parser.Parser().parse(text, skip_style_tags=False)
+            without_style = parser.Parser().parse(text, skip_style_tags=True)
+            self.assertWikicodeEqual(a, with_style)
+            self.assertWikicodeEqual(b, without_style)
+
+        text = "This is an example with ''italics''!"
+        a = wrap([Text("This is an example with "),
+                  Tag(wraptext("i"), wraptext("italics"), wiki_markup="''"),
+                  Text("!")])
+        b = wraptext("This is an example with ''italics''!")
+
+        restore = parser.use_c
+        if parser.use_c:
+            test()
+            parser.use_c = False
+        test()
+        parser.use_c = restore
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -42,13 +42,10 @@ class Argument(Node):
             return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.name):
-            yield self.name, child
+    def __children__(self):
+        yield self.name
         if self.default is not None:
-            for child in getter(self.default):
-                yield self.default, child
+            yield self.default
 
     def __strip__(self, normalize, collapse):
         if self.default is not None:

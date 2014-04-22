@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -25,7 +25,7 @@ from math import log
 import re
 
 from . import contexts, tokens
-from ..compat import htmlentities
+from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
 
@@ -467,7 +467,7 @@ class Tokenizer(object):
         reset = self._head
         self._head += 1
         try:
-            bad_context = self._context & contexts.INVALID_LINK
+            bad_context = self._context & contexts.NO_EXT_LINKS
             if bad_context or not self._can_recurse():
                 raise BadRoute()
             link, extra, delta = self._really_parse_external_link(brackets)
@@ -620,7 +620,8 @@ class Tokenizer(object):
         self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
             pad_before_eq=buf["before_eq"], pad_after_eq=buf["after_eq"]))
         self._emit_all(self._pop())
-        data.padding_buffer = {key: "" for key in data.padding_buffer}
+        for key in data.padding_buffer:
+            data.padding_buffer[key] = ""
 
     def _handle_tag_space(self, data, text):
         """Handle whitespace (*text*) inside of an HTML open tag."""
@@ -989,10 +990,8 @@ class Tokenizer(object):
         context = self._context
         if context & contexts.FAIL_NEXT:
             return False
-        if context & contexts.WIKILINK:
-            if context & contexts.WIKILINK_TEXT:
-                return not (this == self._read(1) == "[")
-            elif this == "]" or this == "{":
+        if context & contexts.WIKILINK_TITLE:
+            if this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
             elif this == "\n" or this == "[" or this == "}":
                 return False
@@ -1082,7 +1081,7 @@ class Tokenizer(object):
                 else:
                     self._emit_text("}")
             elif this == next == "[" and self._can_recurse():
-                if not self._context & contexts.INVALID_LINK:
+                if not self._context & contexts.NO_WIKILINKS:
                     self._parse_wikilink()
                 else:
                     self._emit_text("[")
@@ -1124,7 +1123,7 @@ class Tokenizer(object):
                     self._emit_text("<")
             elif this == ">" and self._context & contexts.TAG_CLOSE:
                 return self._handle_tag_close_close()
-            elif this == next == "'":
+            elif this == next == "'" and not self._skip_style_tags:
                 result = self._parse_style()
                 if result is not None:
                     return result
@@ -1141,8 +1140,9 @@ class Tokenizer(object):
                 self._emit_text(this)
             self._head += 1
 
-    def tokenize(self, text, context=0):
+    def tokenize(self, text, context=0, skip_style_tags=False):
         """Build a list of tokens from a string of wikicode and return it."""
+        self._skip_style_tags = skip_style_tags
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
         self._head = self._global = self._depth = self._cycles = 0

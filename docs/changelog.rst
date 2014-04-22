@@ -1,6 +1,32 @@
 Changelog
 =========
 
+v0.3.3
+------
+
+`Released April 22, 2014 <https://github.com/earwig/mwparserfromhell/tree/v0.3.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.2...v0.3.3>`__):
+
+- Added support for Python 2.6 and 3.4.
+- :py:meth:`.Template.has` is now passed *ignore_empty=False* by default
+  instead of *True*. This fixes a bug when adding parameters to templates with
+  empty fields, **and is a breaking change if you rely on the default
+  behavior.**
+- The *matches* argument of :py:class:`Wikicode's <.Wikicode>`
+  :py:meth:`.filter` methods now accepts a function (taking one argument, a
+  :py:class:`.Node`, and returning a bool) in addition to a regex.
+- Re-added *flat* argument to :py:meth:`.Wikicode.get_sections`, fixed the
+  order in which it returns sections, and made it faster.
+- :py:meth:`.Wikicode.matches` now accepts a tuple or list of
+  strings/:py:class:`.Wikicode` objects instead of just a single string or
+  :py:class:`.Wikicode`.
+- Given the frequency of issues with the (admittedly insufficient) tag parser,
+  there's a temporary *skip_style_tags* argument to
+  :py:meth:`~.Parser.parse` that ignores ``''`` and ``'''`` until these issues
+  are corrected.
+- Fixed a parser bug involving nested wikilinks and external links.
+- C code cleanup and speed improvements.
+
 v0.3.2
 ------
 

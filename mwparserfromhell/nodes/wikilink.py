@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -41,13 +41,10 @@ class Wikilink(Node):
             return "[[" + str(self.title) + "|" + str(self.text) + "]]"
         return "[[" + str(self.title) + "]]"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.title):
-            yield self.title, child
+    def __children__(self):
+        yield self.title
         if self.text is not None:
-            for child in getter(self.text):
-                yield self.text, child
+            yield self.text
 
     def __strip__(self, normalize, collapse):
         if self.text is not None:

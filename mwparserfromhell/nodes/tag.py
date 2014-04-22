@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -70,23 +70,17 @@ class Tag(Node):
             result += "</" + str(self.closing_tag) + ">"
         return result
 
-    def __iternodes__(self, getter):
-        yield None, self
+    def __children__(self):
         if not self.wiki_markup:
-            for child in getter(self.tag):
-                yield self.tag, child
+            yield self.tag
             for attr in self.attributes:
-                for child in getter(attr.name):
-                    yield attr.name, child
-                if attr.value:
-                    for child in getter(attr.value):
-                        yield attr.value, child
+                yield attr.name
+                if attr.value is not None:
+                    yield attr.value
         if self.contents:
-            for child in getter(self.contents):
-                yield self.contents, child
+            yield self.contents
         if not self.self_closing and not self.wiki_markup and self.closing_tag:
-            for child in getter(self.closing_tag):
-                yield self.closing_tag, child
+            yield self.closing_tag
 
     def __strip__(self, normalize, collapse):
         if self.contents and is_visible(self.tag):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,7 @@ import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
-from ..compat import str
+from ..compat import range, str
 from ..utils import parse_anything
 
 __all__ = ["Template"]
@@ -51,16 +51,12 @@ class Template(Node):
         else:
             return "{{" + str(self.name) + "}}"
 
-    def __iternodes__(self, getter):
-        yield None, self
-        for child in getter(self.name):
-            yield self.name, child
+    def __children__(self):
+        yield self.name
         for param in self.params:
             if param.showkey:
-                for child in getter(param.name):
-                    yield param.name, child
-            for child in getter(param.value):
-                yield param.value, child
+                yield param.name
+            yield param.value
 
     def __showtree__(self, write, get, mark):
         write("{{")
@@ -174,7 +170,7 @@ class Template(Node):
     def name(self, value):
         self._name = parse_anything(value)
 
-    def has(self, name, ignore_empty=True):
+    def has(self, name, ignore_empty=False):
         """Return ``True`` if any parameter in the template is named *name*.
 
         With *ignore_empty*, ``False`` will be returned even if the template
@@ -190,7 +186,7 @@ class Template(Node):
                 return True
         return False
 
-    has_param = lambda self, name, ignore_empty=True: \
+    has_param = lambda self, name, ignore_empty=False: \
                 self.has(name, ignore_empty)
     has_param.__doc__ = "Alias for :py:meth:`has`."
 

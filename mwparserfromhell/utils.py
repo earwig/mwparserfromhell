@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-This module contains accessory functions that wrap around existing ones to
-provide additional functionality.
+This module contains accessory functions for other parts of the library. Parser
+users generally won't need stuff from here.
 """
 
 from __future__ import unicode_literals

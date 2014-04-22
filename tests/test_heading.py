@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Heading, Text
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 class TestHeading(TreeEqualityTestCase):
     """Test cases for the Heading node."""
@@ -38,14 +42,11 @@ class TestHeading(TreeEqualityTestCase):
         node2 = Heading(wraptext(" zzz "), 5)
         self.assertEqual("===== zzz =====", str(node2))
 
-    def test_iternodes(self):
-        """test Heading.__iternodes__()"""
-        text1, text2 = Text("foo"), Text("bar")
-        node = Heading(wrap([text1, text2]), 3)
-        gen = node.__iternodes__(getnodes)
-        self.assertEqual((None, node), next(gen))
-        self.assertEqual((node.title, text1), next(gen))
-        self.assertEqual((node.title, text2), next(gen))
+    def test_children(self):
+        """test Heading.__children__()"""
+        node = Heading(wrap([Text("foo"), Text("bar")]), 3)
+        gen = node.__children__()
+        self.assertEqual(node.title, next(gen))
         self.assertRaises(StopIteration, next, gen)
 
     def test_strip(self):

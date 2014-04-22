@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,11 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity
@@ -42,11 +46,10 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertEqual("&#x6b;", str(node3))
         self.assertEqual("&#X6C;", str(node4))
 
-    def test_iternodes(self):
-        """test HTMLEntity.__iternodes__()"""
+    def test_children(self):
+        """test HTMLEntity.__children__()"""
         node = HTMLEntity("nbsp", named=True, hexadecimal=False)
-        gen = node.__iternodes__(None)
-        self.assertEqual((None, node), next(gen))
+        gen = node.__children__()
         self.assertRaises(StopIteration, next, gen)
 
     def test_strip(self):

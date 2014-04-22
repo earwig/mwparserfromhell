@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,12 +23,14 @@
 from __future__ import unicode_literals
 from sys import getdefaultencoding
 from types import GeneratorType
-import unittest
 
-from mwparserfromhell.compat import bytes, py3k, py32, str
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from mwparserfromhell.compat import bytes, py3k, py32, range, str
 from mwparserfromhell.string_mixin import StringMixIn
-
-from .compat import range
 
 class _FakeString(StringMixIn):
     def __init__(self, data):
@@ -59,8 +61,8 @@ class TestStringMixIn(unittest.TestCase):
         else:
             methods.append("decode")
         for meth in methods:
-            expected = getattr(str, meth).__doc__
-            actual = getattr(StringMixIn, meth).__doc__
+            expected = getattr("foo", meth).__doc__
+            actual = getattr(_FakeString("foo"), meth).__doc__
             self.assertEqual(expected, actual)
 
     def test_types(self):
@@ -109,12 +111,12 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str1 < str4)
         self.assertTrue(str1 <= str4)
 
-        self.assertTrue(str1 > str5)
-        self.assertTrue(str1 >= str5)
-        self.assertFalse(str1 == str5)
-        self.assertTrue(str1 != str5)
-        self.assertFalse(str1 < str5)
-        self.assertFalse(str1 <= str5)
+        self.assertFalse(str5 > str1)
+        self.assertFalse(str5 >= str1)
+        self.assertFalse(str5 == str1)
+        self.assertTrue(str5 != str1)
+        self.assertTrue(str5 < str1)
+        self.assertTrue(str5 <= str1)
 
     def test_other_magics(self):
         """test other magically implemented features, like len() and iter()"""
@@ -376,7 +378,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEqual(actual, str25.rsplit(" ", 3))
-        if py3k:
+        if py3k and not py32:
             actual = ["   this is a", "sentence", "with", "whitespace"]
             self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
@@ -394,7 +396,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEqual(actual, str25.split(" ", 3))
-        if py3k:
+        if py3k and not py32:
             actual = ["this", "is", "a", "sentence with  whitespace "]
             self.assertEqual(actual, str25.split(maxsplit=3))
 

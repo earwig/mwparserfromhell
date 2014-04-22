@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -79,6 +79,11 @@ class SmartList(_SliceNormalizerMixIn, list):
         [2, 3, 4]
         >>> parent
         [0, 1, 2, 3, 4]
+
+    The parent needs to keep a list of its children in order to update them,
+    which prevents them from being garbage-collected. If you are keeping the
+    parent around for a while but creating many children, it is advisable to
+    call :py:meth:`~._ListProxy.destroy` when you're finished with them.
     """
 
     def __init__(self, iterable=None):
@@ -146,6 +151,11 @@ class SmartList(_SliceNormalizerMixIn, list):
         self.extend(other)
         return self
 
+    def _release_children(self):
+        copy = list(self)
+        for child in self._children:
+            child._parent = copy
+
     @inheritdoc
     def append(self, item):
         head = len(self)
@@ -174,17 +184,13 @@ class SmartList(_SliceNormalizerMixIn, list):
 
     @inheritdoc
     def reverse(self):
-        copy = list(self)
-        for child in self._children:
-            child._parent = copy
+        self._release_children()
         super(SmartList, self).reverse()
 
     if py3k:
         @inheritdoc
         def sort(self, key=None, reverse=None):
-            copy = list(self)
-            for child in self._children:
-                child._parent = copy
+            self._release_children()
             kwargs = {}
             if key is not None:
                 kwargs["key"] = key
@@ -194,9 +200,7 @@ class SmartList(_SliceNormalizerMixIn, list):
     else:
         @inheritdoc
         def sort(self, cmp=None, key=None, reverse=None):
-            copy = list(self)
-            for child in self._children:
-                child._parent = copy
+            self._release_children()
             kwargs = {}
             if cmp is not None:
                 kwargs["cmp"] = cmp
@@ -447,6 +451,10 @@ class _ListProxy(_SliceNormalizerMixIn, list):
                 kwargs["reverse"] = reverse
             item.sort(**kwargs)
             self._parent[self._start:self._stop:self._step] = item
+
+    def destroy(self):
+        """Make the parent forget this child. The child will no longer work."""
+        self._parent._children.pop(id(self))
 
 
 del inheritdoc

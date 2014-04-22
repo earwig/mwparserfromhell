@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,14 +24,18 @@ from __future__ import unicode_literals
 from functools import partial
 import re
 from types import GeneratorType
-import unittest
 
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
+
+from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Node, Tag, Template, Text, Wikilink)
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
-from mwparserfromhell.compat import py3k, str
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
@@ -242,6 +246,7 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.matches()"""
         code1 = parse("Cleanup")
         code2 = parse("\nstub<!-- TODO: make more specific -->")
+        code3 = parse("")
         self.assertTrue(code1.matches("Cleanup"))
         self.assertTrue(code1.matches("cleanup"))
         self.assertTrue(code1.matches("  cleanup\n"))
@@ -250,13 +255,22 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertTrue(code2.matches("stub"))
         self.assertTrue(code2.matches("Stub<!-- no, it's fine! -->"))
         self.assertFalse(code2.matches("StuB"))
+        self.assertTrue(code1.matches(("cleanup", "stub")))
+        self.assertTrue(code2.matches(("cleanup", "stub")))
+        self.assertFalse(code2.matches(("StuB", "sTUb", "foobar")))
+        self.assertFalse(code2.matches(["StuB", "sTUb", "foobar"]))
+        self.assertTrue(code2.matches(("StuB", "sTUb", "foo", "bar", "Stub")))
+        self.assertTrue(code2.matches(["StuB", "sTUb", "foo", "bar", "Stub"]))
+        self.assertTrue(code3.matches(""))
+        self.assertTrue(code3.matches("<!-- nothing -->"))
+        self.assertTrue(code3.matches(("a", "b", "")))
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""
         def genlist(gen):
             self.assertIsInstance(gen, GeneratorType)
             return list(gen)
-        ifilter = lambda code: (lambda **kw: genlist(code.ifilter(**kw)))
+        ifilter = lambda code: (lambda *a, **k: genlist(code.ifilter(*a, **k)))
 
         code = parse("a{{b}}c[[d]]{{{e}}}{{f}}[[g]]")
         for func in (code.filter, ifilter(code)):
@@ -292,21 +306,27 @@ class TestWikicode(TreeEqualityTestCase):
                               "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
                              func(recursive=True, forcetype=Template))
 
-        code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}")
+        code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}{{barfoo}}")
         for func in (code3.filter, ifilter(code3)):
-            self.assertEqual(["{{foobar}}", "{{FOO}}"], func(recursive=False, matches=r"foo"))
+            self.assertEqual(["{{foobar}}", "{{barfoo}}"],
+                             func(False, matches=lambda node: "foo" in node))
+            self.assertEqual(["{{foobar}}", "{{FOO}}", "{{barfoo}}"],
+                             func(False, matches=r"foo"))
             self.assertEqual(["{{foobar}}", "{{FOO}}"],
-                             func(recursive=False, matches=r"^{{foo.*?}}"))
+                             func(matches=r"^{{foo.*?}}"))
             self.assertEqual(["{{foobar}}"],
-                             func(recursive=False, matches=r"^{{foo.*?}}", flags=re.UNICODE))
-            self.assertEqual(["{{baz}}", "{{bz}}"], func(recursive=False, matches=r"^{{b.*?z"))
-            self.assertEqual(["{{baz}}"], func(recursive=False, matches=r"^{{b.+?z}}"))
+                             func(matches=r"^{{foo.*?}}", flags=re.UNICODE))
+            self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
+            self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
 
         self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
                          code2.filter_templates(recursive=False))
         self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
                           "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
                          code2.filter_templates(recursive=True))
+
+        self.assertEqual(["{{foobar}}"], code3.filter_templates(
+            matches=lambda node: node.name.matches("Foobar")))
         self.assertEqual(["{{baz}}", "{{bz}}"],
                          code3.filter_templates(matches=r"^{{b.*?z"))
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z"))
@@ -335,41 +355,54 @@ class TestWikicode(TreeEqualityTestCase):
         p4_III = "== Section III ==\n" + p4_IIIA
         page4 = parse(p4_lead + p4_I + p4_II + p4_III)
 
-        self.assertEqual([], page1.get_sections())
+        self.assertEqual([""], page1.get_sections())
         self.assertEqual(["", "==Heading=="], page2.get_sections())
         self.assertEqual(["", "===Heading===\nFoo bar baz\n====Gnidaeh====\n",
                           "====Gnidaeh====\n"], page3.get_sections())
-        self.assertEqual([p4_lead, p4_IA, p4_I, p4_IB, p4_IB1, p4_II,
-                          p4_IIIA1a, p4_III, p4_IIIA, p4_IIIA2, p4_IIIA2ai1],
+        self.assertEqual([p4_lead, p4_I, p4_IA, p4_IB, p4_IB1, p4_II,
+                          p4_III, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1],
                          page4.get_sections())
 
         self.assertEqual(["====Gnidaeh====\n"], page3.get_sections(levels=[4]))
         self.assertEqual(["===Heading===\nFoo bar baz\n====Gnidaeh====\n"],
                          page3.get_sections(levels=(2, 3)))
+        self.assertEqual(["===Heading===\nFoo bar baz\n"],
+                         page3.get_sections(levels=(2, 3), flat=True))
         self.assertEqual([], page3.get_sections(levels=[0]))
         self.assertEqual(["", "====Gnidaeh====\n"],
                          page3.get_sections(levels=[4], include_lead=True))
         self.assertEqual(["===Heading===\nFoo bar baz\n====Gnidaeh====\n",
                           "====Gnidaeh====\n"],
                          page3.get_sections(include_lead=False))
+        self.assertEqual(["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"],
+                         page3.get_sections(flat=True, include_lead=False))
 
         self.assertEqual([p4_IB1, p4_IIIA2], page4.get_sections(levels=[4]))
-        self.assertEqual([""], page2.get_sections(include_headings=False))
+        self.assertEqual([p4_IA, p4_IB, p4_IIIA], page4.get_sections(levels=[3]))
+        self.assertEqual([p4_IA, "=== Section I.B ===\n",
+                          "=== Section III.A ===\nText.\n"],
+                         page4.get_sections(levels=[3], flat=True))
+        self.assertEqual(["", ""], page2.get_sections(include_headings=False))
         self.assertEqual(["\nSection I.B.1 body.\n\n&bull;Some content.\n\n",
                           "\nEven more text.\n" + p4_IIIA2ai1],
                          page4.get_sections(levels=[4],
                                             include_headings=False))
 
         self.assertEqual([], page4.get_sections(matches=r"body"))
-        self.assertEqual([p4_IA, p4_I, p4_IB, p4_IB1],
+        self.assertEqual([p4_I, p4_IA, p4_IB, p4_IB1],
                          page4.get_sections(matches=r"Section\sI[.\s].*?"))
-        self.assertEqual([p4_IA, p4_IIIA1a, p4_IIIA, p4_IIIA2, p4_IIIA2ai1],
+        self.assertEqual([p4_IA, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1],
                          page4.get_sections(matches=r".*?a.*?"))
         self.assertEqual([p4_IIIA1a, p4_IIIA2ai1],
                          page4.get_sections(matches=r".*?a.*?", flags=re.U))
         self.assertEqual(["\nMore text.\n", "\nAn invalid section!"],
                          page4.get_sections(matches=r".*?a.*?", flags=re.U,
                                             include_headings=False))
+
+        sections = page2.get_sections(include_headings=False)
+        sections[0].append("Lead!\n")
+        sections[1].append("\nFirst section!")
+        self.assertEqual("Lead!\n==Heading==\nFirst section!", page2)
 
         page5 = parse("X\n== Foo ==\nBar\n== Baz ==\nBuzz")
         section = page5.get_sections(matches="Foo")[0]

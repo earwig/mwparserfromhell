@@ -150,3 +150,31 @@ name:   comment_inside_bracketed_link
 label:  an HTML comment inside a bracketed external link
 input:  "[http://example.com/foo<!--comment-->bar]"
 output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo"), CommentStart(), Text(text="comment"), CommentEnd(), Text(text="bar"), ExternalLinkClose()]
+
+---
+
+name:   wikilink_inside_external_link
+label:  a wikilink inside an external link, which the parser considers valid (see issue #61)
+input:  "[http://example.com/foo Foo [[Bar]]]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com/foo"), ExternalLinkSeparator(), Text(text="Foo "), WikilinkOpen(), Text(text="Bar"), WikilinkClose(), ExternalLinkClose()]
+
+---
+
+name:   external_link_inside_wikilink
+label:  an external link inside a wikilink, valid in the case of images (see issue #62)
+input:  "[[File:Example.png|thumb|http://example.com]]"
+output: [WikilinkOpen(), Text(text="File:Example.png"), WikilinkSeparator(), Text(text="thumb|"), ExternalLinkOpen(brackets=False), Text(text="http://example.com"), ExternalLinkClose(), WikilinkClose()]
+
+---
+
+name:   external_link_inside_wikilink_brackets
+label:  an external link with brackets inside a wikilink
+input:  "[[File:Example.png|thumb|[http://example.com Example]]]"
+output: [WikilinkOpen(), Text(text="File:Example.png"), WikilinkSeparator(), Text(text="thumb|"), ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose(), WikilinkClose()]
+
+---
+
+name:   external_link_inside_wikilink_title
+label:  an external link inside a wikilink title, which is invalid
+input:  "[[File:Example.png http://example.com]]"
+output: [WikilinkOpen(), Text(text="File:Example.png http://example.com"), WikilinkClose()]

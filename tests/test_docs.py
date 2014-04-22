@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,11 @@
 
 from __future__ import print_function, unicode_literals
 import json
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 import mwparserfromhell
 from mwparserfromhell.compat import py3k, str

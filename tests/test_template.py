@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
 from mwparserfromhell.nodes.extras import Parameter
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
 pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
@@ -42,27 +46,21 @@ class TestTemplate(TreeEqualityTestCase):
                          [pgenh("1", "bar"), pgens("abc", "def")])
         self.assertEqual("{{foo|bar|abc=def}}", str(node2))
 
-    def test_iternodes(self):
-        """test Template.__iternodes__()"""
-        node1n1 = Text("foobar")
-        node2n1, node2n2, node2n3 = Text("foo"), Text("bar"), Text("abc")
-        node2n4, node2n5 = Text("def"), Text("ghi")
-        node2p1 = Parameter(wraptext("1"), wrap([node2n2]), showkey=False)
-        node2p2 = Parameter(wrap([node2n3]), wrap([node2n4, node2n5]),
+    def test_children(self):
+        """test Template.__children__()"""
+        node2p1 = Parameter(wraptext("1"), wraptext("bar"), showkey=False)
+        node2p2 = Parameter(wraptext("abc"), wrap([Text("def"), Text("ghi")]),
                             showkey=True)
-        node1 = Template(wrap([node1n1]))
-        node2 = Template(wrap([node2n1]), [node2p1, node2p2])
+        node1 = Template(wraptext("foobar"))
+        node2 = Template(wraptext("foo"), [node2p1, node2p2])
 
-        gen1 = node1.__iternodes__(getnodes)
-        gen2 = node2.__iternodes__(getnodes)
-        self.assertEqual((None, node1), next(gen1))
-        self.assertEqual((None, node2), next(gen2))
-        self.assertEqual((node1.name, node1n1), next(gen1))
-        self.assertEqual((node2.name, node2n1), next(gen2))
-        self.assertEqual((node2.params[0].value, node2n2), next(gen2))
-        self.assertEqual((node2.params[1].name, node2n3), next(gen2))
-        self.assertEqual((node2.params[1].value, node2n4), next(gen2))
-        self.assertEqual((node2.params[1].value, node2n5), next(gen2))
+        gen1 = node1.__children__()
+        gen2 = node2.__children__()
+        self.assertEqual(node1.name, next(gen1))
+        self.assertEqual(node2.name, next(gen2))
+        self.assertEqual(node2.params[0].value, next(gen2))
+        self.assertEqual(node2.params[1].name, next(gen2))
+        self.assertEqual(node2.params[1].value, next(gen2))
         self.assertRaises(StopIteration, next, gen1)
         self.assertRaises(StopIteration, next, gen2)
 
@@ -123,15 +121,15 @@ class TestTemplate(TreeEqualityTestCase):
         node3 = Template(wraptext("foo"),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
         node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
-        self.assertFalse(node1.has("foobar"))
-        self.assertTrue(node2.has(1))
-        self.assertTrue(node2.has("abc"))
-        self.assertFalse(node2.has("def"))
-        self.assertTrue(node3.has("1"))
-        self.assertTrue(node3.has(" b "))
-        self.assertFalse(node4.has("b"))
-        self.assertTrue(node3.has("b", False))
+        self.assertFalse(node1.has("foobar", False))
+        self.assertTrue(node2.has(1, False))
+        self.assertTrue(node2.has("abc", False))
+        self.assertFalse(node2.has("def", False))
+        self.assertTrue(node3.has("1", False))
+        self.assertTrue(node3.has(" b ", False))
         self.assertTrue(node4.has("b", False))
+        self.assertTrue(node3.has("b", True))
+        self.assertFalse(node4.has("b", True))
 
     def test_get(self):
         """test Template.get()"""
@@ -223,6 +221,7 @@ class TestTemplate(TreeEqualityTestCase):
                                           pgenh("1", "c"), pgenh("2", "d")])
         node40 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
                                           pgens("f", "g")])
+        node41 = Template(wraptext("a"), [pgenh("1", "")])
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -266,6 +265,7 @@ class TestTemplate(TreeEqualityTestCase):
         node38.add("1", "e")
         node39.add("1", "e")
         node40.add("d", "h", before="b")
+        node41.add(1, "b")
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -312,6 +312,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a|1=e|x=y|2=d}}", node38)
         self.assertEqual("{{a|x=y|e|d}}", node39)
         self.assertEqual("{{a|b=c|d=h|f=g}}", node40)
+        self.assertEqual("{{a|b}}", node41)
 
     def test_remove(self):
         """test Template.remove()"""

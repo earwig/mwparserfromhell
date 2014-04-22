@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Tag, Template, Text
 from mwparserfromhell.nodes.extras import Attribute
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
 agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
@@ -64,37 +68,30 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual("----", str(node8))
         self.assertEqual("''italics!''", str(node9))
 
-    def test_iternodes(self):
-        """test Tag.__iternodes__()"""
-        node1n1, node1n2 = Text("ref"), Text("foobar")
-        node2n1, node3n1, node3n2 = Text("bold text"), Text("img"), Text("id")
-        node3n3, node3n4, node3n5 = Text("foo"), Text("class"), Text("bar")
-
+    def test_children(self):
+        """test Tag.__children__()"""
         # <ref>foobar</ref>
-        node1 = Tag(wrap([node1n1]), wrap([node1n2]))
+        node1 = Tag(wraptext("ref"), wraptext("foobar"))
         # '''bold text'''
-        node2 = Tag(wraptext("b"), wrap([node2n1]), wiki_markup="'''")
+        node2 = Tag(wraptext("b"), wraptext("bold text"), wiki_markup="'''")
         # <img id="foo" class="bar" />
-        node3 = Tag(wrap([node3n1]),
-                    attrs=[Attribute(wrap([node3n2]), wrap([node3n3])),
-                           Attribute(wrap([node3n4]), wrap([node3n5]))],
+        node3 = Tag(wraptext("img"),
+                    attrs=[Attribute(wraptext("id"), wraptext("foo")),
+                           Attribute(wraptext("class"), wraptext("bar"))],
                     self_closing=True, padding=" ")
 
-        gen1 = node1.__iternodes__(getnodes)
-        gen2 = node2.__iternodes__(getnodes)
-        gen3 = node3.__iternodes__(getnodes)
-        self.assertEqual((None, node1), next(gen1))
-        self.assertEqual((None, node2), next(gen2))
-        self.assertEqual((None, node3), next(gen3))
-        self.assertEqual((node1.tag, node1n1), next(gen1))
-        self.assertEqual((node3.tag, node3n1), next(gen3))
-        self.assertEqual((node3.attributes[0].name, node3n2), next(gen3))
-        self.assertEqual((node3.attributes[0].value, node3n3), next(gen3))
-        self.assertEqual((node3.attributes[1].name, node3n4), next(gen3))
-        self.assertEqual((node3.attributes[1].value, node3n5), next(gen3))
-        self.assertEqual((node1.contents, node1n2), next(gen1))
-        self.assertEqual((node2.contents, node2n1), next(gen2))
-        self.assertEqual((node1.closing_tag, node1n1), next(gen1))
+        gen1 = node1.__children__()
+        gen2 = node2.__children__()
+        gen3 = node3.__children__()
+        self.assertEqual(node1.tag, next(gen1))
+        self.assertEqual(node3.tag, next(gen3))
+        self.assertEqual(node3.attributes[0].name, next(gen3))
+        self.assertEqual(node3.attributes[0].value, next(gen3))
+        self.assertEqual(node3.attributes[1].name, next(gen3))
+        self.assertEqual(node3.attributes[1].value, next(gen3))
+        self.assertEqual(node1.contents, next(gen1))
+        self.assertEqual(node2.contents, next(gen2))
+        self.assertEqual(node1.closing_tag, next(gen1))
         self.assertRaises(StopIteration, next, gen1)
         self.assertRaises(StopIteration, next, gen2)
         self.assertRaises(StopIteration, next, gen3)

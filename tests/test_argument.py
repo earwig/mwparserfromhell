@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,12 +21,16 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-import unittest
+
+try:
+    import unittest2 as unittest
+except ImportError:
+    import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Argument, Text
 
-from ._test_tree_equality import TreeEqualityTestCase, getnodes, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 class TestArgument(TreeEqualityTestCase):
     """Test cases for the Argument node."""
@@ -38,20 +42,15 @@ class TestArgument(TreeEqualityTestCase):
         node2 = Argument(wraptext("foo"), wraptext("bar"))
         self.assertEqual("{{{foo|bar}}}", str(node2))
 
-    def test_iternodes(self):
-        """test Argument.__iternodes__()"""
-        node1n1 = Text("foobar")
-        node2n1, node2n2, node2n3 = Text("foo"), Text("bar"), Text("baz")
-        node1 = Argument(wrap([node1n1]))
-        node2 = Argument(wrap([node2n1]), wrap([node2n2, node2n3]))
-        gen1 = node1.__iternodes__(getnodes)
-        gen2 = node2.__iternodes__(getnodes)
-        self.assertEqual((None, node1), next(gen1))
-        self.assertEqual((None, node2), next(gen2))
-        self.assertEqual((node1.name, node1n1), next(gen1))
-        self.assertEqual((node2.name, node2n1), next(gen2))
-        self.assertEqual((node2.default, node2n2), next(gen2))
-        self.assertEqual((node2.default, node2n3), next(gen2))
+    def test_children(self):
+        """test Argument.__children__()"""
+        node1 = Argument(wraptext("foobar"))
+        node2 = Argument(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
+        gen1 = node1.__children__()
+        gen2 = node2.__children__()
+        self.assertIs(node1.name, next(gen1))
+        self.assertIs(node2.name, next(gen2))
+        self.assertIs(node2.default, next(gen2))
         self.assertRaises(StopIteration, next, gen1)
         self.assertRaises(StopIteration, next, gen2)
 

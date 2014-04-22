@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,13 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from unittest import TestCase
 
+try:
+    from unittest2 import TestCase
+except ImportError:
+    from unittest import TestCase
+
+from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
@@ -31,15 +36,6 @@ from mwparserfromhell.wikicode import Wikicode
 
 wrap = lambda L: Wikicode(SmartList(L))
 wraptext = lambda *args: wrap([Text(t) for t in args])
-
-def getnodes(code):
-    """Iterate over all child nodes of a given parent node.
-
-    Imitates Wikicode._get_all_nodes().
-    """
-    for node in code.nodes:
-        for context, child in node.__iternodes__(getnodes):
-            yield child
 
 class TreeEqualityTestCase(TestCase):
     """A base test case with support for comparing the equality of node trees.
@@ -106,7 +102,7 @@ class TreeEqualityTestCase(TestCase):
             self.assertEqual(exp_attr.pad_first, act_attr.pad_first)
             self.assertEqual(exp_attr.pad_before_eq, act_attr.pad_before_eq)
             self.assertEqual(exp_attr.pad_after_eq, act_attr.pad_after_eq)
-        self.assertIs(expected.wiki_markup, actual.wiki_markup)
+        self.assertEqual(expected.wiki_markup, actual.wiki_markup)
         self.assertIs(expected.self_closing, actual.self_closing)
         self.assertIs(expected.invalid, actual.invalid)
         self.assertIs(expected.implicit, actual.implicit)

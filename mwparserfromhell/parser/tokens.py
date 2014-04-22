@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2013 Ben Kurtovic <ben.kurtovic@verizon.net>
+# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,15 +34,12 @@ from ..compat import py3k, str
 
 __all__ = ["Token"]
 
-class Token(object):
+class Token (dict):
     """A token stores the semantic meaning of a unit of wikicode."""
-
-    def __init__(self, **kwargs):
-        super(Token, self).__setattr__("_kwargs", kwargs)
 
     def __repr__(self):
         args = []
-        for key, value in self._kwargs.items():
+        for key, value in self.items():
             if isinstance(value, str) and len(value) > 100:
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
@@ -50,18 +47,19 @@ class Token(object):
         return "{0}({1})".format(type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
-        if isinstance(other, type(self)):
-            return self._kwargs == other._kwargs
-        return False
+        return isinstance(other, type(self)) and dict.__eq__(self, other)
+
+    def __ne__(self, other):
+        return not self.__eq__(other)
 
     def __getattr__(self, key):
-        return self._kwargs.get(key)
+        return self.get(key)
 
     def __setattr__(self, key, value):
-        self._kwargs[key] = value
+        self[key] = value
 
     def __delattr__(self, key):
-        del self._kwargs[key]
+        del self[key]
 
 
 def make(name):
