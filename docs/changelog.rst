@@ -8,6 +8,7 @@ Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...develop>`__):
 
 - Added a script to test for memory leaks in :file:`scripts/memtest.py`.
+- Added a script to do releases in :file:`scripts/release.sh`.
 
 v0.3.3
 ------

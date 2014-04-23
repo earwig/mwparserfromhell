@@ -36,7 +36,8 @@ with open("README.rst") as fp:
     long_docs = fp.read()
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources = ["mwparserfromhell/parser/tokenizer.c"])
+                      sources = ["mwparserfromhell/parser/tokenizer.c"],
+                      depends = ["mwparserfromhell/parser/tokenizer.h"])
 
 setup(
     name = "mwparserfromhell",
