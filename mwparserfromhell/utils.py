@@ -33,7 +33,7 @@ from .smart_list import SmartList
 
 __all__ = ["parse_anything"]
 
-def parse_anything(value, context=0):
+def parse_anything(value, context=0, skip_style_tags=False):
     """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
 
     This differs from :py:meth:`.Parser.parse` in that we accept more than just
@@ -50,6 +50,9 @@ def parse_anything(value, context=0):
     For example, :py:class:`~.ExternalLink`\ 's :py:attr:`~.ExternalLink.url`
     setter sets *context* to :py:mod:`contexts.EXT_LINK_URI <.contexts>` to
     prevent the URL itself from becoming an :py:class:`~.ExternalLink`.
+
+    If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
+    parsed, but instead will be treated as plain text.
     """
     from .parser import Parser
     from .wikicode import Wikicode
@@ -59,17 +62,17 @@ def parse_anything(value, context=0):
     elif isinstance(value, Node):
         return Wikicode(SmartList([value]))
     elif isinstance(value, str):
-        return Parser().parse(value, context)
+        return Parser().parse(value, context, skip_style_tags)
     elif isinstance(value, bytes):
-        return Parser().parse(value.decode("utf8"), context)
+        return Parser().parse(value.decode("utf8"), context, skip_style_tags)
     elif isinstance(value, int):
-        return Parser().parse(str(value), context)
+        return Parser().parse(str(value), context, skip_style_tags)
     elif value is None:
         return Wikicode(SmartList())
     try:
         nodelist = SmartList()
         for item in value:
-            nodelist += parse_anything(item, context).nodes
+            nodelist += parse_anything(item, context, skip_style_tags).nodes
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value).__name__, value))

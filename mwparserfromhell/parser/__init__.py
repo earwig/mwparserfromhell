@@ -57,7 +57,7 @@ class Parser(object):
         """Parse *text*, returning a :py:class:`~.Wikicode` object tree.
 
         If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
-        parsed, but instead be treated as plain text.
+        parsed, but instead will be treated as plain text.
         """
         tokens = self._tokenizer.tokenize(text, context, skip_style_tags)
         code = self._builder.build(tokens)
