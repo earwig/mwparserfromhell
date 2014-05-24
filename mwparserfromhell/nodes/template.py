@@ -95,7 +95,7 @@ class Template(Node):
     def _select_theory(self, theories):
         """Return the most likely spacing convention given different options.
 
-        Given a dictionary of convention options as keys and their occurance as
+        Given a dictionary of convention options as keys and their occurrence as
         values, return the convention that occurs the most, or ``None`` if
         there is no clear preferred style.
         """
@@ -208,7 +208,7 @@ class Template(Node):
             preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
-        *name* and *value* can be anything parasable by
+        *name* and *value* can be anything parsable by
         :py:func:`.utils.parse_anything`; pipes and equal signs are
         automatically escaped from *value* when appropriate.
 
@@ -226,7 +226,7 @@ class Template(Node):
         name), then we will place the parameter immediately before this one.
         Otherwise, it will be added at the end. If *before* is a name and
         exists multiple times in the template, we will place it before the last
-        occurance. If *before* is not in the template, :py:exc:`ValueError` is
+        occurrence. If *before* is not in the template, :py:exc:`ValueError` is
         raised. The argument is ignored if the new parameter already exists.
 
         If *preserve_spacing* is ``False``, we will avoid preserving spacing

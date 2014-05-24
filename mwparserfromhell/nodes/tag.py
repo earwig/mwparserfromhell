@@ -240,7 +240,7 @@ class Tag(Node):
             pad_before_eq="", pad_after_eq=""):
         """Add an attribute with the given *name* and *value*.
 
-        *name* and *value* can be anything parasable by
+        *name* and *value* can be anything parsable by
         :py:func:`.utils.parse_anything`; *value* can be omitted if the
         attribute is valueless. *quoted* is a bool telling whether to wrap the
         *value* in double quotes (this is recommended). *pad_first*,
