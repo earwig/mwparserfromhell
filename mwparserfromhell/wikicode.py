@@ -294,7 +294,7 @@ class Wikicode(StringMixIn):
     def insert(self, index, value):
         """Insert *value* at *index* in the list of nodes.
 
-        *value* can be anything parasable by :py:func:`.parse_anything`, which
+        *value* can be anything parsable by :py:func:`.parse_anything`, which
         includes strings or other :py:class:`~.Wikicode` or :py:class:`~.Node`
         objects.
         """
@@ -309,7 +309,7 @@ class Wikicode(StringMixIn):
         :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
         for example). If *obj* is a string, we will operate on all instances
         of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
+        given. *value* can be anything parsable by :py:func:`.parse_anything`.
         If *recursive* is ``True``, we will try to find *obj* within our child
         nodes even if it is not a direct descendant of this
         :py:class:`~.Wikicode` object. If *obj* is not found,
@@ -333,7 +333,7 @@ class Wikicode(StringMixIn):
         :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
         for example). If *obj* is a string, we will operate on all instances
         of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
+        given. *value* can be anything parsable by :py:func:`.parse_anything`.
         If *recursive* is ``True``, we will try to find *obj* within our child
         nodes even if it is not a direct descendant of this
         :py:class:`~.Wikicode` object. If *obj* is not found,
@@ -357,7 +357,7 @@ class Wikicode(StringMixIn):
         :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
         for example). If *obj* is a string, we will operate on all instances
         of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
+        given. *value* can be anything parsable by :py:func:`.parse_anything`.
         If *recursive* is ``True``, we will try to find *obj* within our child
         nodes even if it is not a direct descendant of this
         :py:class:`~.Wikicode` object. If *obj* is not found,
@@ -380,7 +380,7 @@ class Wikicode(StringMixIn):
     def append(self, value):
         """Insert *value* at the end of the list of nodes.
 
-        *value* can be anything parasable by :py:func:`.parse_anything`.
+        *value* can be anything parsable by :py:func:`.parse_anything`.
         """
         nodes = parse_anything(value).nodes
         for node in nodes:
