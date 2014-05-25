@@ -20,6 +20,7 @@ if py3k:
     range = range
     maxsize = sys.maxsize
     import html.entities as htmlentities
+    zip = zip
 
 else:
     bytes = str
@@ -27,5 +28,6 @@ else:
     range = xrange
     maxsize = sys.maxint
     import htmlentitydefs as htmlentities
+    from itertools import izip as zip
 
 del sys
