@@ -9,6 +9,10 @@ Unreleased
 
 - Added a script to test for memory leaks in :file:`scripts/memtest.py`.
 - Added a script to do releases in :file:`scripts/release.sh`.
+- *skip_style_tags* can now be passed to :py:func:`mwparserfromhell.parse()
+  <.parse_anything>` (previously, only :py:meth:`.Parser.parse` allowed it).
+- Fixed a parser bug involving nested tags.
+- Updated and fixed some documentation.
 
 v0.3.3
 ------

@@ -56,6 +56,13 @@ class Parser(object):
     def parse(self, text, context=0, skip_style_tags=False):
         """Parse *text*, returning a :py:class:`~.Wikicode` object tree.
 
+        If given, *context* will be passed as a starting context to the parser.
+        This is helpful when this function is used inside node attribute
+        setters. For example, :py:class:`~.ExternalLink`\ 's
+        :py:attr:`~.ExternalLink.url` setter sets *context* to
+        :py:mod:`contexts.EXT_LINK_URI <.contexts>` to prevent the URL itself
+        from becoming an :py:class:`~.ExternalLink`.
+
         If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
         parsed, but instead will be treated as plain text.
         """
