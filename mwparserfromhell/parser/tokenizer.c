@@ -1899,7 +1899,7 @@ static PyObject* Tokenizer_handle_single_tag_end(Tokenizer* self)
     int is_instance;
 
     len = PyList_GET_SIZE(self->topstack->stack);
-    for (index = 0; index < len; index++) {
+    for (index = len - 1; index >= 0; index--) {
         token = PyList_GET_ITEM(self->topstack->stack, index);
         is_instance = PyObject_IsInstance(token, TagCloseOpen);
         if (is_instance == -1)

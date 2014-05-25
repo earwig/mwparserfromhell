@@ -124,6 +124,13 @@ output: [TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before
 
 ---
 
+name:   nested_tag_selfclosing
+label:  a tag nested within the attributes of another; outer tag implicitly self-closing
+input:  "<li <b></b></li>"
+output: [TagOpenOpen(), Text(text="li"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TagOpenOpen(), Text(text="b"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text="</li"), TagCloseSelfclose(padding="", implicit=True)]
+
+---
+
 name:   invalid_space_begin_open
 label:  invalid tag: a space at the beginning of the open tag
 input:  "< ref>test</ref>"

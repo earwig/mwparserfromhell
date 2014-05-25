@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from itertools import izip
 from math import log
 import re
 
@@ -751,11 +752,12 @@ class Tokenizer(object):
 
     def _handle_single_tag_end(self):
         """Handle the stream end when inside a single-supporting HTML tag."""
-        gen = enumerate(self._stack)
+        stack = self._stack
+        gen = izip(xrange(len(stack) - 1, -1, -1), reversed(stack))
         index = next(i for i, t in gen if isinstance(t, tokens.TagCloseOpen))
-        padding = self._stack[index].padding
+        padding = stack[index].padding
         token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
-        self._stack[index] = token
+        stack[index] = token
         return self._pop()
 
     def _really_parse_tag(self):
