@@ -319,11 +319,14 @@ class TestWikicode(TreeEqualityTestCase):
             self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
             self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
 
-        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
-                         code2.filter_templates(recursive=False))
-        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
-                          "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
-                         code2.filter_templates(recursive=True))
+        exp_rec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
+                        "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"]
+        exp_unrec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"]
+        self.assertEqual(exp_rec, code2.filter_templates())
+        self.assertEqual(exp_unrec, code2.filter_templates(recursive=False))
+        self.assertEqual(exp_rec, code2.filter_templates(recursive=True))
+        self.assertEqual(exp_rec, code2.filter_templates(True))
+        self.assertEqual(exp_unrec, code2.filter_templates(False))
 
         self.assertEqual(["{{foobar}}"], code3.filter_templates(
             matches=lambda node: node.name.matches("Foobar")))
@@ -332,9 +335,15 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z"))
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z", flags=0))
 
-        self.assertRaises(TypeError, code.filter_templates, 100)
         self.assertRaises(TypeError, code.filter_templates, a=42)
         self.assertRaises(TypeError, code.filter_templates, forcetype=Template)
+        self.assertRaises(TypeError, code.filter_templates, 1, 0, 0, Template)
+
+        code4 = parse("{{foo}}<b>{{foo|{{bar}}}}</b>")
+        actual1 = code4.filter_templates(recursive=code4.RECURSE_OTHERS)
+        actual2 = code4.filter_templates(code4.RECURSE_OTHERS)
+        self.assertEqual(["{{foo}}", "{{foo|{{bar}}}}"], actual1)
+        self.assertEqual(["{{foo}}", "{{foo|{{bar}}}}"], actual2)
 
     def test_get_sections(self):
         """test Wikicode.get_sections()"""

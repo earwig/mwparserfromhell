@@ -44,6 +44,7 @@ class Wikicode(StringMixIn):
     <ifilter>` series of functions is very useful for extracting and iterating
     over, for example, all of the templates in the object.
     """
+    RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
         super(Wikicode, self).__init__()
@@ -53,12 +54,15 @@ class Wikicode(StringMixIn):
         return "".join([str(node) for node in self.nodes])
 
     @staticmethod
-    def _get_children(node, contexts=False, parent=None):
+    def _get_children(node, contexts=False, restrict=None, parent=None):
         """Iterate over all child :py:class:`.Node`\ s of a given *node*."""
         yield (parent, node) if contexts else node
+        if restrict and isinstance(node, restrict):
+            return
         for code in node.__children__():
             for child in code.nodes:
-                for result in Wikicode._get_children(child, contexts, code):
+                sub = Wikicode._get_children(child, contexts, restrict, code)
+                for result in sub:
                     yield result
 
     @staticmethod
@@ -79,7 +83,7 @@ class Wikicode(StringMixIn):
         if matches:
             if callable(matches):
                 return matches
-            return lambda obj: re.search(matches, str(obj), flags)  # r
+            return lambda obj: re.search(matches, str(obj), flags)
         return lambda obj: True
 
     def _indexed_ifilter(self, recursive=True, matches=None, flags=FLAGS,
@@ -93,8 +97,9 @@ class Wikicode(StringMixIn):
         """
         match = self._build_matcher(matches, flags)
         if recursive:
+            restrict = forcetype if recursive == self.RECURSE_OTHERS else None
             def getter(i, node):
-                for ch in self._get_children(node):
+                for ch in self._get_children(node, restrict=restrict):
                     yield (i, ch)
             inodes = chain(*(getter(i, n) for i, n in enumerate(self.nodes)))
         else:
@@ -222,10 +227,10 @@ class Wikicode(StringMixIn):
         This is equivalent to :py:meth:`{1}` with *forcetype* set to
         :py:class:`~{2.__module__}.{2.__name__}`.
         """
-        make_ifilter = lambda ftype: (lambda self, **kw:
-                                      self.ifilter(forcetype=ftype, **kw))
-        make_filter = lambda ftype: (lambda self, **kw:
-                                     self.filter(forcetype=ftype, **kw))
+        make_ifilter = lambda ftype: (lambda self, *a, **kw:
+                                      self.ifilter(forcetype=ftype, *a, **kw))
+        make_filter = lambda ftype: (lambda self, *a, **kw:
+                                     self.filter(forcetype=ftype, *a, **kw))
         for name, ftype in (meths.items() if py3k else meths.iteritems()):
             ifilter = make_ifilter(ftype)
             filter = make_filter(ftype)
@@ -435,27 +440,36 @@ class Wikicode(StringMixIn):
                 forcetype=None):
         """Iterate over nodes in our list matching certain conditions.
 
-        If *recursive* is ``True``, we will iterate over our children and all
-        of their descendants, otherwise just our immediate children. If
-        *forcetype* is given, only nodes that are instances of this type are
-        yielded. *matches* can be used to further restrict the nodes, either as
-        a function (taking a single :py:class:`.Node` and returning a boolean)
-        or a regular expression (matched against the node's string
-        representation with :py:func:`re.search`). If *matches* is a regex, the
-        flags passed to :py:func:`re.search` are :py:const:`re.IGNORECASE`,
+        If *forcetype* is given, only nodes that are instances of this type (or
+        tuple of types) are yielded. Setting *recursive* to ``True`` will
+        iterate over all children and their descendants. ``RECURSE_OTHERS``
+        will only iterate over children that are not the instances of
+        *forcetype*. ``False`` will only iterate over immediate children.
+
+        ``RECURSE_OTHERS`` can be used to iterate over all un-nested templates,
+        even if they are inside of HTML tags, like so:
+
+            >>> code = mwparserfromhell.parse("{{foo}}<b>{{foo|{{bar}}}}</b>")
+            >>> code.filter_templates(code.RECURSE_OTHERS)
+            ["{{foo}}", "{{foo|{{bar}}}}"]
+
+        *matches* can be used to further restrict the nodes, either as a
+        function (taking a single :py:class:`.Node` and returning a boolean) or
+        a regular expression (matched against the node's string representation
+        with :py:func:`re.search`). If *matches* is a regex, the flags passed
+        to :py:func:`re.search` are :py:const:`re.IGNORECASE`,
         :py:const:`re.DOTALL`, and :py:const:`re.UNICODE`, but custom flags can
         be specified by passing *flags*.
         """
-        return (node for i, node in
-                self._indexed_ifilter(recursive, matches, flags, forcetype))
+        gen = self._indexed_ifilter(recursive, matches, flags, forcetype)
+        return (node for i, node in gen)
 
-    def filter(self, recursive=True, matches=None, flags=FLAGS,
-               forcetype=None):
+    def filter(self, *args, **kwargs):
         """Return a list of nodes within our list matching certain conditions.
 
         This is equivalent to calling :py:func:`list` on :py:meth:`ifilter`.
         """
-        return list(self.ifilter(recursive, matches, flags, forcetype))
+        return list(self.ifilter(*args, **kwargs))
 
     def get_sections(self, levels=None, matches=None, flags=FLAGS, flat=False,
                      include_lead=None, include_headings=True):

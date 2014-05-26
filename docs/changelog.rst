@@ -11,6 +11,11 @@ Unreleased
 - Added a script to do releases in :file:`scripts/release.sh`.
 - *skip_style_tags* can now be passed to :py:func:`mwparserfromhell.parse()
   <.parse_anything>` (previously, only :py:meth:`.Parser.parse` allowed it).
+- The *recursive* argument to :py:class:`Wikicode's <.Wikicode>`
+  :py:meth:`.filter` methods now accepts a third option, ``RECURSE_OTHERS``,
+  which recurses over all children except instances of *forcetype* (for
+  example, ``code.filter_templates(code.RECURSE_OTHERS)`` returns all un-nested
+  templates).
 - Fixed a parser bug involving nested tags.
 - Updated and fixed some documentation.
 

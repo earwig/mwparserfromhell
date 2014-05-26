@@ -4,6 +4,10 @@ v0.4 (unreleased):
 - Added a script to do releases in scripts/release.sh.
 - skip_style_tags can now be passed to mwparserfromhell.parse() (previously,
   only Parser().parse() allowed it).
+- The 'recursive' argument to Wikicode's filter methods now accepts a third
+  option, RECURSE_OTHERS, which recurses over all children except instances of
+  'forcetype' (for example, `code.filter_templates(code.RECURSE_OTHERS)`
+  returns all un-nested templates).
 - Fixed a parser bug involving nested tags.
 - Updated and fixed some documentation.
 
