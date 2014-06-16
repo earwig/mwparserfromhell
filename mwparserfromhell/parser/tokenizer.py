@@ -112,7 +112,7 @@ class Tokenizer(object):
             self._textbuffer = []
 
     def _pop(self, keep_context=False):
-        """Pop the current stack/context/textbuffer, returing the stack.
+        """Pop the current stack/context/textbuffer, returning the stack.
 
         If *keep_context* is ``True``, then we will replace the underlying
         stack's context with the current stack's.
