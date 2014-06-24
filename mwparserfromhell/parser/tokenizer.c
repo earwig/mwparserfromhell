@@ -1896,18 +1896,26 @@ static PyObject* Tokenizer_handle_single_tag_end(Tokenizer* self)
 {
     PyObject *token = 0, *padding, *kwargs;
     Py_ssize_t len, index;
-    int is_instance;
+    int depth = 1, is_instance;
 
     len = PyList_GET_SIZE(self->topstack->stack);
-    for (index = len - 1; index >= 0; index--) {
+    for (index = 2; index < len; index++) {
         token = PyList_GET_ITEM(self->topstack->stack, index);
-        is_instance = PyObject_IsInstance(token, TagCloseOpen);
+        is_instance = PyObject_IsInstance(token, TagOpenOpen);
         if (is_instance == -1)
             return NULL;
         else if (is_instance == 1)
-            break;
+            depth++;
+        is_instance = PyObject_IsInstance(token, TagCloseOpen);
+        if (is_instance == -1)
+            return NULL;
+        else if (is_instance == 1) {
+            depth--;
+            if (depth == 0)
+                break;
+        }
     }
-    if (!token)
+    if (!token || depth > 0)
         return NULL;
     padding = PyObject_GetAttrString(token, "padding");
     if (!padding)

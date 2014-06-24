@@ -25,7 +25,7 @@ from math import log
 import re
 
 from . import contexts, tokens
-from ..compat import htmlentities, range, zip
+from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
 
@@ -752,11 +752,18 @@ class Tokenizer(object):
     def _handle_single_tag_end(self):
         """Handle the stream end when inside a single-supporting HTML tag."""
         stack = self._stack
-        gen = zip(range(len(stack) - 1, -1, -1), reversed(stack))
-        index = next(i for i, t in gen if isinstance(t, tokens.TagCloseOpen))
+        # We need to find the index of the TagCloseOpen token corresponding to
+        # the TagOpenOpen token located at index 0:
+        depth = 1
+        for index, token in enumerate(stack[2:], 2):
+            if isinstance(token, tokens.TagOpenOpen):
+                depth += 1
+            elif isinstance(token, tokens.TagCloseOpen):
+                depth -= 1
+                if depth == 0:
+                    break
         padding = stack[index].padding
-        token = tokens.TagCloseSelfclose(padding=padding, implicit=True)
-        stack[index] = token
+        stack[index] = tokens.TagCloseSelfclose(padding=padding, implicit=True)
         return self._pop()
 
     def _really_parse_tag(self):

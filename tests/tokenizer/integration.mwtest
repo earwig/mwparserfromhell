@@ -178,3 +178,10 @@ name:   external_link_inside_wikilink_title
 label:  an external link inside a wikilink title, which is invalid
 input:  "[[File:Example.png http://example.com]]"
 output: [WikilinkOpen(), Text(text="File:Example.png http://example.com"), WikilinkClose()]
+
+---
+
+name:   italics_inside_external_link_inside_incomplete_list
+label:  italic text inside an external link inside an incomplete list
+input:  "<li>[http://www.example.com ''example'']"
+output: [TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), ExternalLinkOpen(brackets=True), Text(text="http://www.example.com"), ExternalLinkSeparator(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="example"), TagOpenClose(), Text(text="i"), TagCloseClose(), ExternalLinkClose()]
