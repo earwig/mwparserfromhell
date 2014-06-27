@@ -21,12 +21,11 @@
 # SOFTWARE.
 
 from __future__ import print_function, unicode_literals
+import codecs
 from os import listdir, path
 import sys
 
 from mwparserfromhell.compat import py3k
-if not py3k:
-	from codecs import open
 from mwparserfromhell.parser import tokens
 
 class _TestParseError(Exception):
@@ -111,7 +110,7 @@ class TokenizerTestCase(object):
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
         def load_file(filename):
-            with open(filename, "rU", encoding='utf8') as fp:
+            with codecs.open(filename, "rU", encoding="utf8") as fp:
                 text = fp.read()
                 name = path.split(filename)[1][:0-len(extension)]
                 cls._load_tests(filename, name, text)

@@ -9,4 +9,4 @@ __pycache__
 build
 dist
 docs/_build
-tools/*.log
+scripts/*.log
