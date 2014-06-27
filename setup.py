@@ -45,7 +45,9 @@ setup(
     ext_modules = [tokenizer],
     tests_require = ["unittest2"] if py26 else [],
     test_suite = "tests.discover",
-    version = __version__,
+    # python 2 bdist_msi *requires* a str 'ProductName'; prevent upcasting
+    # to 'unicode' by explicitly making __version__ str.
+    version = str(__version__),
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",
     url = "https://github.com/earwig/mwparserfromhell",
