@@ -1,4 +1,5 @@
 *.pyc
+*.pyd
 *.so
 *.dll
 *.egg
@@ -8,3 +9,4 @@ __pycache__
 build
 dist
 docs/_build
+tools/*.log
