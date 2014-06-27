@@ -26,8 +26,6 @@ Parser from Hell) is a Python package that provides an easy-to-use and
 outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 """
 
-from __future__ import unicode_literals
-
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012, 2013, 2014 Ben Kurtovic"
 __license__ = "MIT License"
