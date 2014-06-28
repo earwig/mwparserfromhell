@@ -66,11 +66,19 @@ do_git_stuff() {
     echo " done."
 }
 
-build_sdist() {
-    echo -n "Uploading to PyPI..."
+upload_to_pypi() {
+    # TODO: check whether these commands give output
+    echo -n "PyPI: uploading source tarball and docs..."
     python setup.py register sdist upload -s
     python setup.py upload_docs
     echo " done."
+}
+
+windows_build() {
+    echo "PyPI: building/uploading Windows binaries..."
+    echo "*** Run in Windows: ./scripts/win_build.py"
+    echo "*** Press enter when done."
+    read
 }
 
 post_release() {
@@ -148,6 +156,8 @@ update_version
 update_changelog
 update_docs_changelog
 do_git_stuff
+upload_to_pypi
+windows_build
 post_release
 test_release
 

@@ -30,7 +30,7 @@ def main():
             pass
 
         if run(pyver, ["test"]) == 0:
-            run(pyver, ["bdist_wheel", "upload"])
+            run(pyver, ["bdist_wheel", "upload"])  # TODO: add "-s" to GPG sign
 
 if __name__ == "__main__":
     main()
