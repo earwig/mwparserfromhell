@@ -25,7 +25,7 @@ import sys
 
 if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
    (sys.version_info[1] == 3 and sys.version_info[1] < 2):
-    raise Exception('mwparserfromhell needs Python 2.6+ or 3.2+')
+    raise Exception("mwparserfromhell needs Python 2.6+ or 3.2+")
 
 from setuptools import setup, find_packages, Extension
 
@@ -36,8 +36,8 @@ with open("README.rst") as fp:
     long_docs = fp.read()
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources = ["mwparserfromhell/parser/tokenizer.c"],
-                      depends = ["mwparserfromhell/parser/tokenizer.h"])
+                      sources=["mwparserfromhell/parser/tokenizer.c"],
+                      depends=["mwparserfromhell/parser/tokenizer.h"])
 
 setup(
     name = "mwparserfromhell",

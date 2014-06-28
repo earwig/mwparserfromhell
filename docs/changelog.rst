@@ -7,6 +7,8 @@ v0.4
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...develop>`__):
 
+- The parser is now distributed with Windows binaries, fixing an issue that
+  prevented Windows users from using the C tokenizer.
 - Added a script to test for memory leaks in :file:`scripts/memtest.py`.
 - Added a script to do releases in :file:`scripts/release.sh`.
 - *skip_style_tags* can now be passed to :py:func:`mwparserfromhell.parse()

@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import print_function, unicode_literals
+import codecs
 from os import listdir, path
 import sys
 
@@ -109,10 +110,8 @@ class TokenizerTestCase(object):
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
         def load_file(filename):
-            with open(filename, "rU") as fp:
+            with codecs.open(filename, "rU", encoding="utf8") as fp:
                 text = fp.read()
-                if not py3k:
-                    text = text.decode("utf8")
                 name = path.split(filename)[1][:0-len(extension)]
                 cls._load_tests(filename, name, text)
 
