@@ -62,6 +62,7 @@ static char** entitydefs;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;
+static PyObject* ParserError;
 static PyObject* definitions;
 
 
@@ -267,6 +268,8 @@ static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
 static PyObject* Tokenizer_parse(Tokenizer*, int, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
+
+static int load_exceptions(void);
 
 
 /* Macros for Python 2/3 compatibility: */

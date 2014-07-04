@@ -34,7 +34,7 @@ from ..compat import py3k, str
 
 __all__ = ["Token"]
 
-class Token (dict):
+class Token(dict):
     """A token stores the semantic meaning of a unit of wikicode."""
 
     def __repr__(self):

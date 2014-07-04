@@ -30,7 +30,7 @@ except ImportError:
 from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
                                     HTMLEntity, Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
-from mwparserfromhell.parser import tokens
+from mwparserfromhell.parser import tokens, ParserError
 from mwparserfromhell.parser.builder import Builder
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
@@ -419,6 +419,12 @@ class TestBuilder(TreeEqualityTestCase):
             Parameter(wraptext("j"), wrap([HTMLEntity("nbsp",
             named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
+
+    def test_parser_error(self):
+        """test whether ParserError gets thrown for bad input"""
+        msg = r"_handle_token\(\) got unexpected TemplateClose"
+        self.assertRaisesRegexp(
+            ParserError, msg, self.builder.build, [tokens.TemplateClose()])
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

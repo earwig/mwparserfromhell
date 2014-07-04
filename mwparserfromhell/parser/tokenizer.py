@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from math import log
 import re
 
-from . import contexts, tokens
+from . import contexts, tokens, ParserError
 from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
@@ -1154,4 +1154,7 @@ class Tokenizer(object):
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
         self._head = self._global = self._depth = self._cycles = 0
-        return self._parse(context)
+        try:
+            return self._parse(context)
+        except BadRoute:  # pragma: no cover (untestable/exceptional case)
+            raise ParserError("Python tokenizer exited with BadRoute")

@@ -55,8 +55,8 @@ class Node(StringMixIn):
         raise NotImplementedError()
 
     def __children__(self):
-        return  # Funny generator-that-yields-nothing syntax
-        yield
+        return
+        yield  # pragma: no cover (this is a generator that yields nothing)
 
     def __strip__(self, normalize, collapse):
         return None

@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from . import tokens
+from . import tokens, ParserError
 from ..compat import str
 from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
                      Template, Text, Wikilink)
@@ -33,33 +33,28 @@ from ..wikicode import Wikicode
 __all__ = ["Builder"]
 
 class Builder(object):
-    """Combines a sequence of tokens into a tree of ``Wikicode`` objects.
+    """Builds a tree of nodes out of a sequence of tokens.
 
     To use, pass a list of :py:class:`~.Token`\ s to the :py:meth:`build`
     method. The list will be exhausted as it is parsed and a
-    :py:class:`~.Wikicode` object will be returned.
+    :py:class:`.Wikicode` object containing the node tree will be returned.
     """
 
     def __init__(self):
         self._tokens = []
         self._stacks = []
 
-    def _wrap(self, nodes):
-        """Properly wrap a list of nodes in a ``Wikicode`` object."""
-        return Wikicode(SmartList(nodes))
-
     def _push(self):
         """Push a new node list onto the stack."""
         self._stacks.append([])
 
-    def _pop(self, wrap=True):
+    def _pop(self):
         """Pop the current node list off of the stack.
 
-        If *wrap* is ``True``, we will call :py:meth:`_wrap` on the list.
+        The raw node list is wrapped in a :py:class:`.SmartList` and then in a
+        :py:class:`.Wikicode` object.
         """
-        if wrap:
-            return self._wrap(self._stacks.pop())
-        return self._stacks.pop()
+        return Wikicode(SmartList(self._stacks.pop()))
 
     def _write(self, item):
         """Append a node to the current node list."""
@@ -84,7 +79,7 @@ class Builder(object):
                 self._tokens.append(token)
                 value = self._pop()
                 if key is None:
-                    key = self._wrap([Text(str(default))])
+                    key = Wikicode(SmartList([Text(str(default))]))
                 return Parameter(key, value, showkey)
             else:
                 self._write(self._handle_token(token))
@@ -270,6 +265,8 @@ class Builder(object):
             return self._handle_comment()
         elif isinstance(token, tokens.TagOpenOpen):
             return self._handle_tag(token)
+        err = "_handle_token() got unexpected {0}".format(type(token).__name__)
+        raise ParserError(err)
 
     def build(self, tokenlist):
         """Build a Wikicode object from a list tokens and return it."""

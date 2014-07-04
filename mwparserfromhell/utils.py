@@ -66,7 +66,7 @@ def parse_anything(value, context=0, skip_style_tags=False):
         nodelist = SmartList()
         for item in value:
             nodelist += parse_anything(item, context, skip_style_tags).nodes
+        return Wikicode(nodelist)
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value).__name__, value))
-    return Wikicode(nodelist)

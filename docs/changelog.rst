@@ -18,6 +18,9 @@ Unreleased
   which recurses over all children except instances of *forcetype* (for
   example, ``code.filter_templates(code.RECURSE_OTHERS)`` returns all un-nested
   templates).
+- If something goes wrong while parsing, :py:exc:`.ParserError` will now be
+  raised. Previously, the parser would produce an unclear :py:exc:`.BadRoute`
+  exception or allow an incorrect node tree to be build.
 - Fixed a parser bug involving nested tags.
 - Updated and fixed some documentation.
 

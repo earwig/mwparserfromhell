@@ -347,7 +347,7 @@ static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 
 /*
     Fail the current tokenization route. Discards the current
-    stack/context/textbuffer and raises a BadRoute exception.
+    stack/context/textbuffer and sets the BAD_ROUTE flag.
 */
 static void* Tokenizer_fail_route(Tokenizer* self)
 {
@@ -2681,7 +2681,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 */
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
-    PyObject *text, *temp;
+    PyObject *text, *temp, *tokens;
     int context = 0, skip_style_tags = 0;
 
     if (PyArg_ParseTuple(args, "U|ii", &text, &context, &skip_style_tags)) {
@@ -2704,13 +2704,29 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
         Py_XDECREF(temp);
         self->text = text;
     }
+
     self->head = self->global = self->depth = self->cycles = 0;
     self->length = PyList_GET_SIZE(self->text);
     self->skip_style_tags = skip_style_tags;
-    return Tokenizer_parse(self, context, 1);
+    tokens = Tokenizer_parse(self, context, 1);
+
+    if (!tokens && !PyErr_Occurred()) {
+        if (!ParserError) {
+            if (load_exceptions())
+                return NULL;
+        }
+        if (BAD_ROUTE) {
+            RESET_ROUTE();
+            PyErr_SetString(ParserError, "C tokenizer exited with BAD_ROUTE");
+        }
+        else
+            PyErr_SetString(ParserError, "C tokenizer exited unexpectedly");
+        return NULL;
+    }
+    return tokens;
 }
 
-static int load_entitydefs(void)
+static int load_entities(void)
 {
     PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
@@ -2814,7 +2830,7 @@ static int load_tokens(void)
     return 0;
 }
 
-static int load_definitions(void)
+static int load_defs(void)
 {
     PyObject *tempmod,
              *globals = PyEval_GetGlobals(),
@@ -2835,6 +2851,29 @@ static int load_definitions(void)
     return 0;
 }
 
+static int load_exceptions(void)
+{
+    PyObject *tempmod, *parsermod,
+             *globals = PyEval_GetGlobals(),
+             *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1),
+             *modname = IMPORT_NAME_FUNC("parser");
+    char *name = "mwparserfromhell";
+
+    if (!fromlist || !modname)
+        return -1;
+    PyList_SET_ITEM(fromlist, 0, modname);
+    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
+    Py_DECREF(fromlist);
+    if (!tempmod)
+        return -1;
+    parsermod = PyObject_GetAttrString(tempmod, "parser");
+    Py_DECREF(tempmod);
+    ParserError = PyObject_GetAttrString(parsermod, "ParserError");
+    Py_DECREF(parsermod);
+    return 0;
+}
+
 PyMODINIT_FUNC INIT_FUNC_NAME(void)
 {
     PyObject *module;
@@ -2851,9 +2890,7 @@ PyMODINIT_FUNC INIT_FUNC_NAME(void)
     PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
     EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
-    if (!EMPTY || !NOARGS)
-        INIT_ERROR;
-    if (load_entitydefs() || load_tokens() || load_definitions())
+    if (!EMPTY || !NOARGS || load_entities() || load_tokens() || load_defs())
         INIT_ERROR;
 #ifdef IS_PY3K
     return module;

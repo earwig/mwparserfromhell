@@ -10,6 +10,9 @@ v0.4 (unreleased):
   option, RECURSE_OTHERS, which recurses over all children except instances of
   'forcetype' (for example, `code.filter_templates(code.RECURSE_OTHERS)`
   returns all un-nested templates).
+- If something goes wrong while parsing, ParserError will now be raised.
+  Previously, the parser would produce an unclear BadRoute exception or allow
+  an incorrect node tree to be build.
 - Fixed a parser bug involving nested tags.
 - Updated and fixed some documentation.
 
