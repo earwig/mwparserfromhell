@@ -18,6 +18,11 @@ Unreleased
   which recurses over all children except instances of *forcetype* (for
   example, ``code.filter_templates(code.RECURSE_OTHERS)`` returns all un-nested
   templates).
+- The parser now understands HTML tag attributes quoted with single quotes.
+  When setting a tag attribute's value, quotes will be added if necessary. As
+  part of this, :py:class:`.Attribute`\ 's :py:attr:`~.Attribute.quoted`
+  attribute has been changed to :py:attr:`~.Attribute.quotes`, and is now
+  either a string or ``None``.
 - Calling :py:meth:`.Template.remove` with a :py:class:`.Parameter` object that
   is not part of the template now raises :py:exc:`ValueError` instead of doing
   nothing.

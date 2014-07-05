@@ -100,7 +100,7 @@ CommentEnd = make("CommentEnd")                                     # -->
 TagOpenOpen = make("TagOpenOpen")                                   # <
 TagAttrStart = make("TagAttrStart")
 TagAttrEquals = make("TagAttrEquals")                               # =
-TagAttrQuote = make("TagAttrQuote")                                 # "
+TagAttrQuote = make("TagAttrQuote")                                 # ", '
 TagCloseOpen = make("TagCloseOpen")                                 # >
 TagCloseSelfclose = make("TagCloseSelfclose")                       # />
 TagOpenClose = make("TagOpenClose")                                 # </

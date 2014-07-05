@@ -236,21 +236,24 @@ class Tag(Node):
                 return attr
         raise ValueError(name)
 
-    def add(self, name, value=None, quoted=True, pad_first=" ",
+    def add(self, name, value=None, quotes='"', pad_first=" ",
             pad_before_eq="", pad_after_eq=""):
         """Add an attribute with the given *name* and *value*.
 
         *name* and *value* can be anything parsable by
         :py:func:`.utils.parse_anything`; *value* can be omitted if the
-        attribute is valueless. *quoted* is a bool telling whether to wrap the
-        *value* in double quotes (this is recommended). *pad_first*,
-        *pad_before_eq*, and *pad_after_eq* are whitespace used as padding
-        before the name, before the equal sign (or after the name if no value),
-        and after the equal sign (ignored if no value), respectively.
+        attribute is valueless. If *quotes* is not ``None``, it should be a
+        string (either ``"`` or ``'``) that *value* will be wrapped in (this is
+        recommended). ``None`` is only legal if *value* contains no spacing.
+
+        *pad_first*, *pad_before_eq*, and *pad_after_eq* are whitespace used as
+        padding before the name, before the equal sign (or after the name if no
+        value), and after the equal sign (ignored if no value), respectively.
         """
         if value is not None:
             value = parse_anything(value)
-        attr = Attribute(parse_anything(name), value, quoted)
+        quotes = Attribute.coerce_quotes(quotes)
+        attr = Attribute(parse_anything(name), value, quotes)
         attr.pad_first = pad_first
         attr.pad_before_eq = pad_before_eq
         attr.pad_after_eq = pad_after_eq

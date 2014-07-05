@@ -270,7 +270,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
                                   pad_after_eq=""),
               tokens.Text(text="name"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.Text(text="abc"),
+              tokens.TagAttrQuote(char='"'), tokens.Text(text="abc"),
               tokens.TagCloseSelfclose(padding=" ")],
              wrap([Tag(wraptext("ref"),
                        attrs=[Attribute(wraptext("name"), wraptext("abc"))],
@@ -298,7 +298,7 @@ class TestBuilder(TreeEqualityTestCase):
              wrap([Tag(wraptext("br"), self_closing=True, invalid=True)])),
 
             # <ref name={{abc}}   foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}}
-            #      mno =  "{{p}} [[q]] {{r}}">[[Source]]</ref>
+            #      mno =  '{{p}} [[q]] {{r}}'>[[Source]]</ref>
             ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
                                   pad_after_eq=""),
@@ -308,7 +308,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first="   ", pad_before_eq="",
                                   pad_after_eq=""),
               tokens.Text(text="foo"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.Text(text="bar "),
+              tokens.TagAttrQuote(char='"'), tokens.Text(text="bar "),
               tokens.TemplateOpen(), tokens.Text(text="baz"),
               tokens.TemplateClose(),
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
@@ -326,7 +326,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first=" \n ", pad_before_eq=" ",
                                   pad_after_eq="  "),
               tokens.Text(text="mno"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.TemplateOpen(),
+              tokens.TagAttrQuote(char="'"), tokens.TemplateOpen(),
               tokens.Text(text="p"), tokens.TemplateClose(),
               tokens.Text(text=" "), tokens.WikilinkOpen(),
               tokens.Text(text="q"), tokens.WikilinkClose(),
@@ -338,17 +338,17 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagCloseClose()],
              wrap([Tag(wraptext("ref"), wrap([Wikilink(wraptext("Source"))]), [
                     Attribute(wraptext("name"),
-                              wrap([Template(wraptext("abc"))]), False),
+                              wrap([Template(wraptext("abc"))]), None),
                     Attribute(wraptext("foo"), wrap([Text("bar "),
                               Template(wraptext("baz"))]), pad_first="   "),
                     Attribute(wraptext("abc"), wrap([Template(wraptext("de")),
-                              Text("f")]), False),
+                              Text("f")]), None),
                     Attribute(wraptext("ghi"), wrap([Text("j"),
                               Template(wraptext("k")),
-                              Template(wraptext("l"))]), False),
+                              Template(wraptext("l"))]), None),
                     Attribute(wraptext("mno"), wrap([Template(wraptext("p")),
                               Text(" "), Wikilink(wraptext("q")), Text(" "),
-                              Template(wraptext("r"))]), True, " \n ", " ",
+                              Template(wraptext("r"))]), "'", " \n ", " ",
                               "  ")])])),
 
             # "''italic text''"

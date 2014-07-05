@@ -34,9 +34,9 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
 agennv = lambda name: Attribute(wraptext(name))
-agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
-agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, True, a, b, c)
-agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, True, a, b, c)
+agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), None)
+agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, '"', a, b, c)
+agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, '"', a, b, c)
 
 class TestTag(TreeEqualityTestCase):
     """Test cases for the Tag node."""
@@ -276,28 +276,33 @@ class TestTag(TreeEqualityTestCase):
         """test Tag.add()"""
         node = Tag(wraptext("ref"), wraptext("cite"))
         node.add("name", "value")
-        node.add("name", "value", quoted=False)
+        node.add("name", "value", quotes=None)
+        node.add("name", "value", quotes="'")
         node.add("name")
         node.add(1, False)
         node.add("style", "{{foobar}}")
-        node.add("name", "value", True, "\n", " ", "   ")
+        node.add("name", "value", '"', "\n", " ", "   ")
         attr1 = ' name="value"'
         attr2 = " name=value"
-        attr3 = " name"
-        attr4 = ' 1="False"'
-        attr5 = ' style="{{foobar}}"'
-        attr6 = '\nname =   "value"'
+        attr3 = " name='value'"
+        attr4 = " name"
+        attr5 = ' 1="False"'
+        attr6 = ' style="{{foobar}}"'
+        attr7 = '\nname =   "value"'
         self.assertEqual(attr1, node.attributes[0])
         self.assertEqual(attr2, node.attributes[1])
         self.assertEqual(attr3, node.attributes[2])
         self.assertEqual(attr4, node.attributes[3])
         self.assertEqual(attr5, node.attributes[4])
         self.assertEqual(attr6, node.attributes[5])
-        self.assertEqual(attr6, node.get("name"))
+        self.assertEqual(attr7, node.attributes[6])
+        self.assertEqual(attr7, node.get("name"))
         self.assertWikicodeEqual(wrap([Template(wraptext("foobar"))]),
-                                 node.attributes[4].value)
+                                 node.attributes[5].value)
         self.assertEqual("".join(("<ref", attr1, attr2, attr3, attr4, attr5,
-                                  attr6, ">cite</ref>")), node)
+                                  attr6, attr7, ">cite</ref>")), node)
+        self.assertRaises(ValueError, node.add, "name", "foo", quotes="bar")
+        self.assertRaises(ValueError, node.add, "name", "a bc d", quotes=None)
 
     def test_remove(self):
         """test Tag.remove()"""

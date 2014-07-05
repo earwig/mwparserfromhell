@@ -10,6 +10,10 @@ v0.4 (unreleased):
   option, RECURSE_OTHERS, which recurses over all children except instances of
   'forcetype' (for example, `code.filter_templates(code.RECURSE_OTHERS)`
   returns all un-nested templates).
+- The parser now understands HTML tag attributes quoted with single quotes.
+  When setting a tag attribute's value, quotes will be added if necessary. As
+  part of this, Attribute's 'quoted' attribute has been changed to 'quotes',
+  and is now either a string or None.
 - Calling Template.remove() with a Parameter object that is not part of the
   template now raises ValueError instead of doing nothing.
 - Parameters with non-integer keys can no longer be created with

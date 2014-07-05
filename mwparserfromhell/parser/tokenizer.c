@@ -173,7 +173,7 @@ static TagData* TagData_new(void)
     ALLOC_BUFFER(self->pad_first)
     ALLOC_BUFFER(self->pad_before_eq)
     ALLOC_BUFFER(self->pad_after_eq)
-    self->reset = 0;
+    self->quoter = self->reset = 0;
     return self;
 }
 
@@ -1566,10 +1566,18 @@ static int Tokenizer_parse_comment(Tokenizer* self)
 */
 static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 {
-    PyObject *tokens, *kwargs, *pad_first, *pad_before_eq, *pad_after_eq;
+    PyObject *tokens, *kwargs, *tmp, *pad_first, *pad_before_eq, *pad_after_eq;
 
     if (data->context & TAG_QUOTED) {
-        if (Tokenizer_emit_first(self, TagAttrQuote))
+        kwargs = PyDict_New();
+        if (!kwargs)
+            return -1;
+        tmp = PyUnicode_FromUnicode(&data->quoter, 1);
+        if (!tmp)
+            return -1;
+        PyDict_SetItemString(kwargs, "char", tmp);
+        Py_DECREF(tmp);
+        if (Tokenizer_emit_first_kwargs(self, TagAttrQuote, kwargs))
             return -1;
         tokens = Tokenizer_pop(self);
         if (!tokens)
@@ -1721,16 +1729,17 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
                    Tokenizer_READ_BACKWARDS(self, 2) != '\\');
         if (data->context & TAG_NOTE_QUOTE) {
             data->context ^= TAG_NOTE_QUOTE;
-            if (chunk == '"' && !escaped) {
+            if ((chunk == '"' || chunk == '\'') && !escaped) {
                 data->context |= TAG_QUOTED;
+                data->quoter = chunk;
+                data->reset = self->head;
                 if (Tokenizer_push(self, self->topstack->context))
                     return -1;
-                data->reset = self->head;
                 return 0;
             }
         }
         else if (data->context & TAG_QUOTED) {
-            if (chunk == '"' && !escaped) {
+            if (chunk == data->quoter && !escaped) {
                 data->context |= TAG_NOTE_SPACE;
                 return 0;
             }

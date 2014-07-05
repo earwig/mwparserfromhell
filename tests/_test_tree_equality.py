@@ -98,7 +98,7 @@ class TreeEqualityTestCase(TestCase):
             self.assertWikicodeEqual(exp_attr.name, act_attr.name)
             if exp_attr.value is not None:
                 self.assertWikicodeEqual(exp_attr.value, act_attr.value)
-                self.assertIs(exp_attr.quoted, act_attr.quoted)
+                self.assertEqual(exp_attr.quotes, act_attr.quotes)
             self.assertEqual(exp_attr.pad_first, act_attr.pad_first)
             self.assertEqual(exp_attr.pad_before_eq, act_attr.pad_before_eq)
             self.assertEqual(exp_attr.pad_after_eq, act_attr.pad_after_eq)

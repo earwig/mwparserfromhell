@@ -206,6 +206,7 @@ typedef struct {
     struct Textbuffer* pad_first;
     struct Textbuffer* pad_before_eq;
     struct Textbuffer* pad_after_eq;
+    Py_UNICODE quoter;
     Py_ssize_t reset;
 } TagData;
 

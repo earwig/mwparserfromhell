@@ -42,12 +42,14 @@ class TestAttribute(TreeEqualityTestCase):
         self.assertEqual(" foo", str(node))
         node2 = Attribute(wraptext("foo"), wraptext("bar"))
         self.assertEqual(' foo="bar"', str(node2))
-        node3 = Attribute(wraptext("a"), wraptext("b"), True, "", " ", "   ")
+        node3 = Attribute(wraptext("a"), wraptext("b"), '"', "", " ", "   ")
         self.assertEqual('a =   "b"', str(node3))
-        node3 = Attribute(wraptext("a"), wraptext("b"), False, "", " ", "   ")
-        self.assertEqual("a =   b", str(node3))
-        node4 = Attribute(wraptext("a"), wrap([]), False, " ", "", " ")
-        self.assertEqual(" a= ", str(node4))
+        node4 = Attribute(wraptext("a"), wraptext("b"), "'", "", " ", "   ")
+        self.assertEqual("a =   'b'", str(node4))
+        node5 = Attribute(wraptext("a"), wraptext("b"), None, "", " ", "   ")
+        self.assertEqual("a =   b", str(node5))
+        node6 = Attribute(wraptext("a"), wrap([]), None, " ", "", " ")
+        self.assertEqual(" a= ", str(node6))
 
     def test_name(self):
         """test getter/setter for the name attribute"""
@@ -66,17 +68,35 @@ class TestAttribute(TreeEqualityTestCase):
         self.assertWikicodeEqual(wrap([Template(wraptext("bar"))]), node.value)
         node.value = None
         self.assertIs(None, node.value)
+        node2 = Attribute(wraptext("id"), wraptext("foo"), None)
+        node2.value = "foo bar baz"
+        self.assertWikicodeEqual(wraptext("foo bar baz"), node2.value)
+        self.assertEqual('"', node2.quotes)
+        node2.value = 'foo "bar" baz'
+        self.assertWikicodeEqual(wraptext('foo "bar" baz'), node2.value)
+        self.assertEqual("'", node2.quotes)
+        node2.value = "foo 'bar' baz"
+        self.assertWikicodeEqual(wraptext("foo 'bar' baz"), node2.value)
+        self.assertEqual('"', node2.quotes)
+        node2.value = "fo\"o 'bar' b\"az"
+        self.assertWikicodeEqual(wraptext("fo\"o 'bar' b\"az"), node2.value)
+        self.assertEqual('"', node2.quotes)
 
-    def test_quoted(self):
-        """test getter/setter for the quoted attribute"""
-        node1 = Attribute(wraptext("id"), wraptext("foo"), False)
+    def test_quotes(self):
+        """test getter/setter for the quotes attribute"""
+        node1 = Attribute(wraptext("id"), wraptext("foo"), None)
         node2 = Attribute(wraptext("id"), wraptext("bar"))
-        self.assertFalse(node1.quoted)
-        self.assertTrue(node2.quoted)
-        node1.quoted = True
-        node2.quoted = ""
-        self.assertTrue(node1.quoted)
-        self.assertFalse(node2.quoted)
+        node3 = Attribute(wraptext("id"), wraptext("foo bar baz"))
+        self.assertIs(None, node1.quotes)
+        self.assertEqual('"', node2.quotes)
+        node1.quotes = "'"
+        node2.quotes = None
+        self.assertEqual("'", node1.quotes)
+        self.assertIs(None, node2.quotes)
+        self.assertRaises(ValueError, setattr, node1, "quotes", "foobar")
+        self.assertRaises(ValueError, setattr, node3, "quotes", None)
+        self.assertRaises(ValueError, Attribute, wraptext("id"),
+                          wraptext("foo bar baz"), None)
 
     def test_padding(self):
         """test getter/setter for the padding attributes"""

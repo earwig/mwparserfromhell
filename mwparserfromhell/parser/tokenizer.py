@@ -53,6 +53,7 @@ class _TagOpenData(object):
     def __init__(self):
         self.context = self.CX_NAME
         self.padding_buffer = {"first": "", "before_eq": "", "after_eq": ""}
+        self.quoter = None
         self.reset = 0
 
 
@@ -66,7 +67,7 @@ class Tokenizer(object):
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
-    tag_splitter = re.compile(r"([\s\"\\]+)")
+    tag_splitter = re.compile(r"([\s\"\'\\]+)")
 
     def __init__(self):
         self._text = None
@@ -612,7 +613,7 @@ class Tokenizer(object):
     def _push_tag_buffer(self, data):
         """Write a pending tag attribute from *data* to the stack."""
         if data.context & data.CX_QUOTED:
-            self._emit_first(tokens.TagAttrQuote())
+            self._emit_first(tokens.TagAttrQuote(char=data.quoter))
             self._emit_all(self._pop())
         buf = data.padding_buffer
         self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
@@ -689,13 +690,14 @@ class Tokenizer(object):
                 escaped = self._read(-1) == "\\" and self._read(-2) != "\\"
                 if data.context & data.CX_NOTE_QUOTE:
                     data.context ^= data.CX_NOTE_QUOTE
-                    if chunk == '"' and not escaped:
+                    if chunk in "'\"" and not escaped:
                         data.context |= data.CX_QUOTED
-                        self._push(self._context)
+                        data.quoter = chunk
                         data.reset = self._head
+                        self._push(self._context)
                         continue
                 elif data.context & data.CX_QUOTED:
-                    if chunk == '"' and not escaped:
+                    if chunk == data.quoter and not escaped:
                         data.context |= data.CX_NOTE_SPACE
                         continue
             self._handle_tag_text(chunk)
