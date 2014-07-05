@@ -185,3 +185,10 @@ name:   italics_inside_external_link_inside_incomplete_list
 label:  italic text inside an external link inside an incomplete list
 input:  "<li>[http://www.example.com ''example'']"
 output: [TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), ExternalLinkOpen(brackets=True), Text(text="http://www.example.com"), ExternalLinkSeparator(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="example"), TagOpenClose(), Text(text="i"), TagCloseClose(), ExternalLinkClose()]
+
+---
+
+name:   nodes_inside_external_link_after_punct
+label:  various complex nodes inside an external link following punctuation
+input:  "http://example.com/foo.{{bar}}baz.&biz;<!--hello-->bingo"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo."), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz.&biz;"), CommentStart(), Text(text="hello"), CommentEnd(), Text(text="bingo"), ExternalLinkClose()]

@@ -2508,10 +2508,7 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
         }
         else if (context & LC_FAIL_ON_RBRACE) {
             if (data == '}') {
-                if (context & LC_TEMPLATE)
-                    self->topstack->context |= LC_FAIL_ON_EQUALS;
-                else
-                    self->topstack->context |= LC_FAIL_NEXT;
+                self->topstack->context |= LC_FAIL_NEXT;
                 return 0;
             }
             self->topstack->context ^= LC_FAIL_ON_RBRACE;

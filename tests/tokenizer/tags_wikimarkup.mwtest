@@ -244,6 +244,13 @@ output: [Text(text="''"), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagClos
 
 ---
 
+name:   unending_bold_and_italics
+label:  five ticks (bold and italics) that don't end
+input:  "'''''testing"
+output: [Text(text="'''''testing")]
+
+---
+
 name:   complex_ul
 label:  ul with a lot in it
 input:  "* this is a&nbsp;test of an [[Unordered list|ul]] with {{plenty|of|stuff}}"

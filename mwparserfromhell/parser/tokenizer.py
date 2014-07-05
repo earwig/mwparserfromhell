@@ -1040,10 +1040,7 @@ class Tokenizer(object):
                 self._context ^= contexts.FAIL_ON_LBRACE
             elif context & contexts.FAIL_ON_RBRACE:
                 if this == "}":
-                    if context & contexts.TEMPLATE:
-                        self._context |= contexts.FAIL_ON_EQUALS
-                    else:
-                        self._context |= contexts.FAIL_NEXT
+                    self._context |= contexts.FAIL_NEXT
                     return True
                 self._context ^= contexts.FAIL_ON_RBRACE
             elif this == "{":
