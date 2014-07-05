@@ -832,8 +832,6 @@ static int Tokenizer_parse_wikilink(Tokenizer* self)
     Py_DECREF(wikilink);
     if (Tokenizer_emit(self, WikilinkClose))
         return -1;
-    if (self->topstack->context & LC_FAIL_NEXT)
-        self->topstack->context ^= LC_FAIL_NEXT;
     return 0;
 }
 
@@ -1718,7 +1716,7 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
                 return -1;
         }
     }
-    else if (data->context & TAG_ATTR_VALUE) {
+    else {  // data->context & TAG_ATTR_VALUE assured
         escaped = (Tokenizer_READ_BACKWARDS(self, 1) == '\\' &&
                    Tokenizer_READ_BACKWARDS(self, 2) != '\\');
         if (data->context & TAG_NOTE_QUOTE) {

@@ -255,7 +255,7 @@ class Tokenizer(object):
             self._context ^= contexts.TEMPLATE_NAME
         elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
-        elif self._context & contexts.TEMPLATE_PARAM_KEY:
+        else:
             self._emit_all(self._pop(keep_context=True))
         self._context |= contexts.TEMPLATE_PARAM_KEY
         self._emit(tokens.TemplateParamSeparator())
@@ -296,8 +296,6 @@ class Tokenizer(object):
             self._head = reset
             self._emit_text("[[")
         else:
-            if self._context & contexts.FAIL_NEXT:
-                self._context ^= contexts.FAIL_NEXT
             self._emit(tokens.WikilinkOpen())
             self._emit_all(wikilink)
             self._emit(tokens.WikilinkClose())
@@ -687,7 +685,7 @@ class Tokenizer(object):
                     self._push_tag_buffer(data)
                     data.context = data.CX_ATTR_NAME
                     self._push(contexts.TAG_ATTR)
-            elif data.context & data.CX_ATTR_VALUE:
+            else:  # data.context & data.CX_ATTR_VALUE assured
                 escaped = self._read(-1) == "\\" and self._read(-2) != "\\"
                 if data.context & data.CX_NOTE_QUOTE:
                     data.context ^= data.CX_NOTE_QUOTE
@@ -943,7 +941,7 @@ class Tokenizer(object):
         elif ticks == 3:
             if self._parse_bold():
                 return self._pop()
-        elif ticks == 5:
+        else:  # ticks == 5
             self._parse_italics_and_bold()
         self._head -= 1
 
