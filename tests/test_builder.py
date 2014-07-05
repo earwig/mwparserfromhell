@@ -27,6 +27,7 @@ try:
 except ImportError:
     import unittest
 
+from mwparserfromhell.compat import py3k
 from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
                                     HTMLEntity, Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
@@ -422,9 +423,9 @@ class TestBuilder(TreeEqualityTestCase):
 
     def test_parser_error(self):
         """test whether ParserError gets thrown for bad input"""
+        func = self.assertRaisesRegex if py3k else self.assertRaisesRegexp
         msg = r"_handle_token\(\) got unexpected TemplateClose"
-        self.assertRaisesRegexp(
-            ParserError, msg, self.builder.build, [tokens.TemplateClose()])
+        func(ParserError, msg, self.builder.build, [tokens.TemplateClose()])
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

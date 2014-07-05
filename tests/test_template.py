@@ -130,6 +130,8 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertTrue(node4.has("b", False))
         self.assertTrue(node3.has("b", True))
         self.assertFalse(node4.has("b", True))
+        self.assertFalse(node1.has_param("foobar", False))
+        self.assertTrue(node2.has_param(1, False))
 
     def test_get(self):
         """test Template.get()"""
@@ -176,52 +178,41 @@ class TestTemplate(TreeEqualityTestCase):
             pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
         node16 = Template(wraptext("a"), [
             pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-        node17 = Template(wraptext("a"), [
-            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-        node18 = Template(wraptext("a\n"), [
-            pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
-            pgens("h ", " i\n")])
-        node19 = Template(wraptext("a"), [
-            pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
-        node20 = Template(wraptext("a"), [
-            pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-        node21 = Template(wraptext("a"), [pgenh("1", "b")])
-        node22 = Template(wraptext("a"), [pgenh("1", "b")])
-        node23 = Template(wraptext("a"), [pgenh("1", "b")])
-        node24 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+        node17 = Template(wraptext("a"), [pgenh("1", "b")])
+        node18 = Template(wraptext("a"), [pgenh("1", "b")])
+        node19 = Template(wraptext("a"), [pgenh("1", "b")])
+        node20 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
                                           pgenh("3", "d"), pgenh("4", "e")])
-        node25 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+        node21 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
                                           pgens("4", "d"), pgens("5", "e")])
-        node26 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
+        node22 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
                                           pgens("4", "d"), pgens("5", "e")])
+        node23 = Template(wraptext("a"), [pgenh("1", "b")])
+        node24 = Template(wraptext("a"), [pgenh("1", "b")])
+        node25 = Template(wraptext("a"), [pgens("b", "c")])
+        node26 = Template(wraptext("a"), [pgenh("1", "b")])
         node27 = Template(wraptext("a"), [pgenh("1", "b")])
-        node28 = Template(wraptext("a"), [pgenh("1", "b")])
-        node29 = Template(wraptext("a"), [pgens("b", "c")])
-        node30 = Template(wraptext("a"), [pgenh("1", "b")])
-        node31 = Template(wraptext("a"), [pgenh("1", "b")])
-        node32 = Template(wraptext("a"), [pgens("1", "b")])
-        node33 = Template(wraptext("a"), [
+        node28 = Template(wraptext("a"), [pgens("1", "b")])
+        node29 = Template(wraptext("a"), [
             pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-        node34 = Template(wraptext("a\n"), [
+        node30 = Template(wraptext("a\n"), [
             pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
             pgens("h ", " i\n")])
-        node35 = Template(wraptext("a"), [
+        node31 = Template(wraptext("a"), [
             pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
-        node36 = Template(wraptext("a"), [
+        node32 = Template(wraptext("a"), [
             pgens("\nb ", " c "), pgens("\nd ", " e "), pgens("\nf ", " g ")])
-        node37 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
+        node33 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
                                           pgens("b", "f"), pgens("b", "h"),
                                           pgens("i", "j")])
-        node37 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
-                                          pgens("b", "f"), pgens("b", "h"),
-                                          pgens("i", "j")])
-        node38 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
+        node34 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
                                           pgens("1", "c"), pgens("2", "d")])
-        node39 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
+        node35 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
                                           pgenh("1", "c"), pgenh("2", "d")])
-        node40 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
+        node36 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
                                           pgens("f", "g")])
-        node41 = Template(wraptext("a"), [pgenh("1", "")])
+        node37 = Template(wraptext("a"), [pgenh("1", "")])
+        node38 = Template(wraptext("abc"))
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -241,31 +232,29 @@ class TestTemplate(TreeEqualityTestCase):
         node14.add("j", "k", showkey=True)
         node15.add("h", "i", showkey=True)
         node16.add("h", "i", showkey=True, preserve_spacing=False)
-        node17.add("h", "i", showkey=False)
-        node18.add("j", "k", showkey=False)
-        node19.add("h", "i", showkey=False)
-        node20.add("h", "i", showkey=False, preserve_spacing=False)
-        node21.add("2", "c")
-        node22.add("3", "c")
-        node23.add("c", "d")
-        node24.add("5", "f")
-        node25.add("3", "f")
-        node26.add("6", "f")
-        node27.add("c", "foo=bar")
-        node28.add("2", "foo=bar")
-        node29.add("b", "d")
-        node30.add("1", "foo=bar")
-        node31.add("1", "foo=bar", showkey=True)
-        node32.add("1", "foo=bar", showkey=False)
-        node33.add("d", "foo")
-        node34.add("f", "foo")
-        node35.add("f", "foo")
-        node36.add("d", "foo", preserve_spacing=False)
-        node37.add("b", "k")
-        node38.add("1", "e")
-        node39.add("1", "e")
-        node40.add("d", "h", before="b")
-        node41.add(1, "b")
+        node17.add("2", "c")
+        node18.add("3", "c")
+        node19.add("c", "d")
+        node20.add("5", "f")
+        node21.add("3", "f")
+        node22.add("6", "f")
+        node23.add("c", "foo=bar")
+        node24.add("2", "foo=bar")
+        node25.add("b", "d")
+        node26.add("1", "foo=bar")
+        node27.add("1", "foo=bar", showkey=True)
+        node28.add("1", "foo=bar", showkey=False)
+        node29.add("d", "foo")
+        node30.add("f", "foo")
+        node31.add("f", "foo")
+        node32.add("d", "foo", preserve_spacing=False)
+        node33.add("b", "k")
+        node34.add("1", "e")
+        node35.add("1", "e")
+        node36.add("d", "h", before="b")
+        node37.add(1, "b")
+        node38.add("1", "foo")
+        self.assertRaises(ValueError, node38.add, "z", "bar", showkey=False)
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -285,34 +274,31 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a\n|b =c\n|d = e|f =g\n|h = i\n|j =k\n}}", node14)
         self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =g |h  =i}}", node15)
         self.assertEqual("{{a|\nb = c|\nd = e|\nf = g|h=i}}", node16)
-        self.assertEqual("{{a|\nb = c|\nd = e|\nf = g| i}}", node17)
-        self.assertEqual("{{a\n|b =c\n|d = e|f =g\n|h = i\n|k\n}}", node18)
-        self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =g |i}}", node19)
-        self.assertEqual("{{a|\nb = c|\nd = e|\nf = g|i}}", node20)
-        self.assertEqual("{{a|b|c}}", node21)
-        self.assertEqual("{{a|b|3=c}}", node22)
-        self.assertEqual("{{a|b|c=d}}", node23)
-        self.assertEqual("{{a|b|c|d|e|f}}", node24)
-        self.assertEqual("{{a|b|c|4=d|5=e|f}}", node25)
-        self.assertEqual("{{a|b|c|4=d|5=e|6=f}}", node26)
-        self.assertEqual("{{a|b|c=foo=bar}}", node27)
-        self.assertEqual("{{a|b|foo&#61;bar}}", node28)
-        self.assertIsInstance(node28.params[1].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|b=d}}", node29)
-        self.assertEqual("{{a|foo&#61;bar}}", node30)
-        self.assertIsInstance(node30.params[0].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|1=foo=bar}}", node31)
-        self.assertEqual("{{a|foo&#61;bar}}", node32)
-        self.assertIsInstance(node32.params[0].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|\nb = c|\nd = foo|\nf = g}}", node33)
-        self.assertEqual("{{a\n|b =c\n|d = e|f =foo\n|h = i\n}}", node34)
-        self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =foo }}", node35)
-        self.assertEqual("{{a|\nb = c |\nd =foo|\nf = g }}", node36)
-        self.assertEqual("{{a|b=k|d=e|i=j}}", node37)
-        self.assertEqual("{{a|1=e|x=y|2=d}}", node38)
-        self.assertEqual("{{a|x=y|e|d}}", node39)
-        self.assertEqual("{{a|b=c|d=h|f=g}}", node40)
-        self.assertEqual("{{a|b}}", node41)
+        self.assertEqual("{{a|b|c}}", node17)
+        self.assertEqual("{{a|b|3=c}}", node18)
+        self.assertEqual("{{a|b|c=d}}", node19)
+        self.assertEqual("{{a|b|c|d|e|f}}", node20)
+        self.assertEqual("{{a|b|c|4=d|5=e|f}}", node21)
+        self.assertEqual("{{a|b|c|4=d|5=e|6=f}}", node22)
+        self.assertEqual("{{a|b|c=foo=bar}}", node23)
+        self.assertEqual("{{a|b|foo&#61;bar}}", node24)
+        self.assertIsInstance(node24.params[1].value.get(1), HTMLEntity)
+        self.assertEqual("{{a|b=d}}", node25)
+        self.assertEqual("{{a|foo&#61;bar}}", node26)
+        self.assertIsInstance(node26.params[0].value.get(1), HTMLEntity)
+        self.assertEqual("{{a|1=foo=bar}}", node27)
+        self.assertEqual("{{a|foo&#61;bar}}", node28)
+        self.assertIsInstance(node28.params[0].value.get(1), HTMLEntity)
+        self.assertEqual("{{a|\nb = c|\nd = foo|\nf = g}}", node29)
+        self.assertEqual("{{a\n|b =c\n|d = e|f =foo\n|h = i\n}}", node30)
+        self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =foo }}", node31)
+        self.assertEqual("{{a|\nb = c |\nd =foo|\nf = g }}", node32)
+        self.assertEqual("{{a|b=k|d=e|i=j}}", node33)
+        self.assertEqual("{{a|1=e|x=y|2=d}}", node34)
+        self.assertEqual("{{a|x=y|e|d}}", node35)
+        self.assertEqual("{{a|b=c|d=h|f=g}}", node36)
+        self.assertEqual("{{a|b}}", node37)
+        self.assertEqual("{{abc|foo}}", node38)
 
     def test_remove(self):
         """test Template.remove()"""
@@ -373,6 +359,8 @@ class TestTemplate(TreeEqualityTestCase):
         node26 = Template(wraptext("foo"), [
             pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
             pgens("a", "b")])
+        node27 = Template(wraptext("foo"), [pgenh("1", "bar")])
+        node28 = Template(wraptext("foo"), [pgenh("1", "bar")])
 
         node2.remove("1")
         node2.remove("abc")
@@ -430,6 +418,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{foo|a=|c=d|e=f|a=b|a=b}}", node24)
         self.assertEqual("{{foo|a=b|c=d|e=f|a=b}}", node25)
         self.assertEqual("{{foo|a=b|c=d|e=f|a=|a=b}}", node26)
+        self.assertRaises(ValueError, node27.remove, node28.get(1))
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

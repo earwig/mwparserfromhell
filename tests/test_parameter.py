@@ -71,9 +71,10 @@ class TestParameter(TreeEqualityTestCase):
         self.assertFalse(node1.showkey)
         self.assertTrue(node2.showkey)
         node1.showkey = True
-        node2.showkey = ""
         self.assertTrue(node1.showkey)
-        self.assertFalse(node2.showkey)
+        node1.showkey = ""
+        self.assertFalse(node1.showkey)
+        self.assertRaises(ValueError, setattr, node2, "showkey", False)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

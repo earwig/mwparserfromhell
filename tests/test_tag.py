@@ -33,6 +33,7 @@ from mwparserfromhell.nodes.extras import Attribute
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
+agennv = lambda name: Attribute(wraptext(name))
 agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
 agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, True, a, b, c)
 agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, True, a, b, c)
@@ -74,10 +75,10 @@ class TestTag(TreeEqualityTestCase):
         node1 = Tag(wraptext("ref"), wraptext("foobar"))
         # '''bold text'''
         node2 = Tag(wraptext("b"), wraptext("bold text"), wiki_markup="'''")
-        # <img id="foo" class="bar" />
+        # <img id="foo" class="bar" selected />
         node3 = Tag(wraptext("img"),
-                    attrs=[Attribute(wraptext("id"), wraptext("foo")),
-                           Attribute(wraptext("class"), wraptext("bar"))],
+                    attrs=[agen("id", "foo"), agen("class", "bar"),
+                           agennv("selected")],
                     self_closing=True, padding=" ")
 
         gen1 = node1.__children__()
@@ -89,6 +90,7 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual(node3.attributes[0].value, next(gen3))
         self.assertEqual(node3.attributes[1].name, next(gen3))
         self.assertEqual(node3.attributes[1].value, next(gen3))
+        self.assertEqual(node3.attributes[2].name, next(gen3))
         self.assertEqual(node1.contents, next(gen1))
         self.assertEqual(node2.contents, next(gen2))
         self.assertEqual(node1.closing_tag, next(gen1))
@@ -113,7 +115,8 @@ class TestTag(TreeEqualityTestCase):
         getter, marker = object(), object()
         get = lambda code: output.append((getter, code))
         mark = lambda: output.append(marker)
-        node1 = Tag(wraptext("ref"), wraptext("text"), [agen("name", "foo")])
+        node1 = Tag(wraptext("ref"), wraptext("text"),
+                    [agen("name", "foo"), agennv("selected")])
         node2 = Tag(wraptext("br"), self_closing=True, padding=" ")
         node3 = Tag(wraptext("br"), self_closing=True, invalid=True,
                     implicit=True, padding=" ")
@@ -122,9 +125,10 @@ class TestTag(TreeEqualityTestCase):
         node3.__showtree__(output.append, get, mark)
         valid = [
             "<", (getter, node1.tag), (getter, node1.attributes[0].name),
-            "    = ", marker, (getter, node1.attributes[0].value), ">",
-            (getter, node1.contents), "</", (getter, node1.closing_tag), ">",
-            "<", (getter, node2.tag), "/>", "</", (getter, node3.tag), ">"]
+            "    = ", marker, (getter, node1.attributes[0].value),
+            (getter, node1.attributes[1].name), ">", (getter, node1.contents),
+            "</", (getter, node1.closing_tag), ">", "<", (getter, node2.tag),
+            "/>", "</", (getter, node3.tag), ">"]
         self.assertEqual(valid, output)
 
     def test_tag(self):

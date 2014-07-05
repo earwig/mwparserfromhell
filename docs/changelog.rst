@@ -18,10 +18,17 @@ Unreleased
   which recurses over all children except instances of *forcetype* (for
   example, ``code.filter_templates(code.RECURSE_OTHERS)`` returns all un-nested
   templates).
+- Calling :py:meth:`.Template.remove` with a :py:class:`.Parameter` object that
+  is not part of the template now raises :py:exc:`ValueError` instead of doing
+  nothing.
+- :py:class:`.Parameter`\ s with non-integer keys can no longer be created with
+  *showkey=False*, nor have the value of this attribute be set to *False*
+  later.
 - If something goes wrong while parsing, :py:exc:`.ParserError` will now be
   raised. Previously, the parser would produce an unclear :py:exc:`.BadRoute`
   exception or allow an incorrect node tree to be build.
 - Fixed a parser bug involving nested tags.
+- Test coverage has been improved, and some minor related bugs have been fixed.
 - Updated and fixed some documentation.
 
 v0.3.3

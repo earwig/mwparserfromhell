@@ -155,6 +155,7 @@ class Template(Node):
                 else:
                     self.params.pop(i)
                 return
+        raise ValueError(needle)
 
     @property
     def name(self):
@@ -254,21 +255,19 @@ class Template(Node):
             return existing
 
         if showkey is None:
-            try:
+            if Parameter.can_hide_key(name):
                 int_name = int(str(name))
-            except ValueError:
-                showkey = True
-            else:
                 int_keys = set()
                 for param in self.params:
                     if not param.showkey:
-                        if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                            int_keys.add(int(str(param.name)))
+                        int_keys.add(int(str(param.name)))
                 expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
                 if expected == int_name:
                     showkey = False
                 else:
                     showkey = True
+            else:
+                showkey = True
         if not showkey:
             self._surface_escape(value, "=")
 
