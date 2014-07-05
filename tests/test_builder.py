@@ -421,11 +421,22 @@ class TestBuilder(TreeEqualityTestCase):
             named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
 
-    def test_parser_error(self):
+    def test_parser_errors(self):
         """test whether ParserError gets thrown for bad input"""
+        missing_closes = [
+            [tokens.TemplateOpen(), tokens.TemplateParamSeparator()],
+            [tokens.TemplateOpen()], [tokens.ArgumentOpen()],
+            [tokens.WikilinkOpen()], [tokens.ExternalLinkOpen()],
+            [tokens.HeadingStart()], [tokens.CommentStart()],
+            [tokens.TagOpenOpen(), tokens.TagAttrStart()],
+            [tokens.TagOpenOpen()]
+        ]
+
         func = self.assertRaisesRegex if py3k else self.assertRaisesRegexp
         msg = r"_handle_token\(\) got unexpected TemplateClose"
         func(ParserError, msg, self.builder.build, [tokens.TemplateClose()])
+        for test in missing_closes:
+            self.assertRaises(ParserError, self.builder.build, test)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
