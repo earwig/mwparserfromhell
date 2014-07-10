@@ -369,9 +369,11 @@ class Tokenizer(object):
         if "(" in this and ")" in punct:
             punct = punct[:-1]  # ')' is not longer valid punctuation
         if this.endswith(punct):
-            for i in reversed(range(-len(this), 0)):
-                if i == -len(this) or this[i - 1] not in punct:
+            for i in range(len(this) - 1, 0, -1):
+                if this[i - 1] not in punct:
                     break
+            else:
+                i = 0
             stripped = this[:i]
             if stripped and tail:
                 self._emit_text(tail)
@@ -762,6 +764,8 @@ class Tokenizer(object):
                 depth -= 1
                 if depth == 0:
                     break
+        else:  # pragma: no cover (untestable/exceptional case)
+            raise ParserError("_handle_single_tag_end() missed a TagCloseOpen")
         padding = stack[index].padding
         stack[index] = tokens.TagCloseSelfclose(padding=padding, implicit=True)
         return self._pop()

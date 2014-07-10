@@ -376,6 +376,20 @@ output: [Text(text="{{\nfoo\n|\n{{\nb\nar\n|\nb\naz\n=\nb\niz\n}}\n=\nb\nuzz\n}}
 
 ---
 
+name:   newlines_spaces
+label:  newlines in the middle of a template name, followed by spaces
+input:  "{{foo\n  }}"
+output: [TemplateOpen(), Text(text="foo\n  "), TemplateClose()]
+
+---
+
+name:   newlines_spaces_param
+label:  newlines in the middle of a template name, followed by spaces
+input:  "{{foo\n  }}"
+output: [TemplateOpen(), Text(text="foo\n  "), TemplateClose()]
+
+---
+
 name:   invalid_name_left_brace_middle
 label:  invalid characters in template name: left brace in middle
 input:  "{{foo{bar}}"

@@ -6,3 +6,4 @@ partial_branches =
     pragma: no branch
     if py3k:
     if not py3k:
+    if py26:
