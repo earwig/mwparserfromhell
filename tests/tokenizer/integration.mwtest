@@ -192,3 +192,38 @@ name:   nodes_inside_external_link_after_punct
 label:  various complex nodes inside an external link following punctuation
 input:  "http://example.com/foo.{{bar}}baz.&biz;<!--hello-->bingo"
 output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo."), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz.&biz;"), CommentStart(), Text(text="hello"), CommentEnd(), Text(text="bingo"), ExternalLinkClose()]
+
+---
+
+name:   newline_and_comment_in_template_name
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_2
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->|key=value}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), TemplateParamSeparator(), Text(text="key"), TemplateParamEquals(), Text(text="value"), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_3
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->\n|key=value}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\n"), TemplateParamSeparator(), Text(text="key"), TemplateParamEquals(), Text(text="value"), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_4
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->invalid|key=value}}"
+output: [Text(text="{{foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="invalid|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_5
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->\ninvalid|key=value}}"
+output: [Text(text="{{foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\ninvalid|key=value}}")]

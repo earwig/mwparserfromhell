@@ -384,9 +384,9 @@ output: [TemplateOpen(), Text(text="foo\n  "), TemplateClose()]
 ---
 
 name:   newlines_spaces_param
-label:  newlines in the middle of a template name, followed by spaces
-input:  "{{foo\n  }}"
-output: [TemplateOpen(), Text(text="foo\n  "), TemplateClose()]
+label:  newlines in the middle of a template name, followed by spaces, with a parameter
+input:  "{{foo\n  |bar=baz}}"
+output: [TemplateOpen(), Text(text="foo\n  "), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateClose()]
 
 ---
 
