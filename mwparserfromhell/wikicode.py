@@ -120,8 +120,8 @@ class Wikicode(StringMixIn):
         then it could be any :py:class:`.Wikicode` contained by a node within
         ``self``. If *obj* is not found, :py:exc:`ValueError` is raised.
         """
-        mkslice = lambda i: slice(i, i + 1)
         if isinstance(obj, Node):
+            mkslice = lambda i: slice(i, i + 1)
             if not recursive:
                 return self, mkslice(self.index(obj))
             for i, node in enumerate(self.nodes):
@@ -130,14 +130,13 @@ class Wikicode(StringMixIn):
                         if not context:
                             context = self
                         return context, mkslice(context.index(child))
-        else:
-            context, ind = self._do_strong_search(obj.get(0), recursive)
-            for i in range(1, len(obj.nodes)):
-                if obj.get(i) is not context.get(ind.start + i):
-                    break
-            else:
-                return context, slice(ind.start, ind.start + len(obj.nodes))
-        raise ValueError(obj)
+            raise ValueError(obj)
+
+        context, ind = self._do_strong_search(obj.get(0), recursive)
+        for i in range(1, len(obj.nodes)):
+            if obj.get(i) is not context.get(ind.start + i):
+                raise ValueError(obj)
+        return context, slice(ind.start, ind.start + len(obj.nodes))
 
     def _do_weak_search(self, obj, recursive):
         """Search for an element that looks like *obj* within the node list.

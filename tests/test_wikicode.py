@@ -188,6 +188,13 @@ class TestWikicode(TreeEqualityTestCase):
         func("is {{some", "cd", recursive=True)
         self.assertEqual(expected[5], code6)
 
+        code7 = parse("{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}")
+        func = partial(meth, code7)
+        obj = wrap([code7.get(0), code7.get(2)])
+        self.assertRaises(ValueError, func, obj, "{{lol}}")
+        func("{{foo}}{{baz}}", "{{lol}}")
+        self.assertEqual(expected[6], code7)
+
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
         meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -197,7 +204,8 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a|x{{b}}|{{c|d=y{{f}}}}}}",
             "{{a}}w{{b}}{{c}}x{{d}}{{e}}{{f}}{{g}}{{h}}yz{{i}}{{j}}",
             "{{a|x{{b}}{{c}}|{{f|{{g}}=y{{h}}{{i}}}}}}",
-            "here cdis {{some abtext and a {{template}}}}"]
+            "here cdis {{some abtext and a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}"]
         self._test_search(meth, expected)
 
     def test_insert_after(self):
@@ -209,7 +217,8 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a|{{b}}x|{{c|d={{f}}y}}}}",
             "{{a}}{{b}}{{c}}w{{d}}{{e}}x{{f}}{{g}}{{h}}{{i}}{{j}}yz",
             "{{a|{{b}}{{c}}x|{{f|{{g}}={{h}}{{i}}y}}}}",
-            "here is {{somecd text andab a {{template}}}}"]
+            "here is {{somecd text andab a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}"]
         self._test_search(meth, expected)
 
     def test_replace(self):
@@ -218,7 +227,7 @@ class TestWikicode(TreeEqualityTestCase):
         expected = [
             "{{a}}xz[[y]]{{e}}", "dcdffe", "{{a|x|{{c|d=y}}}}",
             "{{a}}wx{{f}}{{g}}z", "{{a|x|{{f|{{g}}=y}}}}",
-            "here cd ab a {{template}}}}"]
+            "here cd ab a {{template}}}}", "{{foo}}{{bar}}{{baz}}{{lol}}"]
         self._test_search(meth, expected)
 
     def test_append(self):
@@ -238,8 +247,8 @@ class TestWikicode(TreeEqualityTestCase):
         meth = lambda code, obj, value, **kw: code.remove(obj, **kw)
         expected = [
             "{{a}}{{c}}", "", "{{a||{{c|d=}}}}", "{{a}}{{f}}",
-            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}"
-        ]
+            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}"]
         self._test_search(meth, expected)
 
     def test_matches(self):
