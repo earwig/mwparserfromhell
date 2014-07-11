@@ -608,6 +608,11 @@ class Tokenizer(object):
                 self._emit(tokens.CommentEnd())
                 self._emit_all(self._pop())
                 self._head += 2
+                if self._context & contexts.FAIL_NEXT:
+                    # _verify_safe() sets this flag while parsing a template
+                    # name when it encounters what might be a comment -- we
+                    # must unset it to let _verify_safe() know it was correct:
+                    self._context ^= contexts.FAIL_NEXT
                 return
             self._emit_text(this)
             self._head += 1
@@ -1021,6 +1026,9 @@ class Tokenizer(object):
             if context & contexts.HAS_TEXT:
                 if context & contexts.FAIL_ON_TEXT:
                     if this is self.END or not this.isspace():
+                        if this == "<" and self._read(1) == "!":
+                            self._context |= contexts.FAIL_NEXT
+                            return True
                         return False
                 else:
                     if this == "\n":

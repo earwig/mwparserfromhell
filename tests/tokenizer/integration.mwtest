@@ -227,3 +227,17 @@ name:   newline_and_comment_in_template_name_5
 label:  a template name containing a newline followed by a comment
 input:  "{{foobar\n<!-- comment -->\ninvalid|key=value}}"
 output: [Text(text="{{foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\ninvalid|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_6
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!--|key=value}}"
+output: [Text(text="{{foobar\n<!--|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_7
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!|key=value}}"
+output: [Text(text="{{foobar\n<!|key=value}}")]

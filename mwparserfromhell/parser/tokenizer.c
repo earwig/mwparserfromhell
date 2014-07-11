@@ -1553,6 +1553,12 @@ static int Tokenizer_parse_comment(Tokenizer* self)
                 return -1;
             Py_DECREF(comment);
             self->head += 2;
+            if (self->topstack->context & LC_FAIL_NEXT) {
+                /* _verify_safe() sets this flag while parsing a template name
+                   when it encounters what might be a comment -- we must unset
+                   it to let _verify_safe() know it was correct: */
+                self->topstack->context ^= LC_FAIL_NEXT;
+            }
             return 0;
         }
         if (Tokenizer_emit_char(self, this))
@@ -2478,8 +2484,13 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
             return 0;
         if (context & LC_HAS_TEXT) {
             if (context & LC_FAIL_ON_TEXT) {
-                if (!Py_UNICODE_ISSPACE(data))
+                if (!Py_UNICODE_ISSPACE(data)) {
+                    if (data == '<' && Tokenizer_READ(self, 1) == '!') {
+                        self->topstack->context |= LC_FAIL_NEXT;
+                        return 0;
+                    }
                     return -1;
+                }
             }
             else {
                 if (data == '\n')
@@ -2496,8 +2507,8 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
             }
         }
         else if (context & LC_FAIL_ON_LBRACE) {
-            if (data == '{' || (Tokenizer_READ(self, -1) == '{' &&
-                                 Tokenizer_READ(self, -2) == '{')) {
+            if (data == '{' || (Tokenizer_READ_BACKWARDS(self, 1) == '{' &&
+                                 Tokenizer_READ_BACKWARDS(self, 2) == '{')) {
                 if (context & LC_TEMPLATE)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
