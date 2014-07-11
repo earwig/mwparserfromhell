@@ -87,4 +87,3 @@ Subpackages
 .. toctree::
 
     mwparserfromhell.nodes.extras
-

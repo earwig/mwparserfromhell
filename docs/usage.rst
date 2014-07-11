@@ -6,9 +6,9 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> import mwparserfromhell
     >>> wikicode = mwparserfromhell.parse(text)
 
-``wikicode`` is a :py:class:`mwparserfromhell.Wikicode <.Wikicode>` object,
-which acts like an ordinary ``unicode`` object (or ``str`` in Python 3) with
-some extra methods. For example::
+``wikicode`` is a :class:`mwparserfromhell.Wikicode <.Wikicode>` object, which
+acts like an ordinary ``unicode`` object (or ``str`` in Python 3) with some
+extra methods. For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
@@ -33,9 +33,9 @@ Since nodes can contain other nodes, getting nested templates is trivial::
     >>> mwparserfromhell.parse(text).filter_templates()
     ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
 
-You can also pass *recursive=False* to :py:meth:`~.filter_templates` and
-explore templates manually. This is possible because nodes can contain
-additional :py:class:`~.Wikicode` objects::
+You can also pass *recursive=False* to :meth:`.filter_templates` and explore
+templates manually. This is possible because nodes can contain additional
+:class:`.Wikicode` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
     >>> print code.filter_templates(recursive=False)
@@ -49,11 +49,11 @@ additional :py:class:`~.Wikicode` objects::
     template
 
 Templates can be easily modified to add, remove, or alter params.
-:py:class:`~.Wikicode` objects can be treated like lists, with
-:py:meth:`~.Wikicode.append`, :py:meth:`~.Wikicode.insert`,
-:py:meth:`~.Wikicode.remove`, :py:meth:`~.Wikicode.replace`, and more. They
-also have a :py:meth:`~.Wikicode.matches` method for comparing page or template
-names, which takes care of capitalization and whitespace::
+:class:`.Wikicode` objects can be treated like lists, with
+:meth:`~.Wikicode.append`, :meth:`~.Wikicode.insert`,
+:meth:`~.Wikicode.remove`, :meth:`~.Wikicode.replace`, and more. They also have
+a :meth:`~.Wikicode.matches` method for comparing page or template names, which
+takes care of capitalization and whitespace::
 
     >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
     >>> code = mwparserfromhell.parse(text)
@@ -69,8 +69,8 @@ names, which takes care of capitalization and whitespace::
     >>> print code.filter_templates()
     ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
-You can then convert ``code`` back into a regular :py:class:`unicode` object
-(for saving the page!) by calling :py:func:`unicode` on it::
+You can then convert ``code`` back into a regular :class:`unicode` object (for
+saving the page!) by calling :func:`unicode` on it::
 
     >>> text = unicode(code)
     >>> print text
@@ -78,7 +78,7 @@ You can then convert ``code`` back into a regular :py:class:`unicode` object
     >>> text == code
     True
 
-(Likewise, use :py:func:`str(code) <str>` in Python 3.)
+(Likewise, use :func:`str(code) <str>` in Python 3.)
 
-For more tips, check out :py:class:`Wikicode's full method list <.Wikicode>`
-and the :py:mod:`list of Nodes <.nodes>`.
+For more tips, check out :class:`Wikicode's full method list <.Wikicode>` and
+the :mod:`list of Nodes <.nodes>`.

@@ -15,6 +15,12 @@ mwparserfromhell Package
     :members:
     :undoc-members:
 
+:mod:`definitions` Module
+-------------------------
+
+.. automodule:: mwparserfromhell.definitions
+    :members:
+
 :mod:`smart_list` Module
 ------------------------
 
@@ -29,12 +35,6 @@ mwparserfromhell Package
 .. automodule:: mwparserfromhell.string_mixin
     :members:
     :undoc-members:
-
-:mod:`definitions` Module
--------------------------
-
-.. automodule:: mwparserfromhell.definitions
-    :members:
 
 :mod:`utils` Module
 -------------------

@@ -1,11 +1,11 @@
 Integration
 ===========
 
-:py:mod:`mwparserfromhell` is used by and originally developed for EarwigBot_;
-:py:class:`~earwigbot.wiki.page.Page` objects have a
-:py:meth:`~earwigbot.wiki.page.Page.parse` method that essentially calls
-:py:func:`mwparserfromhell.parse() <mwparserfromhell.__init__.parse>` on
-:py:meth:`~earwigbot.wiki.page.Page.get`.
+:mod:`mwparserfromhell` is used by and originally developed for EarwigBot_;
+:class:`~earwigbot.wiki.page.Page` objects have a
+:meth:`~earwigbot.wiki.page.Page.parse` method that essentially calls
+:func:`mwparserfromhell.parse() <mwparserfromhell.__init__.parse>` on
+:meth:`~earwigbot.wiki.page.Page.get`.
 
 If you're using Pywikipedia_, your code might look like this::
 
