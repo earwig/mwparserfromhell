@@ -29,10 +29,13 @@ Unreleased
 - :py:class:`.Parameter`\ s with non-integer keys can no longer be created with
   *showkey=False*, nor have the value of this attribute be set to *False*
   later.
+- :py:meth:`._ListProxy.destroy` has been changed to
+  :py:meth:`._ListProxy.detach`, and now works in a more useful way.
 - If something goes wrong while parsing, :py:exc:`.ParserError` will now be
   raised. Previously, the parser would produce an unclear :py:exc:`.BadRoute`
   exception or allow an incorrect node tree to be build.
-- Fixed a parser bug involving nested tags.
+- Fixed a parser bug involving nested tags, and another involving comments in
+  template names.
 - Test coverage has been improved, and some minor related bugs have been fixed.
 - Updated and fixed some documentation.
 
