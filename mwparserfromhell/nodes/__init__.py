@@ -21,12 +21,12 @@
 # SOFTWARE.
 
 """
-This package contains :py:class:`~.Wikicode` "nodes", which represent a single
-unit of wikitext, such as a Template, an HTML tag, a Heading, or plain text.
-The node "tree" is far from flat, as most types can contain additional
-:py:class:`~.Wikicode` types within them - and with that, more nodes. For
-example, the name of a :py:class:`~.Template` is a :py:class:`~.Wikicode`
-object that can contain text or more templates.
+This package contains :class:`.Wikicode` "nodes", which represent a single unit
+of wikitext, such as a Template, an HTML tag, a Heading, or plain text. The
+node "tree" is far from flat, as most types can contain additional
+:class:`.Wikicode` types within them - and with that, more nodes. For example,
+the name of a :class:`.Template` is a :class:`.Wikicode` object that can
+contain text or more templates.
 """
 
 from __future__ import unicode_literals
@@ -40,16 +40,16 @@ __all__ = ["Node", "Text", "Argument", "Heading", "HTMLEntity", "Tag",
 class Node(StringMixIn):
     """Represents the base Node type, demonstrating the methods to override.
 
-    :py:meth:`__unicode__` must be overridden. It should return a ``unicode``
-    or (``str`` in py3k) representation of the node. If the node contains
-    :py:class:`~.Wikicode` objects inside of it, :py:meth:`__children__`
-    should be a generator that iterates over them. If the node is printable
-    (shown when the page is rendered), :py:meth:`__strip__` should return its
+    :meth:`__unicode__` must be overridden. It should return a ``unicode`` or
+    (``str`` in py3k) representation of the node. If the node contains
+    :class:`.Wikicode` objects inside of it, :meth:`__children__` should be a
+    generator that iterates over them. If the node is printable
+    (shown when the page is rendered), :meth:`__strip__` should return its
     printable version, stripping out any formatting marks. It does not have to
     return a string, but something that can be converted to a string with
-    ``str()``. Finally, :py:meth:`__showtree__` can be overridden to build a
+    ``str()``. Finally, :meth:`__showtree__` can be overridden to build a
     nice tree representation of the node, if desired, for
-    :py:meth:`~.Wikicode.get_tree`.
+    :meth:`~.Wikicode.get_tree`.
     """
     def __unicode__(self):
         raise NotImplementedError()

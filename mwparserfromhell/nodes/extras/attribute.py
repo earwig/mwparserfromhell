@@ -31,7 +31,7 @@ __all__ = ["Attribute"]
 class Attribute(StringMixIn):
     """Represents an attribute of an HTML tag.
 
-    This is used by :py:class:`~.Tag` objects. For example, the tag
+    This is used by :class:`.Tag` objects. For example, the tag
     ``<ref name="foo">`` contains an Attribute whose name is ``"name"`` and
     whose value is ``"foo"``.
     """
@@ -84,12 +84,12 @@ class Attribute(StringMixIn):
 
     @property
     def name(self):
-        """The name of the attribute as a :py:class:`~.Wikicode` object."""
+        """The name of the attribute as a :class:`.Wikicode` object."""
         return self._name
 
     @property
     def value(self):
-        """The value of the attribute as a :py:class:`~.Wikicode` object."""
+        """The value of the attribute as a :class:`.Wikicode` object."""
         return self._value
 
     @property

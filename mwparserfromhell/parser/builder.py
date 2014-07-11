@@ -48,9 +48,9 @@ def _add_handler(token_type):
 class Builder(object):
     """Builds a tree of nodes out of a sequence of tokens.
 
-    To use, pass a list of :py:class:`~.Token`\ s to the :py:meth:`build`
-    method. The list will be exhausted as it is parsed and a
-    :py:class:`.Wikicode` object containing the node tree will be returned.
+    To use, pass a list of :class:`.Token`\ s to the :meth:`build` method. The
+    list will be exhausted as it is parsed and a :class:`.Wikicode` object
+    containing the node tree will be returned.
     """
 
     def __init__(self):
@@ -64,8 +64,8 @@ class Builder(object):
     def _pop(self):
         """Pop the current node list off of the stack.
 
-        The raw node list is wrapped in a :py:class:`.SmartList` and then in a
-        :py:class:`.Wikicode` object.
+        The raw node list is wrapped in a :class:`.SmartList` and then in a
+        :class:`.Wikicode` object.
         """
         return Wikicode(SmartList(self._stacks.pop()))
 

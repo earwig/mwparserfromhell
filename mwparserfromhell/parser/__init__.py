@@ -22,8 +22,8 @@
 
 """
 This package contains the actual wikicode parser, split up into two main
-modules: the :py:mod:`~.tokenizer` and the :py:mod:`~.builder`. This module
-joins them together under one interface.
+modules: the :mod:`.tokenizer` and the :mod:`.builder`. This module joins them
+together into one interface.
 """
 
 class ParserError(Exception):
@@ -54,16 +54,16 @@ class Parser(object):
     """Represents a parser for wikicode.
 
     Actual parsing is a two-step process: first, the text is split up into a
-    series of tokens by the :py:class:`.Tokenizer`, and then the tokens are
-    converted into trees of :py:class:`.Wikicode` objects and
-    :py:class:`.Node`\ s by the :py:class:`.Builder`.
+    series of tokens by the :class:`.Tokenizer`, and then the tokens are
+    converted into trees of :class:`.Wikicode` objects and :class:`.Node`\ s by
+    the :class:`.Builder`.
 
-    Instances of this class or its dependents (:py:class:`.Tokenizer` and
-    :py:class:`.Builder`) should not be shared between threads.
-    :py:meth:`parse` can be called multiple times as long as it is not done
-    concurrently. In general, there is no need to do this because parsing
-    should be done through :py:func:`mwparserfromhell.parse`, which creates a
-    new :py:class:`.Parser` object as necessary.
+    Instances of this class or its dependents (:class:`.Tokenizer` and
+    :class:`.Builder`) should not be shared between threads. :meth:`parse` can
+    be called multiple times as long as it is not done concurrently. In
+    general, there is no need to do this because parsing should be done through
+    :func:`mwparserfromhell.parse`, which creates a new :class:`.Parser` object
+    as necessary.
     """
 
     def __init__(self):
@@ -74,20 +74,20 @@ class Parser(object):
         self._builder = Builder()
 
     def parse(self, text, context=0, skip_style_tags=False):
-        """Parse *text*, returning a :py:class:`~.Wikicode` object tree.
+        """Parse *text*, returning a :class:`.Wikicode` object tree.
 
         If given, *context* will be passed as a starting context to the parser.
         This is helpful when this function is used inside node attribute
-        setters. For example, :py:class:`~.ExternalLink`\ 's
-        :py:attr:`~.ExternalLink.url` setter sets *context* to
-        :py:mod:`contexts.EXT_LINK_URI <.contexts>` to prevent the URL itself
-        from becoming an :py:class:`~.ExternalLink`.
+        setters. For example, :class:`.ExternalLink`\ 's
+        :attr:`~.ExternalLink.url` setter sets *context* to
+        :mod:`contexts.EXT_LINK_URI <.contexts>` to prevent the URL itself
+        from becoming an :class:`.ExternalLink`.
 
         If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
         parsed, but instead will be treated as plain text.
 
-        If there is an internal error while parsing, :py:exc:`.ParserError`
-        will be raised.
+        If there is an internal error while parsing, :exc:`.ParserError` will
+        be raised.
         """
         tokens = self._tokenizer.tokenize(text, context, skip_style_tags)
         code = self._builder.build(tokens)

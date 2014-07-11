@@ -21,9 +21,8 @@
 # SOFTWARE.
 
 """
-This package contains objects used by
-:py:class:`~.Node`\ s, but are not nodes themselves. This includes the
-parameters of Templates or the attributes of HTML tags.
+This package contains objects used by :class:`.Node`\ s, but that are not nodes
+themselves. This includes template parameters and HTML tag attributes.
 """
 
 from .attribute import Attribute

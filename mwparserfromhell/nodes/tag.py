@@ -108,19 +108,19 @@ class Tag(Node):
 
     @property
     def tag(self):
-        """The tag itself, as a :py:class:`~.Wikicode` object."""
+        """The tag itself, as a :class:`.Wikicode` object."""
         return self._tag
 
     @property
     def contents(self):
-        """The contents of the tag, as a :py:class:`~.Wikicode` object."""
+        """The contents of the tag, as a :class:`.Wikicode` object."""
         return self._contents
 
     @property
     def attributes(self):
         """The list of attributes affecting the tag.
 
-        Each attribute is an instance of :py:class:`~.Attribute`.
+        Each attribute is an instance of :class:`.Attribute`.
         """
         return self._attrs
 
@@ -146,7 +146,7 @@ class Tag(Node):
         This makes the tag look like a lone close tag. It is technically
         invalid and is only parsable Wikicode when the tag itself is
         single-only, like ``<br>`` and ``<img>``. See
-        :py:func:`.definitions.is_single_only`.
+        :func:`.definitions.is_single_only`.
         """
         return self._invalid
 
@@ -155,8 +155,8 @@ class Tag(Node):
         """Whether the tag is implicitly self-closing, with no ending slash.
 
         This is only possible for specific "single" tags like ``<br>`` and
-        ``<li>``. See :py:func:`.definitions.is_single`. This field only has an
-        effect if :py:attr:`self_closing` is also ``True``.
+        ``<li>``. See :func:`.definitions.is_single`. This field only has an
+        effect if :attr:`self_closing` is also ``True``.
         """
         return self._implicit
 
@@ -167,9 +167,9 @@ class Tag(Node):
 
     @property
     def closing_tag(self):
-        """The closing tag, as a :py:class:`~.Wikicode` object.
+        """The closing tag, as a :class:`.Wikicode` object.
 
-        This will usually equal :py:attr:`tag`, unless there is additional
+        This will usually equal :attr:`tag`, unless there is additional
         spacing, comments, or the like.
         """
         return self._closing_tag
@@ -226,8 +226,8 @@ class Tag(Node):
     def get(self, name):
         """Get the attribute with the given *name*.
 
-        The returned object is a :py:class:`~.Attribute` instance. Raises
-        :py:exc:`ValueError` if no attribute has this name. Since multiple
+        The returned object is a :class:`.Attribute` instance. Raises
+        :exc:`ValueError` if no attribute has this name. Since multiple
         attributes can have the same name, we'll return the last match, since
         all but the last are ignored by the MediaWiki parser.
         """
@@ -241,9 +241,9 @@ class Tag(Node):
         """Add an attribute with the given *name* and *value*.
 
         *name* and *value* can be anything parsable by
-        :py:func:`.utils.parse_anything`; *value* can be omitted if the
-        attribute is valueless. If *quotes* is not ``None``, it should be a
-        string (either ``"`` or ``'``) that *value* will be wrapped in (this is
+        :func:`.utils.parse_anything`; *value* can be omitted if the attribute
+        is valueless. If *quotes* is not ``None``, it should be a string
+        (either ``"`` or ``'``) that *value* will be wrapped in (this is
         recommended). ``None`` is only legal if *value* contains no spacing.
 
         *pad_first*, *pad_before_eq*, and *pad_after_eq* are whitespace used as

@@ -135,7 +135,7 @@ class Tokenizer(object):
         """Fail the current tokenization route.
 
         Discards the current stack/context/textbuffer and raises
-        :py:exc:`~.BadRoute`.
+        :exc:`.BadRoute`.
         """
         context = self._context
         self._pop()
@@ -173,14 +173,14 @@ class Tokenizer(object):
     def _read(self, delta=0, wrap=False, strict=False):
         """Read the value at a relative point in the wikicode.
 
-        The value is read from :py:attr:`self._head <_head>` plus the value of
+        The value is read from :attr:`self._head <_head>` plus the value of
         *delta* (which can be negative). If *wrap* is ``False``, we will not
         allow attempts to read from the end of the string if ``self._head +
         delta`` is negative. If *strict* is ``True``, the route will be failed
-        (with :py:meth:`_fail_route`) if we try to read from past the end of
-        the string; otherwise, :py:attr:`self.END <END>` is returned. If we try
-        to read from before the start of the string, :py:attr:`self.START
-        <START>` is returned.
+        (with :meth:`_fail_route`) if we try to read from past the end of the
+        string; otherwise, :attr:`self.END <END>` is returned. If we try to
+        read from before the start of the string, :attr:`self.START <START>` is
+        returned.
         """
         index = self._head + delta
         if index < 0 and (not wrap or abs(index) > len(self._text)):

@@ -62,12 +62,12 @@ class Wikilink(Node):
 
     @property
     def title(self):
-        """The title of the linked page, as a :py:class:`~.Wikicode` object."""
+        """The title of the linked page, as a :class:`.Wikicode` object."""
         return self._title
 
     @property
     def text(self):
-        """The text to display (if any), as a :py:class:`~.Wikicode` object."""
+        """The text to display (if any), as a :class:`.Wikicode` object."""
         return self._text
 
     @title.setter

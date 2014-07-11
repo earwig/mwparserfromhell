@@ -34,18 +34,18 @@ from .smart_list import SmartList
 __all__ = ["parse_anything"]
 
 def parse_anything(value, context=0, skip_style_tags=False):
-    """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
+    """Return a :class:`.Wikicode` for *value*, allowing multiple types.
 
-    This differs from :py:meth:`.Parser.parse` in that we accept more than just
-    a string to be parsed. Unicode objects (strings in py3k), strings (bytes in
-    py3k), integers (converted to strings), ``None``, existing
-    :py:class:`~.Node` or :py:class:`~.Wikicode` objects, as well as an
-    iterable of these types, are supported. This is used to parse input
-    on-the-fly by various methods of :py:class:`~.Wikicode` and others like
-    :py:class:`~.Template`, such as :py:meth:`wikicode.insert()
-    <.Wikicode.insert>` or setting :py:meth:`template.name <.Template.name>`.
+    This differs from :meth:`.Parser.parse` in that we accept more than just a
+    string to be parsed. Unicode objects (strings in py3k), strings (bytes in
+    py3k), integers (converted to strings), ``None``, existing :class:`.Node`
+    or :class:`.Wikicode` objects, as well as an iterable of these types, are
+    supported. This is used to parse input on-the-fly by various methods of
+    :class:`.Wikicode` and others like :class:`.Template`, such as
+    :meth:`wikicode.insert() <.Wikicode.insert>` or setting
+    :meth:`template.name <.Template.name>`.
 
-    Additional arguments are passed directly to :py:meth:`.Parser.parse`.
+    Additional arguments are passed directly to :meth:`.Parser.parse`.
     """
     from .parser import Parser
     from .wikicode import Wikicode

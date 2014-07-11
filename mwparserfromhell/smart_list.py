@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-This module contains the :py:class:`~.SmartList` type, as well as its
-:py:class:`~._ListProxy` child, which together implement a list whose sublists
+This module contains the :class:`.SmartList` type, as well as its
+:class:`._ListProxy` child, which together implement a list whose sublists
 reflect changes made to the main list, and vice-versa.
 """
 
@@ -35,7 +35,7 @@ __all__ = ["SmartList"]
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    Since this is used on :py:class:`~.SmartList`, the "parent class" used is
+    Since this is used on :class:`.SmartList`, the "parent class" used is
     ``list``. This function can be used as a decorator.
     """
     method.__doc__ = getattr(list, method.__name__).__doc__
@@ -65,9 +65,9 @@ class SmartList(_SliceNormalizerMixIn, list):
     list (such as the addition, removal, or replacement of elements) will be
     reflected in the sublist, or vice-versa, to the greatest degree possible.
     This is implemented by having sublists - instances of the
-    :py:class:`~._ListProxy` type - dynamically determine their elements by
-    storing their slice info and retrieving that slice from the parent. Methods
-    that change the size of the list also change the slice info. For example::
+    :class:`._ListProxy` type - dynamically determine their elements by storing
+    their slice info and retrieving that slice from the parent. Methods that
+    change the size of the list also change the slice info. For example::
 
         >>> parent = SmartList([0, 1, 2, 3])
         >>> parent
@@ -84,8 +84,8 @@ class SmartList(_SliceNormalizerMixIn, list):
     The parent needs to keep a list of its children in order to update them,
     which prevents them from being garbage-collected. If you are keeping the
     parent around for a while but creating many children, it is advisable to
-    call :py:meth:`~._ListProxy.detach` when you're finished with them. Certain
-    parent methods, like :py:meth:`reverse` and :py:meth:`sort`, will do this
+    call :meth:`._ListProxy.detach` when you're finished with them. Certain
+    parent methods, like :meth:`reverse` and :meth:`sort`, will do this
     automatically.
     """
 
@@ -217,9 +217,9 @@ class SmartList(_SliceNormalizerMixIn, list):
 class _ListProxy(_SliceNormalizerMixIn, list):
     """Implement the ``list`` interface by getting elements from a parent.
 
-    This is created by a :py:class:`~.SmartList` object when slicing. It does
-    not actually store the list at any time; instead, whenever the list is
-    needed, it builds it dynamically using the :py:meth:`_render` method.
+    This is created by a :class:`.SmartList` object when slicing. It does not
+    actually store the list at any time; instead, whenever the list is needed,
+    it builds it dynamically using the :meth:`_render` method.
     """
 
     def __init__(self, parent, sliceinfo):

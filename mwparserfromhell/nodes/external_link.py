@@ -67,12 +67,12 @@ class ExternalLink(Node):
 
     @property
     def url(self):
-        """The URL of the link target, as a :py:class:`~.Wikicode` object."""
+        """The URL of the link target, as a :class:`.Wikicode` object."""
         return self._url
 
     @property
     def title(self):
-        """The link title (if given), as a :py:class:`~.Wikicode` object."""
+        """The link title (if given), as a :class:`.Wikicode` object."""
         return self._title
 
     @property
