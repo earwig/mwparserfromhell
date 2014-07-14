@@ -1002,6 +1002,39 @@ class Tokenizer(object):
             self._fail_route()
         return self._pop()
 
+    def _handle_table_start(self):
+        """Handle the start of a table."""
+        # TODO - fail all other contexts on start?
+        self._head += 2
+        reset = self._head - 1
+        try:
+            table = self._parse(contexts.TABLE_OPEN)
+        except BadRoute:
+            self._head = reset
+            self._emit_text("{|")
+        else:
+            self._emit_style_tag("table", "{|", table)
+
+    def _handle_table_end(self):
+        self._head += 2
+        return self._pop()
+
+    def _handle_table_row(self):
+        self._head += 2
+        self._emit(tokens.TagOpenOpen(wiki_markup="{-"))
+        self._emit_text("tr")
+        self._emit(tokens.TagCloseSelfclose())
+        self._context &= ~contexts.TABLE_CELL_OPEN
+
+    def _handle_table_cell(self):
+        pass
+
+    def _handle_header_cell(self):
+        pass
+
+    def _handle_cell_style(self):
+        pass
+
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
         context = self._context
@@ -1144,15 +1177,48 @@ class Tokenizer(object):
                 result = self._parse_style()
                 if result is not None:
                     return result
-            elif self._read(-1) in ("\n", self.START):
-                if this in ("#", "*", ";", ":"):
+            elif self._read(-1) in ("\n", self.START) and this in ("#", "*", ";", ":"):
                     self._handle_list()
-                elif this == next == self._read(2) == self._read(3) == "-":
+            elif self._read(-1) in ("\n", self.START) and this == next == self._read(2) == self._read(3) == "-":
                     self._handle_hr()
-                else:
-                    self._emit_text(this)
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
+
+            elif (this == "{" and next == "|" and (self._read(-1) in ("\n", self.START)) or
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).strip() == "")):
+                if self._can_recurse():
+                    self._handle_table_start()
+                else:
+                    self._emit_text("{|")
+            elif self._context & contexts.TABLE_OPEN:
+                if this == "|" and next == "}":
+                    return self._handle_table_end()
+                elif this == "|" and next == "|" and self._context & contexts.TABLE_CELL_LINE:
+                    self._handle_table_cell()
+                elif this == "|" and next == "|" and self._context & contexts.TABLE_HEADER_LINE:
+                    self._handle_header_cell()
+                elif this == "!" and next == "!" and self._context & contexts.TABLE_HEADER_LINE:
+                    self._handle_header_cell()
+                elif this == "|" and self._context & contexts.TABLE_CELL_STYLE_POSSIBLE:
+                    self._handle_cell_style()
+                # on newline, clear out cell line contexts
+                elif this == "\n" and self._context & (contexts.TABLE_CELL_LINE | contexts.TABLE_HEADER_LINE | contexts.TABLE_CELL_STYLE_POSSIBLE):
+                    self._context &= (~contexts.TABLE_CELL_LINE & ~contexts.TABLE_HEADER_LINE & ~contexts.TABLE_CELL_STYLE_POSSIBLE)
+                    self._emit_text(this)
+                # newline or whitespace/newline
+                elif (self._read(-1) in ("\n", self.START) or
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).strip() == "")):
+                    if this == "|" and next == "-":
+                        self._handle_table_row()
+                    elif this == "|" and self._can_recurse():
+                        self._handle_table_cell()
+                    elif this == "!" and self._can_recurse():
+                        self._handle_header_cell()
+                    else:
+                        self._emit_text(this)
+                else:
+                    self._emit_text(this)
+
             else:
                 self._emit_text(this)
             self._head += 1

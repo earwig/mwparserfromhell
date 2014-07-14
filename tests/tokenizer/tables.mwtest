@@ -1,0 +1,32 @@
+name:   empty_table
+label:  Parsing an empty table.
+input:  "{|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   inline_table
+label:  Correctly handle tables with close on the same line.
+input:  "{||}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   no_table_close_simple
+label:  Handle case when there is no table close.
+input:  "{| "
+output: [Text(text="{| ")]
+
+---
+
+name:   leading_whitespace_table
+label:  Handle leading whitespace for a table.
+input:  "foo \n    \t {|\n|}"
+output: [Text(text="foo \n    \t "), TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   leading_characters_table
+label:  Don't parse as a table when leading characters are not newline or whitespace.
+input:  "foo \n  foo  \t {|\n|}"
+output: [Text(text="foo \n  foo  \t {|\n|}")]
