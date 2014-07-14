@@ -1020,17 +1020,34 @@ class Tokenizer(object):
         return self._pop()
 
     def _handle_table_row(self):
-        self._head += 2
-        self._emit(tokens.TagOpenOpen(wiki_markup="{-"))
+        self._head += 1
+        self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
         self._emit_text("tr")
         self._emit(tokens.TagCloseSelfclose())
-        self._context &= ~contexts.TABLE_CELL_OPEN
 
-    def _handle_table_cell(self):
-        pass
+    def _handle_table_cell(self, markup, tag, line_context):
+        """Parse as normal syntax unless we hit a style marker, then parse as HTML attributes"""
+        if not self._can_recurse():
+            self._emit_text(markup)
+            self._head += len(markup) - 1
+            return
 
-    def _handle_header_cell(self):
-        pass
+        reset = self._head
+        self._head += len(markup)
+        try:
+            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | contexts.TABLE_CELL_STYLE_POSSIBLE | line_context)
+        except BadRoute:
+            self._head = reset
+            raise
+        else:
+            self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+            self._emit_text(tag)
+            self._emit(tokens.TagCloseSelfclose())
+            self._emit_all(cell)
+            self._head -= 1
+
+    def _handle_table_cell_end(self):
+        return self._pop()
 
     def _handle_cell_style(self):
         pass
@@ -1184,36 +1201,51 @@ class Tokenizer(object):
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
 
-            elif (this == "{" and next == "|" and (self._read(-1) in ("\n", self.START)) or
-                    (self._read(-2) in ("\n", self.START) and self._read(-1).strip() == "")):
+            elif this == "{" and next == "|" and (self._read(-1) in ("\n", self.START) or
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
                 if self._can_recurse():
                     self._handle_table_start()
                 else:
                     self._emit_text("{|")
             elif self._context & contexts.TABLE_OPEN:
                 if this == "|" and next == "}":
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
                     return self._handle_table_end()
                 elif this == "|" and next == "|" and self._context & contexts.TABLE_CELL_LINE:
-                    self._handle_table_cell()
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("||", "td", contexts.TABLE_CELL_LINE)
                 elif this == "|" and next == "|" and self._context & contexts.TABLE_HEADER_LINE:
-                    self._handle_header_cell()
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("||", "th", contexts.TABLE_HEADER_LINE)
                 elif this == "!" and next == "!" and self._context & contexts.TABLE_HEADER_LINE:
-                    self._handle_header_cell()
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("!!", "th", contexts.TABLE_HEADER_LINE)
                 elif this == "|" and self._context & contexts.TABLE_CELL_STYLE_POSSIBLE:
                     self._handle_cell_style()
                 # on newline, clear out cell line contexts
                 elif this == "\n" and self._context & (contexts.TABLE_CELL_LINE | contexts.TABLE_HEADER_LINE | contexts.TABLE_CELL_STYLE_POSSIBLE):
+                    # TODO might not be handled due to DL_TERM code above
+                    # TODO does this even work?
                     self._context &= (~contexts.TABLE_CELL_LINE & ~contexts.TABLE_HEADER_LINE & ~contexts.TABLE_CELL_STYLE_POSSIBLE)
                     self._emit_text(this)
-                # newline or whitespace/newline
                 elif (self._read(-1) in ("\n", self.START) or
-                    (self._read(-2) in ("\n", self.START) and self._read(-1).strip() == "")):
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
                     if this == "|" and next == "-":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
                         self._handle_table_row()
-                    elif this == "|" and self._can_recurse():
-                        self._handle_table_cell()
-                    elif this == "!" and self._can_recurse():
-                        self._handle_header_cell()
+                    elif this == "|":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        self._handle_table_cell("|", "td", contexts.TABLE_CELL_LINE)
+                    elif this == "!":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        self._handle_table_cell("!", "th", contexts.TABLE_HEADER_LINE)
                     else:
                         self._emit_text(this)
                 else:

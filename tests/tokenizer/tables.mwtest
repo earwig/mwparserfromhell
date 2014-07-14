@@ -19,6 +19,13 @@ output: [Text(text="{| ")]
 
 ---
 
+name:   no_table_close_inside_cell
+label:  Handle case when there is no table close while inside of a cell.
+input:  "{| | "
+output: [Text(text="{| | ")]
+
+---
+
 name:   leading_whitespace_table
 label:  Handle leading whitespace for a table.
 input:  "foo \n    \t {|\n|}"
@@ -30,3 +37,52 @@ name:   leading_characters_table
 label:  Don't parse as a table when leading characters are not newline or whitespace.
 input:  "foo \n  foo  \t {|\n|}"
 output: [Text(text="foo \n  foo  \t {|\n|}")]
+
+---
+
+name:   table_row_simple
+label:  Simple table row.
+input:  "{|\n |- \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseSelfclose(), Text(text=" \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_simple
+label:  Simple table cell.
+input:  "{|\n | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(), Text(text=" foo \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   nowiki_inside_table
+label:  Nowiki handles pipe characters in tables.
+input:  "{|\n | foo <nowiki>| |- {| |} || ! !!</nowiki> bar \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(), Text(text=" foo "), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="| |- {| |} || ! !!"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), Text(text=" bar \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_text_outside_cell
+label:  Parse text inside table but outside of a cell.
+input:  "{|\n bar \n | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n bar \n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(), Text(text=" foo \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   no_table_cell_with_leading_characters
+label:  Fail to create a table cell when there are leading non-whitespace characters.
+input:  "{|\n bar | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n bar | foo \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   no_table_row_with_leading_characters
+label:  Fail to create a table row when there are leading non-whitespace characters.
+input:  "{|\n bar |- foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n bar |- foo \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   template_inside_table_cell
+label:  Template within table cell.
+input:  "{|\n |{{foo\n|bar=baz}} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(), TemplateOpen(), Text(text="foo\n"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateClose(), Text(text=" \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
