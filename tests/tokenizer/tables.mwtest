@@ -127,7 +127,7 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text
 name:   table_cell_attributes_name_with_pipe
 label:  Pipe inside an attribute name should still be used as a style separator.
 input:  "{| \n | name|="foo bar"| test \n|}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text=" \n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(), Text(text="=\"foo bar"| test \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text=" \n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseSelfclose(), Text(text="=\"foo bar\"| test \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
 
 ---
 
@@ -135,3 +135,25 @@ name:   table_cell_attributes_pipe_after_equals
 label:  Pipe inside an attribute should still be used as a style separator after an equals.
 input:  "{| \n | name=|"foo|bar"| test \n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text=" \n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagCloseSelfclose(), Text(text="\"foo|bar\"| test \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_attributes
+label:  Parse table row style attributes.
+input:  "{| \n |- name="foo bar"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text=" \n "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseSelfclose(), Text(text="\n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_attributes_crazy_whitespace
+label:  Parse table row style attributes with different whitespace.
+input:  "{| \t    \n |- \t   name="foo bar"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text=" \t    \n "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" \t   ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseSelfclose(), Text(text="\n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+
+---
+
+name:   table_attributes
+label:  Parse table style attributes.
+input:  "{| name="foo bar"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"),TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(), Text(text="\n"), TagOpenClose(), Text(text="table"), TagCloseClose()]

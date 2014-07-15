@@ -1007,23 +1007,53 @@ class Tokenizer(object):
         # TODO - fail all other contexts on start?
         self._head += 2
         reset = self._head - 1
+        style = None
         try:
+            self._push(contexts.TABLE_OPEN)
+            style = self._parse_as_table_style("\n", break_on_table_end=True)
+            if len(style) == 0:
+                self._head = reset + 1
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
             self._head = reset
             self._emit_text("{|")
         else:
-            self._emit_style_tag("table", "{|", table)
+            self._emit(tokens.TagOpenOpen(wiki_markup="{|"))
+            self._emit_text("table")
+            if style:
+                self._emit_all(style)
+            self._emit(tokens.TagCloseOpen())
+            self._emit_all(table)
+            self._emit(tokens.TagOpenClose())
+            self._emit_text("table")
+            self._emit(tokens.TagCloseClose())
+            # self._emit_style_tag("table", "{|", table)
 
     def _handle_table_end(self):
         self._head += 2
         return self._pop()
 
     def _handle_table_row(self):
-        self._head += 1
-        self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
-        self._emit_text("tr")
-        self._emit(tokens.TagCloseSelfclose())
+        reset = self._head
+        self._head += 2
+        try:
+            self._push(contexts.TABLE_OPEN)
+            style = self._parse_as_table_style("\n")
+            if len(style) == 0:
+                self._head = reset + 2
+        except BadRoute:
+            self._head = reset
+            raise
+        else:
+            self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
+            self._emit_text("tr")
+            if style:
+                # this looks highly suspicious
+                # if type(style[0] == tokens.Text):
+                #     style.pop(0)
+                self._emit_all(style)
+            self._emit(tokens.TagCloseSelfclose())
+            self._head -= 1
 
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse as HTML attributes"""
@@ -1047,9 +1077,10 @@ class Tokenizer(object):
             self._head = reset + len(markup)
             try:
                 style = self._parse_as_table_style("|")
+                # Don't parse the style separator
+                self._head += 1
                 (cell_context, cell) = self._parse(table_context)
             except BadRoute:
-                assert False
                 self._head = reset
                 raise
         self._emit(tokens.TagOpenOpen(wiki_markup=markup))
@@ -1066,7 +1097,7 @@ class Tokenizer(object):
         # offset displacement done by _parse()
         self._head -= 1
 
-    def _parse_as_table_style(self, end_token):
+    def _parse_as_table_style(self, end_token, break_on_table_end=False):
         data = _TagOpenData()
         data.context = _TagOpenData.CX_ATTR_READY
         while True:
@@ -1086,7 +1117,9 @@ class Tokenizer(object):
             elif this == end_token and can_exit:
                 if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
                     self._push_tag_buffer(data)
-                self._head += 1
+                # self._head += 1
+                return self._pop()
+            elif break_on_table_end and this == "|" and next == "}":
                 return self._pop()
             else:
                 self._handle_tag_data(data, this)
