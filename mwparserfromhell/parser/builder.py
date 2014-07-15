@@ -248,6 +248,7 @@ class Builder(object):
         close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
         implicit, attrs, contents, closing_tag = False, [], None, None
         wiki_markup, invalid = token.wiki_markup, token.invalid or False
+        closing_wiki_markup = None
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -258,6 +259,7 @@ class Builder(object):
                 tag = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagOpenClose):
+                closing_wiki_markup = token.wiki_markup
                 contents = self._pop()
                 self._push()
             elif isinstance(token, close_tokens):
@@ -270,7 +272,7 @@ class Builder(object):
                     self_closing = False
                     closing_tag = self._pop()
                 return Tag(tag, contents, attrs, wiki_markup, self_closing,
-                           invalid, implicit, padding, closing_tag)
+                           invalid, implicit, padding, closing_tag, closing_wiki_markup)
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_tag() missed a close token")

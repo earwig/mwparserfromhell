@@ -171,6 +171,24 @@ class TestTag(TreeEqualityTestCase):
         self.assertFalse(node.wiki_markup)
         self.assertEqual("<i>italic text</i>", node)
 
+    def test_closing_wiki_markup(self):
+        """test getter/setter behavior for closing_wiki_markup attribute"""
+        node = Tag(wraptext("table"), wraptext("\n"))
+        self.assertIs(None, node.closing_wiki_markup)
+        node.wiki_markup = "{|"
+        self.assertEqual("{|", node.closing_wiki_markup)
+        node.closing_wiki_markup = "|}"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("{|\n|}", node)
+        node.wiki_markup = False
+        self.assertFalse(node.closing_wiki_markup)
+        node.self_closing = True
+        node.wiki_markup = "{|"
+        self.assertIs(None, node.closing_wiki_markup)
+        node.wiki_markup = False
+        node.self_closing = False
+        self.assertEqual("<table>\n</table>", node)
+
     def test_self_closing(self):
         """test getter/setter for the self_closing attribute"""
         node = Tag(wraptext("ref"), wraptext("foobar"))

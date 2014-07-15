@@ -35,7 +35,7 @@ class Tag(Node):
 
     def __init__(self, tag, contents=None, attrs=None, wiki_markup=None,
                  self_closing=False, invalid=False, implicit=False, padding="",
-                 closing_tag=None):
+                 closing_tag=None, closing_wiki_markup=None):
         super(Tag, self).__init__()
         self._tag = tag
         if contents is None and not self_closing:
@@ -44,6 +44,13 @@ class Tag(Node):
             self._contents = contents
         self._attrs = attrs if attrs else []
         self._wiki_markup = wiki_markup
+        if wiki_markup and not self_closing:
+            if closing_wiki_markup:
+                self._closing_wiki_markup = closing_wiki_markup
+            else:
+                self._closing_wiki_markup = wiki_markup
+        else:
+            self._closing_wiki_markup = None
         self._self_closing = self_closing
         self._invalid = invalid
         self._implicit = implicit
@@ -55,10 +62,11 @@ class Tag(Node):
 
     def __unicode__(self):
         if self.wiki_markup:
+            attrs = "".join([str(attr) for attr in self.attributes]) if self.attributes else ""
             if self.self_closing:
                 return self.wiki_markup
             else:
-                return self.wiki_markup + str(self.contents) + self.wiki_markup
+                return self.wiki_markup + attrs + str(self.contents) + self.closing_wiki_markup
 
         result = ("</" if self.invalid else "<") + str(self.tag)
         if self.attributes:
@@ -135,6 +143,19 @@ class Tag(Node):
         return self._wiki_markup
 
     @property
+    def closing_wiki_markup(self):
+        """The wikified version of the closing tag to show instead of HTML.
+
+        If set to a value, this will be displayed instead of the close tag
+        brackets. If tag is :attr:`self_closing` is ``True``, this is set to
+        ``None`` and not displayed. If :attr:`wiki_markup` is set and this has
+        not been set, this is set to the value of :attr:`wiki_markup`. If this
+        has been set and :attr:`wiki_markup` is set to a ``False`` value, this
+        is set to ``None``.
+        """
+        return self._closing_wiki_markup
+
+    @property
     def self_closing(self):
         """Whether the tag is self-closing with no content (like ``<br/>``)."""
         return self._self_closing
@@ -185,10 +206,19 @@ class Tag(Node):
     @wiki_markup.setter
     def wiki_markup(self, value):
         self._wiki_markup = str(value) if value else None
+        if not value or not self.closing_wiki_markup:
+            self.closing_wiki_markup = str(value) if value else None
+
+
+    @closing_wiki_markup.setter
+    def closing_wiki_markup(self, value):
+        self._closing_wiki_markup = str(value) if value and not self.self_closing else None
 
     @self_closing.setter
     def self_closing(self, value):
         self._self_closing = bool(value)
+        if not bool(value):
+            self.closing_wiki_markup = None
 
     @invalid.setter
     def invalid(self, value):
