@@ -1027,30 +1027,78 @@ class Tokenizer(object):
 
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse as HTML attributes"""
+        table_context = contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context
         if not self._can_recurse():
             self._emit_text(markup)
+            # TODO check if this works
             self._head += len(markup) - 1
             return
 
         reset = self._head
         self._head += len(markup)
+        style = None
         try:
-            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | contexts.TABLE_CELL_STYLE_POSSIBLE | line_context)
+            (cell_context, cell) = self._parse(table_context | contexts.TABLE_CELL_STYLE_POSSIBLE)
         except BadRoute:
             self._head = reset
             raise
-        else:
-            self._emit(tokens.TagOpenOpen(wiki_markup=markup))
-            self._emit_text(tag)
-            self._emit(tokens.TagCloseSelfclose())
-            self._emit_all(cell)
-            self._head -= 1
+        # except for handling cell style
+        except StopIteration:
+            self._head = reset + len(markup)
+            try:
+                style = self._parse_as_table_style("|")
+                (cell_context, cell) = self._parse(table_context)
+            except BadRoute:
+                assert False
+                self._head = reset
+                raise
+        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
+        self._emit_text(tag)
+        if style:
+            # this looks highly suspicious
+            if type(style[0] == tokens.Text):
+                style.pop(0)
+            self._emit_all(style)
+        self._emit(tokens.TagCloseSelfclose())
+        self._emit_all(cell)
+        # keep header/cell line contexts
+        self._context |= cell_context & (contexts.TABLE_HEADER_LINE | contexts.TABLE_CELL_LINE)
+        # offset displacement done by _parse()
+        self._head -= 1
+
+    def _parse_as_table_style(self, end_token):
+        data = _TagOpenData()
+        data.context = _TagOpenData.CX_ATTR_READY
+        while True:
+            this, next = self._read(), self._read(1)
+            can_exit = (not data.context & (data.CX_NAME) or
+                        data.context & data.CX_NOTE_SPACE)
+            if this is self.END:
+                if self._context & contexts.TAG_ATTR:
+                    if data.context & data.CX_QUOTED:
+                        # Unclosed attribute quote: reset, don't die
+                        data.context = data.CX_ATTR_VALUE
+                        self._pop()
+                        self._head = data.reset
+                        continue
+                    self._pop()
+                self._fail_route()
+            elif this == end_token and can_exit:
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                self._head += 1
+                return self._pop()
+            else:
+                self._handle_tag_data(data, this)
+            self._head += 1
 
     def _handle_table_cell_end(self):
-        return self._pop()
+        """Returns the context and stack in a tuple."""
+        return (self._context, self._pop())
 
     def _handle_cell_style(self):
-        pass
+        """Pop the cell off the stack and try to parse as style"""
+        raise StopIteration()
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
