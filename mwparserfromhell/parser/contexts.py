@@ -90,6 +90,15 @@ Local (stack-specific) contexts:
     * :const:`FAIL_ON_RBRACE`
     * :const:`FAIL_ON_EQUALS`
 
+* :const:`TABLE`
+
+    * :const:`TABLE_OPEN`
+    * :const:`TABLE_CELL_OPEN`
+    * :const:`TABLE_CELL_STYLE_POSSIBLE`
+    * :const:`TABLE_TD_LINE`
+    * :const:`TABLE_TH_LINE`
+    * :const:`TABLE_CELL_LINE_CONTEXTS`
+
 Global contexts:
 
 * :const:`GL_HEADING`
@@ -156,10 +165,14 @@ SAFETY_CHECK = (HAS_TEXT + FAIL_ON_TEXT + FAIL_NEXT + FAIL_ON_LBRACE +
                 FAIL_ON_RBRACE + FAIL_ON_EQUALS)
 
 TABLE_OPEN =                1 << 30
-TABLE_CELL_LINE =           1 << 31
-TABLE_HEADER_LINE =         1 << 32
-TABLE_CELL_OPEN =           1 << 33
-TABLE_CELL_STYLE_POSSIBLE = 1 << 34
+TABLE_CELL_OPEN =           1 << 31
+TABLE_CELL_STYLE_POSSIBLE = 1 << 32
+TABLE_TD_LINE =             1 << 33
+TABLE_TH_LINE =             1 << 34
+TABLE_CELL_LINE_CONTEXTS = (TABLE_TD_LINE + TABLE_TH_LINE +
+                            TABLE_CELL_STYLE_POSSIBLE)
+TABLE = (TABLE_OPEN + TABLE_CELL_OPEN + TABLE_CELL_STYLE_POSSIBLE +
+         TABLE_TD_LINE + TABLE_TH_LINE)
 
 # Global contexts:
 
@@ -167,7 +180,8 @@ GL_HEADING = 1 << 0
 
 # Aggregate contexts:
 
-FAIL = TEMPLATE + ARGUMENT + WIKILINK + EXT_LINK_TITLE + HEADING + TAG + STYLE + TABLE_OPEN
+FAIL = (TEMPLATE + ARGUMENT + WIKILINK + EXT_LINK_TITLE + HEADING + TAG +
+        STYLE + TABLE_OPEN)
 UNSAFE = (TEMPLATE_NAME + WIKILINK_TITLE + EXT_LINK_TITLE +
           TEMPLATE_PARAM_KEY + ARGUMENT_NAME + TAG_CLOSE)
 DOUBLE = TEMPLATE_PARAM_KEY + TAG_CLOSE
