@@ -61,6 +61,20 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text
 
 ---
 
+name:   table_header_simple
+label:  Simple header cell.
+input:  "{|\n ! foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseSelfclose(), Text(text=" foo \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_inline
+label:  Multiple inline header cells.
+input:  "{|\n ! foo || bar !! test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(), Text(text="\n "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseSelfclose(), Text(text=" foo "), TagOpenOpen(wiki_markup="||"), Text(text="th"), TagCloseSelfclose(), Text(text=" bar "),TagOpenOpen(wiki_markup="!!"), Text(text="th"), TagCloseSelfclose(), Text(text=" test \n"), TagOpenClose(), Text(text="table"), TagCloseClose()]
+
+---
+
 name:   nowiki_inside_table
 label:  Nowiki handles pipe characters in tables.
 input:  "{|\n | foo <nowiki>| |- {| |} || ! !!</nowiki> bar \n|}"

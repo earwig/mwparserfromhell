@@ -63,7 +63,7 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
-               ":", "/", "-", "\n", START, END]
+               ":", "/", "-", "!", "\n", START, END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
