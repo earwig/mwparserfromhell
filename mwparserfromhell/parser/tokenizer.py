@@ -1008,9 +1008,16 @@ class Tokenizer(object):
         data.context = _TagOpenData.CX_ATTR_READY
         while True:
             this, next = self._read(), self._read(1)
-            can_exit = (not data.context & (data.CX_NAME) or
+            table_end = break_on_table_end and this == "|" and next == "}"
+            can_exit = (not data.context & data.CX_QUOTED or
                         data.context & data.CX_NOTE_SPACE)
-            if this is self.END:
+            if (this == end_token and can_exit) or table_end:
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return (self._pop(), data.padding_buffer["first"])
+            elif this is self.END or table_end or this == end_token:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
                         # Unclosed attribute quote: reset, don't die
@@ -1020,16 +1027,6 @@ class Tokenizer(object):
                         continue
                     self._pop()
                 self._fail_route()
-            elif this == end_token and can_exit:
-                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
-                    self._push_tag_buffer(data)
-                if this.isspace():
-                    data.padding_buffer["first"] += this
-                return (self._pop(), data.padding_buffer["first"])
-            elif break_on_table_end and this == "|" and next == "}":
-                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
-                    self._push_tag_buffer(data)
-                return (self._pop(), data.padding_buffer["first"])
             else:
                 self._handle_tag_data(data, this)
             self._head += 1
