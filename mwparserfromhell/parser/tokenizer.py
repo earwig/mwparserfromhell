@@ -1067,24 +1067,21 @@ class Tokenizer(object):
         self._head += len(markup)
         style = None
         try:
-            (cell_context, cell) = self._parse(table_context | contexts.TABLE_CELL_STYLE_POSSIBLE)
+            cell_context, cell, reset_for_style = self._parse(table_context | contexts.TABLE_CELL_STYLE_POSSIBLE)
         except BadRoute:
             self._head = reset
             raise
-        # except for handling cell style
-        except StopIteration:
-            self._pop()
+        if reset_for_style:
             self._head = reset + len(markup)
             try:
                 self._push(table_context)
                 (style, padding) = self._parse_as_table_style("|")
                 # Don't parse the style separator
                 self._head += 1
-                (cell_context, cell) = self._parse(table_context)
+                cell_context, cell, reset_for_style = self._parse(table_context)
             except BadRoute:
                 self._head = reset
                 raise
-
         self._emit(tokens.TagOpenOpen(wiki_markup=markup))
         self._emit_text(tag)
         if style:
@@ -1132,13 +1129,10 @@ class Tokenizer(object):
                 self._handle_tag_data(data, this)
             self._head += 1
 
-    def _handle_table_cell_end(self):
-        """Returns the context and stack in a tuple."""
-        return (self._context, self._pop())
-
-    def _handle_cell_style(self):
-        """Pop the cell off the stack and try to parse as style."""
-        raise StopIteration()
+    def _handle_table_cell_end(self, reset_for_style=False):
+        """Returns the context, stack, and whether to reset the cell for style
+        in a tuple."""
+        return self._context, self._pop(), reset_for_style
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
@@ -1316,7 +1310,7 @@ class Tokenizer(object):
                         return self._handle_table_cell_end()
                     self._handle_table_cell("!!", "th", contexts.TABLE_TH_LINE)
                 elif this == "|" and self._context & contexts.TABLE_CELL_STYLE_POSSIBLE:
-                    self._handle_cell_style()
+                    return self._handle_table_cell_end(reset_for_style=True)
                 # on newline, clear out cell line contexts
                 elif this == "\n" and self._context & contexts.TABLE_CELL_LINE_CONTEXTS:
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS

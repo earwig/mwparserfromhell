@@ -33,6 +33,34 @@ output: [Text(text="{| |- ")]
 
 ---
 
+name:   no_table_close_attributes
+label:  Don't parse attributes as attributes if the table doesn't exist.
+input:  "{| border="1""
+output: [Text(text="{| border=\"1\"")]
+
+---
+
+name:   no_table_close_row_attributes
+label:  Don't parse row attributes as attributes if the table doesn't exist.
+input:  "{| |- border="1""
+output: [Text(text="{| |- border=\"1\"")]
+
+---
+
+name:   no_table_close_cell
+label:  Don't parse cells if the table doesn't close.
+input:  "{| | border="1"| test || red | foo"
+output: [Text(text="{| | border=\"1\"| test || red | foo")]
+
+---
+
+name:   crazy_no_table_close
+label:  Lost of opened wiki syntax without closes.
+input:  "{{{ {{ {| <ref"
+output: [Text(text="{{{ {{ {| <ref")]
+
+---
+
 name:   leading_whitespace_table
 label:  Handle leading whitespace for a table.
 input:  "foo \n    \t {|\n|}"
