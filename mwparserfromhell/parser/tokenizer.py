@@ -1027,6 +1027,8 @@ class Tokenizer(object):
             self._emit(tokens.TagOpenClose(wiki_markup="|}"))
             self._emit_text("table")
             self._emit(tokens.TagCloseClose())
+            # offset displacement done by _parse()
+            self._head -= 1
 
     def _handle_table_end(self):
         """Return the stack in order to handle the table end."""
@@ -1035,25 +1037,22 @@ class Tokenizer(object):
 
     def _handle_table_row(self):
         """Parse as style until end of the line, then continue."""
-        if not self._can_recurse():
-            self._emit_text("|-")
-            self._head += 2
-            return
-
         reset = self._head
         self._head += 2
-        try:
-            self._push(contexts.TABLE_OPEN)
-            (style, padding) = self._parse_as_table_style("\n")
-        except BadRoute:
-            self._head = reset
-            raise
-        else:
-            self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
-            self._emit_text("tr")
-            if style:
-                self._emit_all(style)
-            self._emit(tokens.TagCloseSelfclose(padding=padding))
+        style, padding = None, ""
+        # If we can't recurse, still tokenize tag but parse style attrs as text
+        if self._can_recurse():
+            try:
+                self._push(contexts.TABLE_OPEN)
+                (style, padding) = self._parse_as_table_style("\n")
+            except BadRoute:
+                self._head = reset
+                raise
+        self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
+        self._emit_text("tr")
+        if style:
+            self._emit_all(style)
+        self._emit(tokens.TagCloseSelfclose(padding=padding))
 
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse style

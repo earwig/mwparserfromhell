@@ -26,10 +26,38 @@ output: [Text(text="{| | ")]
 
 ---
 
+name:   no_table_close_inside_row
+label:  Handle case when there is no table close while inside of a row.
+input:  "{| |- "
+output: [Text(text="{| |- ")]
+
+---
+
 name:   leading_whitespace_table
 label:  Handle leading whitespace for a table.
 input:  "foo \n    \t {|\n|}"
 output: [Text(text="foo \n    \t "), TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   whitespace_after_table
+label:  Handle whitespace after a table close.
+input:  "{|\n|}\n    \t "
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text="\n    \t ")]
+
+---
+
+name:   different_whitespace_after_table
+label:  Handle spaces after a table close.
+input:  "{|\n|} \n  "
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" \n  ")]
+
+---
+
+name:   characters_after_table
+label:  Handle characters after a table close.
+input:  "{|\n|} tsta"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" tsta")]
 
 ---
 
@@ -44,6 +72,13 @@ name:   table_row_simple
 label:  Simple table row.
 input:  "{|\n |- \n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseSelfclose(padding=" \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_multiple
+label:  Simple table row.
+input:  "{|\n |- \n|- \n   |-\n |}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseSelfclose(padding=" \n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseSelfclose(padding=" \n"), Text(text="   "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseSelfclose(padding="\n"), Text(text=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
 
 ---
 
@@ -170,7 +205,6 @@ name:   table_row_attributes_crazy_whitespace
 label:  Parse table row style attributes with different whitespace.
 input:  "{| \t    \n |- \t   name="foo bar"  \t \n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(" \t    \n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" \t   ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseSelfclose(padding="  \t \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
-
 
 ---
 
