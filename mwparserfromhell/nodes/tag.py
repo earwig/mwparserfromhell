@@ -44,11 +44,10 @@ class Tag(Node):
             self._contents = contents
         self._attrs = attrs if attrs else []
         self._wiki_markup = wiki_markup
-        if wiki_markup and not self_closing:
-            if closing_wiki_markup:
-                self._closing_wiki_markup = closing_wiki_markup
-            else:
-                self._closing_wiki_markup = wiki_markup
+        if closing_wiki_markup:
+            self._closing_wiki_markup = closing_wiki_markup
+        elif wiki_markup and not self_closing:
+            self._closing_wiki_markup = wiki_markup
         else:
             self._closing_wiki_markup = None
         self._self_closing = self_closing
@@ -63,10 +62,12 @@ class Tag(Node):
     def __unicode__(self):
         if self.wiki_markup:
             attrs = "".join([str(attr) for attr in self.attributes]) if self.attributes else ""
+            close = self.closing_wiki_markup if self.closing_wiki_markup else ""
+            padding = self.padding if self.padding else ""
             if self.self_closing:
-                return self.wiki_markup
+                return self.wiki_markup + attrs + close + padding
             else:
-                return self.wiki_markup + attrs + str(self.contents) + self.closing_wiki_markup
+                return self.wiki_markup + attrs + padding + str(self.contents) + close
 
         result = ("</" if self.invalid else "<") + str(self.tag)
         if self.attributes:
@@ -81,10 +82,10 @@ class Tag(Node):
     def __children__(self):
         if not self.wiki_markup:
             yield self.tag
-            for attr in self.attributes:
-                yield attr.name
-                if attr.value is not None:
-                    yield attr.value
+        for attr in self.attributes:
+            yield attr.name
+            if attr.value is not None:
+                yield attr.value
         if self.contents:
             yield self.contents
         if not self.self_closing and not self.wiki_markup and self.closing_tag:
@@ -147,11 +148,12 @@ class Tag(Node):
         """The wikified version of the closing tag to show instead of HTML.
 
         If set to a value, this will be displayed instead of the close tag
-        brackets. If tag is :attr:`self_closing` is ``True``, this is set to
-        ``None`` and not displayed. If :attr:`wiki_markup` is set and this has
-        not been set, this is set to the value of :attr:`wiki_markup`. If this
-        has been set and :attr:`wiki_markup` is set to a ``False`` value, this
-        is set to ``None``.
+        brackets. If tag is :attr:`self_closing` is ``True`` and this is not
+        ``None``, then it becomes the self-closing end tag. If
+        :attr:`wiki_markup` is set and this has not been set, this is set to the
+        value of :attr:`wiki_markup`. If this has been set and
+        :attr:`wiki_markup` is set to a ``False`` value, this is set to
+        ``None``.
         """
         return self._closing_wiki_markup
 
@@ -209,16 +211,13 @@ class Tag(Node):
         if not value or not self.closing_wiki_markup:
             self.closing_wiki_markup = str(value) if value else None
 
-
     @closing_wiki_markup.setter
     def closing_wiki_markup(self, value):
-        self._closing_wiki_markup = str(value) if value and not self.self_closing else None
+        self._closing_wiki_markup = str(value) if value else None
 
     @self_closing.setter
     def self_closing(self, value):
         self._self_closing = bool(value)
-        if not bool(value):
-            self.closing_wiki_markup = None
 
     @invalid.setter
     def invalid(self, value):

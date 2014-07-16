@@ -1009,9 +1009,9 @@ class Tokenizer(object):
         style = None
         try:
             self._push(contexts.TABLE_OPEN)
-            style = self._parse_as_table_style("\n", break_on_table_end=True)
-            if len(style) == 0:
-                self._head = reset
+            (style, padding) = self._parse_as_table_style("\n", break_on_table_end=True)
+            # Have to do this in the case of inline tables
+            self._head += 1 if "\n" in padding else 0
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
             # offset displacement done by _parse()
@@ -1022,7 +1022,7 @@ class Tokenizer(object):
             self._emit_text("table")
             if style:
                 self._emit_all(style)
-            self._emit(tokens.TagCloseOpen())
+            self._emit(tokens.TagCloseOpen(padding=padding))
             self._emit_all(table)
             self._emit(tokens.TagOpenClose(wiki_markup="|}"))
             self._emit_text("table")
@@ -1044,9 +1044,7 @@ class Tokenizer(object):
         self._head += 2
         try:
             self._push(contexts.TABLE_OPEN)
-            style = self._parse_as_table_style("\n")
-            if len(style) == 0:
-                self._head = reset + 2
+            (style, padding) = self._parse_as_table_style("\n")
         except BadRoute:
             self._head = reset
             raise
@@ -1055,9 +1053,7 @@ class Tokenizer(object):
             self._emit_text("tr")
             if style:
                 self._emit_all(style)
-            self._emit(tokens.TagCloseSelfclose())
-            # offset displacement done by _parse()
-            self._head -= 1
+            self._emit(tokens.TagCloseSelfclose(padding=padding))
 
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse style
@@ -1082,7 +1078,7 @@ class Tokenizer(object):
             self._head = reset + len(markup)
             try:
                 self._push(table_context)
-                style = self._parse_as_table_style("|")
+                (style, padding) = self._parse_as_table_style("|")
                 # Don't parse the style separator
                 self._head += 1
                 (cell_context, cell) = self._parse(table_context)
@@ -1094,7 +1090,9 @@ class Tokenizer(object):
         self._emit_text(tag)
         if style:
             self._emit_all(style)
-        self._emit(tokens.TagCloseSelfclose())
+            self._emit(tokens.TagCloseSelfclose(wiki_markup="|"))
+        else:
+            self._emit(tokens.TagCloseSelfclose())
         self._emit_all(cell)
         # keep header/cell line contexts
         self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
@@ -1122,9 +1120,15 @@ class Tokenizer(object):
             elif this == end_token and can_exit:
                 if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
                     self._push_tag_buffer(data)
-                return self._pop()
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return (self._pop(), data.padding_buffer["first"])
             elif break_on_table_end and this == "|" and next == "}":
-                return self._pop()
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return (self._pop(), data.padding_buffer["first"])
             else:
                 self._handle_tag_data(data, this)
             self._head += 1

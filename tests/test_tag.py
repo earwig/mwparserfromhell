@@ -182,11 +182,6 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual("{|\n|}", node)
         node.wiki_markup = False
         self.assertFalse(node.closing_wiki_markup)
-        node.self_closing = True
-        node.wiki_markup = "{|"
-        self.assertIs(None, node.closing_wiki_markup)
-        node.wiki_markup = False
-        node.self_closing = False
         self.assertEqual("<table>\n</table>", node)
 
     def test_self_closing(self):

@@ -264,6 +264,7 @@ class Builder(object):
                 self._push()
             elif isinstance(token, close_tokens):
                 if isinstance(token, tokens.TagCloseSelfclose):
+                    closing_wiki_markup = token.wiki_markup
                     tag = self._pop()
                     self_closing = True
                     padding = token.padding or ""
