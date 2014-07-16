@@ -1029,8 +1029,6 @@ class Tokenizer(object):
             elif break_on_table_end and this == "|" and next == "}":
                 if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
                     self._push_tag_buffer(data)
-                if this.isspace():
-                    data.padding_buffer["first"] += this
                 return (self._pop(), data.padding_buffer["first"])
             else:
                 self._handle_tag_data(data, this)
@@ -1040,13 +1038,17 @@ class Tokenizer(object):
         """Handle the start of a table."""
         self._head += 2
         reset = self._head
-        style = None
+        style, table = None, None
         try:
             self._push(contexts.TABLE_OPEN)
             (style, padding) = self._parse_as_table_style("\n", break_on_table_end=True)
-            # Have to do this in the case of inline tables
-            self._head += 1 if "\n" in padding else 0
-            table = self._parse(contexts.TABLE_OPEN)
+            # continue to parse if it is NOT an inline table
+            if "\n" in padding:
+                self._head += 1
+                table = self._parse(contexts.TABLE_OPEN)
+            else:
+                # close tag
+                self._head += 2
         except BadRoute:
             # offset displacement done by _parse()
             self._head = reset - 1
@@ -1057,7 +1059,8 @@ class Tokenizer(object):
             if style:
                 self._emit_all(style)
             self._emit(tokens.TagCloseOpen(padding=padding))
-            self._emit_all(table)
+            if table:
+                self._emit_all(table)
             self._emit(tokens.TagOpenClose(wiki_markup="|}"))
             self._emit_text("table")
             self._emit(tokens.TagCloseClose())
@@ -1293,11 +1296,7 @@ class Tokenizer(object):
                 else:
                     self._emit_text("{|")
             elif self._context & contexts.TABLE_OPEN:
-                if this == "|" and next == "}":
-                    if self._context & contexts.TABLE_CELL_OPEN:
-                        return self._handle_table_cell_end()
-                    return self._handle_table_end()
-                elif this == "|" and next == "|" and self._context & contexts.TABLE_TD_LINE:
+                if this == "|" and next == "|" and self._context & contexts.TABLE_TD_LINE:
                     if self._context & contexts.TABLE_CELL_OPEN:
                         return self._handle_table_cell_end()
                     self._handle_table_cell("||", "td", contexts.TABLE_TD_LINE)
@@ -1317,7 +1316,11 @@ class Tokenizer(object):
                     self._emit_text(this)
                 elif (self._read(-1) in ("\n", self.START) or
                     (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
-                    if this == "|" and next == "-":
+                    if this == "|" and next == "}":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        return self._handle_table_end()
+                    elif this == "|" and next == "-":
                         if self._context & contexts.TABLE_CELL_OPEN:
                             return self._handle_table_cell_end()
                         self._handle_table_row()

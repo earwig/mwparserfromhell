@@ -89,6 +89,13 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding
 
 ---
 
+name:   characters_after_inline_table
+label:  Handle characters after an inline table close.
+input:  "{| |} tsta"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" tsta")]
+
+---
+
 name:   leading_characters_table
 label:  Don't parse as a table when leading characters are not newline or whitespace.
 input:  "foo \n  foo  \t {|\n|}"
@@ -121,6 +128,27 @@ name:   table_cell_inline
 label:  Multiple inline table cells.
 input:  "{|\n | foo || bar || test \n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(padding=""), Text(text=" foo "), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseSelfclose(padding=""), Text(text=" bar "),TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseSelfclose(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_fake_close
+label:  Looks like a table close but is not.
+input:  "{|\n | |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(wiki_markup="|", padding=" "), Text(text="} \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_more_fake_close
+label:  Looks like a table close but is not.
+input:  "{|\n || |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(wiki_markup="|", padding=""), Text(text=" |} \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_extra_close
+label:  Process second close as text.
+input:  "{| \n |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" \n|}")]
 
 ---
 
