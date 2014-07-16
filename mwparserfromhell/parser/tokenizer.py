@@ -1002,6 +1002,40 @@ class Tokenizer(object):
             self._fail_route()
         return self._pop()
 
+     def _parse_as_table_style(self, end_token, break_on_table_end=False):
+        """Parse until ``end_token`` as style attributes for a table."""
+        data = _TagOpenData()
+        data.context = _TagOpenData.CX_ATTR_READY
+        while True:
+            this, next = self._read(), self._read(1)
+            can_exit = (not data.context & (data.CX_NAME) or
+                        data.context & data.CX_NOTE_SPACE)
+            if this is self.END:
+                if self._context & contexts.TAG_ATTR:
+                    if data.context & data.CX_QUOTED:
+                        # Unclosed attribute quote: reset, don't die
+                        data.context = data.CX_ATTR_VALUE
+                        self._pop()
+                        self._head = data.reset
+                        continue
+                    self._pop()
+                self._fail_route()
+            elif this == end_token and can_exit:
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return (self._pop(), data.padding_buffer["first"])
+            elif break_on_table_end and this == "|" and next == "}":
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return (self._pop(), data.padding_buffer["first"])
+            else:
+                self._handle_tag_data(data, this)
+            self._head += 1
+
     def _handle_table_start(self):
         """Handle the start of a table."""
         self._head += 2
@@ -1094,40 +1128,6 @@ class Tokenizer(object):
         self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
         # offset displacement done by _parse()
         self._head -= 1
-
-    def _parse_as_table_style(self, end_token, break_on_table_end=False):
-        """Parse until ``end_token`` as style attributes for a table."""
-        data = _TagOpenData()
-        data.context = _TagOpenData.CX_ATTR_READY
-        while True:
-            this, next = self._read(), self._read(1)
-            can_exit = (not data.context & (data.CX_NAME) or
-                        data.context & data.CX_NOTE_SPACE)
-            if this is self.END:
-                if self._context & contexts.TAG_ATTR:
-                    if data.context & data.CX_QUOTED:
-                        # Unclosed attribute quote: reset, don't die
-                        data.context = data.CX_ATTR_VALUE
-                        self._pop()
-                        self._head = data.reset
-                        continue
-                    self._pop()
-                self._fail_route()
-            elif this == end_token and can_exit:
-                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
-                    self._push_tag_buffer(data)
-                if this.isspace():
-                    data.padding_buffer["first"] += this
-                return (self._pop(), data.padding_buffer["first"])
-            elif break_on_table_end and this == "|" and next == "}":
-                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
-                    self._push_tag_buffer(data)
-                if this.isspace():
-                    data.padding_buffer["first"] += this
-                return (self._pop(), data.padding_buffer["first"])
-            else:
-                self._handle_tag_data(data, this)
-            self._head += 1
 
     def _handle_table_cell_end(self, reset_for_style=False):
         """Returns the context, stack, and whether to reset the cell for style
