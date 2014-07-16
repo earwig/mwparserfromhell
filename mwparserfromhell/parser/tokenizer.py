@@ -1002,7 +1002,7 @@ class Tokenizer(object):
             self._fail_route()
         return self._pop()
 
-     def _parse_as_table_style(self, end_token, break_on_table_end=False):
+    def _parse_as_table_style(self, end_token, break_on_table_end=False):
         """Parse until ``end_token`` as style attributes for a table."""
         data = _TagOpenData()
         data.context = _TagOpenData.CX_ATTR_READY
@@ -1099,7 +1099,7 @@ class Tokenizer(object):
         table_context = contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context
         reset = self._head
         self._head += len(markup)
-        style = None
+        rest_for_style, padding = False, ""
         try:
             cell_context, cell, reset_for_style = self._parse(table_context | contexts.TABLE_CELL_STYLE_POSSIBLE)
         except BadRoute:
@@ -1112,17 +1112,17 @@ class Tokenizer(object):
                 (style, padding) = self._parse_as_table_style("|")
                 # Don't parse the style separator
                 self._head += 1
-                cell_context, cell, reset_for_style = self._parse(table_context)
+                cell_context, cell, unused = self._parse(table_context)
             except BadRoute:
                 self._head = reset
                 raise
         self._emit(tokens.TagOpenOpen(wiki_markup=markup))
         self._emit_text(tag)
-        if style:
+        if reset_for_style:
             self._emit_all(style)
-            self._emit(tokens.TagCloseSelfclose(wiki_markup="|"))
+            self._emit(tokens.TagCloseSelfclose(wiki_markup="|", padding=padding))
         else:
-            self._emit(tokens.TagCloseSelfclose())
+            self._emit(tokens.TagCloseSelfclose(padding=padding))
         self._emit_all(cell)
         # keep header/cell line contexts
         self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
