@@ -94,7 +94,7 @@ Local (stack-specific) contexts:
 
     * :const:`TABLE_OPEN`
     * :const:`TABLE_CELL_OPEN`
-    * :const:`TABLE_CELL_STYLE_POSSIBLE`
+    * :const:`TABLE_CELL_STYLE`
     * :const:`TABLE_TD_LINE`
     * :const:`TABLE_TH_LINE`
     * :const:`TABLE_CELL_LINE_CONTEXTS`
@@ -180,7 +180,7 @@ GL_HEADING = 1 << 0
 # Aggregate contexts:
 
 FAIL = (TEMPLATE + ARGUMENT + WIKILINK + EXT_LINK_TITLE + HEADING + TAG +
-        STYLE + TABLE_OPEN)
+        STYLE + TABLE)
 UNSAFE = (TEMPLATE_NAME + WIKILINK_TITLE + EXT_LINK_TITLE +
           TEMPLATE_PARAM_KEY + ARGUMENT_NAME + TAG_CLOSE)
 DOUBLE = TEMPLATE_PARAM_KEY + TAG_CLOSE

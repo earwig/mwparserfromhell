@@ -1098,13 +1098,14 @@ class Tokenizer(object):
             self._head += len(markup) - 1
             return
 
-        table_context = contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context
+        old_context = self._context
         reset = self._head
         self._head += len(markup)
         reset_for_style, padding = False, ""
         try:
-            cell_context = self._parse(table_context | contexts.TABLE_CELL_STYLE)
-            cell = self._pop()
+            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context | contexts.TABLE_CELL_STYLE)
+            cell_context = self._context
+            self._context = old_context
             reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         except BadRoute:
             self._head = reset
@@ -1112,13 +1113,14 @@ class Tokenizer(object):
         if reset_for_style:
             self._head = reset + len(markup)
             try:
-                self._push(table_context)
+                self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
                 padding = self._parse_as_table_style("|")
                 style = self._pop()
                 # Don't parse the style separator
                 self._head += 1
-                cell_context = self._parse(table_context)
-                cell = self._pop()
+                cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
+                cell_context = self._context
+                self._context = old_context
             except BadRoute:
                 self._head = reset
                 raise
@@ -1139,8 +1141,10 @@ class Tokenizer(object):
         """Returns the current context, with the TABLE_CELL_STYLE flag set if
         it is necessary to reset and parse style attributes."""
         if reset_for_style:
-            return self._context | contexts.TABLE_CELL_STYLE
-        return self._context & ~contexts.TABLE_CELL_STYLE
+            self._context |= contexts.TABLE_CELL_STYLE
+        else:
+            self._context &= ~contexts.TABLE_CELL_STYLE
+        return self._pop(keep_context=True)
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
