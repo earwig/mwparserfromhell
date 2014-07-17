@@ -29,6 +29,7 @@ SOFTWARE.
 #include <math.h>
 #include <structmember.h>
 #include <bytesobject.h>
+#include <stdint.h>
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
@@ -191,7 +192,7 @@ struct Textbuffer {
 
 struct Stack {
     PyObject* stack;
-    int context;
+    uint64_t context;
     struct Textbuffer* textbuffer;
     struct Stack* next;
 };
@@ -202,7 +203,7 @@ typedef struct {
 } HeadingData;
 
 typedef struct {
-    int context;
+    uint64_t context;
     struct Textbuffer* pad_first;
     struct Textbuffer* pad_before_eq;
     struct Textbuffer* pad_after_eq;
@@ -267,7 +268,7 @@ static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
 static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
-static PyObject* Tokenizer_parse(Tokenizer*, int, int);
+static PyObject* Tokenizer_parse(Tokenizer*, uint64_t, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
 static int load_exceptions(void);

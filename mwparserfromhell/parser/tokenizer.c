@@ -241,7 +241,7 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 /*
     Add a new token stack, context, and textbuffer to the list.
 */
-static int Tokenizer_push(Tokenizer* self, int context)
+static int Tokenizer_push(Tokenizer* self, uint64_t context)
 {
     Stack* top = malloc(sizeof(Stack));
 
@@ -333,7 +333,7 @@ static PyObject* Tokenizer_pop(Tokenizer* self)
 static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 {
     PyObject* stack;
-    int context;
+    uint64_t context;
 
     if (Tokenizer_push_textbuffer(self))
         return NULL;
@@ -351,7 +351,7 @@ static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 */
 static void* Tokenizer_fail_route(Tokenizer* self)
 {
-    int context = self->topstack->context;
+    uint64_t context = self->topstack->context;
     PyObject* stack = Tokenizer_pop(self);
 
     Py_XDECREF(stack);
@@ -1034,7 +1034,7 @@ Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
 {
     // Built from Tokenizer_parse()'s end sentinels:
     Py_UNICODE after = Tokenizer_READ(self, 2);
-    int ctx = self->topstack->context;
+    uint64_t ctx = self->topstack->context;
 
     return (!this || this == '\n' || this == '[' || this == ']' ||
         this == '<' || this == '>'  || (this == '\'' && next == '\'') ||
@@ -1629,9 +1629,9 @@ static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 static int
 Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
 {
-    int ctx = data->context;
-    int end_of_value = (ctx & TAG_ATTR_VALUE &&
-                        !(ctx & (TAG_QUOTED | TAG_NOTE_QUOTE)));
+    uint64_t ctx = data->context;
+    uint64_t end_of_value = (ctx & TAG_ATTR_VALUE &&
+                             !(ctx & (TAG_QUOTED | TAG_NOTE_QUOTE)));
 
     if (end_of_value || (ctx & TAG_QUOTED && ctx & TAG_NOTE_SPACE)) {
         if (Tokenizer_push_tag_buffer(self, data))
@@ -2153,7 +2153,7 @@ static int Tokenizer_emit_style_tag(Tokenizer* self, const char* tag,
 static int Tokenizer_parse_italics(Tokenizer* self)
 {
     Py_ssize_t reset = self->head;
-    int context;
+    uint64_t context;
     PyObject *stack;
 
     stack = Tokenizer_parse(self, LC_STYLE_ITALICS, 1);
@@ -2273,7 +2273,7 @@ static int Tokenizer_parse_italics_and_bold(Tokenizer* self)
 */
 static PyObject* Tokenizer_parse_style(Tokenizer* self)
 {
-    int context = self->topstack->context, ticks = 2, i;
+    uint64_t context = self->topstack->context, ticks = 2, i;
 
     self->head += 2;
     while (Tokenizer_READ(self, 0) == '\'') {
@@ -2428,7 +2428,7 @@ static int Tokenizer_handle_dl_term(Tokenizer* self)
 /*
     Handle the end of the stream of wikitext.
 */
-static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
+static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
 {
     PyObject *token, *text, *trash;
     int single;
@@ -2457,7 +2457,7 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, int context)
     Make sure we are not trying to write an invalid character. Return 0 if
     everything is safe, or -1 if the route must be failed.
 */
-static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
+static int Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
 {
     if (context & LC_FAIL_NEXT)
         return -1;
@@ -2536,9 +2536,9 @@ static int Tokenizer_verify_safe(Tokenizer* self, int context, Py_UNICODE data)
     Parse the wikicode string, using context for when to stop. If push is true,
     we will push a new context, otherwise we won't and context will be ignored.
 */
-static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
+static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
 {
-    int this_context;
+    uint64_t this_context;
     Py_UNICODE this, next, next_next, last;
     PyObject* temp;
 
@@ -2697,7 +2697,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, int context, int push)
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject *text, *temp, *tokens;
-    int context = 0, skip_style_tags = 0;
+    uint64_t context = 0;
+    int skip_style_tags = 0;
 
     if (PyArg_ParseTuple(args, "U|ii", &text, &context, &skip_style_tags)) {
         Py_XDECREF(self->text);
