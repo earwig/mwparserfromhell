@@ -1016,7 +1016,7 @@ class Tokenizer(object):
                     self._push_tag_buffer(data)
                 if this.isspace():
                     data.padding_buffer["first"] += this
-                return (self._pop(), data.padding_buffer["first"])
+                return data.padding_buffer["first"]
             elif this is self.END or table_end or this == end_token:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
@@ -1038,7 +1038,8 @@ class Tokenizer(object):
         style, table = None, None
         try:
             self._push(contexts.TABLE_OPEN)
-            (style, padding) = self._parse_as_table_style("\n", break_on_table_end=True)
+            padding = self._parse_as_table_style("\n", break_on_table_end=True)
+            style = self._pop()
             # continue to parse if it is NOT an inline table
             if "\n" in padding:
                 self._head += 1
@@ -1078,7 +1079,8 @@ class Tokenizer(object):
         if self._can_recurse():
             try:
                 self._push(contexts.TABLE_OPEN)
-                (style, padding) = self._parse_as_table_style("\n")
+                padding = self._parse_as_table_style("\n")
+                style = self._pop()
             except BadRoute:
                 self._head = reset
                 raise
@@ -1099,9 +1101,11 @@ class Tokenizer(object):
         table_context = contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context
         reset = self._head
         self._head += len(markup)
-        rest_for_style, padding = False, ""
+        reset_for_style, padding = False, ""
         try:
-            cell_context, cell, reset_for_style = self._parse(table_context | contexts.TABLE_CELL_STYLE_POSSIBLE)
+            cell_context = self._parse(table_context | contexts.TABLE_CELL_STYLE)
+            cell = self._pop()
+            reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         except BadRoute:
             self._head = reset
             raise
@@ -1109,10 +1113,12 @@ class Tokenizer(object):
             self._head = reset + len(markup)
             try:
                 self._push(table_context)
-                (style, padding) = self._parse_as_table_style("|")
+                padding = self._parse_as_table_style("|")
+                style = self._pop()
                 # Don't parse the style separator
                 self._head += 1
-                cell_context, cell, unused = self._parse(table_context)
+                cell_context = self._parse(table_context)
+                cell = self._pop()
             except BadRoute:
                 self._head = reset
                 raise
@@ -1130,9 +1136,11 @@ class Tokenizer(object):
         self._head -= 1
 
     def _handle_table_cell_end(self, reset_for_style=False):
-        """Returns the context, stack, and whether to reset the cell for style
-        in a tuple."""
-        return self._context, self._pop(), reset_for_style
+        """Returns the current context, with the TABLE_CELL_STYLE flag set if
+        it is necessary to reset and parse style attributes."""
+        if reset_for_style:
+            return self._context | contexts.TABLE_CELL_STYLE
+        return self._context & ~contexts.TABLE_CELL_STYLE
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
@@ -1305,7 +1313,7 @@ class Tokenizer(object):
                     if self._context & contexts.TABLE_CELL_OPEN:
                         return self._handle_table_cell_end()
                     self._handle_table_cell("!!", "th", contexts.TABLE_TH_LINE)
-                elif this == "|" and self._context & contexts.TABLE_CELL_STYLE_POSSIBLE:
+                elif this == "|" and self._context & contexts.TABLE_CELL_STYLE:
                     return self._handle_table_cell_end(reset_for_style=True)
                 # on newline, clear out cell line contexts
                 elif this == "\n" and self._context & contexts.TABLE_CELL_LINE_CONTEXTS:
