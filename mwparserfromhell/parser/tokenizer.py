@@ -1134,7 +1134,7 @@ class Tokenizer(object):
         self._emit_all(cell)
         # keep header/cell line contexts
         self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
-        # offset displacement done by _parse()
+        # offset displacement done by parse()
         self._head -= 1
 
     def _handle_table_cell_end(self, reset_for_style=False):
