@@ -106,7 +106,7 @@ output: [Text(text="foo \n  foo  \t {|\n|}")]
 name:   table_row_simple
 label:  Simple table row.
 input:  "{|\n |- \n|}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Tag Text(text="table"), TagCloseClose()]
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
 
 ---
 
@@ -131,6 +131,41 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding
 
 ---
 
+name:   table_cell_multiple
+label:  Multiple table cells (non-inline).
+input:  "{|\n| foo \n| bar \n| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" bar \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_simple
+label:  Simple header cell.
+input:  "{|\n ! foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_inline
+label:  Multiple inline header cells.
+input:  "{|\n ! foo || bar !! test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" bar "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_multiple
+label:  Multiple table header cells (non-inline).
+input:  "{|\n! foo \n! bar \n! test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" bar \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   nested_cells_and_rows
+label:  Combination of cells and rows in a table.
+input:  "{|\n|- \n| foo \n|- \n| bar\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" bar\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
 name:   table_cell_fake_close
 label:  Looks like a table close but is not.
 input:  "{|\n | |} \n|}"
@@ -149,20 +184,6 @@ name:   table_cell_extra_close
 label:  Process second close as text.
 input:  "{| \n |} \n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" \n|}")]
-
----
-
-name:   table_header_simple
-label:  Simple header cell.
-input:  "{|\n ! foo \n|}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
-
----
-
-name:   table_header_inline
-label:  Multiple inline header cells.
-input:  "{|\n ! foo || bar !! test \n|}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" bar "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
 
 ---
 

@@ -249,9 +249,11 @@ class TestTag(TreeEqualityTestCase):
         node.wiki_markup = False
         self.assertFalse(node.closing_wiki_markup)
         self.assertEqual("<table>\n</table>", node)
-        node2 = Tag(wraptext("table"), wraptext("\n"), wiki_markup="{|",
+        node2 = Tag(wraptext("table"), wraptext("\n"),
+                    attrs=[agen("id", "foo")], wiki_markup="{|",
                     closing_wiki_markup="|}")
         self.assertEqual("|}", node2.closing_wiki_markup)
+        self.assertEqual('{| id="foo"\n|}', node2)
 
     def test_has(self):
         """test Tag.has()"""
