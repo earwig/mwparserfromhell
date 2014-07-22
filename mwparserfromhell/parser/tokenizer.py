@@ -1002,6 +1002,23 @@ class Tokenizer(object):
             self._fail_route()
         return self._pop()
 
+    def _emit_table_tag(self, open_open_markup, tag, style, padding,
+                        close_open_markup, contents, open_close_markup):
+        """Emit a table tag."""
+        self._emit(tokens.TagOpenOpen(wiki_markup=open_open_markup))
+        self._emit_text(tag)
+        if style:
+            self._emit_all(style)
+        if close_open_markup:
+            self._emit(tokens.TagCloseOpen(wiki_markup=close_open_markup, padding=padding))
+        else:
+            self._emit(tokens.TagCloseOpen(padding=padding))
+        if contents:
+            self._emit_all(contents)
+        self._emit(tokens.TagOpenClose(wiki_markup=open_close_markup))
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseClose())
+
     def _parse_as_table_style(self, end_token, break_on_table_end=False):
         """Parse until ``end_token`` as style attributes for a table."""
         data = _TagOpenData()
@@ -1052,17 +1069,7 @@ class Tokenizer(object):
             self._head = reset - 1
             self._emit_text("{|")
         else:
-            self._emit(tokens.TagOpenOpen(wiki_markup="{|"))
-            self._emit_text("table")
-            if style:
-                self._emit_all(style)
-            self._emit(tokens.TagCloseOpen(padding=padding))
-            if table:
-                self._emit_all(table)
-            self._emit(tokens.TagOpenClose(wiki_markup="|}"))
-            self._emit_text("table")
-            self._emit(tokens.TagCloseClose())
-            # offset displacement done by _parse()
+            self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
             self._head -= 1
 
     def _handle_table_end(self):
@@ -1072,23 +1079,31 @@ class Tokenizer(object):
 
     def _handle_table_row(self):
         """Parse as style until end of the line, then continue."""
+        if not self._can_recurse():
+            self._emit_text("|-")
+            self._head += 1
+            return
+
         reset = self._head
         self._head += 2
         style, padding = None, ""
-        # If we can't recurse, still tokenize tag but parse style attrs as text
-        if self._can_recurse():
-            try:
-                self._push(contexts.TABLE_OPEN)
-                padding = self._parse_as_table_style("\n")
-                style = self._pop()
-            except BadRoute:
-                self._head = reset
-                raise
-        self._emit(tokens.TagOpenOpen(wiki_markup="|-"))
-        self._emit_text("tr")
-        if style:
-            self._emit_all(style)
-        self._emit(tokens.TagCloseSelfclose(padding=padding))
+        try:
+            self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
+            padding = self._parse_as_table_style("\n")
+            style = self._pop()
+            # don't parse the style separator
+            self._head += 1
+            row = self._parse(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
+        except BadRoute:
+            self._head = reset
+            raise
+        self._emit_table_tag("|-", "tr", style, padding, None, row, "")
+        # offset displacement done by parse()
+        self._head -= 1
+
+    def _handle_table_row_end(self):
+        """Return the stack in order to handle the table row end."""
+        return self._pop()
 
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse style
@@ -1101,7 +1116,7 @@ class Tokenizer(object):
         old_context = self._context
         reset = self._head
         self._head += len(markup)
-        reset_for_style, padding = False, ""
+        reset_for_style, padding, style = False, "", None
         try:
             cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context | contexts.TABLE_CELL_STYLE)
             cell_context = self._context
@@ -1124,14 +1139,8 @@ class Tokenizer(object):
             except BadRoute:
                 self._head = reset
                 raise
-        self._emit(tokens.TagOpenOpen(wiki_markup=markup))
-        self._emit_text(tag)
-        if reset_for_style:
-            self._emit_all(style)
-            self._emit(tokens.TagCloseSelfclose(wiki_markup="|", padding=padding))
-        else:
-            self._emit(tokens.TagCloseSelfclose(padding=padding))
-        self._emit_all(cell)
+        close_open_markup = "|" if reset_for_style else None
+        self._emit_table_tag(markup, tag, style, padding, close_open_markup, cell, "")
         # keep header/cell line contexts
         self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
         # offset displacement done by parse()
@@ -1140,6 +1149,8 @@ class Tokenizer(object):
     def _handle_table_cell_end(self, reset_for_style=False):
         """Returns the current context, with the TABLE_CELL_STYLE flag set if
         it is necessary to reset and parse style attributes."""
+        if self._context & (contexts.FAIL & ~contexts.TABLE):
+            raise BadRoute
         if reset_for_style:
             self._context |= contexts.TABLE_CELL_STYLE
         else:
@@ -1328,10 +1339,14 @@ class Tokenizer(object):
                     if this == "|" and next == "}":
                         if self._context & contexts.TABLE_CELL_OPEN:
                             return self._handle_table_cell_end()
+                        if self._context & contexts.TABLE_ROW_OPEN:
+                            return self._handle_table_row_end()
                         return self._handle_table_end()
                     elif this == "|" and next == "-":
                         if self._context & contexts.TABLE_CELL_OPEN:
                             return self._handle_table_cell_end()
+                        if self._context & contexts.TABLE_ROW_OPEN:
+                            return self._handle_table_row_end()
                         self._handle_table_row()
                     elif this == "|":
                         if self._context & contexts.TABLE_CELL_OPEN:

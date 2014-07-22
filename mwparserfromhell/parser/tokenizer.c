@@ -2454,6 +2454,88 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
 }
 
 /*
+    Emit a table tag.
+*/
+static int Tokenizer_emit_table_tag(Tokenizer* self, const char* open_open_markup,
+                                    const char* tag, PyObject* style, PyObject* padding,
+                                    const char* close_open_markup, PyObject* contents,
+                                    const char* open_close_markup)
+{
+    PyObject *open_open_kwargs, *open_open_markup_unicode, *close_open_kwargs, *close_open_markup_unicode,
+             *open_close_kwargs, *open_close_markup_unicode;
+
+    open_open_kwargs = PyDict_New();
+    if (!open_open_kwargs)
+        goto fail_decref_all;
+    open_open_markup_unicode = PyUnicode_FromString(open_open_markup);
+    if (!open_open_markup_unicode) {
+        Py_DECREF(open_open_kwargs);
+        goto fail_decref_all;
+    }
+    PyDict_SetItemString(open_open_kwargs, "wiki_markup", open_open_markup_unicode);
+    Py_DECREF(open_open_markup_unicode);
+    if (Tokenizer_emit_kwargs(self, TagOpenOpen, open_open_kwargs))
+        goto fail_decref_all;
+    if (Tokenizer_emit_text(self, tag))
+        goto fail_decref_all;
+
+    if (style) {
+        if (Tokenizer_emit_all(self, style))
+            goto fail_decref_all;
+        Py_DECREF(style);
+    }
+
+    close_open_kwargs = PyDict_New();
+    if (!close_open_kwargs)
+        goto fail_decref_padding_contents;
+    if (close_open_markup && strlen(close_open_markup) != 0) {
+        close_open_markup_unicode = PyUnicode_FromString(close_open_markup);
+        if (!close_open_markup_unicode) {
+            Py_DECREF(close_open_kwargs);
+            goto fail_decref_padding_contents;
+        }
+        PyDict_SetItemString(close_open_kwargs, "wiki_markup", close_open_markup_unicode);
+        Py_DECREF(close_open_markup_unicode);
+    }
+    PyDict_SetItemString(close_open_kwargs, "padding", padding);
+    Py_DECREF(padding);
+    if (Tokenizer_emit_kwargs(self, TagCloseOpen, close_open_kwargs))
+        goto fail_decref_contents;
+
+    if (contents) {
+        if (Tokenizer_emit_all(self, contents))
+            goto fail_decref_contents;
+        Py_DECREF(contents);
+    }
+
+    open_close_kwargs = PyDict_New();
+    if (!open_close_kwargs)
+        return -1;
+    open_close_markup_unicode = PyUnicode_FromString(open_close_markup);
+    if (!open_close_markup_unicode) {
+        Py_DECREF(open_close_kwargs);
+        return -1;
+    }
+    PyDict_SetItemString(open_close_kwargs, "wiki_markup", open_close_markup_unicode);
+    Py_DECREF(open_close_markup_unicode);
+    if (Tokenizer_emit_kwargs(self, TagOpenClose, open_close_kwargs))
+        return -1;
+    if (Tokenizer_emit_text(self, tag))
+        return -1;
+    if (Tokenizer_emit(self, TagCloseClose))
+        return -1;
+    return 0;
+
+    fail_decref_all:
+    Py_XDECREF(style);
+    fail_decref_padding_contents:
+    Py_DECREF(padding);
+    fail_decref_contents:
+    Py_DECREF(contents);
+    return -1;
+}
+
+/*
     Parse until ``end_token`` as style attributes for a table.
 */
 static PyObject* Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
@@ -2521,8 +2603,7 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
 {
     self->head += 2;
     Py_ssize_t reset = self->head;
-    PyObject *style, *open_open_kwargs, *close_open_kwargs, *open_close_kwargs,
-             *padding, *newline_character, *open_wiki_markup, *close_wiki_markup;
+    PyObject *style, *padding, *newline_character;
     PyObject *table = NULL;
 
     if(Tokenizer_push(self, LC_TABLE_OPEN))
@@ -2573,68 +2654,11 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
         self->head += 2;
     }
 
-    open_open_kwargs = PyDict_New();
-    if (!open_open_kwargs)
-        goto fail_decref_all;
-    open_wiki_markup = PyUnicode_FromString("{|");
-    if (!open_wiki_markup) {
-        Py_DECREF(open_open_kwargs);
-        goto fail_decref_all;
-    }
-    PyDict_SetItemString(open_open_kwargs, "wiki_markup", open_wiki_markup);
-    Py_DECREF(open_wiki_markup);
-    if (Tokenizer_emit_kwargs(self, TagOpenOpen, open_open_kwargs))
-        goto fail_decref_all;
-    if (Tokenizer_emit_text(self, "table"))
-        goto fail_decref_all;
-
-    if (style) {
-        if (Tokenizer_emit_all(self, style))
-            goto fail_decref_padding_table;
-        Py_DECREF(style);
-    }
-
-    close_open_kwargs = PyDict_New();
-    if (!close_open_kwargs)
-        goto fail_decref_padding_table;
-    PyDict_SetItemString(close_open_kwargs, "padding", padding);
-    Py_DECREF(padding);
-    if (Tokenizer_emit_kwargs(self, TagCloseOpen, close_open_kwargs))
-        goto fail_decref_table;
-
-    if (table) {
-        if (Tokenizer_emit_all(self, table))
-            goto fail_decref_table;
-        Py_DECREF(table);
-    }
-
-    open_close_kwargs = PyDict_New();
-    if (!open_close_kwargs)
-        return -1;
-    close_wiki_markup = PyUnicode_FromString("|}");
-    if (!close_wiki_markup) {
-        Py_DECREF(open_close_kwargs);
-        return -1;
-    }
-    PyDict_SetItemString(open_close_kwargs, "wiki_markup", close_wiki_markup);
-    Py_DECREF(close_wiki_markup);
-    if (Tokenizer_emit_kwargs(self, TagOpenClose, open_close_kwargs))
-        return -1;
-    if (Tokenizer_emit_text(self, "table"))
-        return -1;
-    if (Tokenizer_emit(self, TagCloseClose))
+    if (Tokenizer_emit_table_tag(self, "{|", "table", style, padding, NULL, table, "|}"))
         return -1;
     // offset displacement done by _parse()
     self->head--;
     return 0;
-
-    fail_decref_all:
-    Py_DECREF(style);
-    fail_decref_padding_table:
-    Py_DECREF(padding);
-    fail_decref_table:
-    Py_XDECREF(table);
-    return -1;
 }
 
 /*
@@ -2651,67 +2675,60 @@ static PyObject * Tokenizer_handle_table_end(Tokenizer* self)
 */
 static int Tokenizer_handle_table_row(Tokenizer* self)
 {
+    if (!Tokenizer_CAN_RECURSE(self)) {
+        if (Tokenizer_emit_text(self, "|-"))
+            return -1;
+        self->head += 1;
+        return 0;
+    }
+
     Py_ssize_t reset = self->head;
     self->head += 2;
-    PyObject *padding, *open_kwargs, *close_kwargs, *wiki_markup;
-    PyObject *style = NULL;
+    PyObject *padding, *style, *row;
 
-    // If we can't recurse, still tokenize tag but parse style attrs as text
-    if (Tokenizer_CAN_RECURSE(self)) {
-        if(Tokenizer_push(self, LC_TABLE_OPEN))
-            return -1;
-        padding = Tokenizer_parse_as_table_style(self, '\n', 0);
-        if (BAD_ROUTE) {
-            self->head = reset;
-            return 0;
-        }
-        if (!padding)
-            return -1;
-        style = Tokenizer_pop(self);
-        if (!style) {
-            Py_DECREF(padding);
-            return -1;
-        }
-    } else {
-        padding = PyUnicode_FromString("");
-        if (!padding)
-            return -1;
-    }
-
-    open_kwargs = PyDict_New();
-    if (!open_kwargs)
-        goto fail_decref_all;
-    wiki_markup = PyUnicode_FromString("|-");
-    if (!wiki_markup) {
-        Py_DECREF(open_kwargs);
-        goto fail_decref_all;
-    }
-    PyDict_SetItemString(open_kwargs, "wiki_markup", wiki_markup);
-    Py_DECREF(wiki_markup);
-    if (Tokenizer_emit_kwargs(self, TagOpenOpen, open_kwargs))
-        goto fail_decref_all;
-    if (Tokenizer_emit_text(self, "tr"))
-        goto fail_decref_all;
-
-    if (style) {
-        if (Tokenizer_emit_all(self, style))
-            goto fail_decref_all;
-        Py_DECREF(style);
-    }
-
-    close_kwargs = PyDict_New();
-    if (!close_kwargs)
-        goto fail_decref_all;
-    PyDict_SetItemString(close_kwargs, "padding", padding);
-    Py_DECREF(padding);
-    if (Tokenizer_emit_kwargs(self, TagCloseSelfclose, close_kwargs))
+    if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
         return -1;
-    return 0;
+    padding = Tokenizer_parse_as_table_style(self, '\n', 0);
+    if (BAD_ROUTE) {
+        self->head = reset;
+        return 0;
+    }
+    if (!padding)
+        return -1;
+    style = Tokenizer_pop(self);
+    if (!style) {
+        Py_DECREF(padding);
+        return -1;
+    }
+    // don't parse the style separator
+    self->head++;
+    row = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN, 1);
+    if (BAD_ROUTE) {
+        Py_DECREF(padding);
+        Py_DECREF(style);
+        self->head = reset;
+        return 0;
+    }
+    if (!row) {
+        Py_DECREF(padding);
+        Py_DECREF(style);
+        Py_DECREF(row);
+        return -1;
+    }
 
-    fail_decref_all:
-    Py_XDECREF(style);
-    Py_DECREF(padding);
-    return -1;
+    if (Tokenizer_emit_table_tag(self, "|-", "tr", style, padding, NULL, row, ""))
+        return -1;
+    // offset displacement done by _parse()
+    self->head--;
+    return 0;
+}
+
+/*
+    Return the stack in order to handle the table row end.
+*/
+static PyObject* Tokenizer_handle_table_row_end(Tokenizer* self)
+{
+    return Tokenizer_pop(self);
 }
 
 /*
@@ -2732,9 +2749,9 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
     uint64_t cell_context;
     Py_ssize_t reset = self->head;
     self->head += strlen(markup);
-    PyObject *padding;
-    PyObject *cell, *open_kwargs, *close_kwargs, *open_wiki_markup, *close_wiki_markup;
+    PyObject *padding, *cell;
     PyObject *style = NULL;
+    const char *close_open_markup = NULL;
 
     cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN | LC_TABLE_CELL_STYLE | line_context, 1);
     if (BAD_ROUTE) {
@@ -2783,54 +2800,16 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
         }
     }
 
-    open_kwargs = PyDict_New();
-    if (!open_kwargs)
-        goto fail_decref_all;
-    close_kwargs = PyDict_New();
-    if (!close_kwargs)
-        goto fail_decref_all;
-    open_wiki_markup = PyUnicode_FromString(markup);
-    if (!open_wiki_markup)
-        goto fail_decref_all;
-    PyDict_SetItemString(open_kwargs, "wiki_markup", open_wiki_markup);
-    Py_DECREF(open_wiki_markup);
-    if (Tokenizer_emit_kwargs(self, TagOpenOpen, open_kwargs))
-        goto fail_decref_all;
-    if (Tokenizer_emit_text(self, tag))
-        goto fail_decref_all;
-
     if (style) {
-        if (Tokenizer_emit_all(self, style))
-            goto fail_decref_all;
-        close_wiki_markup = PyUnicode_FromString("|");
-        if (!close_wiki_markup)
-            goto fail_decref_all;
-        PyDict_SetItemString(close_kwargs, "wiki_markup", close_wiki_markup);
-        Py_DECREF(close_wiki_markup);
-        Py_DECREF(style);
+        close_open_markup = "|";
     }
-
-    PyDict_SetItemString(close_kwargs, "padding", padding);
-    Py_DECREF(padding);
-    if (Tokenizer_emit_kwargs(self, TagCloseSelfclose, close_kwargs))
-        goto fail_decref_cell;
-    if (Tokenizer_emit_all(self, cell))
-        goto fail_decref_cell;
-    Py_DECREF(cell);
+    if (Tokenizer_emit_table_tag(self, markup, tag, style, padding, close_open_markup, cell, ""))
+        return -1;
     // keep header/cell line contexts
     self->topstack->context |= cell_context & (LC_TABLE_TH_LINE | LC_TABLE_TD_LINE);
     // offset displacement done by parse()
     self->head--;
     return 0;
-
-    fail_decref_all:
-    Py_XDECREF(style);
-    Py_DECREF(padding);
-    Py_XDECREF(open_kwargs);
-    Py_XDECREF(close_kwargs);
-    fail_decref_cell:
-    Py_DECREF(cell);
-    return -1;
 }
 
 /*
@@ -3139,12 +3118,16 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 if (this == '|' && next == '}') {
                     if (this_context & LC_TABLE_CELL_OPEN)
                         return Tokenizer_handle_table_cell_end(self, 0);
+                    if (this_context & LC_TABLE_ROW_OPEN)
+                        return Tokenizer_handle_table_row_end(self);
                     else
                         return Tokenizer_handle_table_end(self);
                 }
                 else if (this == '|' && next == '-') {
                     if (this_context & LC_TABLE_CELL_OPEN)
                         return Tokenizer_handle_table_cell_end(self, 0);
+                    if (this_context & LC_TABLE_ROW_OPEN)
+                        return Tokenizer_handle_table_row_end(self);
                     else if (Tokenizer_handle_table_row(self))
                         return NULL;
                 }
