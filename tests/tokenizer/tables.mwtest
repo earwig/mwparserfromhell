@@ -299,14 +299,6 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_fir
 
 ---
 
-name:   table_cell_unclosed_style
-label:  Parse unclosed and closed bold and italics inside cells.
-input:  "{|\n | ''foo || '''bar ||''baz''||'''test'''\n|}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseSelfclose(padding=""), Text(text=" ''foo "), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseSelfclose(padding=""), Text(text=" '''bar "), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseSelfclose(padding=""), TagOpenOpen(wiki_markup="'"), Text(text="i"), TagCloseOpen(), Text(text="baz"), TagOpenClose(), Text(text="i"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseSelfclose(padding=""), TagOpenOpen(wiki_markup="'''"), Text(text="b"), TagCloseOpen(), Text(text="text"), TagOpenClose(), Text(text="b"), TagCloseClose(), Text(text="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
-
-
----
-
 name:   recursion_five_hundred_opens
 label:  test potentially dangerous recursion: five hundred table openings, without spaces
 input:  "{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|"
