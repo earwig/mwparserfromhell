@@ -65,7 +65,7 @@ class Tag(Node):
             close = self.closing_wiki_markup if self.closing_wiki_markup else ""
             padding = self.padding if self.padding else ""
             if self.self_closing:
-                return self.wiki_markup + attrs + close + padding
+                return self.wiki_markup + attrs + padding + close
             else:
                 return self.wiki_markup + attrs + padding + str(self.contents) + close
 
