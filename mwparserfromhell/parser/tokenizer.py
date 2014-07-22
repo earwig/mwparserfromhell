@@ -1050,9 +1050,9 @@ class Tokenizer(object):
 
     def _handle_table_start(self):
         """Handle the start of a table."""
-        self._head += 2
-        reset = self._head
+        reset = self._head + 1
         style, table = None, None
+        self._head += 2
         try:
             self._push(contexts.TABLE_OPEN)
             padding = self._parse_as_table_style("\n", break_on_table_end=True)
@@ -1066,7 +1066,7 @@ class Tokenizer(object):
                 self._head += 2
         except BadRoute:
             # offset displacement done by _parse()
-            self._head = reset - 1
+            self._head = reset
             self._emit_text("{|")
         else:
             self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
@@ -1079,14 +1079,14 @@ class Tokenizer(object):
 
     def _handle_table_row(self):
         """Parse as style until end of the line, then continue."""
+        reset = self._head
+        style, padding = None, ""
+        self._head += 2
         if not self._can_recurse():
             self._emit_text("|-")
-            self._head += 1
+            self._head -= 1
             return
 
-        reset = self._head
-        self._head += 2
-        style, padding = None, ""
         try:
             self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
             padding = self._parse_as_table_style("\n")
@@ -1108,15 +1108,15 @@ class Tokenizer(object):
     def _handle_table_cell(self, markup, tag, line_context):
         """Parse as normal syntax unless we hit a style marker, then parse style
         as HTML attributes and the remainder as normal syntax."""
-        if not self._can_recurse():
-            self._emit_text(markup)
-            self._head += len(markup) - 1
-            return
-
         old_context = self._context
         reset = self._head
-        self._head += len(markup)
         reset_for_style, padding, style = False, "", None
+        self._head += len(markup)
+        if not self._can_recurse():
+            self._emit_text(markup)
+            self._head -= 1
+            return
+
         try:
             cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context | contexts.TABLE_CELL_STYLE)
             cell_context = self._context
@@ -1149,8 +1149,6 @@ class Tokenizer(object):
     def _handle_table_cell_end(self, reset_for_style=False):
         """Returns the current context, with the TABLE_CELL_STYLE flag set if
         it is necessary to reset and parse style attributes."""
-        if self._context & (contexts.FAIL & ~contexts.TABLE):
-            raise BadRoute
         if reset_for_style:
             self._context |= contexts.TABLE_CELL_STYLE
         else:

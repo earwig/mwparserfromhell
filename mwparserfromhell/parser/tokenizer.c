@@ -2601,17 +2601,17 @@ static PyObject* Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
 */
 static int Tokenizer_handle_table_start(Tokenizer* self)
 {
-    self->head += 2;
-    Py_ssize_t reset = self->head;
+    Py_ssize_t reset = self->head + 1;
     PyObject *style, *padding, *newline_character;
     PyObject *table = NULL;
+    self->head += 2;
 
     if(Tokenizer_push(self, LC_TABLE_OPEN))
         return -1;
     padding = Tokenizer_parse_as_table_style(self, '\n', 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();
-        self->head = reset - 1;
+        self->head = reset;
         if (Tokenizer_emit_text(self, "{|"))
             return -1;
         return 0;
@@ -2638,7 +2638,7 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
         if (BAD_ROUTE) {
             RESET_ROUTE();
             // offset displacement done by parse()
-            self->head = reset - 1;
+            self->head = reset;
             if (Tokenizer_emit_text(self, "{|"))
                 return -1;
             return 0;
@@ -2675,16 +2675,16 @@ static PyObject * Tokenizer_handle_table_end(Tokenizer* self)
 */
 static int Tokenizer_handle_table_row(Tokenizer* self)
 {
+    Py_ssize_t reset = self->head;
+    PyObject *padding, *style, *row;
+    self->head += 2;
+
     if (!Tokenizer_CAN_RECURSE(self)) {
         if (Tokenizer_emit_text(self, "|-"))
             return -1;
-        self->head += 1;
+        self->head -= 1;
         return 0;
     }
-
-    Py_ssize_t reset = self->head;
-    self->head += 2;
-    PyObject *padding, *style, *row;
 
     if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
         return -1;
@@ -2738,20 +2738,20 @@ static PyObject* Tokenizer_handle_table_row_end(Tokenizer* self)
 static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
                                        const char *tag, uint64_t line_context)
 {
-    if (!Tokenizer_CAN_RECURSE(self)) {
-        if (Tokenizer_emit_text(self, markup))
-            return -1;
-        self->head += strlen(markup) - 1;
-        return 0;
-    }
-
     uint64_t old_context = self->topstack->context;
     uint64_t cell_context;
     Py_ssize_t reset = self->head;
-    self->head += strlen(markup);
     PyObject *padding, *cell;
     PyObject *style = NULL;
     const char *close_open_markup = NULL;
+    self->head += strlen(markup);
+
+    if (!Tokenizer_CAN_RECURSE(self)) {
+        if (Tokenizer_emit_text(self, markup))
+            return -1;
+        self->head--;
+        return 0;
+    }
 
     cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN | LC_TABLE_CELL_STYLE | line_context, 1);
     if (BAD_ROUTE) {
