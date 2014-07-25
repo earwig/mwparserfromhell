@@ -53,7 +53,8 @@ static const char MARKERS[] = {
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
-static int route_state = 0, route_context = 0;
+static int route_state = 0;
+static uint64_t route_context = 0;
 #define BAD_ROUTE            route_state
 #define BAD_ROUTE_CONTEXT    route_context
 #define FAIL_ROUTE(context)  route_state = 1; route_context = context
