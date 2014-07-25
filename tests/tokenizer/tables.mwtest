@@ -13,23 +13,51 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding
 ---
 
 name:   no_table_close_simple
-label:  Handle case when there is no table close.
+label:  No table close on inline table
 input:  "{| "
 output: [Text(text="{| ")]
 
 ---
 
+name:   no_table_close_newline
+label:  No table close with a newline
+input:  "{| \n "
+output: [Text(text="{| \n ")]
+
+---
+
 name:   no_table_close_inside_cell
-label:  Handle case when there is no table close while inside of a cell.
-input:  "{| | "
-output: [Text(text="{| | ")]
+label:  No table close while inside of a cell
+input:  "{| \n| "
+output: [Text(text="{| \n| ")]
+
+---
+
+name:   no_table_close_inside_cell_after_newline
+label:  No table close while inside of a cell after a newline
+input:  "{| \n| \n "
+output: [Text(text="{| \n| \n ")]
+
+---
+
+name:   no_table_close_inside_cell_with_attributes
+label:  No table close while inside of a cell with attributes
+input:  "{| \n| red | test"
+output: [Text(text="{| \n| red | test")]
 
 ---
 
 name:   no_table_close_inside_row
-label:  Handle case when there is no table close while inside of a row.
-input:  "{| |- "
-output: [Text(text="{| |- ")]
+label:  No table close while inside of a row
+input:  "{| \n|- "
+output: [Text(text="{| \n|- ")]
+
+---
+
+name:   no_table_close_inside_row_after_newline
+label:  No table close while inside of a row after a newline
+input:  "{| \n|- \n "
+output: [Text(text="{| \n|- \n ")]
 
 ---
 
@@ -37,6 +65,13 @@ name:   no_table_close_attributes
 label:  Don't parse attributes as attributes if the table doesn't exist.
 input:  "{| border="1""
 output: [Text(text="{| border=\"1\"")]
+
+---
+
+name:   no_table_close_unclosed_attributes
+label:  Don't parse unclosed attributes if the table doesn't exist.
+input:  "{| border="
+output: [Text(text="{| border=")]
 
 ---
 

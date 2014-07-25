@@ -2636,8 +2636,9 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
         self->head++;
         table = Tokenizer_parse(self, LC_TABLE_OPEN, 1);
         if (BAD_ROUTE) {
+            Py_DECREF(padding);
+            Py_DECREF(style);
             RESET_ROUTE();
-            // offset displacement done by parse()
             self->head = reset;
             if (Tokenizer_emit_text(self, "{|"))
                 return -1;
@@ -2676,7 +2677,7 @@ static PyObject * Tokenizer_handle_table_end(Tokenizer* self)
 static int Tokenizer_handle_table_row(Tokenizer* self)
 {
     Py_ssize_t reset = self->head;
-    PyObject *padding, *style, *row;
+    PyObject *padding, *style, *row, *trash;
     self->head += 2;
 
     if (!Tokenizer_CAN_RECURSE(self)) {
@@ -2690,6 +2691,8 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
         return -1;
     padding = Tokenizer_parse_as_table_style(self, '\n', 0);
     if (BAD_ROUTE) {
+        trash = Tokenizer_pop(self);
+        Py_XDECREF(trash);
         self->head = reset;
         return 0;
     }
@@ -2704,6 +2707,8 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
     self->head++;
     row = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN, 1);
     if (BAD_ROUTE) {
+        trash = Tokenizer_pop(self);
+        Py_XDECREF(trash);
         Py_DECREF(padding);
         Py_DECREF(style);
         self->head = reset;
@@ -2712,7 +2717,6 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
     if (!row) {
         Py_DECREF(padding);
         Py_DECREF(style);
-        Py_DECREF(row);
         return -1;
     }
 
@@ -2741,7 +2745,7 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
     uint64_t old_context = self->topstack->context;
     uint64_t cell_context;
     Py_ssize_t reset = self->head;
-    PyObject *padding, *cell;
+    PyObject *padding, *cell, *trash;
     PyObject *style = NULL;
     const char *close_open_markup = NULL;
     self->head += strlen(markup);
@@ -2755,6 +2759,8 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
 
     cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN | LC_TABLE_CELL_STYLE | line_context, 1);
     if (BAD_ROUTE) {
+        trash = Tokenizer_pop(self);
+        Py_XDECREF(trash);
         self->head = reset;
         return 0;
     }
@@ -2770,6 +2776,8 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
             return -1;
         padding = Tokenizer_parse_as_table_style(self, '|', 0);
         if (BAD_ROUTE) {
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
             self->head = reset;
             return 0;
         }
@@ -2784,11 +2792,18 @@ static int Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
         self->head++;
         cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN | line_context, 1);
         if (BAD_ROUTE) {
+            Py_DECREF(padding);
+            Py_DECREF(style);
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
             self->head = reset;
             return 0;
         }
-        if (!cell)
+        if (!cell) {
+            Py_DECREF(padding);
+            Py_DECREF(style);
             return -1;
+        }
         cell_context = self->topstack->context;
         self->topstack->context = old_context;
     }
@@ -3147,6 +3162,9 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                     return NULL;
             }
             else if (Tokenizer_emit_char(self, this))
+                return NULL;
+            // Raise BadRoute to table start
+            if (BAD_ROUTE)
                 return NULL;
         }
         else if (Tokenizer_emit_char(self, this))

@@ -1053,24 +1053,30 @@ class Tokenizer(object):
         reset = self._head + 1
         style, table = None, None
         self._head += 2
+
+        self._push(contexts.TABLE_OPEN)
         try:
-            self._push(contexts.TABLE_OPEN)
             padding = self._parse_as_table_style("\n", break_on_table_end=True)
-            style = self._pop()
-            # continue to parse if it is NOT an inline table
-            if "\n" in padding:
-                self._head += 1
-                table = self._parse(contexts.TABLE_OPEN)
-            else:
-                # close tag
-                self._head += 2
         except BadRoute:
-            # offset displacement done by _parse()
             self._head = reset
             self._emit_text("{|")
+            return
+        style = self._pop()
+        # continue to parse if it is NOT an inline table
+        if "\n" in padding:
+            self._head += 1
+            try:
+                table = self._parse(contexts.TABLE_OPEN)
+            except BadRoute:
+                self._head = reset
+                self._emit_text("{|")
+                return
         else:
-            self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
-            self._head -= 1
+            # close tag
+            self._head += 2
+        self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
+        # offset displacement done by _parse()
+        self._head -= 1
 
     def _handle_table_end(self):
         """Return the stack in order to handle the table end."""
@@ -1087,15 +1093,21 @@ class Tokenizer(object):
             self._head -= 1
             return
 
+        self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
         try:
-            self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
             padding = self._parse_as_table_style("\n")
-            style = self._pop()
-            # don't parse the style separator
-            self._head += 1
+        except BadRoute:
+            self._head = reset
+            self._pop()
+            raise
+        style = self._pop()
+        # don't parse the style separator
+        self._head += 1
+        try:
             row = self._parse(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
         except BadRoute:
             self._head = reset
+            self._pop()
             raise
         self._emit_table_tag("|-", "tr", style, padding, None, row, "")
         # offset displacement done by parse()
@@ -1119,26 +1131,34 @@ class Tokenizer(object):
 
         try:
             cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context | contexts.TABLE_CELL_STYLE)
-            cell_context = self._context
-            self._context = old_context
-            reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         except BadRoute:
             self._head = reset
+            self._pop()
             raise
+        cell_context = self._context
+        self._context = old_context
+        reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         if reset_for_style:
             self._head = reset + len(markup)
+            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
             try:
-                self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
                 padding = self._parse_as_table_style("|")
-                style = self._pop()
-                # Don't parse the style separator
-                self._head += 1
-                cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
-                cell_context = self._context
-                self._context = old_context
             except BadRoute:
                 self._head = reset
+                self._pop()
                 raise
+            style = self._pop()
+            # Don't parse the style separator
+            self._head += 1
+            try:
+                cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
+            except BadRoute:
+                self._head = reset
+                ret = self._pop()
+                raise
+            cell_context = self._context
+            self._context = old_context
+
         close_open_markup = "|" if reset_for_style else None
         self._emit_table_tag(markup, tag, style, padding, close_open_markup, cell, "")
         # keep header/cell line contexts
