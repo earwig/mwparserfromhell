@@ -37,9 +37,9 @@ class Attribute(StringMixIn):
     """
 
     def __init__(self, name, value=None, quotes='"', pad_first=" ",
-                 pad_before_eq="", pad_after_eq=""):
+                 pad_before_eq="", pad_after_eq="", check_quotes=True):
         super(Attribute, self).__init__()
-        if not quotes and self._value_needs_quotes(value):
+        if check_quotes and not quotes and self._value_needs_quotes(value):
             raise ValueError("given value {0!r} requires quotes".format(value))
         self._name = name
         self._value = value
