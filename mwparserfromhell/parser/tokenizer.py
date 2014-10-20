@@ -1010,7 +1010,8 @@ class Tokenizer(object):
         if style:
             self._emit_all(style)
         if close_open_markup:
-            self._emit(tokens.TagCloseOpen(wiki_markup=close_open_markup, padding=padding))
+            self._emit(tokens.TagCloseOpen(wiki_markup=close_open_markup,
+                                           padding=padding))
         else:
             self._emit(tokens.TagCloseOpen(padding=padding))
         if contents:
@@ -1130,7 +1131,8 @@ class Tokenizer(object):
             return
 
         try:
-            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context | contexts.TABLE_CELL_STYLE)
+            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
+                               line_context | contexts.TABLE_CELL_STYLE)
         except BadRoute:
             self._head = reset
             self._pop()
@@ -1140,7 +1142,8 @@ class Tokenizer(object):
         reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         if reset_for_style:
             self._head = reset + len(markup)
-            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
+            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
+                       line_context)
             try:
                 padding = self._parse_as_table_style("|")
             except BadRoute:
@@ -1151,7 +1154,8 @@ class Tokenizer(object):
             # Don't parse the style separator
             self._head += 1
             try:
-                cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
+                cell = self._parse(contexts.TABLE_OPEN |
+                                   contexts.TABLE_CELL_OPEN | line_context)
             except BadRoute:
                 self._head = reset
                 ret = self._pop()
@@ -1160,9 +1164,11 @@ class Tokenizer(object):
             self._context = old_context
 
         close_open_markup = "|" if reset_for_style else None
-        self._emit_table_tag(markup, tag, style, padding, close_open_markup, cell, "")
+        self._emit_table_tag(markup, tag, style, padding, close_open_markup,
+                             cell, "")
         # keep header/cell line contexts
-        self._context |= cell_context & (contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE)
+        self._context |= cell_context & (contexts.TABLE_TH_LINE |
+                                         contexts.TABLE_TD_LINE)
         # offset displacement done by parse()
         self._head -= 1
 
