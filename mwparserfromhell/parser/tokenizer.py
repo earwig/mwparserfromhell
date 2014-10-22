@@ -1119,8 +1119,8 @@ class Tokenizer(object):
         return self._pop()
 
     def _handle_table_cell(self, markup, tag, line_context):
-        """Parse as normal syntax unless we hit a style marker, then parse style
-        as HTML attributes and the remainder as normal syntax."""
+        """Parse as normal syntax unless we hit a style marker, then parse
+        style as HTML attributes and the remainder as normal syntax."""
         old_context = self._context
         reset = self._head
         reset_for_style, padding, style = False, "", None
@@ -1144,12 +1144,7 @@ class Tokenizer(object):
             self._head = reset + len(markup)
             self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
                        line_context)
-            try:
-                padding = self._parse_as_table_style("|")
-            except BadRoute:
-                self._head = reset
-                self._pop()
-                raise
+            padding = self._parse_as_table_style("|")
             style = self._pop()
             # Don't parse the style separator
             self._head += 1
