@@ -369,6 +369,13 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_fir
 
 ---
 
+name:   inappropriate_marker_at_line_start
+label:  an inappropriate marker (a right bracket) at the start of a line in the table
+input:  "{|\n}"
+output: [Text(text="{|\n}")]
+
+---
+
 name:   recursion_five_hundred_opens
 label:  test potentially dangerous recursion: five hundred table openings, without spaces
 input:  "{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|"
