@@ -246,6 +246,9 @@ class TestTag(TreeEqualityTestCase):
         node.closing_wiki_markup = "|}"
         self.assertEqual("|}", node.closing_wiki_markup)
         self.assertEqual("{|\n|}", node)
+        node.wiki_markup = "!!"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("!!\n|}", node)
         node.wiki_markup = False
         self.assertFalse(node.closing_wiki_markup)
         self.assertEqual("<table>\n</table>", node)

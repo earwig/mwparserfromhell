@@ -223,7 +223,7 @@ class Tag(Node):
     def wiki_markup(self, value):
         self._wiki_markup = str(value) if value else None
         if not value or not self.closing_wiki_markup:
-            self.closing_wiki_markup = str(value) if value else None
+            self._closing_wiki_markup = self._wiki_markup
 
     @self_closing.setter
     def self_closing(self, value):
