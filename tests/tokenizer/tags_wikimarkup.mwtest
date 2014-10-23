@@ -447,6 +447,13 @@ output: [TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Tag
 
 ---
 
+name:   dt_dd_mix4
+label:  another example of correct dt/dd usage, with a trigger for a specific parse route
+input:  ";foo]:bar"
+output: [TagOpenOpen(wiki_markup=";"), Text(text="dt"), TagCloseSelfclose(), Text(text="foo]"), TagOpenOpen(wiki_markup=":"), Text(text="dd"), TagCloseSelfclose(), Text(text="bar")]
+
+---
+
 name:   ul_ol_dt_dd_mix
 label:  an assortment of uls, ols, dds, and dts
 input:  ";:#*foo\n:#*;foo\n#*;:foo\n*;:#foo"

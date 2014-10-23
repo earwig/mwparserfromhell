@@ -1325,7 +1325,7 @@ class Tokenizer(object):
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
                 if this == "\n":
-                    # kill potential table contexts
+                    # Kill potential table contexts
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
             # Start of table parsing
             elif this == "{" and next == "|" and (self._read(-1) in ("\n", self.START) or

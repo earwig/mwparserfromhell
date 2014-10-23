@@ -2783,12 +2783,6 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
                           line_context))
             return -1;
         padding = Tokenizer_parse_as_table_style(self, '|', 0);
-        if (BAD_ROUTE) {
-            trash = Tokenizer_pop(self);
-            Py_XDECREF(trash);
-            self->head = reset;
-            return 0;
-        }
         if (!padding)
             return -1;
         style = Tokenizer_pop(self);
