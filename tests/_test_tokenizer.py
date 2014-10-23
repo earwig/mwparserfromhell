@@ -53,7 +53,7 @@ class TokenizerTestCase(object):
         def inner(self):
             if hasattr(self, "roundtrip"):
                 expected = data["input"]
-                actual = str(Builder().build(data["output"]))
+                actual = str(Builder().build(data["output"][:]))
             else:
                 expected = data["output"]
                 actual = self.tokenizer().tokenize(data["input"])
