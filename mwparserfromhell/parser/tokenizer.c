@@ -676,11 +676,8 @@ static int Tokenizer_parse_template_or_argument(Tokenizer* self)
                 RESET_ROUTE();
                 for (i = 0; i < braces; i++) text[i] = '{';
                 text[braces] = '\0';
-                if (Tokenizer_emit_text_then_stack(self, text)) {
-                    Py_XDECREF(text);
+                if (Tokenizer_emit_text_then_stack(self, text))
                     return -1;
-                }
-                Py_XDECREF(text);
                 return 0;
             }
             else
