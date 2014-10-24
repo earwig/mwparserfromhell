@@ -9,7 +9,7 @@ Unreleased
 
 - The parser is now distributed with Windows binaries, fixing an issue that
   prevented Windows users from using the C tokenizer.
-- Added support for parsing wikicode tables.
+- Added support for parsing wikicode tables (patches by David Winegar).
 - Added a script to test for memory leaks in :file:`scripts/memtest.py`.
 - Added a script to do releases in :file:`scripts/release.sh`.
 - *skip_style_tags* can now be passed to :func:`mwparserfromhell.parse()
