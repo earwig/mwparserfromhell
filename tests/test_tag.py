@@ -226,6 +226,38 @@ class TestTag(TreeEqualityTestCase):
         self.assertWikicodeEqual(parsed, node.closing_tag)
         self.assertEqual("<ref>foobar</ref {{ignore me}}>", node)
 
+    def test_wiki_style_separator(self):
+        """test getter/setter for wiki_style_separator attribute"""
+        node = Tag(wraptext("table"), wraptext("\n"))
+        self.assertIs(None, node.wiki_style_separator)
+        node.wiki_style_separator = "|"
+        self.assertEqual("|", node.wiki_style_separator)
+        node.wiki_markup = "{"
+        self.assertEqual("{|\n{", node)
+        node2 = Tag(wraptext("table"), wraptext("\n"), wiki_style_separator="|")
+        self.assertEqual("|", node.wiki_style_separator)
+
+    def test_closing_wiki_markup(self):
+        """test getter/setter for closing_wiki_markup attribute"""
+        node = Tag(wraptext("table"), wraptext("\n"))
+        self.assertIs(None, node.closing_wiki_markup)
+        node.wiki_markup = "{|"
+        self.assertEqual("{|", node.closing_wiki_markup)
+        node.closing_wiki_markup = "|}"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("{|\n|}", node)
+        node.wiki_markup = "!!"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("!!\n|}", node)
+        node.wiki_markup = False
+        self.assertFalse(node.closing_wiki_markup)
+        self.assertEqual("<table>\n</table>", node)
+        node2 = Tag(wraptext("table"), wraptext("\n"),
+                    attrs=[agen("id", "foo")], wiki_markup="{|",
+                    closing_wiki_markup="|}")
+        self.assertEqual("|}", node2.closing_wiki_markup)
+        self.assertEqual('{| id="foo"\n|}', node2)
+
     def test_has(self):
         """test Tag.has()"""
         node = Tag(wraptext("ref"), wraptext("cite"), [agen("name", "foo")])

@@ -63,7 +63,7 @@ class Tokenizer(object):
     START = object()
     END = object()
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
-               ":", "/", "-", "\n", START, END]
+               ":", "/", "-", "!", "\n", START, END]
     MAX_DEPTH = 40
     MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
@@ -991,12 +991,166 @@ class Tokenizer(object):
         else:
             self._emit_text("\n")
 
+    def _emit_table_tag(self, open_open_markup, tag, style, padding,
+                        close_open_markup, contents, open_close_markup):
+        """Emit a table tag."""
+        self._emit(tokens.TagOpenOpen(wiki_markup=open_open_markup))
+        self._emit_text(tag)
+        if style:
+            self._emit_all(style)
+        if close_open_markup:
+            self._emit(tokens.TagCloseOpen(wiki_markup=close_open_markup,
+                                           padding=padding))
+        else:
+            self._emit(tokens.TagCloseOpen(padding=padding))
+        if contents:
+            self._emit_all(contents)
+        self._emit(tokens.TagOpenClose(wiki_markup=open_close_markup))
+        self._emit_text(tag)
+        self._emit(tokens.TagCloseClose())
+
+    def _handle_table_style(self, end_token):
+        """Handle style attributes for a table until ``end_token``."""
+        data = _TagOpenData()
+        data.context = _TagOpenData.CX_ATTR_READY
+        while True:
+            this = self._read()
+            can_exit = (not data.context & data.CX_QUOTED or
+                        data.context & data.CX_NOTE_SPACE)
+            if this == end_token and can_exit:
+                if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
+                    self._push_tag_buffer(data)
+                if this.isspace():
+                    data.padding_buffer["first"] += this
+                return data.padding_buffer["first"]
+            elif this is self.END or this == end_token:
+                if self._context & contexts.TAG_ATTR:
+                    if data.context & data.CX_QUOTED:
+                        # Unclosed attribute quote: reset, don't die
+                        data.context = data.CX_ATTR_VALUE
+                        self._pop()
+                        self._head = data.reset
+                        continue
+                    self._pop()
+                self._fail_route()
+            else:
+                self._handle_tag_data(data, this)
+            self._head += 1
+
+    def _parse_table(self):
+        """Parse a wikicode table by starting with the first line."""
+        reset = self._head + 1
+        self._head += 2
+        self._push(contexts.TABLE_OPEN)
+        try:
+            padding = self._handle_table_style("\n")
+        except BadRoute:
+            self._head = reset
+            self._emit_text("{|")
+            return
+        style = self._pop()
+
+        self._head += 1
+        try:
+            table = self._parse(contexts.TABLE_OPEN)
+        except BadRoute:
+            self._head = reset
+            self._emit_text("{|")
+            return
+
+        self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
+        # Offset displacement done by _parse():
+        self._head -= 1
+
+    def _handle_table_row(self):
+        """Parse as style until end of the line, then continue."""
+        self._head += 2
+        if not self._can_recurse():
+            self._emit_text("|-")
+            self._head -= 1
+            return
+
+        self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
+        try:
+            padding = self._handle_table_style("\n")
+        except BadRoute:
+            self._pop()
+            raise
+        style = self._pop()
+
+        # Don't parse the style separator:
+        self._head += 1
+        row = self._parse(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
+
+        self._emit_table_tag("|-", "tr", style, padding, None, row, "")
+        # Offset displacement done by parse():
+        self._head -= 1
+
+    def _handle_table_cell(self, markup, tag, line_context):
+        """Parse as normal syntax unless we hit a style marker, then parse
+        style as HTML attributes and the remainder as normal syntax."""
+        old_context = self._context
+        padding, style = "", None
+        self._head += len(markup)
+        reset = self._head
+        if not self._can_recurse():
+            self._emit_text(markup)
+            self._head -= 1
+            return
+
+        cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
+                           line_context | contexts.TABLE_CELL_STYLE)
+        cell_context = self._context
+        self._context = old_context
+        reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
+        if reset_for_style:
+            self._head = reset
+            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
+                       line_context)
+            padding = self._handle_table_style("|")
+            style = self._pop()
+            # Don't parse the style separator:
+            self._head += 1
+            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
+                               line_context)
+            cell_context = self._context
+            self._context = old_context
+
+        close_open_markup = "|" if reset_for_style else None
+        self._emit_table_tag(markup, tag, style, padding, close_open_markup,
+                             cell, "")
+        # Keep header/cell line contexts:
+        self._context |= cell_context & (contexts.TABLE_TH_LINE |
+                                         contexts.TABLE_TD_LINE)
+        # Offset displacement done by parse():
+        self._head -= 1
+
+    def _handle_table_cell_end(self, reset_for_style=False):
+        """Returns the current context, with the TABLE_CELL_STYLE flag set if
+        it is necessary to reset and parse style attributes."""
+        if reset_for_style:
+            self._context |= contexts.TABLE_CELL_STYLE
+        else:
+            self._context &= ~contexts.TABLE_CELL_STYLE
+        return self._pop(keep_context=True)
+
+    def _handle_table_row_end(self):
+        """Return the stack in order to handle the table row end."""
+        return self._pop()
+
+    def _handle_table_end(self):
+        """Return the stack in order to handle the table end."""
+        self._head += 2
+        return self._pop()
+
     def _handle_end(self):
         """Handle the end of the stream of wikitext."""
         if self._context & contexts.FAIL:
             if self._context & contexts.TAG_BODY:
                 if is_single(self._stack[1].text):
                     return self._handle_single_tag_end()
+            if self._context & contexts.TABLE_CELL_OPEN:
+                self._pop()
             if self._context & contexts.DOUBLE:
                 self._pop()
             self._fail_route()
@@ -1144,15 +1298,68 @@ class Tokenizer(object):
                 result = self._parse_style()
                 if result is not None:
                     return result
-            elif self._read(-1) in ("\n", self.START):
-                if this in ("#", "*", ";", ":"):
+            elif self._read(-1) in ("\n", self.START) and this in ("#", "*", ";", ":"):
                     self._handle_list()
-                elif this == next == self._read(2) == self._read(3) == "-":
+            elif self._read(-1) in ("\n", self.START) and this == next == self._read(2) == self._read(3) == "-":
                     self._handle_hr()
-                else:
-                    self._emit_text(this)
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
+                if this == "\n":
+                    # Kill potential table contexts
+                    self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
+            # Start of table parsing
+            elif this == "{" and next == "|" and (self._read(-1) in ("\n", self.START) or
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
+                if self._can_recurse():
+                    self._parse_table()
+                else:
+                    self._emit_text("{|")
+            elif self._context & contexts.TABLE_OPEN:
+                if this == next == "|" and self._context & contexts.TABLE_TD_LINE:
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("||", "td", contexts.TABLE_TD_LINE)
+                elif this == next == "|" and self._context & contexts.TABLE_TH_LINE:
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("||", "th", contexts.TABLE_TH_LINE)
+                elif this == next == "!" and self._context & contexts.TABLE_TH_LINE:
+                    if self._context & contexts.TABLE_CELL_OPEN:
+                        return self._handle_table_cell_end()
+                    self._handle_table_cell("!!", "th", contexts.TABLE_TH_LINE)
+                elif this == "|" and self._context & contexts.TABLE_CELL_STYLE:
+                    return self._handle_table_cell_end(reset_for_style=True)
+                # on newline, clear out cell line contexts
+                elif this == "\n" and self._context & contexts.TABLE_CELL_LINE_CONTEXTS:
+                    self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
+                    self._emit_text(this)
+                elif (self._read(-1) in ("\n", self.START) or
+                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
+                    if this == "|" and next == "}":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        if self._context & contexts.TABLE_ROW_OPEN:
+                            return self._handle_table_row_end()
+                        return self._handle_table_end()
+                    elif this == "|" and next == "-":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        if self._context & contexts.TABLE_ROW_OPEN:
+                            return self._handle_table_row_end()
+                        self._handle_table_row()
+                    elif this == "|":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        self._handle_table_cell("|", "td", contexts.TABLE_TD_LINE)
+                    elif this == "!":
+                        if self._context & contexts.TABLE_CELL_OPEN:
+                            return self._handle_table_cell_end()
+                        self._handle_table_cell("!", "th", contexts.TABLE_TH_LINE)
+                    else:
+                        self._emit_text(this)
+                else:
+                    self._emit_text(this)
+
             else:
                 self._emit_text(this)
             self._head += 1
@@ -1164,6 +1371,10 @@ class Tokenizer(object):
         self._text = [segment for segment in split if segment]
         self._head = self._global = self._depth = self._cycles = 0
         try:
-            return self._parse(context)
+            tokens = self._parse(context)
         except BadRoute:  # pragma: no cover (untestable/exceptional case)
             raise ParserError("Python tokenizer exited with BadRoute")
+        if self._stacks:  # pragma: no cover (untestable/exceptional case)
+            err = "Python tokenizer exited with non-empty token stack"
+            raise ParserError(err)
+        return tokens

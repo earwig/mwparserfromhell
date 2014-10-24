@@ -25,8 +25,9 @@ import codecs
 from os import listdir, path
 import sys
 
-from mwparserfromhell.compat import py3k
+from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.parser import tokens
+from mwparserfromhell.parser.builder import Builder
 
 class _TestParseError(Exception):
     """Raised internally when a test could not be parsed."""
@@ -50,8 +51,12 @@ class TokenizerTestCase(object):
         *label* for the method's docstring.
         """
         def inner(self):
-            expected = data["output"]
-            actual = self.tokenizer().tokenize(data["input"])
+            if hasattr(self, "roundtrip"):
+                expected = data["input"]
+                actual = str(Builder().build(data["output"][:]))
+            else:
+                expected = data["output"]
+                actual = self.tokenizer().tokenize(data["input"])
             self.assertEqual(expected, actual)
         if not py3k:
             inner.__name__ = funcname.encode("utf8")
