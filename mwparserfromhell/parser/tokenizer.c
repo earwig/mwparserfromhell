@@ -2423,34 +2423,6 @@ static int Tokenizer_handle_dl_term(Tokenizer* self)
 }
 
 /*
-    Handle the end of the stream of wikitext.
-*/
-static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
-{
-    PyObject *token, *text, *trash;
-    int single;
-
-    if (context & AGG_FAIL) {
-        if (context & LC_TAG_BODY) {
-            token = PyList_GET_ITEM(self->topstack->stack, 1);
-            text = PyObject_GetAttrString(token, "text");
-            if (!text)
-                return NULL;
-            single = IS_SINGLE(text);
-            Py_DECREF(text);
-            if (single)
-                return Tokenizer_handle_single_tag_end(self);
-        }
-        else if (context & AGG_DOUBLE) {
-            trash = Tokenizer_pop(self);
-            Py_XDECREF(trash);
-        }
-        return Tokenizer_fail_route(self);
-    }
-    return Tokenizer_pop(self);
-}
-
-/*
     Emit a table tag.
 */
 static int
@@ -2844,6 +2816,34 @@ Tokenizer_handle_table_cell_end(Tokenizer* self, int reset_for_style)
     else
         self->topstack->context &= ~LC_TABLE_CELL_STYLE;
     return Tokenizer_pop_keeping_context(self);
+}
+
+/*
+    Handle the end of the stream of wikitext.
+*/
+static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
+{
+    PyObject *token, *text, *trash;
+    int single;
+
+    if (context & AGG_FAIL) {
+        if (context & LC_TAG_BODY) {
+            token = PyList_GET_ITEM(self->topstack->stack, 1);
+            text = PyObject_GetAttrString(token, "text");
+            if (!text)
+                return NULL;
+            single = IS_SINGLE(text);
+            Py_DECREF(text);
+            if (single)
+                return Tokenizer_handle_single_tag_end(self);
+        }
+        else if (context & AGG_DOUBLE) {
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
+        }
+        return Tokenizer_fail_route(self);
+    }
+    return Tokenizer_pop(self);
 }
 
 /*

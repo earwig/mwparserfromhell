@@ -991,17 +991,6 @@ class Tokenizer(object):
         else:
             self._emit_text("\n")
 
-    def _handle_end(self):
-        """Handle the end of the stream of wikitext."""
-        if self._context & contexts.FAIL:
-            if self._context & contexts.TAG_BODY:
-                if is_single(self._stack[1].text):
-                    return self._handle_single_tag_end()
-            if self._context & contexts.DOUBLE:
-                self._pop()
-            self._fail_route()
-        return self._pop()
-
     def _emit_table_tag(self, open_open_markup, tag, style, padding,
                         close_open_markup, contents, open_close_markup):
         """Emit a table tag."""
@@ -1020,22 +1009,21 @@ class Tokenizer(object):
         self._emit_text(tag)
         self._emit(tokens.TagCloseClose())
 
-    def _parse_as_table_style(self, end_token, break_on_table_end=False):
+    def _parse_as_table_style(self, end_token):
         """Parse until ``end_token`` as style attributes for a table."""
         data = _TagOpenData()
         data.context = _TagOpenData.CX_ATTR_READY
         while True:
-            this, next = self._read(), self._read(1)
-            table_end = break_on_table_end and this == "|" and next == "}"
+            this = self._read()
             can_exit = (not data.context & data.CX_QUOTED or
                         data.context & data.CX_NOTE_SPACE)
-            if (this == end_token and can_exit) or table_end:
+            if this == end_token and can_exit:
                 if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
                     self._push_tag_buffer(data)
                 if this.isspace():
                     data.padding_buffer["first"] += this
                 return data.padding_buffer["first"]
-            elif this is self.END or table_end or this == end_token:
+            elif this is self.END or this == end_token:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
                         # Unclosed attribute quote: reset, don't die
@@ -1052,31 +1040,27 @@ class Tokenizer(object):
     def _handle_table_start(self):
         """Handle the start of a table."""
         reset = self._head + 1
-        style, table = None, None
         self._head += 2
 
         self._push(contexts.TABLE_OPEN)
         try:
-            padding = self._parse_as_table_style("\n", break_on_table_end=True)
+            padding = self._parse_as_table_style("\n")
         except BadRoute:
             self._head = reset
             self._emit_text("{|")
             return
         style = self._pop()
-        # continue to parse if it is NOT an inline table
-        if "\n" in padding:
-            self._head += 1
-            try:
-                table = self._parse(contexts.TABLE_OPEN)
-            except BadRoute:
-                self._head = reset
-                self._emit_text("{|")
-                return
-        else:
-            # close tag
-            self._head += 2
+
+        self._head += 1
+        try:
+            table = self._parse(contexts.TABLE_OPEN)
+        except BadRoute:
+            self._head = reset
+            self._emit_text("{|")
+            return
+
         self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
-        # offset displacement done by _parse()
+        # Offset displacement done by _parse():
         self._head -= 1
 
     def _handle_table_end(self):
@@ -1087,7 +1071,6 @@ class Tokenizer(object):
     def _handle_table_row(self):
         """Parse as style until end of the line, then continue."""
         reset = self._head
-        style, padding = None, ""
         self._head += 2
         if not self._can_recurse():
             self._emit_text("|-")
@@ -1102,7 +1085,8 @@ class Tokenizer(object):
             self._pop()
             raise
         style = self._pop()
-        # don't parse the style separator
+
+        # Don't parse the style separator:
         self._head += 1
         try:
             row = self._parse(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
@@ -1110,8 +1094,9 @@ class Tokenizer(object):
             self._head = reset
             self._pop()
             raise
+
         self._emit_table_tag("|-", "tr", style, padding, None, row, "")
-        # offset displacement done by parse()
+        # Offset displacement done by parse():
         self._head -= 1
 
     def _handle_table_row_end(self):
@@ -1146,7 +1131,7 @@ class Tokenizer(object):
                        line_context)
             padding = self._parse_as_table_style("|")
             style = self._pop()
-            # Don't parse the style separator
+            # Don't parse the style separator:
             self._head += 1
             try:
                 cell = self._parse(contexts.TABLE_OPEN |
@@ -1161,10 +1146,10 @@ class Tokenizer(object):
         close_open_markup = "|" if reset_for_style else None
         self._emit_table_tag(markup, tag, style, padding, close_open_markup,
                              cell, "")
-        # keep header/cell line contexts
+        # Keep header/cell line contexts:
         self._context |= cell_context & (contexts.TABLE_TH_LINE |
                                          contexts.TABLE_TD_LINE)
-        # offset displacement done by parse()
+        # Offset displacement done by parse():
         self._head -= 1
 
     def _handle_table_cell_end(self, reset_for_style=False):
@@ -1175,6 +1160,17 @@ class Tokenizer(object):
         else:
             self._context &= ~contexts.TABLE_CELL_STYLE
         return self._pop(keep_context=True)
+
+    def _handle_end(self):
+        """Handle the end of the stream of wikitext."""
+        if self._context & contexts.FAIL:
+            if self._context & contexts.TAG_BODY:
+                if is_single(self._stack[1].text):
+                    return self._handle_single_tag_end()
+            if self._context & contexts.DOUBLE:
+                self._pop()
+            self._fail_route()
+        return self._pop()
 
     def _verify_safe(self, this):
         """Make sure we are not trying to write an invalid character."""
