@@ -6,9 +6,9 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding
 ---
 
 name:   inline_table
-label:  correctly handle tables with close on the same line
+label:  tables with a close on the same line are not valid
 input:  "{||}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=""), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+output: [Text(text="{||}")]
 
 ---
 
@@ -127,7 +127,7 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding
 name:   characters_after_inline_table
 label:  handle characters after an inline table close
 input:  "{| |} tsta"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" tsta")]
+output: [Text(text="{| |} tsta")]
 
 ---
 
@@ -342,9 +342,9 @@ output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_fir
 ---
 
 name:   inline_table_attributes
-label:  correctly handle attributes in inline tables
+label:  handle attributes in inline tables
 input:  "{| foo="tee bar" |}"
-output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"),TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="tee bar"), TagCloseOpen(padding=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+output: [Text(text='{| foo="tee bar" |}')]
 
 ---
 
@@ -376,14 +376,28 @@ output: [Text(text="{|\n}")]
 
 ---
 
-name:   recursion_five_hundred_opens
-label:  test potentially dangerous recursion: five hundred table openings, without spaces
-input:  "{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|"
-output: [Text(text="{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|{|")]
+name:   fake_close_near_start
+label:  a fake closing token at the end of the first line in the table
+input:  "{| class="wikitable" style="text-align: center; width=100%;|}\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"text-align:"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="center;"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="width"), TagAttrEquals(), Text(text="100%;|}"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
 
 ---
 
-name:   recursion_one_hundred_opens
-label:  test potentially dangerous recursion: one hundred table openings, with spaces
-input:  "{| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {|"
-output: [Text(text="{| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {| {|")]
+name:   fake_close_near_start_2
+label:  a fake closing token at the end of the first line in the table
+input:  "{| class="wikitable|}"\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable|}"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   junk_after_table_start
+label:  ignore more junk on the first line of the table
+input:  "{| class="wikitable" | foobar\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="|"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="foobar"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   junk_after_table_row
+label:  ignore junk on the first line of a table row
+input:  "{|\n|- foo="bar" | baz\n|blerp\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="bar"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="|"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="baz"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="blerp\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
