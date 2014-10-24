@@ -61,6 +61,13 @@ output: [Text(text="{| \n|- \n ")]
 
 ---
 
+name:   no_table_close_row_and_cell
+label:  no table close while inside a cell inside a row
+input:  "{| \n|- \n|"
+output: [Text(text="{| \n|- \n|")]
+
+---
+
 name:   no_table_close_attributes
 label:  don't parse attributes as attributes if the table doesn't exist
 input:  "{| border="1""

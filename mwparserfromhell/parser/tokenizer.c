@@ -2510,10 +2510,9 @@ Tokenizer_emit_table_tag(Tokenizer* self, const char* open_open_markup,
 }
 
 /*
-    Parse until ``end_token`` as style attributes for a table.
+    Handle style attributes for a table until an ending token.
 */
-static PyObject*
-Tokenizer_parse_as_table_style(Tokenizer* self, char end_token)
+static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
 {
     TagData *data = TagData_new();
     PyObject *padding, *trash;
@@ -2569,9 +2568,9 @@ Tokenizer_parse_as_table_style(Tokenizer* self, char end_token)
 }
 
 /*
-    Handle the start of a table.
+    Parse a wikicode table by starting with the first line.
 */
-static int Tokenizer_handle_table_start(Tokenizer* self)
+static int Tokenizer_parse_table(Tokenizer* self)
 {
     Py_ssize_t reset = self->head + 1;
     PyObject *style, *padding;
@@ -2580,7 +2579,7 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
 
     if(Tokenizer_push(self, LC_TABLE_OPEN))
         return -1;
-    padding = Tokenizer_parse_as_table_style(self, '\n');
+    padding = Tokenizer_handle_table_style(self, '\n');
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
@@ -2622,20 +2621,10 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
 }
 
 /*
-    Return the stack in order to handle the table end.
-*/
-static PyObject* Tokenizer_handle_table_end(Tokenizer* self)
-{
-    self->head += 2;
-    return Tokenizer_pop(self);
-}
-
-/*
     Parse as style until end of the line, then continue.
 */
 static int Tokenizer_handle_table_row(Tokenizer* self)
 {
-    Py_ssize_t reset = self->head;
     PyObject *padding, *style, *row, *trash;
     self->head += 2;
 
@@ -2648,11 +2637,10 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
 
     if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
         return -1;
-    padding = Tokenizer_parse_as_table_style(self, '\n');
+    padding = Tokenizer_handle_table_style(self, '\n');
     if (BAD_ROUTE) {
         trash = Tokenizer_pop(self);
         Py_XDECREF(trash);
-        self->head = reset;
         return 0;
     }
     if (!padding)
@@ -2666,14 +2654,6 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
     // Don't parse the style separator
     self->head++;
     row = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN, 1);
-    if (BAD_ROUTE) {
-        trash = Tokenizer_pop(self);
-        Py_XDECREF(trash);
-        Py_DECREF(padding);
-        Py_DECREF(style);
-        self->head = reset;
-        return 0;
-    }
     if (!row) {
         Py_DECREF(padding);
         Py_DECREF(style);
@@ -2688,14 +2668,6 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
 }
 
 /*
-    Return the stack in order to handle the table row end.
-*/
-static PyObject* Tokenizer_handle_table_row_end(Tokenizer* self)
-{
-    return Tokenizer_pop(self);
-}
-
-/*
     Parse as normal syntax unless we hit a style marker, then parse style
     as HTML attributes and the remainder as normal syntax.
 */
@@ -2705,11 +2677,10 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
 {
     uint64_t old_context = self->topstack->context;
     uint64_t cell_context;
-    Py_ssize_t reset = self->head;
-    PyObject *padding, *cell, *trash;
-    PyObject *style = NULL;
+    PyObject *padding, *cell, *style = NULL;
     const char *close_open_markup = NULL;
     self->head += strlen(markup);
+    Py_ssize_t reset = self->head;
 
     if (!Tokenizer_CAN_RECURSE(self)) {
         if (Tokenizer_emit_text(self, markup))
@@ -2720,12 +2691,6 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
 
     cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
                            LC_TABLE_CELL_STYLE | line_context, 1);
-    if (BAD_ROUTE) {
-        trash = Tokenizer_pop(self);
-        Py_XDECREF(trash);
-        self->head = reset;
-        return 0;
-    }
     if (!cell)
         return -1;
     cell_context = self->topstack->context;
@@ -2733,11 +2698,11 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
 
     if (cell_context & LC_TABLE_CELL_STYLE) {
         Py_DECREF(cell);
-        self->head = reset + strlen(markup);
+        self->head = reset;
         if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
                           line_context))
             return -1;
-        padding = Tokenizer_parse_as_table_style(self, '|');
+        padding = Tokenizer_handle_table_style(self, '|');
         if (!padding)
             return -1;
         style = Tokenizer_pop(self);
@@ -2749,14 +2714,6 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
         self->head++;
         cell = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
                                line_context, 1);
-        if (BAD_ROUTE) {
-            Py_DECREF(padding);
-            Py_DECREF(style);
-            trash = Tokenizer_pop(self);
-            Py_XDECREF(trash);
-            self->head = reset;
-            return 0;
-        }
         if (!cell) {
             Py_DECREF(padding);
             Py_DECREF(style);
@@ -2801,6 +2758,23 @@ Tokenizer_handle_table_cell_end(Tokenizer* self, int reset_for_style)
 }
 
 /*
+    Return the stack in order to handle the table row end.
+*/
+static PyObject* Tokenizer_handle_table_row_end(Tokenizer* self)
+{
+    return Tokenizer_pop(self);
+}
+
+/*
+    Return the stack in order to handle the table end.
+*/
+static PyObject* Tokenizer_handle_table_end(Tokenizer* self)
+{
+    self->head += 2;
+    return Tokenizer_pop(self);
+}
+
+/*
     Handle the end of the stream of wikitext.
 */
 static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
@@ -2819,9 +2793,16 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
             if (single)
                 return Tokenizer_handle_single_tag_end(self);
         }
-        else if (context & AGG_DOUBLE) {
-            trash = Tokenizer_pop(self);
-            Py_XDECREF(trash);
+        else {
+            if (context & LC_TABLE_CELL_OPEN) {
+                trash = Tokenizer_pop(self);
+                Py_XDECREF(trash);
+                context = self->topstack->context;
+            }
+            if (context & AGG_DOUBLE) {
+                trash = Tokenizer_pop(self);
+                Py_XDECREF(trash);
+            }
         }
         return Tokenizer_fail_route(self);
     }
@@ -3082,7 +3063,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
         // Start of table parsing
         else if (this == '{' && next == '|' && Tokenizer_has_leading_whitespace(self)) {
             if (Tokenizer_CAN_RECURSE(self)) {
-                if (Tokenizer_handle_table_start(self))
+                if (Tokenizer_parse_table(self))
                     return NULL;
             }
             else if (Tokenizer_emit_char(self, this) || Tokenizer_emit_char(self, next))
@@ -3197,7 +3178,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     self->skip_style_tags = skip_style_tags;
     tokens = Tokenizer_parse(self, context, 1);
 
-    if (!tokens && !PyErr_Occurred()) {
+    if ((!tokens && !PyErr_Occurred()) || self->topstack) {
         if (!ParserError) {
             if (load_exceptions())
                 return NULL;
@@ -3206,6 +3187,9 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
             RESET_ROUTE();
             PyErr_SetString(ParserError, "C tokenizer exited with BAD_ROUTE");
         }
+        else if (self->topstack)
+            PyErr_SetString(ParserError,
+                            "C tokenizer exited with non-empty token stack");
         else
             PyErr_SetString(ParserError, "C tokenizer exited unexpectedly");
         return NULL;
