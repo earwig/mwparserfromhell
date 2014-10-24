@@ -2513,13 +2513,12 @@ Tokenizer_emit_table_tag(Tokenizer* self, const char* open_open_markup,
     Parse until ``end_token`` as style attributes for a table.
 */
 static PyObject*
-Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
-                               int break_on_table_end)
+Tokenizer_parse_as_table_style(Tokenizer* self, char end_token)
 {
     TagData *data = TagData_new();
     PyObject *padding, *trash;
-    Py_UNICODE this, next;
-    int can_exit, table_end;
+    Py_UNICODE this;
+    int can_exit;
 
     if (!data)
         return NULL;
@@ -2527,10 +2526,8 @@ Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
 
     while (1) {
         this = Tokenizer_READ(self, 0);
-        next = Tokenizer_READ(self, 1);
         can_exit = (!(data->context & TAG_QUOTED) || data->context & TAG_NOTE_SPACE);
-        table_end = (break_on_table_end && this == '|' && next == '}');
-        if ((this == end_token && can_exit) || table_end) {
+        if (this == end_token && can_exit) {
             if (data->context & (TAG_ATTR_NAME | TAG_ATTR_VALUE)) {
                 if (Tokenizer_push_tag_buffer(self, data)) {
                     TagData_dealloc(data);
@@ -2545,7 +2542,7 @@ Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
                 return NULL;
             return padding;
         }
-        else if (!this || table_end || this == end_token) {
+        else if (!this || this == end_token) {
            if (self->topstack->context & LC_TAG_ATTR) {
                 if (data->context & TAG_QUOTED) {
                     // Unclosed attribute quote: reset, don't die
@@ -2577,13 +2574,13 @@ Tokenizer_parse_as_table_style(Tokenizer* self, char end_token,
 static int Tokenizer_handle_table_start(Tokenizer* self)
 {
     Py_ssize_t reset = self->head + 1;
-    PyObject *style, *padding, *newline_character;
+    PyObject *style, *padding;
     PyObject *table = NULL;
     self->head += 2;
 
     if(Tokenizer_push(self, LC_TABLE_OPEN))
         return -1;
-    padding = Tokenizer_parse_as_table_style(self, '\n', 1);
+    padding = Tokenizer_parse_as_table_style(self, '\n');
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
@@ -2599,41 +2596,27 @@ static int Tokenizer_handle_table_start(Tokenizer* self)
         return -1;
     }
 
-    newline_character = PyUnicode_FromString("\n");
-    if (!newline_character) {
+    self->head++;
+    table = Tokenizer_parse(self, LC_TABLE_OPEN, 1);
+    if (BAD_ROUTE) {
+        RESET_ROUTE();
+        Py_DECREF(padding);
+        Py_DECREF(style);
+        self->head = reset;
+        if (Tokenizer_emit_text(self, "{|"))
+            return -1;
+        return 0;
+    }
+    if (!table) {
         Py_DECREF(padding);
         Py_DECREF(style);
         return -1;
-    }
-    // continue to parse if it is NOT an inline table
-    if (PyUnicode_Contains(padding, newline_character)) {
-        Py_DECREF(newline_character);
-        self->head++;
-        table = Tokenizer_parse(self, LC_TABLE_OPEN, 1);
-        if (BAD_ROUTE) {
-            Py_DECREF(padding);
-            Py_DECREF(style);
-            RESET_ROUTE();
-            self->head = reset;
-            if (Tokenizer_emit_text(self, "{|"))
-                return -1;
-            return 0;
-        }
-        if (!table) {
-            Py_DECREF(padding);
-            Py_DECREF(style);
-            return -1;
-        }
-    } else {
-        Py_DECREF(newline_character);
-        // close tag
-        self->head += 2;
     }
 
     if (Tokenizer_emit_table_tag(self, "{|", "table", style, padding, NULL,
                                  table, "|}"))
         return -1;
-    // offset displacement done by _parse()
+    // Offset displacement done by _parse()
     self->head--;
     return 0;
 }
@@ -2665,7 +2648,7 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
 
     if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
         return -1;
-    padding = Tokenizer_parse_as_table_style(self, '\n', 0);
+    padding = Tokenizer_parse_as_table_style(self, '\n');
     if (BAD_ROUTE) {
         trash = Tokenizer_pop(self);
         Py_XDECREF(trash);
@@ -2679,7 +2662,8 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
         Py_DECREF(padding);
         return -1;
     }
-    // don't parse the style separator
+
+    // Don't parse the style separator
     self->head++;
     row = Tokenizer_parse(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN, 1);
     if (BAD_ROUTE) {
@@ -2696,10 +2680,9 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
         return -1;
     }
 
-    if (Tokenizer_emit_table_tag(self, "|-", "tr", style, padding, NULL, row,
-                                 ""))
+    if (Tokenizer_emit_table_tag(self, "|-", "tr", style, padding, NULL, row, ""))
         return -1;
-    // offset displacement done by _parse()
+    // Offset displacement done by _parse()
     self->head--;
     return 0;
 }
@@ -2754,7 +2737,7 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
         if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
                           line_context))
             return -1;
-        padding = Tokenizer_parse_as_table_style(self, '|', 0);
+        padding = Tokenizer_parse_as_table_style(self, '|');
         if (!padding)
             return -1;
         style = Tokenizer_pop(self);
@@ -2796,10 +2779,9 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
     if (Tokenizer_emit_table_tag(self, markup, tag, style, padding,
                                  close_open_markup, cell, ""))
         return -1;
-    // keep header/cell line contexts
-    self->topstack->context |= cell_context & (LC_TABLE_TH_LINE |
-                                               LC_TABLE_TD_LINE);
-    // offset displacement done by parse()
+    // Keep header/cell line contexts
+    self->topstack->context |= cell_context & (LC_TABLE_TH_LINE | LC_TABLE_TD_LINE);
+    // Offset displacement done by parse()
     self->head--;
     return 0;
 }
@@ -3092,7 +3074,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
         else if ((this == '\n' || this == ':') && this_context & LC_DLTERM) {
             if (Tokenizer_handle_dl_term(self))
                 return NULL;
-            // kill potential table contexts
+            // Kill potential table contexts
             if (this == '\n')
                 self->topstack->context &= ~LC_TABLE_CELL_LINE_CONTEXTS;
         }
@@ -3130,7 +3112,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
             else if (this == '|' && this_context & LC_TABLE_CELL_STYLE) {
                 return Tokenizer_handle_table_cell_end(self, 1);
             }
-            // on newline, clear out cell line contexts
+            // On newline, clear out cell line contexts
             else if (this == '\n' && this_context & LC_TABLE_CELL_LINE_CONTEXTS) {
                 self->topstack->context &= ~LC_TABLE_CELL_LINE_CONTEXTS;
                 if (Tokenizer_emit_char(self, this))
