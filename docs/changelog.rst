@@ -37,6 +37,8 @@ Unreleased
   exception or allow an incorrect node tree to be build.
 - Fixed a parser bug involving nested tags, and another involving comments in
   template names.
+- Added tests to ensure that parsed trees convert back to wikicode without
+  unintentional modifications.
 - Test coverage has been improved, and some minor related bugs have been fixed.
 - Updated and fixed some documentation.
 
