@@ -2677,10 +2677,12 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
 {
     uint64_t old_context = self->topstack->context;
     uint64_t cell_context;
+    Py_ssize_t reset;
     PyObject *padding, *cell, *style = NULL;
     const char *close_open_markup = NULL;
+
     self->head += strlen(markup);
-    Py_ssize_t reset = self->head;
+    reset = self->head;
 
     if (!Tokenizer_CAN_RECURSE(self)) {
         if (Tokenizer_emit_text(self, markup))
