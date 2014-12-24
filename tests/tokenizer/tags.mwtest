@@ -611,3 +611,10 @@ name:   capitalization
 label:  caps should be ignored within tag names
 input:  "<NoWiKi>{{test}}</nOwIkI>"
 output: [TagOpenOpen(), Text(text="NoWiKi"), TagCloseOpen(padding=""), Text(text="{{test}}"), TagOpenClose(), Text(text="nOwIkI"), TagCloseClose()]
+
+---
+
+name:   unparsable_with_intermediates
+label:  an unparsable tag with intermediate tags inside of it
+input:  "<nowiki><ref></ref></nowiki>"
+output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="<ref></ref>"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
