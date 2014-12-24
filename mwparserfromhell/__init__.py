@@ -29,7 +29,7 @@ outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012, 2013, 2014 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.4.dev"
+__version__ = "0.4.dev0"
 __email__ = "ben.kurtovic@gmail.com"
 
 from . import (compat, definitions, nodes, parser, smart_list, string_mixin,
