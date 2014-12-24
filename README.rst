@@ -121,13 +121,13 @@ Integration
 ``Page`` objects have a ``parse`` method that essentially calls
 ``mwparserfromhell.parse()`` on ``page.get()``.
 
-If you're using Pywikipedia_, your code might look like this::
+If you're using Pywikibot_, your code might look like this::
 
     import mwparserfromhell
-    import wikipedia as pywikibot
+    import pywikibot
 
     def parse(title):
-        site = pywikibot.getSite()
+        site = pywikibot.Site()
         page = pywikibot.Page(site, title)
         text = page.get()
         return mwparserfromhell.parse(text)
@@ -158,5 +158,5 @@ If you're not using a library, you can parse any page using the following code
 .. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 .. _get pip:                http://pypi.python.org/pypi/pip
 .. _EarwigBot:              https://github.com/earwig/earwigbot
-.. _Pywikipedia:            https://www.mediawiki.org/wiki/Manual:Pywikipediabot
+.. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                    http://mediawiki.org/wiki/API
