@@ -614,7 +614,21 @@ output: [TagOpenOpen(), Text(text="NoWiKi"), TagCloseOpen(padding=""), Text(text
 
 ---
 
+name:   unparsable_incomplete_close
+label:  an unparsable tag with an incomplete close afterwards
+input:  "<nowiki>foo</nowiki"
+output: [Text(text="<nowiki>foo</nowiki")]
+
+---
+
 name:   unparsable_with_intermediates
 label:  an unparsable tag with intermediate tags inside of it
 input:  "<nowiki><ref></ref></nowiki>"
 output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="<ref></ref>"), TagOpenClose(), Text(text="nowiki"), TagCloseClose()]
+
+---
+
+name:   unparsable_with_intermediates_normalize
+label:  an unparsable tag with intermediate tags inside of it, requiring normalization
+input:  "<nowiki><ref></ref></nowIKI  >"
+output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="<ref></ref>"), TagOpenClose(), Text(text="nowIKI  "), TagCloseClose()]

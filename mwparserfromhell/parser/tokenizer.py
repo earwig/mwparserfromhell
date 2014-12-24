@@ -735,14 +735,22 @@ class Tokenizer(object):
 
     def _handle_blacklisted_tag(self):
         """Handle the body of an HTML tag that is parser-blacklisted."""
+        strip = lambda text: text.rstrip().lower()
         while True:
             this, next = self._read(), self._read(1)
             if this is self.END:
                 self._fail_route()
             elif this == "<" and next == "/":
-                self._handle_tag_open_close()
-                self._head += 1
-                return self._parse(push=False)
+                self._head += 3
+                if self._read() != ">" or (strip(self._read(-1)) !=
+                                           strip(self._stack[1].text)):
+                    self._head -= 1
+                    self._emit_text("</")
+                    continue
+                self._emit(tokens.TagOpenClose())
+                self._emit_text(self._read(-1))
+                self._emit(tokens.TagCloseClose())
+                return self._pop()
             elif this == "&":
                 self._parse_entity()
             else:

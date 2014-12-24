@@ -69,15 +69,19 @@ static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2,
 /*
     Sanitize the name of a tag so it can be compared with others for equality.
 */
-static PyObject* strip_tag_name(PyObject* token)
+static PyObject* strip_tag_name(PyObject* token, int take_attr)
 {
     PyObject *text, *rstripped, *lowered;
 
-    text = PyObject_GetAttrString(token, "text");
-    if (!text)
-        return NULL;
-    rstripped = PyObject_CallMethod(text, "rstrip", NULL);
-    Py_DECREF(text);
+    if (take_attr) {
+        text = PyObject_GetAttrString(token, "text");
+        if (!text)
+            return NULL;
+        rstripped = PyObject_CallMethod(text, "rstrip", NULL);
+        Py_DECREF(text);
+    }
+    else
+        rstripped = PyObject_CallMethod(token, "rstrip", NULL);
     if (!rstripped)
         return NULL;
     lowered = PyObject_CallMethod(rstripped, "lower", NULL);
@@ -1812,8 +1816,9 @@ static PyObject* Tokenizer_handle_tag_close_close(Tokenizer* self)
                 valid = 0;
                 break;
             case 1: {
-                so = strip_tag_name(first);
-                sc = strip_tag_name(PyList_GET_ITEM(self->topstack->stack, 1));
+                so = strip_tag_name(first, 1);
+                sc = strip_tag_name(
+                    PyList_GET_ITEM(self->topstack->stack, 1), 1);
                 if (so && sc) {
                     if (PyUnicode_Compare(so, sc))
                         valid = 0;
@@ -1848,7 +1853,11 @@ static PyObject* Tokenizer_handle_tag_close_close(Tokenizer* self)
 */
 static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
 {
+    Textbuffer* buffer;
+    PyObject *buf_tmp, *end_tag, *start_tag;
     Py_UNICODE this, next;
+    Py_ssize_t reset;
+    int cmp;
 
     while (1) {
         this = Tokenizer_READ(self, 0);
@@ -1856,10 +1865,48 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
         if (!this)
             return Tokenizer_fail_route(self);
         else if (this == '<' && next == '/') {
-            if (Tokenizer_handle_tag_open_close(self))
+            self->head += 2;
+            reset = self->head - 1;
+            buffer = Textbuffer_new();
+            if (!buffer)
                 return NULL;
-            self->head++;
-            return Tokenizer_parse(self, 0, 0);
+            while ((this = Tokenizer_READ(self, 0))) {
+                if (this == '>') {
+                    buf_tmp = Textbuffer_render(buffer);
+                    if (!buf_tmp)
+                        return NULL;
+                    end_tag = strip_tag_name(buf_tmp, 0);
+                    Py_DECREF(buf_tmp);
+                    if (!end_tag)
+                        return NULL;
+                    start_tag = strip_tag_name(
+                        PyList_GET_ITEM(self->topstack->stack, 1), 1);
+                    if (!start_tag)
+                        return NULL;
+                    cmp = PyUnicode_Compare(start_tag, end_tag);
+                    Py_DECREF(end_tag);
+                    Py_DECREF(start_tag);
+                    if (cmp)
+                        goto no_matching_end;
+                    if (Tokenizer_emit(self, TagOpenClose))
+                        return NULL;
+                    if (Tokenizer_emit_textbuffer(self, buffer, 0))
+                        return NULL;
+                    if (Tokenizer_emit(self, TagCloseClose))
+                        return NULL;
+                    return Tokenizer_pop(self);
+                }
+                if (!this || this == '\n') {
+                    no_matching_end:
+                    Textbuffer_dealloc(buffer);
+                    self->head = reset;
+                    if (Tokenizer_emit_text(self, "</"))
+                        return NULL;
+                    break;
+                }
+                Textbuffer_write(&buffer, this);
+                self->head++;
+            }
         }
         else if (this == '&') {
             if (Tokenizer_parse_entity(self))
