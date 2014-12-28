@@ -22,12 +22,12 @@ If you're not using a library, you can parse any page using the following code
 (via the API_)::
 
     import json
-    import urllib
+    import urllib.request
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
 
     def parse(title):
-        raw = urllib.urlopen(API_URL, data).read()
+        raw = urllib.request.urlopen(API_URL, data).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
