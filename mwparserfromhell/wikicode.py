@@ -567,7 +567,7 @@ class Wikicode(StringMixIn):
         following::
 
             >>> text = "Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}"
-            >>> print mwparserfromhell.parse(text).get_tree()
+            >>> print(mwparserfromhell.parse(text).get_tree())
             Lorem ipsum
             {{
                   foo

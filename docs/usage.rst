@@ -12,19 +12,19 @@ extra methods. For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
-    >>> print wikicode
+    >>> print(wikicode)
     I has a template! {{foo|bar|baz|eggs=spam}} See it?
     >>> templates = wikicode.filter_templates()
-    >>> print templates
+    >>> print(templates)
     ['{{foo|bar|baz|eggs=spam}}']
     >>> template = templates[0]
-    >>> print template.name
+    >>> print(template.name)
     foo
-    >>> print template.params
+    >>> print(template.params)
     ['bar', 'baz', 'eggs=spam']
-    >>> print template.get(1).value
+    >>> print(template.get(1).value)
     bar
-    >>> print template.get("eggs").value
+    >>> print(template.get("eggs").value)
     spam
 
 Since nodes can contain other nodes, getting nested templates is trivial::
@@ -38,14 +38,14 @@ templates manually. This is possible because nodes can contain additional
 :class:`.Wikicode` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    >>> print code.filter_templates(recursive=False)
+    >>> print(code.filter_templates(recursive=False))
     ['{{foo|this {{includes a|template}}}}']
     >>> foo = code.filter_templates(recursive=False)[0]
-    >>> print foo.get(1).value
+    >>> print(foo.get(1).value)
     this {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0]
+    >>> print(foo.get(1).value.filter_templates()[0])
     {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0].get(1).value
+    >>> print(foo.get(1).value.filter_templates()[0].get(1).value)
     template
 
 Templates can be easily modified to add, remove, or alter params.
@@ -61,24 +61,24 @@ takes care of capitalization and whitespace::
     ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
     >>> code.replace("{{uncategorized}}", "{{bar-stub}}")
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
-    >>> print code.filter_templates()
+    >>> print(code.filter_templates())
     ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
-You can then convert ``code`` back into a regular :class:`unicode` object (for
-saving the page!) by calling :func:`unicode` on it::
+You can then convert ``code`` back into a regular :class:`str` object (for
+saving the page!) by calling :func:`str` on it::
 
-    >>> text = unicode(code)
-    >>> print text
+    >>> text = str(code)
+    >>> print(text)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> text == code
     True
 
-(Likewise, use :func:`str(code) <str>` in Python 3.)
+(Likewise, use :func:`unicode(code) <unicode>` in Python 2.)
 
 For more tips, check out :class:`Wikicode's full method list <.Wikicode>` and
 the :mod:`list of Nodes <.nodes>`.

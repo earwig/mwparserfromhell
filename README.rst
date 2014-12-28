@@ -47,19 +47,19 @@ For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
-    >>> print wikicode
+    >>> print(wikicode)
     I has a template! {{foo|bar|baz|eggs=spam}} See it?
     >>> templates = wikicode.filter_templates()
-    >>> print templates
+    >>> print(templates)
     ['{{foo|bar|baz|eggs=spam}}']
     >>> template = templates[0]
-    >>> print template.name
+    >>> print(template.name)
     foo
-    >>> print template.params
+    >>> print(template.params)
     ['bar', 'baz', 'eggs=spam']
-    >>> print template.get(1).value
+    >>> print(template.get(1).value)
     bar
-    >>> print template.get("eggs").value
+    >>> print(template.get("eggs").value)
     spam
 
 Since nodes can contain other nodes, getting nested templates is trivial::
@@ -73,14 +73,14 @@ templates manually. This is possible because nodes can contain additional
 ``Wikicode`` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    >>> print code.filter_templates(recursive=False)
+    >>> print(code.filter_templates(recursive=False))
     ['{{foo|this {{includes a|template}}}}']
     >>> foo = code.filter_templates(recursive=False)[0]
-    >>> print foo.get(1).value
+    >>> print(foo.get(1).value)
     this {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0]
+    >>> print(foo.get(1).value.filter_templates()[0])
     {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0].get(1).value
+    >>> print(foo.get(1).value.filter_templates()[0].get(1).value)
     template
 
 Templates can be easily modified to add, remove, or alter params. ``Wikicode``
@@ -95,19 +95,19 @@ whitespace::
     ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
     >>> code.replace("{{uncategorized}}", "{{bar-stub}}")
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
-    >>> print code.filter_templates()
+    >>> print(code.filter_templates())
     ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
 You can then convert ``code`` back into a regular ``unicode`` object (for
 saving the page!) by calling ``unicode()`` on it::
 
     >>> text = unicode(code)
-    >>> print text
+    >>> print(text)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> text == code
     True
@@ -136,14 +136,15 @@ If you're not using a library, you can parse any page using the following code
 (via the API_)::
 
     import json
-    import urllib
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
 
     def parse(title):
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
                 "rvprop": "content", "format": "json", "titles": title}
-        raw = urllib.urlopen(API_URL, urllib.urlencode(data)).read()
+        raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
