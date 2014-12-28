@@ -103,16 +103,16 @@ whitespace::
     >>> print(code.filter_templates())
     ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
-You can then convert ``code`` back into a regular ``unicode`` object (for
-saving the page!) by calling ``unicode()`` on it::
+You can then convert ``code`` back into a regular ``str`` object (for
+saving the page!) by calling ``str()`` on it::
 
-    >>> text = unicode(code)
+    >>> text = str(code)
     >>> print(text)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> text == code
     True
 
-Likewise, use ``str(code)`` in Python 3.
+Likewise, use ``unicode(code)`` in Python 2.
 
 Integration
 -----------
