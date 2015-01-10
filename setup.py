@@ -21,6 +21,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import os
 import sys
 
 if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
@@ -39,7 +40,57 @@ tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources=["mwparserfromhell/parser/tokenizer.c"],
                       depends=["mwparserfromhell/parser/tokenizer.h"])
 
-setup(
+
+def optional_compile_setup(func=setup, use_ext=True, *args, **kwargs):
+    """
+    Wrap setup to allow optional compilation of extensions.
+
+    Falls back to pure python mode (no extensions)
+    if compilation of extensions fails.
+    """
+    extensions = kwargs.get('ext_modules', None)
+
+    if use_ext and extensions:
+        try:
+            func(*args, **kwargs)
+            return
+        except (Exception, SystemExit) as e:
+            print('Building extension failed: %s' % repr(e))
+
+    if extensions:
+        if use_ext:
+            print('Falling back to pure python mode.')
+        else:
+            print('Using pure python mode.')
+
+        del kwargs['ext_modules']
+
+        # Basic algorithm to push the extension sources into
+        # the package as data.
+        ext_files = [(ext, filename)
+                     for ext in extensions
+                     for filename in ext.sources + ext.depends]
+
+        pkg_data = kwargs.get('package_data', {})
+        for ext, filename in ext_files:
+            ext_name_parts = ext.name.split('.')
+            pkg_name = '.'.join(ext_name_parts[0:-1])
+            pkg = pkg_data.setdefault(pkg_name, [])
+            # This assumes the extension's package name
+            # is the same prefix as the filename.
+            pkg.append(os.path.basename(filename))
+
+        kwargs['package_data'] = pkg_data
+
+        # Ensure the extension package is in the main packages list.
+        for name in pkg_data.keys():
+            if name not in kwargs['packages']:
+                kwargs['packages'].append(name)
+
+    func(*args, **kwargs)
+
+
+optional_compile_setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer],
