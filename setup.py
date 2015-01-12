@@ -28,6 +28,9 @@ if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
    (sys.version_info[1] == 3 and sys.version_info[1] < 2):
     raise Exception("mwparserfromhell needs Python 2.6+ or 3.2+")
 
+if sys.version_info >= (3, 0):
+    basestring = (str, )
+
 from setuptools import setup, find_packages, Extension
 
 from mwparserfromhell import __version__
@@ -40,8 +43,25 @@ tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources=["mwparserfromhell/parser/tokenizer.c"],
                       depends=["mwparserfromhell/parser/tokenizer.h"])
 
+use_extension=True
 
-def optional_compile_setup(func=setup, use_ext=True, *args, **kwargs):
+# Allow env var WITHOUT_EXTENSION and args --with[out]-extension
+if '--without-extension' in sys.argv:
+    use_extension = False
+elif '--with-extension' in sys.argv:
+    pass
+elif os.environ.get('WITHOUT_EXTENSION', '0') == '1':
+    use_extension = False
+
+# Remove the command line argument as it isnt understood by
+# setuptools/distutils
+sys.argv = [arg for arg in sys.argv
+            if not arg.startswith('--with')
+            and not arg.endswith('-extension')]
+
+
+def optional_compile_setup(func=setup, use_ext=use_extension,
+                           *args, **kwargs):
     """
     Wrap setup to allow optional compilation of extensions.
 
@@ -54,8 +74,19 @@ def optional_compile_setup(func=setup, use_ext=True, *args, **kwargs):
         try:
             func(*args, **kwargs)
             return
-        except (Exception, SystemExit) as e:
-            print('Building extension failed: %s' % repr(e))
+        except SystemExit as e:
+            assert(e.args)
+            if e.args[0] is False:
+                raise
+            elif isinstance(e.args[0], basestring):
+                if e.args[0].startswith('usage: '):
+                    raise
+                else:
+                    # Fallback to pure python mode
+                    print('setup with extension failed: %s' % repr(e))
+                    pass
+        except Exception as e:
+            print('setup with extension failed: %s' % repr(e))
 
     if extensions:
         if use_ext:
@@ -64,28 +95,6 @@ def optional_compile_setup(func=setup, use_ext=True, *args, **kwargs):
             print('Using pure python mode.')
 
         del kwargs['ext_modules']
-
-        # Basic algorithm to push the extension sources into
-        # the package as data.
-        ext_files = [(ext, filename)
-                     for ext in extensions
-                     for filename in ext.sources + ext.depends]
-
-        pkg_data = kwargs.get('package_data', {})
-        for ext, filename in ext_files:
-            ext_name_parts = ext.name.split('.')
-            pkg_name = '.'.join(ext_name_parts[0:-1])
-            pkg = pkg_data.setdefault(pkg_name, [])
-            # This assumes the extension's package name
-            # is the same prefix as the filename.
-            pkg.append(os.path.basename(filename))
-
-        kwargs['package_data'] = pkg_data
-
-        # Ensure the extension package is in the main packages list.
-        for name in pkg_data.keys():
-            if name not in kwargs['packages']:
-                kwargs['packages'].append(name)
 
     func(*args, **kwargs)
 
