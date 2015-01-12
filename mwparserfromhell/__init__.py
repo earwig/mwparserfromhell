@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,7 +27,7 @@ outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 """
 
 __author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012, 2013, 2014 Ben Kurtovic"
+__copyright__ = "Copyright (C) 2012, 2013, 2014, 2015 Ben Kurtovic"
 __license__ = "MIT License"
 __version__ = "0.4.dev0"
 __email__ = "ben.kurtovic@gmail.com"
