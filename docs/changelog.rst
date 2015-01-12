@@ -35,10 +35,14 @@ Unreleased
 - If something goes wrong while parsing, :exc:`.ParserError` will now be
   raised. Previously, the parser would produce an unclear :exc:`.BadRoute`
   exception or allow an incorrect node tree to be build.
-- Fixed a parser bug involving nested tags, and another involving comments in
-  template names.
+- Fixed parser bugs involving:
+  - nested tags;
+  - comments in template names;
+  - tags inside of ``<nowiki>`` tags.
 - Added tests to ensure that parsed trees convert back to wikicode without
   unintentional modifications.
+- Added support for a :envvar:`NOWEB` environment variable, which disables a
+  unit test that makes a web call.
 - Test coverage has been improved, and some minor related bugs have been fixed.
 - Updated and fixed some documentation.
 
