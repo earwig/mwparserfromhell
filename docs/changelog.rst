@@ -7,8 +7,9 @@ v0.4
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...develop>`__):
 
-- The parser is now distributed with Windows binaries, fixing an issue that
-  prevented Windows users from using the C tokenizer.
+- The parser is now distributed with Windows binaries, and falls back on a pure
+  Python mode if C extensions cannot be built. This fixes an issue that
+  prevented some Windows users from installing the parser.
 - Added support for parsing wikicode tables (patches by David Winegar).
 - Added a script to test for memory leaks in :file:`scripts/memtest.py`.
 - Added a script to do releases in :file:`scripts/release.sh`.
