@@ -12,3 +12,8 @@ script:
     - coverage run --source=mwparserfromhell setup.py -q test
 after_success:
     - coveralls
+
+env:
+  matrix:
+    - WITHOUT_EXTENSION=0
+    - WITHOUT_EXTENSION=1
