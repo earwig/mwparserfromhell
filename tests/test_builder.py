@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +27,11 @@ try:
 except ImportError:
     import unittest
 
+from mwparserfromhell.compat import py3k
 from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
                                     HTMLEntity, Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
-from mwparserfromhell.parser import tokens
+from mwparserfromhell.parser import tokens, ParserError
 from mwparserfromhell.parser.builder import Builder
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
@@ -269,7 +270,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
                                   pad_after_eq=""),
               tokens.Text(text="name"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.Text(text="abc"),
+              tokens.TagAttrQuote(char='"'), tokens.Text(text="abc"),
               tokens.TagCloseSelfclose(padding=" ")],
              wrap([Tag(wraptext("ref"),
                        attrs=[Attribute(wraptext("name"), wraptext("abc"))],
@@ -297,7 +298,7 @@ class TestBuilder(TreeEqualityTestCase):
              wrap([Tag(wraptext("br"), self_closing=True, invalid=True)])),
 
             # <ref name={{abc}}   foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}}
-            #      mno =  "{{p}} [[q]] {{r}}">[[Source]]</ref>
+            #      mno =  '{{p}} [[q]] {{r}}'>[[Source]]</ref>
             ([tokens.TagOpenOpen(), tokens.Text(text="ref"),
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
                                   pad_after_eq=""),
@@ -307,7 +308,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first="   ", pad_before_eq="",
                                   pad_after_eq=""),
               tokens.Text(text="foo"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.Text(text="bar "),
+              tokens.TagAttrQuote(char='"'), tokens.Text(text="bar "),
               tokens.TemplateOpen(), tokens.Text(text="baz"),
               tokens.TemplateClose(),
               tokens.TagAttrStart(pad_first=" ", pad_before_eq="",
@@ -325,7 +326,7 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagAttrStart(pad_first=" \n ", pad_before_eq=" ",
                                   pad_after_eq="  "),
               tokens.Text(text="mno"), tokens.TagAttrEquals(),
-              tokens.TagAttrQuote(), tokens.TemplateOpen(),
+              tokens.TagAttrQuote(char="'"), tokens.TemplateOpen(),
               tokens.Text(text="p"), tokens.TemplateClose(),
               tokens.Text(text=" "), tokens.WikilinkOpen(),
               tokens.Text(text="q"), tokens.WikilinkClose(),
@@ -337,17 +338,17 @@ class TestBuilder(TreeEqualityTestCase):
               tokens.TagCloseClose()],
              wrap([Tag(wraptext("ref"), wrap([Wikilink(wraptext("Source"))]), [
                     Attribute(wraptext("name"),
-                              wrap([Template(wraptext("abc"))]), False),
+                              wrap([Template(wraptext("abc"))]), None),
                     Attribute(wraptext("foo"), wrap([Text("bar "),
                               Template(wraptext("baz"))]), pad_first="   "),
                     Attribute(wraptext("abc"), wrap([Template(wraptext("de")),
-                              Text("f")]), False),
+                              Text("f")]), None),
                     Attribute(wraptext("ghi"), wrap([Text("j"),
                               Template(wraptext("k")),
-                              Template(wraptext("l"))]), False),
+                              Template(wraptext("l"))]), None),
                     Attribute(wraptext("mno"), wrap([Template(wraptext("p")),
                               Text(" "), Wikilink(wraptext("q")), Text(" "),
-                              Template(wraptext("r"))]), True, " \n ", " ",
+                              Template(wraptext("r"))]), "'", " \n ", " ",
                               "  ")])])),
 
             # "''italic text''"
@@ -419,6 +420,23 @@ class TestBuilder(TreeEqualityTestCase):
             Parameter(wraptext("j"), wrap([HTMLEntity("nbsp",
             named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))
+
+    def test_parser_errors(self):
+        """test whether ParserError gets thrown for bad input"""
+        missing_closes = [
+            [tokens.TemplateOpen(), tokens.TemplateParamSeparator()],
+            [tokens.TemplateOpen()], [tokens.ArgumentOpen()],
+            [tokens.WikilinkOpen()], [tokens.ExternalLinkOpen()],
+            [tokens.HeadingStart()], [tokens.CommentStart()],
+            [tokens.TagOpenOpen(), tokens.TagAttrStart()],
+            [tokens.TagOpenOpen()]
+        ]
+
+        func = self.assertRaisesRegex if py3k else self.assertRaisesRegexp
+        msg = r"_handle_token\(\) got unexpected TemplateClose"
+        func(ParserError, msg, self.builder.build, [tokens.TemplateClose()])
+        for test in missing_closes:
+            self.assertRaises(ParserError, self.builder.build, test)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

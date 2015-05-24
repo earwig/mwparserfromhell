@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,7 @@
 
 from __future__ import unicode_literals
 
-from . import tokens
+from . import tokens, ParserError
 from ..compat import str
 from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
                      Template, Text, Wikilink)
@@ -32,34 +32,42 @@ from ..wikicode import Wikicode
 
 __all__ = ["Builder"]
 
-class Builder(object):
-    """Combines a sequence of tokens into a tree of ``Wikicode`` objects.
+_HANDLERS = {
+    tokens.Text: lambda self, token: Text(token.text)
+}
 
-    To use, pass a list of :py:class:`~.Token`\ s to the :py:meth:`build`
-    method. The list will be exhausted as it is parsed and a
-    :py:class:`~.Wikicode` object will be returned.
+def _add_handler(token_type):
+    """Create a decorator that adds a handler function to the lookup table."""
+    def decorator(func):
+        """Add a handler function to the lookup table."""
+        _HANDLERS[token_type] = func
+        return func
+    return decorator
+
+
+class Builder(object):
+    """Builds a tree of nodes out of a sequence of tokens.
+
+    To use, pass a list of :class:`.Token`\ s to the :meth:`build` method. The
+    list will be exhausted as it is parsed and a :class:`.Wikicode` object
+    containing the node tree will be returned.
     """
 
     def __init__(self):
         self._tokens = []
         self._stacks = []
 
-    def _wrap(self, nodes):
-        """Properly wrap a list of nodes in a ``Wikicode`` object."""
-        return Wikicode(SmartList(nodes))
-
     def _push(self):
         """Push a new node list onto the stack."""
         self._stacks.append([])
 
-    def _pop(self, wrap=True):
+    def _pop(self):
         """Pop the current node list off of the stack.
 
-        If *wrap* is ``True``, we will call :py:meth:`_wrap` on the list.
+        The raw node list is wrapped in a :class:`.SmartList` and then in a
+        :class:`.Wikicode` object.
         """
-        if wrap:
-            return self._wrap(self._stacks.pop())
-        return self._stacks.pop()
+        return Wikicode(SmartList(self._stacks.pop()))
 
     def _write(self, item):
         """Append a node to the current node list."""
@@ -84,12 +92,14 @@ class Builder(object):
                 self._tokens.append(token)
                 value = self._pop()
                 if key is None:
-                    key = self._wrap([Text(str(default))])
+                    key = Wikicode(SmartList([Text(str(default))]))
                 return Parameter(key, value, showkey)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_parameter() missed a close token")
 
-    def _handle_template(self):
+    @_add_handler(tokens.TemplateOpen)
+    def _handle_template(self, token):
         """Handle a case where a template is at the head of the tokens."""
         params = []
         default = 1
@@ -109,8 +119,10 @@ class Builder(object):
                 return Template(name, params)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_template() missed a close token")
 
-    def _handle_argument(self):
+    @_add_handler(tokens.ArgumentOpen)
+    def _handle_argument(self, token):
         """Handle a case where an argument is at the head of the tokens."""
         name = None
         self._push()
@@ -125,8 +137,10 @@ class Builder(object):
                 return Argument(self._pop())
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_argument() missed a close token")
 
-    def _handle_wikilink(self):
+    @_add_handler(tokens.WikilinkOpen)
+    def _handle_wikilink(self, token):
         """Handle a case where a wikilink is at the head of the tokens."""
         title = None
         self._push()
@@ -141,7 +155,9 @@ class Builder(object):
                 return Wikilink(self._pop())
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_wikilink() missed a close token")
 
+    @_add_handler(tokens.ExternalLinkOpen)
     def _handle_external_link(self, token):
         """Handle when an external link is at the head of the tokens."""
         brackets, url = token.brackets, None
@@ -157,8 +173,10 @@ class Builder(object):
                 return ExternalLink(self._pop(), brackets=brackets)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_external_link() missed a close token")
 
-    def _handle_entity(self):
+    @_add_handler(tokens.HTMLEntityStart)
+    def _handle_entity(self, token):
         """Handle a case where an HTML entity is at the head of the tokens."""
         token = self._tokens.pop()
         if isinstance(token, tokens.HTMLEntityNumeric):
@@ -173,6 +191,7 @@ class Builder(object):
         self._tokens.pop()  # Remove HTMLEntityEnd
         return HTMLEntity(token.text, named=True, hexadecimal=False)
 
+    @_add_handler(tokens.HeadingStart)
     def _handle_heading(self, token):
         """Handle a case where a heading is at the head of the tokens."""
         level = token.level
@@ -184,8 +203,10 @@ class Builder(object):
                 return Heading(title, level)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_heading() missed a close token")
 
-    def _handle_comment(self):
+    @_add_handler(tokens.CommentStart)
+    def _handle_comment(self, token):
         """Handle a case where an HTML comment is at the head of the tokens."""
         self._push()
         while self._tokens:
@@ -195,10 +216,11 @@ class Builder(object):
                 return Comment(contents)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_comment() missed a close token")
 
     def _handle_attribute(self, start):
         """Handle a case where a tag attribute is at the head of the tokens."""
-        name, quoted = None, False
+        name = quotes = None
         self._push()
         while self._tokens:
             token = self._tokens.pop()
@@ -206,7 +228,7 @@ class Builder(object):
                 name = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagAttrQuote):
-                quoted = True
+                quotes = token.char
             elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
                                     tokens.TagCloseSelfclose)):
                 self._tokens.append(token)
@@ -214,30 +236,37 @@ class Builder(object):
                     value = self._pop()
                 else:
                     name, value = self._pop(), None
-                return Attribute(name, value, quoted, start.pad_first,
-                                 start.pad_before_eq, start.pad_after_eq)
+                return Attribute(name, value, quotes, start.pad_first,
+                                 start.pad_before_eq, start.pad_after_eq,
+                                 check_quotes=False)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_attribute() missed a close token")
 
+    @_add_handler(tokens.TagOpenOpen)
     def _handle_tag(self, token):
         """Handle a case where a tag is at the head of the tokens."""
         close_tokens = (tokens.TagCloseSelfclose, tokens.TagCloseClose)
         implicit, attrs, contents, closing_tag = False, [], None, None
         wiki_markup, invalid = token.wiki_markup, token.invalid or False
+        wiki_style_separator, closing_wiki_markup = None, wiki_markup
         self._push()
         while self._tokens:
             token = self._tokens.pop()
             if isinstance(token, tokens.TagAttrStart):
                 attrs.append(self._handle_attribute(token))
             elif isinstance(token, tokens.TagCloseOpen):
+                wiki_style_separator = token.wiki_markup
                 padding = token.padding or ""
                 tag = self._pop()
                 self._push()
             elif isinstance(token, tokens.TagOpenClose):
+                closing_wiki_markup = token.wiki_markup
                 contents = self._pop()
                 self._push()
             elif isinstance(token, close_tokens):
                 if isinstance(token, tokens.TagCloseSelfclose):
+                    closing_wiki_markup = token.wiki_markup
                     tag = self._pop()
                     self_closing = True
                     padding = token.padding or ""
@@ -246,30 +275,19 @@ class Builder(object):
                     self_closing = False
                     closing_tag = self._pop()
                 return Tag(tag, contents, attrs, wiki_markup, self_closing,
-                           invalid, implicit, padding, closing_tag)
+                           invalid, implicit, padding, closing_tag,
+                           wiki_style_separator, closing_wiki_markup)
             else:
                 self._write(self._handle_token(token))
+        raise ParserError("_handle_tag() missed a close token")
 
     def _handle_token(self, token):
         """Handle a single token."""
-        if isinstance(token, tokens.Text):
-            return Text(token.text)
-        elif isinstance(token, tokens.TemplateOpen):
-            return self._handle_template()
-        elif isinstance(token, tokens.ArgumentOpen):
-            return self._handle_argument()
-        elif isinstance(token, tokens.WikilinkOpen):
-            return self._handle_wikilink()
-        elif isinstance(token, tokens.ExternalLinkOpen):
-            return self._handle_external_link(token)
-        elif isinstance(token, tokens.HTMLEntityStart):
-            return self._handle_entity()
-        elif isinstance(token, tokens.HeadingStart):
-            return self._handle_heading(token)
-        elif isinstance(token, tokens.CommentStart):
-            return self._handle_comment()
-        elif isinstance(token, tokens.TagOpenOpen):
-            return self._handle_tag(token)
+        try:
+            return _HANDLERS[type(token)](self, token)
+        except KeyError:
+            err = "_handle_token() got unexpected {0}"
+            raise ParserError(err.format(type(token).__name__))
 
     def build(self, tokenlist):
         """Build a Wikicode object from a list tokens and return it."""
@@ -280,3 +298,6 @@ class Builder(object):
             node = self._handle_token(self._tokens.pop())
             self._write(node)
         return self._pop()
+
+
+del _add_handler

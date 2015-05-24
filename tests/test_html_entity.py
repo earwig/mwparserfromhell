@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -108,6 +108,7 @@ class TestHTMLEntity(TreeEqualityTestCase):
         self.assertRaises(ValueError, setattr, node3, "value", -1)
         self.assertRaises(ValueError, setattr, node1, "value", 110000)
         self.assertRaises(ValueError, setattr, node1, "value", "1114112")
+        self.assertRaises(ValueError, setattr, node1, "value", "12FFFF")
 
     def test_named(self):
         """test getter/setter for the named attribute"""
@@ -163,10 +164,14 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
         node4 = HTMLEntity("1f648")
+        node5 = HTMLEntity("-2")
+        node6 = HTMLEntity("110000", named=False, hexadecimal=True)
         self.assertEqual("\xa0", node1.normalize())
         self.assertEqual("k", node2.normalize())
         self.assertEqual("é", node3.normalize())
         self.assertEqual("\U0001F648", node4.normalize())
+        self.assertRaises(ValueError, node5.normalize)
+        self.assertRaises(ValueError, node6.normalize)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -77,17 +77,17 @@ class HTMLEntity(Node):
                 # Test whether we're on the wide or narrow Python build. Check
                 # the length of a non-BMP code point
                 # (U+1F64A, SPEAK-NO-EVIL MONKEY):
-                if len("\U0001F64A") == 2:
-                    # Ensure this is within the range we can encode:
-                    if value > 0x10FFFF:
-                        raise ValueError("unichr() arg not in range(0x110000)")
-                    code = value - 0x10000
-                    if value < 0:  # Invalid code point
-                        raise
-                    lead = 0xD800 + (code >> 10)
-                    trail = 0xDC00 + (code % (1 << 10))
-                    return unichr(lead) + unichr(trail)
-                raise
+                if len("\U0001F64A") == 1:  # pragma: no cover
+                    raise
+                # Ensure this is within the range we can encode:
+                if value > 0x10FFFF:
+                    raise ValueError("unichr() arg not in range(0x110000)")
+                code = value - 0x10000
+                if value < 0:  # Invalid code point
+                    raise
+                lead = 0xD800 + (code >> 10)
+                trail = 0xDC00 + (code % (1 << 10))
+                return unichr(lead) + unichr(trail)
 
     @property
     def value(self):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 # SOFTWARE.
 
 """
-This module contains the :py:class:`~.StringMixIn` type, which implements the
+This module contains the :class:`.StringMixIn` type, which implements the
 interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
 """
 
@@ -35,7 +35,7 @@ __all__ = ["StringMixIn"]
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    Since this is used on :py:class:`~.StringMixIn`, the "parent class" used is
+    Since this is used on :class:`.StringMixIn`, the "parent class" used is
     ``str``. This function can be used as a decorator.
     """
     method.__doc__ = getattr(str, method.__name__).__doc__
@@ -44,11 +44,10 @@ def inheritdoc(method):
 class StringMixIn(object):
     """Implement the interface for ``unicode``/``str`` in a dynamic manner.
 
-    To use this class, inherit from it and override the :py:meth:`__unicode__`
+    To use this class, inherit from it and override the :meth:`__unicode__`
     method (same on py3k) to return the string representation of the object.
-    The various string methods will operate on the value of
-    :py:meth:`__unicode__` instead of the immutable ``self`` like the regular
-    ``str`` type.
+    The various string methods will operate on the value of :meth:`__unicode__`
+    instead of the immutable ``self`` like the regular ``str`` type.
     """
 
     if py3k:

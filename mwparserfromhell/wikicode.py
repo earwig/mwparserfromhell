@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -39,11 +39,12 @@ class Wikicode(StringMixIn):
 
     Additionally, it contains methods that can be used to extract data from or
     modify the nodes, implemented in an interface similar to a list. For
-    example, :py:meth:`index` can get the index of a node in the list, and
-    :py:meth:`insert` can add a new node at that index. The :py:meth:`filter()
+    example, :meth:`index` can get the index of a node in the list, and
+    :meth:`insert` can add a new node at that index. The :meth:`filter()
     <ifilter>` series of functions is very useful for extracting and iterating
     over, for example, all of the templates in the object.
     """
+    RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
         super(Wikicode, self).__init__()
@@ -53,12 +54,15 @@ class Wikicode(StringMixIn):
         return "".join([str(node) for node in self.nodes])
 
     @staticmethod
-    def _get_children(node, contexts=False, parent=None):
-        """Iterate over all child :py:class:`.Node`\ s of a given *node*."""
+    def _get_children(node, contexts=False, restrict=None, parent=None):
+        """Iterate over all child :class:`.Node`\ s of a given *node*."""
         yield (parent, node) if contexts else node
+        if restrict and isinstance(node, restrict):
+            return
         for code in node.__children__():
             for child in code.nodes:
-                for result in Wikicode._get_children(child, contexts, code):
+                sub = Wikicode._get_children(child, contexts, restrict, code)
+                for result in sub:
                     yield result
 
     @staticmethod
@@ -70,7 +74,7 @@ class Wikicode(StringMixIn):
 
     @staticmethod
     def _build_matcher(matches, flags):
-        """Helper for :py:meth:`_indexed_ifilter` and others.
+        """Helper for :meth:`_indexed_ifilter` and others.
 
         If *matches* is a function, return it. If it's a regex, return a
         wrapper around it that can be called with a node to do a search. If
@@ -79,22 +83,23 @@ class Wikicode(StringMixIn):
         if matches:
             if callable(matches):
                 return matches
-            return lambda obj: re.search(matches, str(obj), flags)  # r
+            return lambda obj: re.search(matches, str(obj), flags)
         return lambda obj: True
 
     def _indexed_ifilter(self, recursive=True, matches=None, flags=FLAGS,
                          forcetype=None):
         """Iterate over nodes and their corresponding indices in the node list.
 
-        The arguments are interpreted as for :py:meth:`ifilter`. For each tuple
+        The arguments are interpreted as for :meth:`ifilter`. For each tuple
         ``(i, node)`` yielded by this method, ``self.index(node) == i``. Note
         that if *recursive* is ``True``, ``self.nodes[i]`` might not be the
         node itself, but will still contain it.
         """
         match = self._build_matcher(matches, flags)
         if recursive:
+            restrict = forcetype if recursive == self.RECURSE_OTHERS else None
             def getter(i, node):
-                for ch in self._get_children(node):
+                for ch in self._get_children(node, restrict=restrict):
                     yield (i, ch)
             inodes = chain(*(getter(i, n) for i, n in enumerate(self.nodes)))
         else:
@@ -106,17 +111,17 @@ class Wikicode(StringMixIn):
     def _do_strong_search(self, obj, recursive=True):
         """Search for the specific element *obj* within the node list.
 
-        *obj* can be either a :py:class:`.Node` or a :py:class:`.Wikicode`
-        object. If found, we return a tuple (*context*, *index*) where
-        *context* is the :py:class:`.Wikicode` that contains *obj* and *index*
-        is its index there, as a :py:class:`slice`. Note that if *recursive* is
-        ``False``, *context* will always be ``self`` (since we only look for
-        *obj* among immediate descendants), but if *recursive* is ``True``,
-        then it could be any :py:class:`.Wikicode` contained by a node within
-        ``self``. If *obj* is not found, :py:exc:`ValueError` is raised.
+        *obj* can be either a :class:`.Node` or a :class:`.Wikicode` object. If
+        found, we return a tuple (*context*, *index*) where *context* is the
+        :class:`.Wikicode` that contains *obj* and *index* is its index there,
+        as a :class:`slice`. Note that if *recursive* is ``False``, *context*
+        will always be ``self`` (since we only look for *obj* among immediate
+        descendants), but if *recursive* is ``True``, then it could be any
+        :class:`.Wikicode` contained by a node within ``self``. If *obj* is not
+        found, :exc:`ValueError` is raised.
         """
-        mkslice = lambda i: slice(i, i + 1)
         if isinstance(obj, Node):
+            mkslice = lambda i: slice(i, i + 1)
             if not recursive:
                 return self, mkslice(self.index(obj))
             for i, node in enumerate(self.nodes):
@@ -125,26 +130,25 @@ class Wikicode(StringMixIn):
                         if not context:
                             context = self
                         return context, mkslice(context.index(child))
-        else:
-            context, ind = self._do_strong_search(obj.get(0), recursive)
-            for i in range(1, len(obj.nodes)):
-                if obj.get(i) is not context.get(ind.start + i):
-                    break
-            else:
-                return context, slice(ind.start, ind.start + len(obj.nodes))
-        raise ValueError(obj)
+            raise ValueError(obj)
+
+        context, ind = self._do_strong_search(obj.get(0), recursive)
+        for i in range(1, len(obj.nodes)):
+            if obj.get(i) is not context.get(ind.start + i):
+                raise ValueError(obj)
+        return context, slice(ind.start, ind.start + len(obj.nodes))
 
     def _do_weak_search(self, obj, recursive):
         """Search for an element that looks like *obj* within the node list.
 
-        This follows the same rules as :py:meth:`_do_strong_search` with some
+        This follows the same rules as :meth:`_do_strong_search` with some
         differences. *obj* is treated as a string that might represent any
-        :py:class:`.Node`, :py:class:`.Wikicode`, or combination of the two
-        present in the node list. Thus, matching is weak (using string
-        comparisons) rather than strong (using ``is``). Because multiple nodes
-        can match *obj*, the result is a list of tuples instead of just one
-        (however, :py:exc:`ValueError` is still raised if nothing is found).
-        Individual matches will never overlap.
+        :class:`.Node`, :class:`.Wikicode`, or combination of the two present
+        in the node list. Thus, matching is weak (using string comparisons)
+        rather than strong (using ``is``). Because multiple nodes can match
+        *obj*, the result is a list of tuples instead of just one (however,
+        :exc:`ValueError` is still raised if nothing is found). Individual
+        matches will never overlap.
 
         The tuples contain a new first element, *exact*, which is ``True`` if
         we were able to match *obj* exactly to one or more adjacent nodes, or
@@ -208,24 +212,24 @@ class Wikicode(StringMixIn):
     def _build_filter_methods(cls, **meths):
         """Given Node types, build the corresponding i?filter shortcuts.
 
-        The should be given as keys storing the method's base name paired
-        with values storing the corresponding :py:class:`~.Node` type. For
-        example, the dict may contain the pair ``("templates", Template)``,
-        which will produce the methods :py:meth:`ifilter_templates` and
-        :py:meth:`filter_templates`, which are shortcuts for
-        :py:meth:`ifilter(forcetype=Template) <ifilter>` and
-        :py:meth:`filter(forcetype=Template) <filter>`, respectively. These
+        The should be given as keys storing the method's base name paired with
+        values storing the corresponding :class:`.Node` type. For example, the
+        dict may contain the pair ``("templates", Template)``, which will
+        produce the methods :meth:`ifilter_templates` and
+        :meth:`filter_templates`, which are shortcuts for
+        :meth:`ifilter(forcetype=Template) <ifilter>` and
+        :meth:`filter(forcetype=Template) <filter>`, respectively. These
         shortcuts are added to the class itself, with an appropriate docstring.
         """
         doc = """Iterate over {0}.
 
-        This is equivalent to :py:meth:`{1}` with *forcetype* set to
-        :py:class:`~{2.__module__}.{2.__name__}`.
+        This is equivalent to :meth:`{1}` with *forcetype* set to
+        :class:`~{2.__module__}.{2.__name__}`.
         """
-        make_ifilter = lambda ftype: (lambda self, **kw:
-                                      self.ifilter(forcetype=ftype, **kw))
-        make_filter = lambda ftype: (lambda self, **kw:
-                                     self.filter(forcetype=ftype, **kw))
+        make_ifilter = lambda ftype: (lambda self, *a, **kw:
+                                      self.ifilter(forcetype=ftype, *a, **kw))
+        make_filter = lambda ftype: (lambda self, *a, **kw:
+                                     self.filter(forcetype=ftype, *a, **kw))
         for name, ftype in (meths.items() if py3k else meths.iteritems()):
             ifilter = make_ifilter(ftype)
             filter = make_filter(ftype)
@@ -236,10 +240,10 @@ class Wikicode(StringMixIn):
 
     @property
     def nodes(self):
-        """A list of :py:class:`~.Node` objects.
+        """A list of :class:`.Node` objects.
 
-        This is the internal data actually stored within a
-        :py:class:`~.Wikicode` object.
+        This is the internal data actually stored within a :class:`.Wikicode`
+        object.
         """
         return self._nodes
 
@@ -256,11 +260,10 @@ class Wikicode(StringMixIn):
     def set(self, index, value):
         """Set the ``Node`` at *index* to *value*.
 
-        Raises :py:exc:`IndexError` if *index* is out of range, or
-        :py:exc:`ValueError` if *value* cannot be coerced into one
-        :py:class:`~.Node`. To insert multiple nodes at an index, use
-        :py:meth:`get` with either :py:meth:`remove` and :py:meth:`insert` or
-        :py:meth:`replace`.
+        Raises :exc:`IndexError` if *index* is out of range, or
+        :exc:`ValueError` if *value* cannot be coerced into one :class:`.Node`.
+        To insert multiple nodes at an index, use :meth:`get` with either
+        :meth:`remove` and :meth:`insert` or :meth:`replace`.
         """
         nodes = parse_anything(value).nodes
         if len(nodes) > 1:
@@ -275,7 +278,7 @@ class Wikicode(StringMixIn):
     def index(self, obj, recursive=False):
         """Return the index of *obj* in the list of nodes.
 
-        Raises :py:exc:`ValueError` if *obj* is not found. If *recursive* is
+        Raises :exc:`ValueError` if *obj* is not found. If *recursive* is
         ``True``, we will look in all nodes of ours and their descendants, and
         return the index of our direct descendant node within *our* list of
         nodes. Otherwise, the lookup is done only on direct descendants.
@@ -294,9 +297,8 @@ class Wikicode(StringMixIn):
     def insert(self, index, value):
         """Insert *value* at *index* in the list of nodes.
 
-        *value* can be anything parasable by :py:func:`.parse_anything`, which
-        includes strings or other :py:class:`~.Wikicode` or :py:class:`~.Node`
-        objects.
+        *value* can be anything parsable by :func:`.parse_anything`, which
+        includes strings or other :class:`.Wikicode` or :class:`.Node` objects.
         """
         nodes = parse_anything(value).nodes
         for node in reversed(nodes):
@@ -305,15 +307,14 @@ class Wikicode(StringMixIn):
     def insert_before(self, obj, value, recursive=True):
         """Insert *value* immediately before *obj*.
 
-        *obj* can be either a string, a :py:class:`~.Node`, or another
-        :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
-        for example). If *obj* is a string, we will operate on all instances
-        of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
-        If *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~.Wikicode` object. If *obj* is not found,
-        :py:exc:`ValueError` is raised.
+        *obj* can be either a string, a :class:`.Node`, or another
+        :class:`.Wikicode` object (as created by :meth:`get_sections`, for
+        example). If *obj* is a string, we will operate on all instances of
+        that string within the code, otherwise only on the specific instance
+        given. *value* can be anything parsable by :func:`.parse_anything`. If
+        *recursive* is ``True``, we will try to find *obj* within our child
+        nodes even if it is not a direct descendant of this :class:`.Wikicode`
+        object. If *obj* is not found, :exc:`ValueError` is raised.
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
@@ -329,15 +330,14 @@ class Wikicode(StringMixIn):
     def insert_after(self, obj, value, recursive=True):
         """Insert *value* immediately after *obj*.
 
-        *obj* can be either a string, a :py:class:`~.Node`, or another
-        :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
-        for example). If *obj* is a string, we will operate on all instances
-        of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
-        If *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~.Wikicode` object. If *obj* is not found,
-        :py:exc:`ValueError` is raised.
+        *obj* can be either a string, a :class:`.Node`, or another
+        :class:`.Wikicode` object (as created by :meth:`get_sections`, for
+        example). If *obj* is a string, we will operate on all instances of
+        that string within the code, otherwise only on the specific instance
+        given. *value* can be anything parsable by :func:`.parse_anything`. If
+        *recursive* is ``True``, we will try to find *obj* within our child
+        nodes even if it is not a direct descendant of this :class:`.Wikicode`
+        object. If *obj* is not found, :exc:`ValueError` is raised.
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
@@ -353,15 +353,14 @@ class Wikicode(StringMixIn):
     def replace(self, obj, value, recursive=True):
         """Replace *obj* with *value*.
 
-        *obj* can be either a string, a :py:class:`~.Node`, or another
-        :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
-        for example). If *obj* is a string, we will operate on all instances
-        of that string within the code, otherwise only on the specific instance
-        given. *value* can be anything parasable by :py:func:`.parse_anything`.
+        *obj* can be either a string, a :class:`.Node`, or another
+        :class:`.Wikicode` object (as created by :meth:`get_sections`, for
+        example). If *obj* is a string, we will operate on all instances of
+        that string within the code, otherwise only on the specific instance
+        given. *value* can be anything parsable by :func:`.parse_anything`.
         If *recursive* is ``True``, we will try to find *obj* within our child
-        nodes even if it is not a direct descendant of this
-        :py:class:`~.Wikicode` object. If *obj* is not found,
-        :py:exc:`ValueError` is raised.
+        nodes even if it is not a direct descendant of this :class:`.Wikicode`
+        object. If *obj* is not found, :exc:`ValueError` is raised.
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
@@ -380,7 +379,7 @@ class Wikicode(StringMixIn):
     def append(self, value):
         """Insert *value* at the end of the list of nodes.
 
-        *value* can be anything parasable by :py:func:`.parse_anything`.
+        *value* can be anything parsable by :func:`.parse_anything`.
         """
         nodes = parse_anything(value).nodes
         for node in nodes:
@@ -389,14 +388,14 @@ class Wikicode(StringMixIn):
     def remove(self, obj, recursive=True):
         """Remove *obj* from the list of nodes.
 
-        *obj* can be either a string, a :py:class:`~.Node`, or another
-        :py:class:`~.Wikicode` object (as created by :py:meth:`get_sections`,
-        for example). If *obj* is a string, we will operate on all instances
-        of that string within the code, otherwise only on the specific instance
+        *obj* can be either a string, a :class:`.Node`, or another
+        :class:`.Wikicode` object (as created by :meth:`get_sections`, for
+        example). If *obj* is a string, we will operate on all instances of
+        that string within the code, otherwise only on the specific instance
         given. If *recursive* is ``True``, we will try to find *obj* within our
         child nodes even if it is not a direct descendant of this
-        :py:class:`~.Wikicode` object. If *obj* is not found,
-        :py:exc:`ValueError` is raised.
+        :class:`.Wikicode` object. If *obj* is not found, :exc:`ValueError` is
+        raised.
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
@@ -413,10 +412,10 @@ class Wikicode(StringMixIn):
     def matches(self, other):
         """Do a loose equivalency test suitable for comparing page names.
 
-        *other* can be any string-like object, including
-        :py:class:`~.Wikicode`, or a tuple of these. This operation is
-        symmetric; both sides are adjusted. Specifically, whitespace and markup
-        is stripped and the first letter's case is normalized. Typical usage is
+        *other* can be any string-like object, including :class:`.Wikicode`, or
+        a tuple of these. This operation is symmetric; both sides are adjusted.
+        Specifically, whitespace and markup is stripped and the first letter's
+        case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
         cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
@@ -435,35 +434,44 @@ class Wikicode(StringMixIn):
                 forcetype=None):
         """Iterate over nodes in our list matching certain conditions.
 
-        If *recursive* is ``True``, we will iterate over our children and all
-        of their descendants, otherwise just our immediate children. If
-        *forcetype* is given, only nodes that are instances of this type are
-        yielded. *matches* can be used to further restrict the nodes, either as
-        a function (taking a single :py:class:`.Node` and returning a boolean)
-        or a regular expression (matched against the node's string
-        representation with :py:func:`re.search`). If *matches* is a regex, the
-        flags passed to :py:func:`re.search` are :py:const:`re.IGNORECASE`,
-        :py:const:`re.DOTALL`, and :py:const:`re.UNICODE`, but custom flags can
-        be specified by passing *flags*.
-        """
-        return (node for i, node in
-                self._indexed_ifilter(recursive, matches, flags, forcetype))
+        If *forcetype* is given, only nodes that are instances of this type (or
+        tuple of types) are yielded. Setting *recursive* to ``True`` will
+        iterate over all children and their descendants. ``RECURSE_OTHERS``
+        will only iterate over children that are not the instances of
+        *forcetype*. ``False`` will only iterate over immediate children.
 
-    def filter(self, recursive=True, matches=None, flags=FLAGS,
-               forcetype=None):
+        ``RECURSE_OTHERS`` can be used to iterate over all un-nested templates,
+        even if they are inside of HTML tags, like so:
+
+            >>> code = mwparserfromhell.parse("{{foo}}<b>{{foo|{{bar}}}}</b>")
+            >>> code.filter_templates(code.RECURSE_OTHERS)
+            ["{{foo}}", "{{foo|{{bar}}}}"]
+
+        *matches* can be used to further restrict the nodes, either as a
+        function (taking a single :class:`.Node` and returning a boolean) or a
+        regular expression (matched against the node's string representation
+        with :func:`re.search`). If *matches* is a regex, the flags passed to
+        :func:`re.search` are :const:`re.IGNORECASE`, :const:`re.DOTALL`, and
+        :const:`re.UNICODE`, but custom flags can be specified by passing
+        *flags*.
+        """
+        gen = self._indexed_ifilter(recursive, matches, flags, forcetype)
+        return (node for i, node in gen)
+
+    def filter(self, *args, **kwargs):
         """Return a list of nodes within our list matching certain conditions.
 
-        This is equivalent to calling :py:func:`list` on :py:meth:`ifilter`.
+        This is equivalent to calling :func:`list` on :meth:`ifilter`.
         """
-        return list(self.ifilter(recursive, matches, flags, forcetype))
+        return list(self.ifilter(*args, **kwargs))
 
     def get_sections(self, levels=None, matches=None, flags=FLAGS, flat=False,
                      include_lead=None, include_headings=True):
         """Return a list of sections within the page.
 
-        Sections are returned as :py:class:`~.Wikicode` objects with a shared
-        node list (implemented using :py:class:`~.SmartList`) so that changes
-        to sections are reflected in the parent Wikicode object.
+        Sections are returned as :class:`.Wikicode` objects with a shared node
+        list (implemented using :class:`.SmartList`) so that changes to
+        sections are reflected in the parent Wikicode object.
 
         Each section contains all of its subsections, unless *flat* is
         ``True``. If *levels* is given, it should be a iterable of integers;
@@ -471,14 +479,13 @@ class Wikicode(StringMixIn):
         *matches* is given, it should be either a function or a regex; only
         sections whose headings match it (without the surrounding equal signs)
         will be included. *flags* can be used to override the default regex
-        flags (see :py:meth:`ifilter`) if a regex *matches* is used.
+        flags (see :meth:`ifilter`) if a regex *matches* is used.
 
         If *include_lead* is ``True``, the first, lead section (without a
         heading) will be included in the list; ``False`` will not include it;
         the default will include it only if no specific *levels* were given. If
         *include_headings* is ``True``, the section's beginning
-        :py:class:`~.Heading` object will be included; otherwise, this is
-        skipped.
+        :class:`.Heading` object will be included; otherwise, this is skipped.
         """
         title_matcher = self._build_matcher(matches, flags)
         matcher = lambda heading: (title_matcher(heading.title) and
@@ -527,7 +534,7 @@ class Wikicode(StringMixIn):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
-        :py:meth:`~.Node.__strip__` method of :py:class:`~.Node` objects, which
+        :meth:`~.Node.__strip__` method of :class:`.Node` objects, which
         generally return a subset of their nodes or ``None``. For example,
         templates and tags are removed completely, links are stripped to just
         their display part, headings are stripped to just their title. If
@@ -555,12 +562,12 @@ class Wikicode(StringMixIn):
         """Return a hierarchical tree representation of the object.
 
         The representation is a string makes the most sense printed. It is
-        built by calling :py:meth:`_get_tree` on the
-        :py:class:`~.Wikicode` object and its children recursively. The end
-        result may look something like the following::
+        built by calling :meth:`_get_tree` on the :class:`.Wikicode` object and
+        its children recursively. The end result may look something like the
+        following::
 
             >>> text = "Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}"
-            >>> print mwparserfromhell.parse(text).get_tree()
+            >>> print(mwparserfromhell.parse(text).get_tree())
             Lorem ipsum
             {{
                   foo

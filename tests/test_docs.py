@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,7 @@
 
 from __future__ import print_function, unicode_literals
 import json
+import os
 
 try:
     import unittest2 as unittest
@@ -111,6 +112,7 @@ class TestDocs(unittest.TestCase):
         self.assertPrint(text, res)
         self.assertEqual(text, code)
 
+    @unittest.skipIf("NOWEB" in os.environ, "web test disabled by environ var")
     def test_readme_5(self):
         """test a block of example code in the README; includes a web call"""
         url1 = "http://en.wikipedia.org/w/api.php"

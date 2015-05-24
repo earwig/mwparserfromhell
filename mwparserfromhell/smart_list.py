@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-This module contains the :py:class:`~.SmartList` type, as well as its
-:py:class:`~._ListProxy` child, which together implement a list whose sublists
+This module contains the :class:`.SmartList` type, as well as its
+:class:`._ListProxy` child, which together implement a list whose sublists
 reflect changes made to the main list, and vice-versa.
 """
 
@@ -35,11 +35,12 @@ __all__ = ["SmartList"]
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    Since this is used on :py:class:`~.SmartList`, the "parent class" used is
+    Since this is used on :class:`.SmartList`, the "parent class" used is
     ``list``. This function can be used as a decorator.
     """
     method.__doc__ = getattr(list, method.__name__).__doc__
     return method
+
 
 class _SliceNormalizerMixIn(object):
     """MixIn that provides a private method to normalize slices."""
@@ -64,9 +65,9 @@ class SmartList(_SliceNormalizerMixIn, list):
     list (such as the addition, removal, or replacement of elements) will be
     reflected in the sublist, or vice-versa, to the greatest degree possible.
     This is implemented by having sublists - instances of the
-    :py:class:`~._ListProxy` type - dynamically determine their elements by
-    storing their slice info and retrieving that slice from the parent. Methods
-    that change the size of the list also change the slice info. For example::
+    :class:`._ListProxy` type - dynamically determine their elements by storing
+    their slice info and retrieving that slice from the parent. Methods that
+    change the size of the list also change the slice info. For example::
 
         >>> parent = SmartList([0, 1, 2, 3])
         >>> parent
@@ -83,7 +84,9 @@ class SmartList(_SliceNormalizerMixIn, list):
     The parent needs to keep a list of its children in order to update them,
     which prevents them from being garbage-collected. If you are keeping the
     parent around for a while but creating many children, it is advisable to
-    call :py:meth:`~._ListProxy.destroy` when you're finished with them.
+    call :meth:`._ListProxy.detach` when you're finished with them. Certain
+    parent methods, like :meth:`reverse` and :meth:`sort`, will do this
+    automatically.
     """
 
     def __init__(self, iterable=None):
@@ -151,10 +154,10 @@ class SmartList(_SliceNormalizerMixIn, list):
         self.extend(other)
         return self
 
-    def _release_children(self):
-        copy = list(self)
-        for child in self._children:
-            child._parent = copy
+    def _detach_children(self):
+        children = [val[0] for val in self._children.values()]
+        for child in children:
+            child.detach()
 
     @inheritdoc
     def append(self, item):
@@ -184,13 +187,13 @@ class SmartList(_SliceNormalizerMixIn, list):
 
     @inheritdoc
     def reverse(self):
-        self._release_children()
+        self._detach_children()
         super(SmartList, self).reverse()
 
     if py3k:
         @inheritdoc
         def sort(self, key=None, reverse=None):
-            self._release_children()
+            self._detach_children()
             kwargs = {}
             if key is not None:
                 kwargs["key"] = key
@@ -200,7 +203,7 @@ class SmartList(_SliceNormalizerMixIn, list):
     else:
         @inheritdoc
         def sort(self, cmp=None, key=None, reverse=None):
-            self._release_children()
+            self._detach_children()
             kwargs = {}
             if cmp is not None:
                 kwargs["cmp"] = cmp
@@ -214,15 +217,16 @@ class SmartList(_SliceNormalizerMixIn, list):
 class _ListProxy(_SliceNormalizerMixIn, list):
     """Implement the ``list`` interface by getting elements from a parent.
 
-    This is created by a :py:class:`~.SmartList` object when slicing. It does
-    not actually store the list at any time; instead, whenever the list is
-    needed, it builds it dynamically using the :py:meth:`_render` method.
+    This is created by a :class:`.SmartList` object when slicing. It does not
+    actually store the list at any time; instead, whenever the list is needed,
+    it builds it dynamically using the :meth:`_render` method.
     """
 
     def __init__(self, parent, sliceinfo):
         super(_ListProxy, self).__init__()
         self._parent = parent
         self._sliceinfo = sliceinfo
+        self._detached = False
 
     def __repr__(self):
         return repr(self._render())
@@ -452,9 +456,17 @@ class _ListProxy(_SliceNormalizerMixIn, list):
             item.sort(**kwargs)
             self._parent[self._start:self._stop:self._step] = item
 
-    def destroy(self):
-        """Make the parent forget this child. The child will no longer work."""
-        self._parent._children.pop(id(self))
+    def detach(self):
+        """Detach the child so it operates like a normal list.
+
+        This allows children to be properly garbage-collected if their parent
+        is being kept around for a long time. This method has no effect if the
+        child is already detached.
+        """
+        if not self._detached:
+            self._parent._children.pop(id(self))
+            self._parent = list(self._parent)
+            self._detached = True
 
 
 del inheritdoc

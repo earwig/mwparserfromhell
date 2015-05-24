@@ -1,6 +1,6 @@
 /*
 Tokenizer Header File for MWParserFromHell
-Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -29,6 +29,7 @@ SOFTWARE.
 #include <math.h>
 #include <structmember.h>
 #include <bytesobject.h>
+#include <stdint.h>
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
@@ -43,16 +44,17 @@ SOFTWARE.
 
 static const char MARKERS[] = {
     '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
-    '-', '\n', '\0'};
+    '-', '!', '\n', '\0'};
 
-#define NUM_MARKERS 18
+#define NUM_MARKERS 19
 #define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
-static int route_state = 0, route_context = 0;
+static int route_state = 0;
+static uint64_t route_context = 0;
 #define BAD_ROUTE            route_state
 #define BAD_ROUTE_CONTEXT    route_context
 #define FAIL_ROUTE(context)  route_state = 1; route_context = context
@@ -62,6 +64,7 @@ static char** entitydefs;
 
 static PyObject* EMPTY;
 static PyObject* NOARGS;
+static PyObject* ParserError;
 static PyObject* definitions;
 
 
@@ -108,52 +111,61 @@ static PyObject* TagCloseClose;
 
 /* Local contexts: */
 
-#define LC_TEMPLATE             0x00000007
-#define LC_TEMPLATE_NAME        0x00000001
-#define LC_TEMPLATE_PARAM_KEY   0x00000002
-#define LC_TEMPLATE_PARAM_VALUE 0x00000004
+#define LC_TEMPLATE                 0x0000000000000007
+#define LC_TEMPLATE_NAME            0x0000000000000001
+#define LC_TEMPLATE_PARAM_KEY       0x0000000000000002
+#define LC_TEMPLATE_PARAM_VALUE     0x0000000000000004
 
-#define LC_ARGUMENT             0x00000018
-#define LC_ARGUMENT_NAME        0x00000008
-#define LC_ARGUMENT_DEFAULT     0x00000010
+#define LC_ARGUMENT                 0x0000000000000018
+#define LC_ARGUMENT_NAME            0x0000000000000008
+#define LC_ARGUMENT_DEFAULT         0x0000000000000010
 
-#define LC_WIKILINK             0x00000060
-#define LC_WIKILINK_TITLE       0x00000020
-#define LC_WIKILINK_TEXT        0x00000040
+#define LC_WIKILINK                 0x0000000000000060
+#define LC_WIKILINK_TITLE           0x0000000000000020
+#define LC_WIKILINK_TEXT            0x0000000000000040
 
-#define LC_EXT_LINK             0x00000180
-#define LC_EXT_LINK_URI         0x00000080
-#define LC_EXT_LINK_TITLE       0x00000100
+#define LC_EXT_LINK                 0x0000000000000180
+#define LC_EXT_LINK_URI             0x0000000000000080
+#define LC_EXT_LINK_TITLE           0x0000000000000100
 
-#define LC_HEADING              0x00007E00
-#define LC_HEADING_LEVEL_1      0x00000200
-#define LC_HEADING_LEVEL_2      0x00000400
-#define LC_HEADING_LEVEL_3      0x00000800
-#define LC_HEADING_LEVEL_4      0x00001000
-#define LC_HEADING_LEVEL_5      0x00002000
-#define LC_HEADING_LEVEL_6      0x00004000
+#define LC_HEADING                  0x0000000000007E00
+#define LC_HEADING_LEVEL_1          0x0000000000000200
+#define LC_HEADING_LEVEL_2          0x0000000000000400
+#define LC_HEADING_LEVEL_3          0x0000000000000800
+#define LC_HEADING_LEVEL_4          0x0000000000001000
+#define LC_HEADING_LEVEL_5          0x0000000000002000
+#define LC_HEADING_LEVEL_6          0x0000000000004000
 
-#define LC_TAG                  0x00078000
-#define LC_TAG_OPEN             0x00008000
-#define LC_TAG_ATTR             0x00010000
-#define LC_TAG_BODY             0x00020000
-#define LC_TAG_CLOSE            0x00040000
+#define LC_TAG                      0x0000000000078000
+#define LC_TAG_OPEN                 0x0000000000008000
+#define LC_TAG_ATTR                 0x0000000000010000
+#define LC_TAG_BODY                 0x0000000000020000
+#define LC_TAG_CLOSE                0x0000000000040000
 
-#define LC_STYLE                0x00780000
-#define LC_STYLE_ITALICS        0x00080000
-#define LC_STYLE_BOLD           0x00100000
-#define LC_STYLE_PASS_AGAIN     0x00200000
-#define LC_STYLE_SECOND_PASS    0x00400000
+#define LC_STYLE                    0x0000000000780000
+#define LC_STYLE_ITALICS            0x0000000000080000
+#define LC_STYLE_BOLD               0x0000000000100000
+#define LC_STYLE_PASS_AGAIN         0x0000000000200000
+#define LC_STYLE_SECOND_PASS        0x0000000000400000
 
-#define LC_DLTERM               0x00800000
+#define LC_DLTERM                   0x0000000000800000
 
-#define LC_SAFETY_CHECK         0x3F000000
-#define LC_HAS_TEXT             0x01000000
-#define LC_FAIL_ON_TEXT         0x02000000
-#define LC_FAIL_NEXT            0x04000000
-#define LC_FAIL_ON_LBRACE       0x08000000
-#define LC_FAIL_ON_RBRACE       0x10000000
-#define LC_FAIL_ON_EQUALS       0x20000000
+#define LC_SAFETY_CHECK             0x000000003F000000
+#define LC_HAS_TEXT                 0x0000000001000000
+#define LC_FAIL_ON_TEXT             0x0000000002000000
+#define LC_FAIL_NEXT                0x0000000004000000
+#define LC_FAIL_ON_LBRACE           0x0000000008000000
+#define LC_FAIL_ON_RBRACE           0x0000000010000000
+#define LC_FAIL_ON_EQUALS           0x0000000020000000
+
+#define LC_TABLE                    0x0000000FC0000000
+#define LC_TABLE_CELL_LINE_CONTEXTS 0x0000000D00000000
+#define LC_TABLE_OPEN               0x0000000040000000
+#define LC_TABLE_CELL_OPEN          0x0000000080000000
+#define LC_TABLE_CELL_STYLE         0x0000000100000000
+#define LC_TABLE_ROW_OPEN           0x0000000200000000
+#define LC_TABLE_TD_LINE            0x0000000400000000
+#define LC_TABLE_TH_LINE            0x0000000800000000
 
 /* Global contexts: */
 
@@ -161,9 +173,9 @@ static PyObject* TagCloseClose;
 
 /* Aggregate contexts: */
 
-#define AGG_FAIL         (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_HEADING | LC_TAG | LC_STYLE)
+#define AGG_FAIL         (LC_TEMPLATE | LC_ARGUMENT | LC_WIKILINK | LC_EXT_LINK_TITLE | LC_HEADING | LC_TAG | LC_STYLE | LC_TABLE_OPEN)
 #define AGG_UNSAFE       (LC_TEMPLATE_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK_TITLE | LC_TEMPLATE_PARAM_KEY | LC_ARGUMENT_NAME)
-#define AGG_DOUBLE       (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE)
+#define AGG_DOUBLE       (LC_TEMPLATE_PARAM_KEY | LC_TAG_CLOSE | LC_TABLE_ROW_OPEN)
 #define AGG_NO_WIKILINKS (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK_URI)
 #define AGG_NO_EXT_LINKS (LC_TEMPLATE_NAME | LC_ARGUMENT_NAME | LC_WIKILINK_TITLE | LC_EXT_LINK)
 
@@ -190,7 +202,7 @@ struct Textbuffer {
 
 struct Stack {
     PyObject* stack;
-    int context;
+    uint64_t context;
     struct Textbuffer* textbuffer;
     struct Stack* next;
 };
@@ -201,10 +213,11 @@ typedef struct {
 } HeadingData;
 
 typedef struct {
-    int context;
+    uint64_t context;
     struct Textbuffer* pad_first;
     struct Textbuffer* pad_before_eq;
     struct Textbuffer* pad_after_eq;
+    Py_UNICODE quoter;
     Py_ssize_t reset;
 } TagData;
 
@@ -265,8 +278,10 @@ static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
 static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
-static PyObject* Tokenizer_parse(Tokenizer*, int, int);
+static PyObject* Tokenizer_parse(Tokenizer*, uint64_t, int);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
+
+static int load_exceptions(void);
 
 
 /* Macros for Python 2/3 compatibility: */

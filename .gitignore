@@ -1,10 +1,14 @@
 *.pyc
+*.pyd
 *.so
 *.dll
 *.egg
 *.egg-info
+.coverage
 .DS_Store
 __pycache__
 build
 dist
 docs/_build
+scripts/*.log
+htmlcov/

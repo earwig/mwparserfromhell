@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -188,6 +188,13 @@ class TestWikicode(TreeEqualityTestCase):
         func("is {{some", "cd", recursive=True)
         self.assertEqual(expected[5], code6)
 
+        code7 = parse("{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}")
+        func = partial(meth, code7)
+        obj = wrap([code7.get(0), code7.get(2)])
+        self.assertRaises(ValueError, func, obj, "{{lol}}")
+        func("{{foo}}{{baz}}", "{{lol}}")
+        self.assertEqual(expected[6], code7)
+
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
         meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -197,7 +204,8 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a|x{{b}}|{{c|d=y{{f}}}}}}",
             "{{a}}w{{b}}{{c}}x{{d}}{{e}}{{f}}{{g}}{{h}}yz{{i}}{{j}}",
             "{{a|x{{b}}{{c}}|{{f|{{g}}=y{{h}}{{i}}}}}}",
-            "here cdis {{some abtext and a {{template}}}}"]
+            "here cdis {{some abtext and a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}"]
         self._test_search(meth, expected)
 
     def test_insert_after(self):
@@ -209,7 +217,8 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a|{{b}}x|{{c|d={{f}}y}}}}",
             "{{a}}{{b}}{{c}}w{{d}}{{e}}x{{f}}{{g}}{{h}}{{i}}{{j}}yz",
             "{{a|{{b}}{{c}}x|{{f|{{g}}={{h}}{{i}}y}}}}",
-            "here is {{somecd text andab a {{template}}}}"]
+            "here is {{somecd text andab a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}"]
         self._test_search(meth, expected)
 
     def test_replace(self):
@@ -218,7 +227,7 @@ class TestWikicode(TreeEqualityTestCase):
         expected = [
             "{{a}}xz[[y]]{{e}}", "dcdffe", "{{a|x|{{c|d=y}}}}",
             "{{a}}wx{{f}}{{g}}z", "{{a|x|{{f|{{g}}=y}}}}",
-            "here cd ab a {{template}}}}"]
+            "here cd ab a {{template}}}}", "{{foo}}{{bar}}{{baz}}{{lol}}"]
         self._test_search(meth, expected)
 
     def test_append(self):
@@ -238,8 +247,8 @@ class TestWikicode(TreeEqualityTestCase):
         meth = lambda code, obj, value, **kw: code.remove(obj, **kw)
         expected = [
             "{{a}}{{c}}", "", "{{a||{{c|d=}}}}", "{{a}}{{f}}",
-            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}"
-        ]
+            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}"]
         self._test_search(meth, expected)
 
     def test_matches(self):
@@ -319,11 +328,14 @@ class TestWikicode(TreeEqualityTestCase):
             self.assertEqual(["{{baz}}", "{{bz}}"], func(matches=r"^{{b.*?z"))
             self.assertEqual(["{{baz}}"], func(matches=r"^{{b.+?z}}"))
 
-        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"],
-                         code2.filter_templates(recursive=False))
-        self.assertEqual(["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
-                          "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"],
-                         code2.filter_templates(recursive=True))
+        exp_rec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
+                        "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"]
+        exp_unrec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"]
+        self.assertEqual(exp_rec, code2.filter_templates())
+        self.assertEqual(exp_unrec, code2.filter_templates(recursive=False))
+        self.assertEqual(exp_rec, code2.filter_templates(recursive=True))
+        self.assertEqual(exp_rec, code2.filter_templates(True))
+        self.assertEqual(exp_unrec, code2.filter_templates(False))
 
         self.assertEqual(["{{foobar}}"], code3.filter_templates(
             matches=lambda node: node.name.matches("Foobar")))
@@ -332,9 +344,15 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z"))
         self.assertEqual([], code3.filter_tags(matches=r"^{{b.*?z", flags=0))
 
-        self.assertRaises(TypeError, code.filter_templates, 100)
         self.assertRaises(TypeError, code.filter_templates, a=42)
         self.assertRaises(TypeError, code.filter_templates, forcetype=Template)
+        self.assertRaises(TypeError, code.filter_templates, 1, 0, 0, Template)
+
+        code4 = parse("{{foo}}<b>{{foo|{{bar}}}}</b>")
+        actual1 = code4.filter_templates(recursive=code4.RECURSE_OTHERS)
+        actual2 = code4.filter_templates(code4.RECURSE_OTHERS)
+        self.assertEqual(["{{foo}}", "{{foo|{{bar}}}}"], actual1)
+        self.assertEqual(["{{foo}}", "{{foo|{{bar}}}}"], actual2)
 
     def test_get_sections(self):
         """test Wikicode.get_sections()"""

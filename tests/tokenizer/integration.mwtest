@@ -43,7 +43,7 @@ output: [Text(text="&n"), CommentStart(), Text(text="foo"), CommentEnd(), Text(t
 name:   rich_tags
 label:  a HTML tag with tons of other things in it
 input:  "{{dubious claim}}<ref name={{abc}}   foo="bar {{baz}}" abc={{de}}f ghi=j{{k}}{{l}} \n mno =  "{{p}} [[q]] {{r}}">[[Source]]</ref>"
-output: [TemplateOpen(), Text(text="dubious claim"), TemplateClose(), TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TemplateOpen(), Text(text="abc"), TemplateClose(), TagAttrStart(pad_first="   ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(), Text(text="bar "), TemplateOpen(), Text(text="baz"), TemplateClose(), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="abc"), TagAttrEquals(), TemplateOpen(), Text(text="de"), TemplateClose(), Text(text="f"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="ghi"), TagAttrEquals(), Text(text="j"), TemplateOpen(), Text(text="k"), TemplateClose(), TemplateOpen(), Text(text="l"), TemplateClose(), TagAttrStart(pad_first=" \n ", pad_before_eq=" ", pad_after_eq="  "), Text(text="mno"), TagAttrEquals(), TagAttrQuote(), TemplateOpen(), Text(text="p"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="q"), WikilinkClose(), Text(text=" "), TemplateOpen(), Text(text="r"), TemplateClose(), TagCloseOpen(padding=""), WikilinkOpen(), Text(text="Source"), WikilinkClose(), TagOpenClose(), Text(text="ref"), TagCloseClose()]
+output: [TemplateOpen(), Text(text="dubious claim"), TemplateClose(), TagOpenOpen(), Text(text="ref"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TemplateOpen(), Text(text="abc"), TemplateClose(), TagAttrStart(pad_first="   ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="bar "), TemplateOpen(), Text(text="baz"), TemplateClose(), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="abc"), TagAttrEquals(), TemplateOpen(), Text(text="de"), TemplateClose(), Text(text="f"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="ghi"), TagAttrEquals(), Text(text="j"), TemplateOpen(), Text(text="k"), TemplateClose(), TemplateOpen(), Text(text="l"), TemplateClose(), TagAttrStart(pad_first=" \n ", pad_before_eq=" ", pad_after_eq="  "), Text(text="mno"), TagAttrEquals(), TagAttrQuote(char="\""), TemplateOpen(), Text(text="p"), TemplateClose(), Text(text=" "), WikilinkOpen(), Text(text="q"), WikilinkClose(), Text(text=" "), TemplateOpen(), Text(text="r"), TemplateClose(), TagCloseOpen(padding=""), WikilinkOpen(), Text(text="Source"), WikilinkClose(), TagOpenClose(), Text(text="ref"), TagCloseClose()]
 
 ---
 
@@ -178,3 +178,66 @@ name:   external_link_inside_wikilink_title
 label:  an external link inside a wikilink title, which is invalid
 input:  "[[File:Example.png http://example.com]]"
 output: [WikilinkOpen(), Text(text="File:Example.png http://example.com"), WikilinkClose()]
+
+---
+
+name:   italics_inside_external_link_inside_incomplete_list
+label:  italic text inside an external link inside an incomplete list
+input:  "<li>[http://www.example.com ''example'']"
+output: [TagOpenOpen(), Text(text="li"), TagCloseSelfclose(padding="", implicit=True), ExternalLinkOpen(brackets=True), Text(text="http://www.example.com"), ExternalLinkSeparator(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="example"), TagOpenClose(), Text(text="i"), TagCloseClose(), ExternalLinkClose()]
+
+---
+
+name:   nodes_inside_external_link_after_punct
+label:  various complex nodes inside an external link following punctuation
+input:  "http://example.com/foo.{{bar}}baz.&biz;<!--hello-->bingo"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://example.com/foo."), TemplateOpen(), Text(text="bar"), TemplateClose(), Text(text="baz.&biz;"), CommentStart(), Text(text="hello"), CommentEnd(), Text(text="bingo"), ExternalLinkClose()]
+
+---
+
+name:   newline_and_comment_in_template_name
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_2
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->|key=value}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), TemplateParamSeparator(), Text(text="key"), TemplateParamEquals(), Text(text="value"), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_3
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->\n|key=value}}"
+output: [TemplateOpen(), Text(text="foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\n"), TemplateParamSeparator(), Text(text="key"), TemplateParamEquals(), Text(text="value"), TemplateClose()]
+
+---
+
+name:   newline_and_comment_in_template_name_4
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->invalid|key=value}}"
+output: [Text(text="{{foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="invalid|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_5
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!-- comment -->\ninvalid|key=value}}"
+output: [Text(text="{{foobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\ninvalid|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_6
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!--|key=value}}"
+output: [Text(text="{{foobar\n<!--|key=value}}")]
+
+---
+
+name:   newline_and_comment_in_template_name_7
+label:  a template name containing a newline followed by a comment
+input:  "{{foobar\n<!|key=value}}"
+output: [Text(text="{{foobar\n<!|key=value}}")]

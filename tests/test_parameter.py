@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -71,9 +71,10 @@ class TestParameter(TreeEqualityTestCase):
         self.assertFalse(node1.showkey)
         self.assertTrue(node2.showkey)
         node1.showkey = True
-        node2.showkey = ""
         self.assertTrue(node1.showkey)
-        self.assertFalse(node2.showkey)
+        node1.showkey = ""
+        self.assertFalse(node1.showkey)
+        self.assertRaises(ValueError, setattr, node2, "showkey", False)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

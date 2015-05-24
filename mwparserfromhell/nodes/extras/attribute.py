@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,17 +31,19 @@ __all__ = ["Attribute"]
 class Attribute(StringMixIn):
     """Represents an attribute of an HTML tag.
 
-    This is used by :py:class:`~.Tag` objects. For example, the tag
+    This is used by :class:`.Tag` objects. For example, the tag
     ``<ref name="foo">`` contains an Attribute whose name is ``"name"`` and
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quoted=True, pad_first=" ",
-                 pad_before_eq="", pad_after_eq=""):
+    def __init__(self, name, value=None, quotes='"', pad_first=" ",
+                 pad_before_eq="", pad_after_eq="", check_quotes=True):
         super(Attribute, self).__init__()
+        if check_quotes and not quotes and self._value_needs_quotes(value):
+            raise ValueError("given value {0!r} requires quotes".format(value))
         self._name = name
         self._value = value
-        self._quoted = quoted
+        self._quotes = quotes
         self._pad_first = pad_first
         self._pad_before_eq = pad_before_eq
         self._pad_after_eq = pad_after_eq
@@ -50,10 +52,17 @@ class Attribute(StringMixIn):
         result = self.pad_first + str(self.name) + self.pad_before_eq
         if self.value is not None:
             result += "=" + self.pad_after_eq
-            if self.quoted:
-                return result + '"' + str(self.value) + '"'
+            if self.quotes:
+                return result + self.quotes + str(self.value) + self.quotes
             return result + str(self.value)
         return result
+
+    @staticmethod
+    def _value_needs_quotes(val):
+        """Return the preferred quotes for the given value, or None."""
+        if val and any(char.isspace() for char in val):
+            return ('"' in val and "'" in val) or ("'" if '"' in val else '"')
+        return None
 
     def _set_padding(self, attr, value):
         """Setter for the value of a padding attribute."""
@@ -65,20 +74,28 @@ class Attribute(StringMixIn):
                 raise ValueError("padding must be entirely whitespace")
             setattr(self, attr, value)
 
+    @staticmethod
+    def coerce_quotes(quotes):
+        """Coerce a quote type into an acceptable value, or raise an error."""
+        orig, quotes = quotes, str(quotes) if quotes else None
+        if quotes not in [None, '"', "'"]:
+            raise ValueError("{0!r} is not a valid quote type".format(orig))
+        return quotes
+
     @property
     def name(self):
-        """The name of the attribute as a :py:class:`~.Wikicode` object."""
+        """The name of the attribute as a :class:`.Wikicode` object."""
         return self._name
 
     @property
     def value(self):
-        """The value of the attribute as a :py:class:`~.Wikicode` object."""
+        """The value of the attribute as a :class:`.Wikicode` object."""
         return self._value
 
     @property
-    def quoted(self):
-        """Whether the attribute's value is quoted with double quotes."""
-        return self._quoted
+    def quotes(self):
+        """How to enclose the attribute value. ``"``, ``'``, or ``None``."""
+        return self._quotes
 
     @property
     def pad_first(self):
@@ -101,11 +118,21 @@ class Attribute(StringMixIn):
 
     @value.setter
     def value(self, newval):
-        self._value = None if newval is None else parse_anything(newval)
+        if newval is None:
+            self._value = None
+        else:
+            code = parse_anything(newval)
+            quotes = self._value_needs_quotes(code)
+            if quotes in ['"', "'"] or (quotes is True and not self.quotes):
+                self._quotes = quotes
+            self._value = code
 
-    @quoted.setter
-    def quoted(self, value):
-        self._quoted = bool(value)
+    @quotes.setter
+    def quotes(self, value):
+        value = self.coerce_quotes(value)
+        if not value and self._value_needs_quotes(self.value):
+            raise ValueError("attribute value requires quotes")
+        self._quotes = value
 
     @pad_first.setter
     def pad_first(self, value):

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,11 +21,13 @@
 # SOFTWARE.
 
 from __future__ import print_function, unicode_literals
+import codecs
 from os import listdir, path
 import sys
 
-from mwparserfromhell.compat import py3k
+from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.parser import tokens
+from mwparserfromhell.parser.builder import Builder
 
 class _TestParseError(Exception):
     """Raised internally when a test could not be parsed."""
@@ -49,8 +51,12 @@ class TokenizerTestCase(object):
         *label* for the method's docstring.
         """
         def inner(self):
-            expected = data["output"]
-            actual = self.tokenizer().tokenize(data["input"])
+            if hasattr(self, "roundtrip"):
+                expected = data["input"]
+                actual = str(Builder().build(data["output"][:]))
+            else:
+                expected = data["output"]
+                actual = self.tokenizer().tokenize(data["input"])
             self.assertEqual(expected, actual)
         if not py3k:
             inner.__name__ = funcname.encode("utf8")
@@ -109,10 +115,8 @@ class TokenizerTestCase(object):
     def build(cls):
         """Load and install all tests from the 'tokenizer' directory."""
         def load_file(filename):
-            with open(filename, "rU") as fp:
+            with codecs.open(filename, "rU", encoding="utf8") as fp:
                 text = fp.read()
-                if not py3k:
-                    text = text.decode("utf8")
                 name = path.split(filename)[1][:0-len(extension)]
                 cls._load_tests(filename, name, text)
 

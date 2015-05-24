@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -95,7 +95,7 @@ class Template(Node):
     def _select_theory(self, theories):
         """Return the most likely spacing convention given different options.
 
-        Given a dictionary of convention options as keys and their occurance as
+        Given a dictionary of convention options as keys and their occurrence as
         values, return the convention that occurs the most, or ``None`` if
         there is no clear preferred style.
         """
@@ -110,8 +110,8 @@ class Template(Node):
         """Try to determine the whitespace conventions for parameters.
 
         This will examine the existing parameters and use
-        :py:meth:`_select_theory` to determine if there are any preferred
-        styles for how much whitespace to put before or after the value.
+        :meth:`_select_theory` to determine if there are any preferred styles
+        for how much whitespace to put before or after the value.
         """
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
@@ -155,10 +155,11 @@ class Template(Node):
                 else:
                     self.params.pop(i)
                 return
+        raise ValueError(needle)
 
     @property
     def name(self):
-        """The name of the template, as a :py:class:`~.Wikicode` object."""
+        """The name of the template, as a :class:`.Wikicode` object."""
         return self._name
 
     @property
@@ -188,13 +189,13 @@ class Template(Node):
 
     has_param = lambda self, name, ignore_empty=False: \
                 self.has(name, ignore_empty)
-    has_param.__doc__ = "Alias for :py:meth:`has`."
+    has_param.__doc__ = "Alias for :meth:`has`."
 
     def get(self, name):
         """Get the parameter whose name is *name*.
 
-        The returned object is a :py:class:`~.Parameter` instance. Raises
-        :py:exc:`ValueError` if no parameter has this name. Since multiple
+        The returned object is a :class:`.Parameter` instance. Raises
+        :exc:`ValueError` if no parameter has this name. Since multiple
         parameters can have the same name, we'll return the last match, since
         the last parameter is the only one read by the MediaWiki parser.
         """
@@ -208,9 +209,9 @@ class Template(Node):
             preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
-        *name* and *value* can be anything parasable by
-        :py:func:`.utils.parse_anything`; pipes and equal signs are
-        automatically escaped from *value* when appropriate.
+        *name* and *value* can be anything parsable by
+        :func:`.utils.parse_anything`; pipes and equal signs are automatically
+        escaped from *value* when appropriate.
 
         If *showkey* is given, this will determine whether or not to show the
         parameter's name (e.g., ``{{foo|bar}}``'s parameter has a name of
@@ -220,13 +221,13 @@ class Template(Node):
         If *name* is already a parameter in the template, we'll replace its
         value while keeping the same whitespace around it. We will also try to
         guess the dominant spacing convention when adding a new parameter using
-        :py:meth:`_get_spacing_conventions`.
+        :meth:`_get_spacing_conventions`.
 
-        If *before* is given (either a :py:class:`~.Parameter` object or a
-        name), then we will place the parameter immediately before this one.
+        If *before* is given (either a :class:`.Parameter` object or a name),
+        then we will place the parameter immediately before this one.
         Otherwise, it will be added at the end. If *before* is a name and
         exists multiple times in the template, we will place it before the last
-        occurance. If *before* is not in the template, :py:exc:`ValueError` is
+        occurrence. If *before* is not in the template, :exc:`ValueError` is
         raised. The argument is ignored if the new parameter already exists.
 
         If *preserve_spacing* is ``False``, we will avoid preserving spacing
@@ -254,21 +255,19 @@ class Template(Node):
             return existing
 
         if showkey is None:
-            try:
+            if Parameter.can_hide_key(name):
                 int_name = int(str(name))
-            except ValueError:
-                showkey = True
-            else:
                 int_keys = set()
                 for param in self.params:
                     if not param.showkey:
-                        if re.match(r"[1-9][0-9]*$", param.name.strip()):
-                            int_keys.add(int(str(param.name)))
+                        int_keys.add(int(str(param.name)))
                 expected = min(set(range(1, len(int_keys) + 2)) - int_keys)
                 if expected == int_name:
                     showkey = False
                 else:
                     showkey = True
+            else:
+                showkey = True
         if not showkey:
             self._surface_escape(value, "=")
 
@@ -290,9 +289,9 @@ class Template(Node):
     def remove(self, param, keep_field=False):
         """Remove a parameter from the template, identified by *param*.
 
-        If *param* is a :py:class:`.Parameter` object, it will be matched
-        exactly, otherwise it will be treated like the *name* argument to
-        :py:meth:`has` and :py:meth:`get`.
+        If *param* is a :class:`.Parameter` object, it will be matched exactly,
+        otherwise it will be treated like the *name* argument to :meth:`has`
+        and :meth:`get`.
 
         If *keep_field* is ``True``, we will keep the parameter's name, but
         blank its value. Otherwise, we will remove the parameter completely
@@ -301,7 +300,7 @@ class Template(Node):
         we expected, so ``{{foo||baz}}`` will be produced instead).
 
         If the parameter shows up multiple times in the template and *param* is
-        not a :py:class:`.Parameter` object, we will remove all instances of it
+        not a :class:`.Parameter` object, we will remove all instances of it
         (and keep only one if *keep_field* is ``True`` - the first instance if
         none have dependents, otherwise the one with dependents will be kept).
         """

@@ -1,9 +1,13 @@
 mwparserfromhell
 ================
 
-.. image:: https://travis-ci.org/earwig/mwparserfromhell.png?branch=develop
+.. image:: https://img.shields.io/travis/earwig/mwparserfromhell/develop.svg
   :alt: Build Status
   :target: http://travis-ci.org/earwig/mwparserfromhell
+
+.. image:: https://img.shields.io/coveralls/earwig/mwparserfromhell/develop.svg
+  :alt: Coverage Status
+  :target: https://coveralls.io/r/earwig/mwparserfromhell
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
@@ -15,18 +19,16 @@ Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.
 Installation
 ------------
 
-The easiest way to install the parser is through the `Python Package Index`_,
-so you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). Alternatively, get the latest development version::
+The easiest way to install the parser is through the `Python Package Index`_;
+you can install the latest release with ``pip install mwparserfromhell``
+(`get pip`_). On Windows, make sure you have the latest version of pip
+installed by running ``pip install --upgrade pip``.
+
+Alternatively, get the latest development version::
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
     python setup.py install
-
-If you get ``error: Unable to find vcvarsall.bat`` while installing, this is
-because Windows can't find the compiler for C extensions. Consult this
-`StackOverflow question`_ for help. You can also set ``ext_modules`` in
-``setup.py`` to an empty list to prevent the extension from building.
 
 You can run the comprehensive unit testing suite with
 ``python setup.py test -q``.
@@ -40,24 +42,24 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
-ordinary ``unicode`` object (or ``str`` in Python 3) with some extra methods.
+ordinary ``str`` object (or ``unicode`` in Python 2) with some extra methods.
 For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
-    >>> print wikicode
+    >>> print(wikicode)
     I has a template! {{foo|bar|baz|eggs=spam}} See it?
     >>> templates = wikicode.filter_templates()
-    >>> print templates
+    >>> print(templates)
     ['{{foo|bar|baz|eggs=spam}}']
     >>> template = templates[0]
-    >>> print template.name
+    >>> print(template.name)
     foo
-    >>> print template.params
+    >>> print(template.params)
     ['bar', 'baz', 'eggs=spam']
-    >>> print template.get(1).value
+    >>> print(template.get(1).value)
     bar
-    >>> print template.get("eggs").value
+    >>> print(template.get("eggs").value)
     spam
 
 Since nodes can contain other nodes, getting nested templates is trivial::
@@ -71,14 +73,14 @@ templates manually. This is possible because nodes can contain additional
 ``Wikicode`` objects::
 
     >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    >>> print code.filter_templates(recursive=False)
+    >>> print(code.filter_templates(recursive=False))
     ['{{foo|this {{includes a|template}}}}']
     >>> foo = code.filter_templates(recursive=False)[0]
-    >>> print foo.get(1).value
+    >>> print(foo.get(1).value)
     this {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0]
+    >>> print(foo.get(1).value.filter_templates()[0])
     {{includes a|template}}
-    >>> print foo.get(1).value.filter_templates()[0].get(1).value
+    >>> print(foo.get(1).value.filter_templates()[0].get(1).value)
     template
 
 Templates can be easily modified to add, remove, or alter params. ``Wikicode``
@@ -93,24 +95,24 @@ whitespace::
     ...     if template.name.matches("Cleanup") and not template.has("date"):
     ...         template.add("date", "July 2012")
     ...
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
     >>> code.replace("{{uncategorized}}", "{{bar-stub}}")
-    >>> print code
+    >>> print(code)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
-    >>> print code.filter_templates()
+    >>> print(code.filter_templates())
     ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
-You can then convert ``code`` back into a regular ``unicode`` object (for
-saving the page!) by calling ``unicode()`` on it::
+You can then convert ``code`` back into a regular ``str`` object (for
+saving the page!) by calling ``str()`` on it::
 
-    >>> text = unicode(code)
-    >>> print text
+    >>> text = str(code)
+    >>> print(text)
     {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
     >>> text == code
     True
 
-Likewise, use ``str(code)`` in Python 3.
+Likewise, use ``unicode(code)`` in Python 2.
 
 Integration
 -----------
@@ -119,27 +121,30 @@ Integration
 ``Page`` objects have a ``parse`` method that essentially calls
 ``mwparserfromhell.parse()`` on ``page.get()``.
 
-If you're using Pywikipedia_, your code might look like this::
+If you're using Pywikibot_, your code might look like this::
 
     import mwparserfromhell
-    import wikipedia as pywikibot
+    import pywikibot
+
     def parse(title):
-        site = pywikibot.getSite()
+        site = pywikibot.Site()
         page = pywikibot.Page(site, title)
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse templates in any page using the
-following code (via the API_)::
+If you're not using a library, you can parse any page using the following code
+(via the API_)::
 
     import json
-    import urllib
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
+
     def parse(title):
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
                 "rvprop": "content", "format": "json", "titles": title}
-        raw = urllib.urlopen(API_URL, urllib.urlencode(data)).read()
+        raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
@@ -154,5 +159,5 @@ following code (via the API_)::
 .. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 .. _get pip:                http://pypi.python.org/pypi/pip
 .. _EarwigBot:              https://github.com/earwig/earwigbot
-.. _Pywikipedia:            https://www.mediawiki.org/wiki/Manual:Pywikipediabot
+.. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                    http://mediawiki.org/wiki/API

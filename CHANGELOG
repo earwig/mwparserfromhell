@@ -1,3 +1,41 @@
+v0.4 (unreleased):
+
+- The parser now falls back on pure Python mode if C extensions cannot be
+  built. This fixes an issue that prevented some Windows users from installing
+  the parser.
+- Added support for parsing wikicode tables (patches by David Winegar).
+- Added a script to test for memory leaks in scripts/memtest.py.
+- Added a script to do releases in scripts/release.sh.
+- skip_style_tags can now be passed to mwparserfromhell.parse() (previously,
+  only Parser().parse() allowed it).
+- The 'recursive' argument to Wikicode's filter methods now accepts a third
+  option, RECURSE_OTHERS, which recurses over all children except instances of
+  'forcetype' (for example, `code.filter_templates(code.RECURSE_OTHERS)`
+  returns all un-nested templates).
+- The parser now understands HTML tag attributes quoted with single quotes.
+  When setting a tag attribute's value, quotes will be added if necessary. As
+  part of this, Attribute's 'quoted' attribute has been changed to 'quotes',
+  and is now either a string or None.
+- Calling Template.remove() with a Parameter object that is not part of the
+  template now raises ValueError instead of doing nothing.
+- Parameters with non-integer keys can no longer be created with
+  'showkey=False', nor have the value of this attribute be set to False later.
+- _ListProxy.destroy() has been changed to _ListProxy.detach(), and now works
+  in a more useful way.
+- If something goes wrong while parsing, ParserError will now be raised.
+  Previously, the parser would produce an unclear BadRoute exception or allow
+  an incorrect node tree to be build.
+- Fixed parser bugs involving:
+  - nested tags;
+  - comments in template names;
+  - tags inside of <nowiki> tags.
+- Added tests to ensure that parsed trees convert back to wikicode without
+  unintentional modifications.
+- Added support for a NOWEB environment variable, which disables a unit test
+  that makes a web call.
+- Test coverage has been improved, and some minor related bugs have been fixed.
+- Updated and fixed some documentation.
+
 v0.3.3 (released April 22, 2014):
 
 - Added support for Python 2.6 and 3.4.

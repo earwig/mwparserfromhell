@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+import re
 
 from ...compat import str
 from ...string_mixin import StringMixIn
@@ -39,6 +40,8 @@ class Parameter(StringMixIn):
 
     def __init__(self, name, value, showkey=True):
         super(Parameter, self).__init__()
+        if not showkey and not self.can_hide_key(name):
+            raise ValueError("key {0!r} cannot be hidden".format(name))
         self._name = name
         self._value = value
         self._showkey = showkey
@@ -48,14 +51,19 @@ class Parameter(StringMixIn):
             return str(self.name) + "=" + str(self.value)
         return str(self.value)
 
+    @staticmethod
+    def can_hide_key(key):
+        """Return whether or not the given key can be hidden."""
+        return re.match(r"[1-9][0-9]*$", str(key).strip())
+
     @property
     def name(self):
-        """The name of the parameter as a :py:class:`~.Wikicode` object."""
+        """The name of the parameter as a :class:`.Wikicode` object."""
         return self._name
 
     @property
     def value(self):
-        """The value of the parameter as a :py:class:`~.Wikicode` object."""
+        """The value of the parameter as a :class:`.Wikicode` object."""
         return self._value
 
     @property
@@ -73,4 +81,7 @@ class Parameter(StringMixIn):
 
     @showkey.setter
     def showkey(self, newval):
-        self._showkey = bool(newval)
+        newval = bool(newval)
+        if not newval and not self.can_hide_key(self.name):
+            raise ValueError("parameter key cannot be hidden")
+        self._showkey = newval

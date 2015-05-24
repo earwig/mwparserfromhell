@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -52,7 +52,7 @@ INVISIBLE_TAGS = [
 
 # [mediawiki/core.git]/includes/Sanitizer.php @ 87a0aef762
 SINGLE_ONLY = ["br", "hr", "meta", "link", "img"]
-SINGLE = SINGLE_ONLY + ["li", "dt", "dd"]
+SINGLE = SINGLE_ONLY + ["li", "dt", "dd", "th", "td", "tr"]
 
 MARKUP_TO_HTML = {
     "#": "li",

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +33,10 @@ from mwparserfromhell.nodes.extras import Attribute
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 
 agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
-agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), False)
-agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, True, a, b, c)
-agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, True, a, b, c)
+agennv = lambda name: Attribute(wraptext(name))
+agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), None)
+agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, '"', a, b, c)
+agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, '"', a, b, c)
 
 class TestTag(TreeEqualityTestCase):
     """Test cases for the Tag node."""
@@ -74,10 +75,10 @@ class TestTag(TreeEqualityTestCase):
         node1 = Tag(wraptext("ref"), wraptext("foobar"))
         # '''bold text'''
         node2 = Tag(wraptext("b"), wraptext("bold text"), wiki_markup="'''")
-        # <img id="foo" class="bar" />
+        # <img id="foo" class="bar" selected />
         node3 = Tag(wraptext("img"),
-                    attrs=[Attribute(wraptext("id"), wraptext("foo")),
-                           Attribute(wraptext("class"), wraptext("bar"))],
+                    attrs=[agen("id", "foo"), agen("class", "bar"),
+                           agennv("selected")],
                     self_closing=True, padding=" ")
 
         gen1 = node1.__children__()
@@ -89,6 +90,7 @@ class TestTag(TreeEqualityTestCase):
         self.assertEqual(node3.attributes[0].value, next(gen3))
         self.assertEqual(node3.attributes[1].name, next(gen3))
         self.assertEqual(node3.attributes[1].value, next(gen3))
+        self.assertEqual(node3.attributes[2].name, next(gen3))
         self.assertEqual(node1.contents, next(gen1))
         self.assertEqual(node2.contents, next(gen2))
         self.assertEqual(node1.closing_tag, next(gen1))
@@ -113,7 +115,8 @@ class TestTag(TreeEqualityTestCase):
         getter, marker = object(), object()
         get = lambda code: output.append((getter, code))
         mark = lambda: output.append(marker)
-        node1 = Tag(wraptext("ref"), wraptext("text"), [agen("name", "foo")])
+        node1 = Tag(wraptext("ref"), wraptext("text"),
+                    [agen("name", "foo"), agennv("selected")])
         node2 = Tag(wraptext("br"), self_closing=True, padding=" ")
         node3 = Tag(wraptext("br"), self_closing=True, invalid=True,
                     implicit=True, padding=" ")
@@ -122,9 +125,10 @@ class TestTag(TreeEqualityTestCase):
         node3.__showtree__(output.append, get, mark)
         valid = [
             "<", (getter, node1.tag), (getter, node1.attributes[0].name),
-            "    = ", marker, (getter, node1.attributes[0].value), ">",
-            (getter, node1.contents), "</", (getter, node1.closing_tag), ">",
-            "<", (getter, node2.tag), "/>", "</", (getter, node3.tag), ">"]
+            "    = ", marker, (getter, node1.attributes[0].value),
+            (getter, node1.attributes[1].name), ">", (getter, node1.contents),
+            "</", (getter, node1.closing_tag), ">", "<", (getter, node2.tag),
+            "/>", "</", (getter, node3.tag), ">"]
         self.assertEqual(valid, output)
 
     def test_tag(self):
@@ -222,6 +226,38 @@ class TestTag(TreeEqualityTestCase):
         self.assertWikicodeEqual(parsed, node.closing_tag)
         self.assertEqual("<ref>foobar</ref {{ignore me}}>", node)
 
+    def test_wiki_style_separator(self):
+        """test getter/setter for wiki_style_separator attribute"""
+        node = Tag(wraptext("table"), wraptext("\n"))
+        self.assertIs(None, node.wiki_style_separator)
+        node.wiki_style_separator = "|"
+        self.assertEqual("|", node.wiki_style_separator)
+        node.wiki_markup = "{"
+        self.assertEqual("{|\n{", node)
+        node2 = Tag(wraptext("table"), wraptext("\n"), wiki_style_separator="|")
+        self.assertEqual("|", node.wiki_style_separator)
+
+    def test_closing_wiki_markup(self):
+        """test getter/setter for closing_wiki_markup attribute"""
+        node = Tag(wraptext("table"), wraptext("\n"))
+        self.assertIs(None, node.closing_wiki_markup)
+        node.wiki_markup = "{|"
+        self.assertEqual("{|", node.closing_wiki_markup)
+        node.closing_wiki_markup = "|}"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("{|\n|}", node)
+        node.wiki_markup = "!!"
+        self.assertEqual("|}", node.closing_wiki_markup)
+        self.assertEqual("!!\n|}", node)
+        node.wiki_markup = False
+        self.assertFalse(node.closing_wiki_markup)
+        self.assertEqual("<table>\n</table>", node)
+        node2 = Tag(wraptext("table"), wraptext("\n"),
+                    attrs=[agen("id", "foo")], wiki_markup="{|",
+                    closing_wiki_markup="|}")
+        self.assertEqual("|}", node2.closing_wiki_markup)
+        self.assertEqual('{| id="foo"\n|}', node2)
+
     def test_has(self):
         """test Tag.has()"""
         node = Tag(wraptext("ref"), wraptext("cite"), [agen("name", "foo")])
@@ -272,28 +308,33 @@ class TestTag(TreeEqualityTestCase):
         """test Tag.add()"""
         node = Tag(wraptext("ref"), wraptext("cite"))
         node.add("name", "value")
-        node.add("name", "value", quoted=False)
+        node.add("name", "value", quotes=None)
+        node.add("name", "value", quotes="'")
         node.add("name")
         node.add(1, False)
         node.add("style", "{{foobar}}")
-        node.add("name", "value", True, "\n", " ", "   ")
+        node.add("name", "value", '"', "\n", " ", "   ")
         attr1 = ' name="value"'
         attr2 = " name=value"
-        attr3 = " name"
-        attr4 = ' 1="False"'
-        attr5 = ' style="{{foobar}}"'
-        attr6 = '\nname =   "value"'
+        attr3 = " name='value'"
+        attr4 = " name"
+        attr5 = ' 1="False"'
+        attr6 = ' style="{{foobar}}"'
+        attr7 = '\nname =   "value"'
         self.assertEqual(attr1, node.attributes[0])
         self.assertEqual(attr2, node.attributes[1])
         self.assertEqual(attr3, node.attributes[2])
         self.assertEqual(attr4, node.attributes[3])
         self.assertEqual(attr5, node.attributes[4])
         self.assertEqual(attr6, node.attributes[5])
-        self.assertEqual(attr6, node.get("name"))
+        self.assertEqual(attr7, node.attributes[6])
+        self.assertEqual(attr7, node.get("name"))
         self.assertWikicodeEqual(wrap([Template(wraptext("foobar"))]),
-                                 node.attributes[4].value)
+                                 node.attributes[5].value)
         self.assertEqual("".join(("<ref", attr1, attr2, attr3, attr4, attr5,
-                                  attr6, ">cite</ref>")), node)
+                                  attr6, attr7, ">cite</ref>")), node)
+        self.assertRaises(ValueError, node.add, "name", "foo", quotes="bar")
+        self.assertRaises(ValueError, node.add, "name", "a bc d", quotes=None)
 
     def test_remove(self):
         """test Tag.remove()"""

@@ -1,9 +1,9 @@
 MWParserFromHell v\ |version| Documentation
 ===========================================
 
-:py:mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python
-package that provides an easy-to-use and outrageously powerful parser for
-MediaWiki_ wikicode. It supports Python 2 and Python 3.
+:mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python package
+that provides an easy-to-use and outrageously powerful parser for MediaWiki_
+wikicode. It supports Python 2 and Python 3.
 
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Development occurs on GitHub_.

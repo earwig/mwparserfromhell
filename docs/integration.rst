@@ -1,35 +1,40 @@
 Integration
 ===========
 
-:py:mod:`mwparserfromhell` is used by and originally developed for EarwigBot_;
-:py:class:`~earwigbot.wiki.page.Page` objects have a
-:py:meth:`~earwigbot.wiki.page.Page.parse` method that essentially calls
-:py:func:`mwparserfromhell.parse() <mwparserfromhell.__init__.parse>` on
-:py:meth:`~earwigbot.wiki.page.Page.get`.
+:mod:`mwparserfromhell` is used by and originally developed for EarwigBot_;
+:class:`~earwigbot.wiki.page.Page` objects have a
+:meth:`~earwigbot.wiki.page.Page.parse` method that essentially calls
+:func:`mwparserfromhell.parse() <mwparserfromhell.__init__.parse>` on
+:meth:`~earwigbot.wiki.page.Page.get`.
 
-If you're using Pywikipedia_, your code might look like this::
+If you're using Pywikibot_, your code might look like this::
 
     import mwparserfromhell
-    import wikipedia as pywikibot
+    import pywikibot
+
     def parse(title):
-        site = pywikibot.getSite()
+        site = pywikibot.Site()
         page = pywikibot.Page(site, title)
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse templates in any page using the
-following code (via the API_)::
+If you're not using a library, you can parse any page using the following code
+(via the API_)::
 
     import json
-    import urllib
+    from urllib.parse import urlencode
+    from urllib.request import urlopen
     import mwparserfromhell
     API_URL = "http://en.wikipedia.org/w/api.php"
+
     def parse(title):
-        raw = urllib.urlopen(API_URL, data).read()
+        data = {"action": "query", "prop": "revisions", "rvlimit": 1,
+                "rvprop": "content", "format": "json", "titles": title}
+        raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
         text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
 
 .. _EarwigBot:            https://github.com/earwig/earwigbot
-.. _Pywikipedia:          https://www.mediawiki.org/wiki/Manual:Pywikipediabot
+.. _Pywikibot:            https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                  http://mediawiki.org/wiki/API

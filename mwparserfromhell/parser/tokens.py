@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,8 @@
 This module contains the token definitions that are used as an intermediate
 parsing data type - they are stored in a flat list, with each token being
 identified by its type and optional attributes. The token list is generated in
-a syntactically valid form by the :py:class:`~.Tokenizer`, and then converted
-into the :py:class`~.Wikicode` tree by the :py:class:`~.Builder`.
+a syntactically valid form by the :class:`.Tokenizer`, and then converted into
+the :class`.Wikicode` tree by the :class:`.Builder`.
 """
 
 from __future__ import unicode_literals
@@ -34,7 +34,7 @@ from ..compat import py3k, str
 
 __all__ = ["Token"]
 
-class Token (dict):
+class Token(dict):
     """A token stores the semantic meaning of a unit of wikicode."""
 
     def __repr__(self):
@@ -100,7 +100,7 @@ CommentEnd = make("CommentEnd")                                     # -->
 TagOpenOpen = make("TagOpenOpen")                                   # <
 TagAttrStart = make("TagAttrStart")
 TagAttrEquals = make("TagAttrEquals")                               # =
-TagAttrQuote = make("TagAttrQuote")                                 # "
+TagAttrQuote = make("TagAttrQuote")                                 # ", '
 TagCloseOpen = make("TagCloseOpen")                                 # >
 TagCloseSelfclose = make("TagCloseSelfclose")                       # />
 TagOpenClose = make("TagOpenClose")                                 # </

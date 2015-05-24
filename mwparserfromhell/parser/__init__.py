@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,9 +22,22 @@
 
 """
 This package contains the actual wikicode parser, split up into two main
-modules: the :py:mod:`~.tokenizer` and the :py:mod:`~.builder`. This module
-joins them together under one interface.
+modules: the :mod:`.tokenizer` and the :mod:`.builder`. This module joins them
+together into one interface.
 """
+
+class ParserError(Exception):
+    """Exception raised when an internal error occurs while parsing.
+
+    This does not mean that the wikicode was invalid, because invalid markup
+    should still be parsed correctly. This means that the parser caught itself
+    with an impossible internal state and is bailing out before other problems
+    can happen. Its appearance indicates a bug.
+    """
+    def __init__(self, extra):
+        msg = "This is a bug and should be reported. Info: {0}.".format(extra)
+        super(ParserError, self).__init__(msg)
+
 
 from .builder import Builder
 from .tokenizer import Tokenizer
@@ -35,15 +48,22 @@ except ImportError:
     CTokenizer = None
     use_c = False
 
-__all__ = ["use_c", "Parser"]
+__all__ = ["use_c", "Parser", "ParserError"]
 
 class Parser(object):
     """Represents a parser for wikicode.
 
     Actual parsing is a two-step process: first, the text is split up into a
-    series of tokens by the :py:class:`~.Tokenizer`, and then the tokens are
-    converted into trees of :py:class:`~.Wikicode` objects and
-    :py:class:`~.Node`\ s by the :py:class:`~.Builder`.
+    series of tokens by the :class:`.Tokenizer`, and then the tokens are
+    converted into trees of :class:`.Wikicode` objects and :class:`.Node`\ s by
+    the :class:`.Builder`.
+
+    Instances of this class or its dependents (:class:`.Tokenizer` and
+    :class:`.Builder`) should not be shared between threads. :meth:`parse` can
+    be called multiple times as long as it is not done concurrently. In
+    general, there is no need to do this because parsing should be done through
+    :func:`mwparserfromhell.parse`, which creates a new :class:`.Parser` object
+    as necessary.
     """
 
     def __init__(self):
@@ -54,10 +74,20 @@ class Parser(object):
         self._builder = Builder()
 
     def parse(self, text, context=0, skip_style_tags=False):
-        """Parse *text*, returning a :py:class:`~.Wikicode` object tree.
+        """Parse *text*, returning a :class:`.Wikicode` object tree.
+
+        If given, *context* will be passed as a starting context to the parser.
+        This is helpful when this function is used inside node attribute
+        setters. For example, :class:`.ExternalLink`\ 's
+        :attr:`~.ExternalLink.url` setter sets *context* to
+        :mod:`contexts.EXT_LINK_URI <.contexts>` to prevent the URL itself
+        from becoming an :class:`.ExternalLink`.
 
         If *skip_style_tags* is ``True``, then ``''`` and ``'''`` will not be
-        parsed, but instead be treated as plain text.
+        parsed, but instead will be treated as plain text.
+
+        If there is an internal error while parsing, :exc:`.ParserError` will
+        be raised.
         """
         tokens = self._tokenizer.tokenize(text, context, skip_style_tags)
         code = self._builder.build(tokens)

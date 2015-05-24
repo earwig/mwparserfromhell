@@ -1,0 +1,410 @@
+name:   empty_table
+label:  parsing an empty table
+input:  "{|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   inline_table
+label:  tables with a close on the same line are not valid
+input:  "{||}"
+output: [Text(text="{||}")]
+
+---
+
+name:   no_table_close_simple
+label:  no table close on inline table
+input:  "{| "
+output: [Text(text="{| ")]
+
+---
+
+name:   no_table_close_newline
+label:  no table close with a newline
+input:  "{| \n "
+output: [Text(text="{| \n ")]
+
+---
+
+name:   no_table_close_inside_cell
+label:  no table close while inside of a cell
+input:  "{| \n| "
+output: [Text(text="{| \n| ")]
+
+---
+
+name:   no_table_close_inside_cell_after_newline
+label:  no table close while inside of a cell after a newline
+input:  "{| \n| \n "
+output: [Text(text="{| \n| \n ")]
+
+---
+
+name:   no_table_close_inside_cell_with_attributes
+label:  no table close while inside of a cell with attributes
+input:  "{| \n| red | test"
+output: [Text(text="{| \n| red | test")]
+
+---
+
+name:   no_table_close_inside_row
+label:  no table close while inside of a row
+input:  "{| \n|- "
+output: [Text(text="{| \n|- ")]
+
+---
+
+name:   no_table_close_inside_row_after_newline
+label:  no table close while inside of a row after a newline
+input:  "{| \n|- \n "
+output: [Text(text="{| \n|- \n ")]
+
+---
+
+name:   no_table_close_row_and_cell
+label:  no table close while inside a cell inside a row
+input:  "{| \n|- \n|"
+output: [Text(text="{| \n|- \n|")]
+
+---
+
+name:   no_table_close_attributes
+label:  don't parse attributes as attributes if the table doesn't exist
+input:  "{| border="1""
+output: [Text(text="{| border=\"1\"")]
+
+---
+
+name:   no_table_close_unclosed_attributes
+label:  don't parse unclosed attributes if the table doesn't exist
+input:  "{| border="
+output: [Text(text="{| border=")]
+
+---
+
+name:   no_table_close_row_attributes
+label:  don't parse row attributes as attributes if the table doesn't exist
+input:  "{| |- border="1""
+output: [Text(text="{| |- border=\"1\"")]
+
+---
+
+name:   no_table_close_cell
+label:  don't parse cells if the table doesn't close
+input:  "{| | border="1"| test || red | foo"
+output: [Text(text="{| | border=\"1\"| test || red | foo")]
+
+---
+
+name:   crazy_no_table_close
+label:  lots of opened wiki syntax without closes
+input:  "{{{ {{ {| <ref"
+output: [Text(text="{{{ {{ {| <ref")]
+
+---
+
+name:   leading_whitespace_table
+label:  handle leading whitespace for a table
+input:  "foo \n    \t {|\n|}"
+output: [Text(text="foo \n    \t "), TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   whitespace_after_table
+label:  handle whitespace after a table close
+input:  "{|\n|}\n    \t "
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text="\n    \t ")]
+
+---
+
+name:   different_whitespace_after_table
+label:  handle spaces after a table close
+input:  "{|\n|} \n  "
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" \n  ")]
+
+---
+
+name:   characters_after_table
+label:  handle characters after a table close
+input:  "{|\n|} tsta"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" tsta")]
+
+---
+
+name:   characters_after_inline_table
+label:  handle characters after an inline table close
+input:  "{| |} tsta"
+output: [Text(text="{| |} tsta")]
+
+---
+
+name:   leading_characters_table
+label:  don't parse as a table when leading characters are not newline or whitespace
+input:  "foo \n  foo  \t {|\n|}"
+output: [Text(text="foo \n  foo  \t {|\n|}")]
+
+---
+
+name:   table_row_simple
+label:  simple table row
+input:  "{|\n |- \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_multiple
+label:  simple table row
+input:  "{|\n |- \n|- \n   |-\n |}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), Text(text="   "), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_simple
+label:  simple table cell
+input:  "{|\n | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_inline
+label:  multiple inline table cells
+input:  "{|\n | foo || bar || test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo "), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" bar "), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_multiple
+label:  multiple table cells (non-inline)
+input:  "{|\n| foo \n| bar \n| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" bar \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_simple
+label:  simple header cell
+input:  "{|\n ! foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_inline
+label:  multiple inline header cells
+input:  "{|\n ! foo || bar !! test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" bar "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_header_multiple
+label:  multiple table header cells (non-inline)
+input:  "{|\n! foo \n! bar \n! test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" bar \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagCloseOpen(padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   nested_cells_and_rows
+label:  combination of cells and rows in a table
+input:  "{|\n|- \n| foo \n|- \n| bar\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagCloseOpen(padding=" \n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" bar\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_fake_close
+label:  looks like a table close but is not
+input:  "{|\n | |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(wiki_markup="|", padding=" "), Text(text="} \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_more_fake_close
+label:  looks like a table close but is not
+input:  "{|\n || |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" |} \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_extra_close
+label:  process second close as text
+input:  "{| \n |} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" \n|}")]
+
+---
+
+name:   nowiki_inside_table
+label:  nowiki handles pipe characters in tables
+input:  "{|\n | foo <nowiki>| |- {| |} || ! !!</nowiki> bar \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo "), TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="| |- {| |} || ! !!"), TagOpenClose(), Text(text="nowiki"), TagCloseClose(), Text(text=" bar \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_text_outside_cell
+label:  parse text inside table but outside of a cell
+input:  "{|\n bar \n | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" bar \n "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text=" foo \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   no_table_cell_with_leading_characters
+label:  fail to create a table cell when there are leading non-whitespace characters
+input:  "{|\n bar | foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" bar | foo \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   no_table_row_with_leading_characters
+label:  fail to create a table row when there are leading non-whitespace characters
+input:  "{|\n bar |- foo \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" bar |- foo \n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   template_inside_table_cell
+label:  template within table cell
+input:  "{|\n |{{foo\n|bar=baz}} \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), TemplateOpen(), Text(text="foo\n"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="baz"), TemplateClose(), Text(text=" \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_attributes
+label:  parse table cell style attributes
+input:  "{| \n | name="foo bar"| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_empty_attributes
+label:  parse table cell with style markers but no attributes
+input:  "{| \n | | test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(wiki_markup="|", padding=" "), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_with_dash
+label:  parse a situation in which a cell line looks like a row line
+input:  "{|\n ||- \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(wiki_markup="|", padding=""), Text(text="- \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_attributes_quote_with_pipe
+label:  pipe inside an attribute quote should still be used as a style separator
+input:  "{| \n | name="foo|bar"| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="\"foo"), TagCloseOpen(wiki_markup="|", padding=""), Text(text="bar\"| test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_attributes_name_with_pipe
+label:  pipe inside an attribute name should still be used as a style separator
+input:  "{| \n | name|="foo bar" | test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagCloseOpen(wiki_markup="|", padding=""), Text(text="=\"foo bar\" | test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_attributes_pipe_after_equals
+label:  pipe inside an attribute should still be used as a style separator after an equals
+input:  "{| \n | name=|"foo|bar"| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagCloseOpen(wiki_markup="|", padding=""), Text(text="\"foo|bar\"| test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_cell_attributes_templates
+label:  pipe inside attributes shouldn't be style separator
+input:  "{| \n | {{comment|template=baz}} | test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_after_eq="", pad_first=" ", pad_before_eq=" "), TemplateOpen(), Text(text="comment"), TemplateParamSeparator(), Text(text="template"), TemplateParamEquals(), Text(text="baz"), TemplateClose(), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   header_cell_attributes
+label:  parse header cell style attributes
+input:  "{| \n ! name="foo bar"| test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   inline_cell_attributes
+label:  parse cell style attributes of inline cells
+input:  "{| \n ! name="foo bar" | test ||color="red"| markup!!foo | time \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="!"), Text(text="th"), TagAttrStart(pad_after_eq="", pad_first=" ", pad_before_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(wiki_markup="|", padding=" "), Text(text=" test "), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="||"), Text(text="th"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="color"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="red"), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" markup"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenOpen(wiki_markup="!!"), Text(text="th"), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), Text(text="foo"), TagCloseOpen(wiki_markup="|", padding=""), Text(text=" time \n"), TagOpenClose(wiki_markup=""), Text(text="th"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_attributes
+label:  parse table row style attributes
+input:  "{| \n |- name="foo bar"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_row_attributes_crazy_whitespace
+label:  parse table row style attributes with different whitespace
+input:  "{| \t    \n |- \t   name="foo bar"  \t \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding=" \t    \n"), Text(text=" "), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" \t   ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(padding="  \t \n"), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   table_attributes
+label:  parse table style attributes
+input:  "{| name="foo bar"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   inline_table_attributes
+label:  handle attributes in inline tables
+input:  "{| foo="tee bar" |}"
+output: [Text(text='{| foo="tee bar" |}')]
+
+---
+
+name:   table_incorrect_attributes
+label:  parse incorrect table style attributes
+input:  "{| name="foo\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), Text(text="\"foo"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   templates_in_table_attribute
+label:  templates in the attributes of a table, after the start
+input:  "{| {{class}}="{{wikitable}}"\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), TemplateOpen(), Text(text="class"), TemplateClose(), TagAttrEquals(), TagAttrQuote(char="\""), TemplateOpen(), Text(text="wikitable"), TemplateClose(), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   templates_in_table_attribute_2
+label:  templates in the attributes of a table, after the start
+input:  "{|{{foo}} \n | name="foo bar" | test \n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first="", pad_before_eq=" ", pad_after_eq=""), TemplateOpen(), Text(text="foo"), TemplateClose(), TagCloseOpen(padding="\n"), Text(text=" "), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="name"), TagAttrEquals(), TagAttrQuote(char="\""), Text(text="foo bar"), TagCloseOpen(wiki_markup="|", padding=" "), Text(text=" test \n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   inappropriate_marker_at_line_start
+label:  an inappropriate marker (a right bracket) at the start of a line in the table
+input:  "{|\n}"
+output: [Text(text="{|\n}")]
+
+---
+
+name:   fake_close_near_start
+label:  a fake closing token at the end of the first line in the table
+input:  "{| class="wikitable" style="text-align: center; width=100%;|}\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="style"), TagAttrEquals(), Text(text="\"text-align:"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="center;"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="width"), TagAttrEquals(), Text(text="100%;|}"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   fake_close_near_start_2
+label:  a fake closing token at the end of the first line in the table
+input:  "{| class="wikitable|}"\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable|}"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   junk_after_table_start
+label:  ignore more junk on the first line of the table
+input:  "{| class="wikitable" | foobar\n|\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="class"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="wikitable"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="|"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="foobar"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   junk_after_table_row
+label:  ignore junk on the first line of a table row
+input:  "{|\n|- foo="bar" | baz\n|blerp\n|}"
+output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="bar"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="|"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="baz"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="blerp\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]

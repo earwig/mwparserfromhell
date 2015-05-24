@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -88,6 +88,10 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([0, 1, 2, 3, 4, 5, 6], list2)
         self.assertRaises(ValueError, assign, list2, 0, 5, 2,
                           [100, 102, 104, 106])
+        with self.assertRaises(IndexError):
+            list2[7] = "foo"
+        with self.assertRaises(IndexError):
+            list2[-8] = "foo"
 
         del list2[2]
         self.assertEqual([0, 1, 3, 4, 5, 6], list2)
@@ -271,6 +275,13 @@ class TestSmartList(unittest.TestCase):
         list3.sort(key=lambda i: i[1], reverse=True)
         self.assertEqual([("b", 8), ("a", 5), ("c", 3), ("d", 2)], list3)
 
+    def _dispatch_test_for_children(self, meth):
+        """Run a test method on various different types of children."""
+        meth(lambda L: SmartList(list(L))[:])
+        meth(lambda L: SmartList([999] + list(L))[1:])
+        meth(lambda L: SmartList(list(L) + [999])[:-1])
+        meth(lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2])
+
     def test_docs(self):
         """make sure the methods of SmartList/_ListProxy have docstrings"""
         methods = ["append", "count", "extend", "index", "insert", "pop",
@@ -300,8 +311,8 @@ class TestSmartList(unittest.TestCase):
         """make sure SmartList's add/radd/iadd work"""
         self._test_add_radd_iadd(SmartList)
 
-    def test_parent_unaffected_magics(self):
-        """sanity checks against SmartList features that were not modified"""
+    def test_parent_other_magics(self):
+        """make sure SmartList's other magically implemented features work"""
         self._test_other_magic_methods(SmartList)
 
     def test_parent_methods(self):
@@ -310,41 +321,29 @@ class TestSmartList(unittest.TestCase):
 
     def test_child_get_set_del(self):
         """make sure _ListProxy's getitem/setitem/delitem work"""
-        self._test_get_set_del_item(lambda L: SmartList(list(L))[:])
-        self._test_get_set_del_item(lambda L: SmartList([999] + list(L))[1:])
-        self._test_get_set_del_item(lambda L: SmartList(list(L) + [999])[:-1])
-        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
-        self._test_get_set_del_item(builder)
+        self._dispatch_test_for_children(self._test_get_set_del_item)
 
     def test_child_add(self):
         """make sure _ListProxy's add/radd/iadd work"""
-        self._test_add_radd_iadd(lambda L: SmartList(list(L))[:])
-        self._test_add_radd_iadd(lambda L: SmartList([999] + list(L))[1:])
-        self._test_add_radd_iadd(lambda L: SmartList(list(L) + [999])[:-1])
-        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
-        self._test_add_radd_iadd(builder)
+        self._dispatch_test_for_children(self._test_add_radd_iadd)
 
     def test_child_other_magics(self):
         """make sure _ListProxy's other magically implemented features work"""
-        self._test_other_magic_methods(lambda L: SmartList(list(L))[:])
-        self._test_other_magic_methods(lambda L: SmartList([999] + list(L))[1:])
-        self._test_other_magic_methods(lambda L: SmartList(list(L) + [999])[:-1])
-        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
-        self._test_other_magic_methods(builder)
+        self._dispatch_test_for_children(self._test_other_magic_methods)
 
     def test_child_methods(self):
         """make sure _ListProxy's non-magic methods work, like append()"""
-        self._test_list_methods(lambda L: SmartList(list(L))[:])
-        self._test_list_methods(lambda L: SmartList([999] + list(L))[1:])
-        self._test_list_methods(lambda L: SmartList(list(L) + [999])[:-1])
-        builder = lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2]
-        self._test_list_methods(builder)
+        self._dispatch_test_for_children(self._test_list_methods)
 
     def test_influence(self):
         """make sure changes are propagated from parents to children"""
         parent = SmartList([0, 1, 2, 3, 4, 5])
         child1 = parent[2:]
         child2 = parent[2:5]
+        self.assertEqual([0, 1, 2, 3, 4, 5], parent)
+        self.assertEqual([2, 3, 4, 5], child1)
+        self.assertEqual([2, 3, 4], child2)
+        self.assertEqual(2, len(parent._children))
 
         parent.append(6)
         child1.append(7)
@@ -389,6 +388,29 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
         self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
+
+        child1.detach()
+        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
+        self.assertEqual(1, len(parent._children))
+
+        parent.remove(1.9)
+        parent.remove(1.8)
+        self.assertEqual([1, 4, 3, 2, 5, 6, 7, 8, 8.1, 8.2], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([4, 3, 2], child2)
+
+        parent.reverse()
+        self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([4, 3, 2], child2)
+        self.assertEqual(0, len(parent._children))
+
+        child2.detach()
+        self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([4, 3, 2], child2)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

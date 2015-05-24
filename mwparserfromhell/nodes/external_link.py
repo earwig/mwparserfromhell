@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,12 +67,12 @@ class ExternalLink(Node):
 
     @property
     def url(self):
-        """The URL of the link target, as a :py:class:`~.Wikicode` object."""
+        """The URL of the link target, as a :class:`.Wikicode` object."""
         return self._url
 
     @property
     def title(self):
-        """The link title (if given), as a :py:class:`~.Wikicode` object."""
+        """The link title (if given), as a :class:`.Wikicode` object."""
         return self._title
 
     @property

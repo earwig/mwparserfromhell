@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2014 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,23 +33,19 @@ from .smart_list import SmartList
 
 __all__ = ["parse_anything"]
 
-def parse_anything(value, context=0):
-    """Return a :py:class:`~.Wikicode` for *value*, allowing multiple types.
+def parse_anything(value, context=0, skip_style_tags=False):
+    """Return a :class:`.Wikicode` for *value*, allowing multiple types.
 
-    This differs from :py:meth:`.Parser.parse` in that we accept more than just
-    a string to be parsed. Unicode objects (strings in py3k), strings (bytes in
-    py3k), integers (converted to strings), ``None``, existing
-    :py:class:`~.Node` or :py:class:`~.Wikicode` objects, as well as an
-    iterable of these types, are supported. This is used to parse input
-    on-the-fly by various methods of :py:class:`~.Wikicode` and others like
-    :py:class:`~.Template`, such as :py:meth:`wikicode.insert()
-    <.Wikicode.insert>` or setting :py:meth:`template.name <.Template.name>`.
+    This differs from :meth:`.Parser.parse` in that we accept more than just a
+    string to be parsed. Unicode objects (strings in py3k), strings (bytes in
+    py3k), integers (converted to strings), ``None``, existing :class:`.Node`
+    or :class:`.Wikicode` objects, as well as an iterable of these types, are
+    supported. This is used to parse input on-the-fly by various methods of
+    :class:`.Wikicode` and others like :class:`.Template`, such as
+    :meth:`wikicode.insert() <.Wikicode.insert>` or setting
+    :meth:`template.name <.Template.name>`.
 
-    If given, *context* will be passed as a starting context to the parser.
-    This is helpful when this function is used inside node attribute setters.
-    For example, :py:class:`~.ExternalLink`\ 's :py:attr:`~.ExternalLink.url`
-    setter sets *context* to :py:mod:`contexts.EXT_LINK_URI <.contexts>` to
-    prevent the URL itself from becoming an :py:class:`~.ExternalLink`.
+    Additional arguments are passed directly to :meth:`.Parser.parse`.
     """
     from .parser import Parser
     from .wikicode import Wikicode
@@ -59,18 +55,18 @@ def parse_anything(value, context=0):
     elif isinstance(value, Node):
         return Wikicode(SmartList([value]))
     elif isinstance(value, str):
-        return Parser().parse(value, context)
+        return Parser().parse(value, context, skip_style_tags)
     elif isinstance(value, bytes):
-        return Parser().parse(value.decode("utf8"), context)
+        return Parser().parse(value.decode("utf8"), context, skip_style_tags)
     elif isinstance(value, int):
-        return Parser().parse(str(value), context)
+        return Parser().parse(str(value), context, skip_style_tags)
     elif value is None:
         return Wikicode(SmartList())
     try:
         nodelist = SmartList()
         for item in value:
-            nodelist += parse_anything(item, context).nodes
+            nodelist += parse_anything(item, context, skip_style_tags).nodes
+        return Wikicode(nodelist)
     except TypeError:
         error = "Needs string, Node, Wikicode, int, None, or iterable of these, but got {0}: {1}"
         raise ValueError(error.format(type(value).__name__, value))
-    return Wikicode(nodelist)

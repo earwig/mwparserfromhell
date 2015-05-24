@@ -37,3 +37,10 @@ name:   incomplete_partial_close
 label:  a comment that doesn't close, with a partial close
 input:  "<!-- foo --\x01>"
 output: [Text(text="<!-- foo --\x01>")]
+
+---
+
+name:   incomplete_part_only
+label:  a comment that only has a < and !
+input:  "<!foo"
+output: [Text(text="<!foo")]

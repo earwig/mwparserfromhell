@@ -1,0 +1,2 @@
+include LICENSE CHANGELOG
+recursive-include tests *.py *.mwtest

@@ -27,26 +27,15 @@ try:
 except ImportError:
     import unittest
 
-try:
-    from mwparserfromhell.parser._tokenizer import CTokenizer
-except ImportError:
-    CTokenizer = None
-
 from ._test_tokenizer import TokenizerTestCase
 
-@unittest.skipUnless(CTokenizer, "C tokenizer not available")
-class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
-    """Test cases for the C tokenizer."""
+class TestRoundtripping(TokenizerTestCase, unittest.TestCase):
+    """Test cases for roundtripping tokens back to wikitext."""
 
     @classmethod
     def setUpClass(cls):
-        cls.tokenizer = CTokenizer
+        cls.roundtrip = True
 
-    if not TokenizerTestCase.skip_others:
-        def test_uses_c(self):
-            """make sure the C tokenizer identifies as using a C extension"""
-            self.assertTrue(CTokenizer.USES_C)
-            self.assertTrue(CTokenizer().USES_C)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
