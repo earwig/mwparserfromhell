@@ -1,6 +1,17 @@
 Changelog
 =========
 
+v0.4.1
+------
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4...develop>`__):
+
+- The process for building Windows binaries has been fixed, and these should be
+  distributed along with new releases. Windows users can now take advantage of
+  C speedups without having a compiler of their own.
+- Fixed some bugs in the release scripts.
+
 v0.4
 ----
 

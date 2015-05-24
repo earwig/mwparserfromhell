@@ -1,3 +1,10 @@
+v0.4.1 (unreleased):
+
+- The process for building Windows binaries has been fixed, and these should be
+  distributed along with new releases. Windows users can now take advantage of
+  C speedups without having a compiler of their own.
+- Fixed some bugs in the release scripts.
+
 v0.4 (released May 23, 2015):
 
 - The parser now falls back on pure Python mode if C extensions cannot be

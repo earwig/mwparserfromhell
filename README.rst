@@ -156,7 +156,6 @@ If you're not using a library, you can parse any page using the following code
 .. _Legoktm:                http://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _Python Package Index:   http://pypi.python.org
-.. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 .. _get pip:                http://pypi.python.org/pypi/pip
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
