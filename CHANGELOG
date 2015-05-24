@@ -1,4 +1,4 @@
-v0.4 (unreleased):
+v0.4 (released May 23, 2015):
 
 - The parser now falls back on pure Python mode if C extensions cannot be
   built. This fixes an issue that prevented some Windows users from installing

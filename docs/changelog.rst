@@ -4,8 +4,8 @@ Changelog
 v0.4
 ----
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...develop>`__):
+`Released May 23, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.3.3...v0.4>`__):
 
 - The parser now falls back on pure Python mode if C extensions cannot be
   built. This fixes an issue that prevented some Windows users from installing

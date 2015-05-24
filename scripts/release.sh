@@ -34,7 +34,7 @@ update_version() {
 update_changelog() {
     filename="CHANGELOG"
     echo -n "Updating $filename..."
-    sed -e '1s/.*/v'$VERSION' (released '$RELEASE_DATE'):/' -i "" $filename
+    sed -e "1s/.*/v$VERSION (released $RELEASE_DATE):/" -i "" $filename
     echo " done."
 }
 
@@ -45,10 +45,10 @@ update_docs_changelog() {
     previous_lineno=$(expr $(grep -n -e "^---" $filename | sed '2q;d' | cut -d ':' -f 1) - 1)
     previous_version=$(sed $previous_lineno'q;d' $filename)
     sed \
-        -e '4s/.*/v'$VERSION \
-        -e '5s/.*/'$dashes \
-        -e '7s/.*/`Released '$RELEASE_DATE' <https:\/\/github.com\/earwig\/mwparserfromhell\/tree\/v'$VERSION'>`_/' \
-        -e '8s/.*/(`changes <https:\/\/github.com\/earwig\/mwparserfromhell\/compare\/v'$previous_version'...v'$VERSION'>`__):/' \
+        -e "4s/.*/v$VERSION/" \
+        -e "5s/.*/$dashes/" \
+        -e "7s/.*/\`Released $RELEASE_DATE <https:\/\/github.com\/earwig\/mwparserfromhell\/tree\/v$VERSION>\`_/" \
+        -e "8s/.*/(\`changes <https:\/\/github.com\/earwig\/mwparserfromhell\/compare\/$previous_version...v$VERSION>\`__):/" \
         -i "" $filename
     echo " done."
 }
