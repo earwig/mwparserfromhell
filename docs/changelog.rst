@@ -10,6 +10,7 @@ Unreleased
 - The process for building Windows binaries has been fixed, and these should be
   distributed along with new releases. Windows users can now take advantage of
   C speedups without having a compiler of their own.
+- Added support for Python 3.5.
 - Fixed some bugs in the release scripts.
 
 v0.4
