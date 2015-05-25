@@ -36,14 +36,14 @@ from setuptools import setup, find_packages, Extension
 from mwparserfromhell import __version__
 from mwparserfromhell.compat import py26, py3k
 
-with open("README.rst", **{'encoding':'utf-8'} if py3k else {}) as fp:
+with open("README.rst", **({'encoding':'utf-8'} if py3k else {})) as fp:
     long_docs = fp.read()
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources=["mwparserfromhell/parser/tokenizer.c"],
                       depends=["mwparserfromhell/parser/tokenizer.h"])
 
-use_extension=True
+use_extension = True
 
 # Allow env var WITHOUT_EXTENSION and args --with[out]-extension
 if '--without-extension' in sys.argv:
@@ -53,7 +53,7 @@ elif '--with-extension' in sys.argv:
 elif os.environ.get('WITHOUT_EXTENSION', '0') == '1':
     use_extension = False
 
-# Remove the command line argument as it isnt understood by
+# Remove the command line argument as it isn't understood by
 # setuptools/distutils
 sys.argv = [arg for arg in sys.argv
             if not arg.startswith('--with')
@@ -126,6 +126,7 @@ optional_compile_setup(
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
         "Topic :: Text Processing :: Markup"
     ],
 )
