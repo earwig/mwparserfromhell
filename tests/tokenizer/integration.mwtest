@@ -241,3 +241,73 @@ name:   newline_and_comment_in_template_name_7
 label:  a template name containing a newline followed by a comment
 input:  "{{foobar\n<!|key=value}}"
 output: [Text(text="{{foobar\n<!|key=value}}")]
+
+---
+
+name:   tag_in_link_title
+label:  HTML tags are invalid in link titles, even when complete
+input:  "[[foo<i>bar</i>baz]]"
+output: [Text(text="[[foo"), TagOpenOpen(), Text(text="i"), TagCloseOpen(padding=""), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="baz]]")]
+
+---
+
+name:   tag_in_template_name
+label:  HTML tags are invalid in template names, even when complete
+input:  "{{foo<i>bar</i>baz}}"
+output: [Text(text="{{foo"), TagOpenOpen(), Text(text="i"), TagCloseOpen(padding=""), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="baz}}")]
+
+---
+
+name:   tag_in_link_text
+label:  HTML tags are valid in link text
+input:  "[[foo|<i>bar</i>baz]]"
+output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), TagOpenOpen(), Text(text="i"), TagCloseOpen(padding=""), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose(), Text(text="baz"), WikilinkClose()]
+
+---
+
+name:   comment_in_link_title
+label:  comments are valid in link titles
+input:  "[[foo<!--bar-->baz]]"
+output: [WikilinkOpen(), Text(text="foo"), CommentStart(), Text(text="bar"), CommentEnd(), Text(text="baz"), WikilinkClose()]
+
+---
+
+name:   incomplete_comment_in_link_title
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!--bar--baz]]"
+output: [Text(text="[[foo<!--bar--baz]]")]
+
+---
+
+name:   incomplete_comment_in_link_title_2
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!--barbaz]]"
+output: [Text(text="[[foo<!--barbaz]]")]
+
+---
+
+name:   incomplete_comment_in_link_title_3
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!barbaz]]"
+output: [Text(text="[[foo<!barbaz]]")]
+
+---
+
+name:   incomplete_comment_in_link_title_4
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!--]]"
+output: [Text(text="[[foo<!--]]")]
+
+---
+
+name:   incomplete_comment_in_link_title_5
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!-"
+output: [Text(text="[[foo<!-")]
+
+---
+
+name:   incomplete_comment_in_link_title_6
+label:  incomplete comments are invalid in link titles
+input:  "[[foo<!--bar"
+output: [Text(text="[[foo<!--bar")]

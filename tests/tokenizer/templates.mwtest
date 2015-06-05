@@ -509,6 +509,20 @@ output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="
 
 ---
 
+name:   invalid_left_angle_bracket
+label:  invalid template: left angle bracket in name
+input:  "{{foo<bar}}"
+output: [Text(text="{{foo<bar}}")]
+
+---
+
+name:   invalid_right_angle_bracket
+label:  invalid template: right angle bracket in name
+input:  "{{foo>bar}}"
+output: [Text(text="{{foo>bar}}")]
+
+---
+
 name:   incomplete_stub
 label:  incomplete templates that should fail gracefully: just an opening
 input:  "{{"

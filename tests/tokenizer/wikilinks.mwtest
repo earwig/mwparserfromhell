@@ -124,6 +124,34 @@ output: [Text(text="[[foo|"), WikilinkOpen(), Text(text="bar"), WikilinkClose()]
 
 ---
 
+name:   invalid_left_angle_bracket
+label:  invalid wikilink: left angle bracket
+input:  "[[foo<bar]]"
+output: [Text(text="[[foo<bar]]")]
+
+---
+
+name:   invalid_right_angle_bracket
+label:  invalid wikilink: right angle bracket
+input:  "[[foo>bar]]"
+output: [Text(text="[[foo>bar]]")]
+
+---
+
+name:   invalid_newline_at_start
+label:  invalid wikilink: newline at start of title
+input:  "[[\nfoobar]]"
+output: [Text(text="[[\nfoobar]]")]
+
+---
+
+name:   invalid_newline_at_end
+label:  invalid wikilink: newline at end of title
+input:  "[[foobar\n]]"
+output: [Text(text="[[foobar\n]]")]
+
+---
+
 name:   incomplete_open_only
 label:  incomplete wikilinks: just an open
 input:  "[["
