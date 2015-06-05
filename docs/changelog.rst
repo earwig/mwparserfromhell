@@ -11,6 +11,8 @@ Unreleased
   distributed along with new releases. Windows users can now take advantage of
   C speedups without having a compiler of their own.
 - Added support for Python 3.5.
+- ``<`` and ``>`` are now disallowed in wikilink titles and template names.
+  This includes when denoting tags, but not comments.
 - Fixed some bugs in the release scripts.
 
 v0.4

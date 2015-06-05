@@ -1555,9 +1555,9 @@ static int Tokenizer_parse_comment(Tokenizer* self)
             Py_DECREF(comment);
             self->head += 2;
             if (self->topstack->context & LC_FAIL_NEXT) {
-                /* _verify_safe() sets this flag while parsing a template name
-                   when it encounters what might be a comment -- we must unset
-                   it to let _verify_safe() know it was correct: */
+                /* _verify_safe() sets this flag while parsing a template or
+                   link when it encounters what might be a comment -- we must
+                   unset it to let _verify_safe() know it was correct: */
                 self->topstack->context ^= LC_FAIL_NEXT;
             }
             return 0;
@@ -2868,10 +2868,16 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
     if (context & LC_FAIL_NEXT)
         return -1;
     if (context & LC_WIKILINK_TITLE) {
-        if (data == ']' || data == '{')
+        if (data == ']' || data == '{') {
             self->topstack->context |= LC_FAIL_NEXT;
-        else if (data == '\n' || data == '[' || data == '}')
+        } else if (data == '\n' || data == '[' || data == '}' || data == '>') {
             return -1;
+        } else if (data == '<') {
+            if (Tokenizer_READ(self, 1) == '!')
+                self->topstack->context |= LC_FAIL_NEXT;
+            else
+                return -1;
+        }
         return 0;
     }
     if (context & LC_EXT_LINK_TITLE)
@@ -2883,7 +2889,8 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
             self->topstack->context |= LC_FAIL_NEXT;
             return 0;
         }
-        if (data == ']') {
+        if (data == ']' || data == '>' || (data == '<' &&
+                                           Tokenizer_READ(self, 1) != '!')) {
             return -1;
         }
         if (data == '|')

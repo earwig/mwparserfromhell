@@ -610,7 +610,7 @@ class Tokenizer(object):
                 self._head += 2
                 if self._context & contexts.FAIL_NEXT:
                     # _verify_safe() sets this flag while parsing a template
-                    # name when it encounters what might be a comment -- we
+                    # or link when it encounters what might be a comment -- we
                     # must unset it to let _verify_safe() know it was correct:
                     self._context ^= contexts.FAIL_NEXT
                 return
@@ -1172,8 +1172,13 @@ class Tokenizer(object):
         if context & contexts.WIKILINK_TITLE:
             if this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
-            elif this == "\n" or this == "[" or this == "}":
+            elif this == "\n" or this == "[" or this == "}" or this == ">":
                 return False
+            elif this == "<":
+                if self._read(1) == "!":
+                    self._context |= contexts.FAIL_NEXT
+                else:
+                    return False
             return True
         elif context & contexts.EXT_LINK_TITLE:
             return this != "\n"
@@ -1181,7 +1186,7 @@ class Tokenizer(object):
             if this == "{" or this == "}" or this == "[":
                 self._context |= contexts.FAIL_NEXT
                 return True
-            if this == "]":
+            if this == "]" or this == ">" or (this == "<" and self._read(1) != "!"):
                 return False
             if this == "|":
                 return True
