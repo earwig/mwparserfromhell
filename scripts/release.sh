@@ -31,6 +31,8 @@ update_version() {
     echo " done."
 }
 
+# TODO: update appveyor version!
+
 update_changelog() {
     filename="CHANGELOG"
     echo -n "Updating $filename..."
@@ -67,10 +69,9 @@ do_git_stuff() {
 }
 
 upload_to_pypi() {
-    # TODO: check whether these commands give output
     echo -n "PyPI: uploading source tarball and docs..."
-    python setup.py register sdist upload -s
-    python setup.py upload_docs
+    python setup.py -q register sdist upload -s
+    python setup.py -q upload_docs
     echo " done."
 }
 

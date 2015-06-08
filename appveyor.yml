@@ -1,0 +1,56 @@
+# This config file is used by appveyor.com to build Windows release binaries
+
+version: 0.4.1.dev0-b{build}
+
+branches:
+  only:
+    - master
+
+skip_tags: true
+
+environment:
+  global:
+    # See: http://stackoverflow.com/a/13751649/163740
+    WRAPPER: "cmd /E:ON /V:ON /C .\\scripts\\win_wrapper.cmd"
+
+  matrix:
+    - PYTHON:         "C:\\Python27"
+      PYTHON_VERSION: "2.7.10"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7.10"
+      PYTHON_ARCH:    "64"
+
+    - PYTHON:         "C:\\Python33"
+      PYTHON_VERSION: "3.3.6"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3.6"
+      PYTHON_ARCH:    "64"
+
+    - PYTHON:         "C:\\Python34"
+      PYTHON_VERSION: "3.4.3"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4.3"
+      PYTHON_ARCH:    "64"
+
+install:
+  - "powershell scripts\\win_install.ps1"
+
+build_script:
+  - "%WRAPPER% %PYTHON%\\python setup.py build"
+
+test_script:
+  - "%WRAPPER% %PYTHON%\\python setup.py -q test"
+
+after_test:
+  - "%WRAPPER% %PYTHON%\\python setup.py bdist_wheel"
+
+artifacts:
+  - path: dist\*
+
+deploy: off
