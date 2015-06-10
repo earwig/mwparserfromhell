@@ -12,6 +12,8 @@ environment:
   global:
     # See: http://stackoverflow.com/a/13751649/163740
     WRAPPER: "cmd /E:ON /V:ON /C .\\scripts\\win_wrapper.cmd"
+    PIP:     "%WRAPPER% %PYTHON%\\Scripts\\pip.exe"
+    SETUPPY: "%WRAPPER% %PYTHON%\\python setup.py --with-extension"
 
   matrix:
     - PYTHON:         "C:\\Python27"
@@ -39,16 +41,16 @@ environment:
       PYTHON_ARCH:    "64"
 
 install:
-  - "powershell scripts\\win_install.ps1"
+  - "%PIP% install wheel"
 
 build_script:
-  - "%WRAPPER% %PYTHON%\\python setup.py build"
+  - "%SETUPPY% build"
 
 test_script:
-  - "%WRAPPER% %PYTHON%\\python setup.py -q test"
+  - "%SETUPPY% -q test"
 
 after_test:
-  - "%WRAPPER% %PYTHON%\\python setup.py bdist_wheel"
+  - "%SETUPPY% bdist_wheel"
 
 artifacts:
   - path: dist\*

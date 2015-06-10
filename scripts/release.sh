@@ -31,7 +31,12 @@ update_version() {
     echo " done."
 }
 
-# TODO: update appveyor version!
+update_appveyor() {
+    filename="appveyor.yml"
+    echo -n "Updating $filename..."
+    sed -e "s/version: .*/version: $VERSION-b{build}/" -i "" $filename
+    echo " done."
+}
 
 update_changelog() {
     filename="CHANGELOG"
@@ -154,6 +159,7 @@ cd "$SCRIPT_DIR/.."
 
 check_git
 update_version
+update_appveyor
 update_changelog
 update_docs_changelog
 do_git_stuff
