@@ -29,10 +29,13 @@ SOFTWARE.
 #include <math.h>
 #include <structmember.h>
 #include <bytesobject.h>
-#include <stdint.h>
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
+#endif
+
+#ifndef uint64_t
+#define uint64_t unsigned PY_LONG_LONG
 #endif
 
 #define malloc PyObject_Malloc
