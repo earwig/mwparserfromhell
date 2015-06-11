@@ -40,7 +40,7 @@ static int is_marker(Py_UNICODE this)
 /*
     Given a context, return the heading level encoded within it.
 */
-static int heading_level_from_context(int n)
+static int heading_level_from_context(uint64_t n)
 {
     int level;
 
@@ -177,7 +177,8 @@ static TagData* TagData_new(void)
     ALLOC_BUFFER(self->pad_first)
     ALLOC_BUFFER(self->pad_before_eq)
     ALLOC_BUFFER(self->pad_after_eq)
-    self->quoter = self->reset = 0;
+    self->quoter = 0;
+    self->reset = 0;
     return self;
 }
 
@@ -444,7 +445,7 @@ static int
 Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
 {
     Textbuffer *original = buffer;
-    long i;
+    Py_ssize_t i;
 
     if (reverse) {
         do {
@@ -939,7 +940,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     Textbuffer *scheme_buffer = Textbuffer_new(), *temp_buffer;
     PyObject *scheme;
     Py_UNICODE chunk;
-    long i;
+    Py_ssize_t i;
     int slashes, j;
 
     if (!scheme_buffer)
