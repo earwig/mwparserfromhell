@@ -139,7 +139,7 @@ If you're not using a library, you can parse any page using the following code
     from urllib.parse import urlencode
     from urllib.request import urlopen
     import mwparserfromhell
-    API_URL = "http://en.wikipedia.org/w/api.php"
+    API_URL = "https://en.wikipedia.org/w/api.php"
 
     def parse(title):
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
