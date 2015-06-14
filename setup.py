@@ -23,6 +23,7 @@
 
 from __future__ import print_function
 from distutils.errors import DistutilsError, CCompilerError
+from glob import glob
 from os import environ
 import sys
 
@@ -38,10 +39,6 @@ from mwparserfromhell.compat import py26, py3k
 
 with open("README.rst", **({'encoding':'utf-8'} if py3k else {})) as fp:
     long_docs = fp.read()
-
-tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=["mwparserfromhell/parser/tokenizer.c"],
-                      depends=["mwparserfromhell/parser/tokenizer.h"])
 
 use_extension = True
 fallback = True
@@ -74,6 +71,12 @@ def build_ext_patched(self):
 
 if fallback:
     build_ext.run, build_ext_original = build_ext_patched, build_ext.run
+
+# Project-specific part begins here:
+
+tokenizer = Extension("mwparserfromhell.parser._tokenizer",
+                      sources=glob("mwparserfromhell/parser/ctokenizer/*.c"),
+                      depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
 
 setup(
     name = "mwparserfromhell",

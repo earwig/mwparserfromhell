@@ -1,5 +1,4 @@
 /*
-Tokenizer for MWParserFromHell
 Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -87,75 +86,6 @@ static PyObject* strip_tag_name(PyObject* token, int take_attr)
     lowered = PyObject_CallMethod(rstripped, "lower", NULL);
     Py_DECREF(rstripped);
     return lowered;
-}
-
-static Textbuffer* Textbuffer_new(void)
-{
-    Textbuffer* buffer = malloc(sizeof(Textbuffer));
-
-    if (!buffer) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->size = 0;
-    buffer->data = malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
-    if (!buffer->data) {
-        free(buffer);
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->prev = buffer->next = NULL;
-    return buffer;
-}
-
-static void Textbuffer_dealloc(Textbuffer* self)
-{
-    Textbuffer* next;
-
-    while (self) {
-        free(self->data);
-        next = self->next;
-        free(self);
-        self = next;
-    }
-}
-
-/*
-    Write a Unicode codepoint to the given textbuffer.
-*/
-static int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
-{
-    Textbuffer* self = *this;
-
-    if (self->size == TEXTBUFFER_BLOCKSIZE) {
-        Textbuffer* new = Textbuffer_new();
-        if (!new)
-            return -1;
-        new->next = self;
-        self->prev = new;
-        *this = self = new;
-    }
-    self->data[self->size++] = code;
-    return 0;
-}
-
-/*
-    Return the contents of the textbuffer as a Python Unicode object.
-*/
-static PyObject* Textbuffer_render(Textbuffer* self)
-{
-    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
-    PyObject *left, *concat;
-
-    while (self->next) {
-        self = self->next;
-        left = PyUnicode_FromUnicode(self->data, self->size);
-        concat = PyUnicode_Concat(left, result);
-        Py_DECREF(left);
-        Py_DECREF(result);
-        result = concat;
-    }
-    return result;
 }
 
 static TagData* TagData_new(void)

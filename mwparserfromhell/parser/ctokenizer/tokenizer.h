@@ -1,5 +1,4 @@
 /*
-Tokenizer Header File for MWParserFromHell
 Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -21,25 +20,10 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#ifndef PY_SSIZE_T_CLEAN
-#define PY_SSIZE_T_CLEAN
-#endif
-
-#include <Python.h>
 #include <math.h>
-#include <structmember.h>
-#include <bytesobject.h>
 
-#if PY_MAJOR_VERSION >= 3
-#define IS_PY3K
-#endif
-
-#ifndef uint64_t
-#define uint64_t unsigned PY_LONG_LONG
-#endif
-
-#define malloc PyObject_Malloc
-#define free   PyObject_Free
+#include "common.h"
+#include "textbuffer.h"
 
 #define DIGITS    "0123456789"
 #define HEXDIGITS "0123456789abcdefABCDEF"
@@ -50,7 +34,6 @@ static const char MARKERS[] = {
     '-', '!', '\n', '\0'};
 
 #define NUM_MARKERS 19
-#define TEXTBUFFER_BLOCKSIZE 1024
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
 #define MAX_BRACES 255
@@ -196,13 +179,6 @@ static PyObject* TagCloseClose;
 
 /* Miscellaneous structs: */
 
-struct Textbuffer {
-    Py_ssize_t size;
-    Py_UNICODE* data;
-    struct Textbuffer* prev;
-    struct Textbuffer* next;
-};
-
 struct Stack {
     PyObject* stack;
     uint64_t context;
@@ -224,7 +200,6 @@ typedef struct {
     Py_ssize_t reset;
 } TagData;
 
-typedef struct Textbuffer Textbuffer;
 typedef struct Stack Stack;
 
 
@@ -267,9 +242,6 @@ typedef struct {
 
 
 /* Function prototypes: */
-
-static Textbuffer* Textbuffer_new(void);
-static void Textbuffer_dealloc(Textbuffer*);
 
 static TagData* TagData_new(void);
 static void TagData_dealloc(TagData*);
