@@ -23,10 +23,21 @@ SOFTWARE.
 #pragma once
 
 #include "common.h"
+#include "textbuffer.h"
+
+/* Structs */
+
+typedef struct {
+    uint64_t context;
+    Textbuffer* pad_first;
+    Textbuffer* pad_before_eq;
+    Textbuffer* pad_after_eq;
+    Py_UNICODE quoter;
+    Py_ssize_t reset;
+} TagData;
 
 /* Functions */
 
-Textbuffer* Textbuffer_new(void);
-void Textbuffer_dealloc(Textbuffer*);
-int Textbuffer_write(Textbuffer**, Py_UNICODE);
-PyObject* Textbuffer_render(Textbuffer*);
+TagData* TagData_new(void);
+void TagData_dealloc(TagData*);
+int TagData_reset_buffers(TagData*);

@@ -20,13 +20,17 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
+#pragma once
+
 #ifndef PY_SSIZE_T_CLEAN
-#define PY_SSIZE_T_CLEAN
+#define PY_SSIZE_T_CLEAN  // See: https://docs.python.org/2/c-api/arg.html
 #endif
 
 #include <Python.h>
 #include <structmember.h>
 #include <bytesobject.h>
+
+/* Compatibility macros */
 
 #if PY_MAJOR_VERSION >= 3
 #define IS_PY3K
@@ -36,5 +40,53 @@ SOFTWARE.
 #define uint64_t unsigned PY_LONG_LONG
 #endif
 
-#define malloc PyObject_Malloc
+#define malloc PyObject_Malloc  // XXX: yuck
 #define free   PyObject_Free
+
+/* Error handling globals/macros */
+
+extern int route_state;  // TODO: this is NOT thread-safe!
+extern uint64_t route_context;
+
+#define BAD_ROUTE            route_state
+#define BAD_ROUTE_CONTEXT    route_context
+#define FAIL_ROUTE(context)  { route_state = 1; route_context = context; }
+#define RESET_ROUTE()        route_state = 0
+
+/* Shared globals */
+
+extern char** entitydefs;
+
+extern PyObject* EMPTY;
+extern PyObject* NOARGS;
+extern PyObject* definitions;
+
+/* Structs */
+
+struct Textbuffer {
+    Py_ssize_t size;
+    Py_UNICODE* data;
+    struct Textbuffer* prev;
+    struct Textbuffer* next;
+};
+typedef struct Textbuffer Textbuffer;
+
+struct Stack {
+    PyObject* stack;
+    uint64_t context;
+    struct Textbuffer* textbuffer;
+    struct Stack* next;
+};
+typedef struct Stack Stack;
+
+typedef struct {
+    PyObject_HEAD
+    PyObject* text;         /* text to tokenize */
+    Stack* topstack;        /* topmost stack */
+    Py_ssize_t head;        /* current position in text */
+    Py_ssize_t length;      /* length of text */
+    int global;             /* global context */
+    int depth;              /* stack recursion depth */
+    int cycles;             /* total number of stack recursions */
+    int skip_style_tags;    /* temporary fix for the sometimes broken tag parser */
+} Tokenizer;

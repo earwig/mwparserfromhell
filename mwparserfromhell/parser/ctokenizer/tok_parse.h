@@ -26,7 +26,4 @@ SOFTWARE.
 
 /* Functions */
 
-Textbuffer* Textbuffer_new(void);
-void Textbuffer_dealloc(Textbuffer*);
-int Textbuffer_write(Textbuffer**, Py_UNICODE);
-PyObject* Textbuffer_render(Textbuffer*);
+PyObject* Tokenizer_parse(Tokenizer*, uint64_t, int);
