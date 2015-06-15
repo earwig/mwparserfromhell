@@ -82,11 +82,7 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
     Py_INCREF(Py_None);
     self->topstack = NULL;
     self->head = self->length = self->global = self->depth = self->cycles = 0;
-
-    // TODO: should be member variables!
-    route_state = 0;
-    route_context = 0;
-
+    self->route_context = self->route_state = 0;
     return 0;
 }
 

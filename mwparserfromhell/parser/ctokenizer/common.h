@@ -43,15 +43,15 @@ SOFTWARE.
 #define malloc PyObject_Malloc  // XXX: yuck
 #define free   PyObject_Free
 
-/* Error handling globals/macros */
+/* Error handling macros */
 
-extern int route_state;  // TODO: this is NOT thread-safe!
-extern uint64_t route_context;
-
-#define BAD_ROUTE            route_state
-#define BAD_ROUTE_CONTEXT    route_context
-#define FAIL_ROUTE(context)  { route_state = 1; route_context = context; }
-#define RESET_ROUTE()        route_state = 0
+#define BAD_ROUTE            self->route_state
+#define BAD_ROUTE_CONTEXT    self->route_context
+#define FAIL_ROUTE(context)  {                                                \
+        self->route_state = 1;                                                \
+        self->route_context = context;                                        \
+    }
+#define RESET_ROUTE()        self->route_state = 0
 
 /* Shared globals */
 
@@ -81,12 +81,14 @@ typedef struct Stack Stack;
 
 typedef struct {
     PyObject_HEAD
-    PyObject* text;         /* text to tokenize */
-    Stack* topstack;        /* topmost stack */
-    Py_ssize_t head;        /* current position in text */
-    Py_ssize_t length;      /* length of text */
-    int global;             /* global context */
-    int depth;              /* stack recursion depth */
-    int cycles;             /* total number of stack recursions */
-    int skip_style_tags;    /* temporary fix for the sometimes broken tag parser */
+    PyObject* text;          /* text to tokenize */
+    Stack* topstack;         /* topmost stack */
+    Py_ssize_t head;         /* current position in text */
+    Py_ssize_t length;       /* length of text */
+    int global;              /* global context */
+    int depth;               /* stack recursion depth */
+    int cycles;              /* total number of stack recursions */
+    int route_state;         /* whether a BadRoute has been triggered */
+    uint64_t route_context;  /* context when the last BadRoute was triggered */
+    int skip_style_tags;     /* temp fix for the sometimes broken tag parser */
 } Tokenizer;
