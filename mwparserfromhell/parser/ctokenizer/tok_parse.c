@@ -1420,7 +1420,7 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
             buffer = Textbuffer_new();
             if (!buffer)
                 return NULL;
-            while ((this = Tokenizer_READ(self, 0))) {
+            while ((this = Tokenizer_READ(self, 0)), 1) {
                 if (this == '>') {
                     buf_tmp = Textbuffer_render(buffer);
                     if (!buf_tmp)
