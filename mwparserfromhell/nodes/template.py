@@ -213,26 +213,25 @@ class Template(Node):
         :func:`.utils.parse_anything`; pipes and equal signs are automatically
         escaped from *value* when appropriate.
 
+        If *name* is already a parameter in the template, we'll replace its
+        value.
+
         If *showkey* is given, this will determine whether or not to show the
         parameter's name (e.g., ``{{foo|bar}}``'s parameter has a name of
         ``"1"`` but it is hidden); otherwise, we'll make a safe and intelligent
         guess.
-
-        If *name* is already a parameter in the template, we'll replace its
-        value while keeping the same whitespace around it. We will also try to
-        guess the dominant spacing convention when adding a new parameter using
-        :meth:`_get_spacing_conventions`.
 
         If *before* is given (either a :class:`.Parameter` object or a name),
         then we will place the parameter immediately before this one.
         Otherwise, it will be added at the end. If *before* is a name and
         exists multiple times in the template, we will place it before the last
         occurrence. If *before* is not in the template, :exc:`ValueError` is
-        raised. The argument is ignored if the new parameter already exists.
+        raised. The argument is ignored if *name* is an existing parameter.
 
-        If *preserve_spacing* is ``False``, we will avoid preserving spacing
-        conventions when changing the value of an existing parameter or when
-        adding a new one.
+        If *preserve_spacing* is ``True``, we will try to preserve whitespace
+        conventions around the parameter, whether it is new or we are updating
+        an existing value. It is disabled for parameters with hidden keys,
+        since MediaWiki doesn't strip whitespace in this case.
         """
         name, value = parse_anything(name), parse_anything(value)
         self._surface_escape(value, "|")
@@ -245,7 +244,7 @@ class Template(Node):
             if not existing.showkey:
                 self._surface_escape(value, "=")
             nodes = existing.value.nodes
-            if preserve_spacing:
+            if preserve_spacing and existing.showkey:
                 for i in range(2):  # Ignore empty text nodes
                     if not nodes[i]:
                         nodes[i] = None
@@ -271,7 +270,7 @@ class Template(Node):
         if not showkey:
             self._surface_escape(value, "=")
 
-        if preserve_spacing:
+        if preserve_spacing and showkey:
             before_n, after_n = self._get_spacing_conventions(use_names=True)
             before_v, after_v = self._get_spacing_conventions(use_names=False)
             name = parse_anything([before_n, name, after_n])

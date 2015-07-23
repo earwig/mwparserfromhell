@@ -213,6 +213,9 @@ class TestTemplate(TreeEqualityTestCase):
                                           pgens("f", "g")])
         node37 = Template(wraptext("a"), [pgenh("1", "")])
         node38 = Template(wraptext("abc"))
+        node39 = Template(wraptext("a"), [pgenh("1", " b ")])
+        node40 = Template(wraptext("a"), [pgenh("1", " b"), pgenh("2", " c")])
+        node41 = Template(wraptext("a"), [pgens("1", " b"), pgens("2", " c")])
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -255,6 +258,9 @@ class TestTemplate(TreeEqualityTestCase):
         node37.add(1, "b")
         node38.add("1", "foo")
         self.assertRaises(ValueError, node38.add, "z", "bar", showkey=False)
+        node39.add("1", "c")
+        node40.add("3", "d")
+        node41.add("3", "d")
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -299,6 +305,9 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a|b=c|d=h|f=g}}", node36)
         self.assertEqual("{{a|b}}", node37)
         self.assertEqual("{{abc|foo}}", node38)
+        self.assertEqual("{{a|c}}", node39)
+        self.assertEqual("{{a| b| c|d}}", node40)
+        self.assertEqual("{{a|1= b|2= c|3= d}}", node41)
 
     def test_remove(self):
         """test Template.remove()"""
