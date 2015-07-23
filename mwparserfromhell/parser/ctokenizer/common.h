@@ -43,6 +43,18 @@ SOFTWARE.
 #define malloc PyObject_Malloc  // XXX: yuck
 #define free   PyObject_Free
 
+/* Unicode support macros */
+
+#if defined(IS_PY3K) && PYTHON_MINOR_VERSION >= 3
+#define PEP_393
+#endif
+
+#ifdef PEP_393
+#define Unicode Py_UCS4
+#else
+#define Unicode Py_UNICODE
+#endif
+
 /* Error handling macros */
 
 #define BAD_ROUTE            self->route_state
@@ -63,18 +75,15 @@ extern PyObject* definitions;
 
 /* Structs */
 
-struct Textbuffer {
+typedef struct {
     Py_ssize_t size;
     Py_UNICODE* data;
-    struct Textbuffer* prev;
-    struct Textbuffer* next;
-};
-typedef struct Textbuffer Textbuffer;
+} Textbuffer;
 
 struct Stack {
     PyObject* stack;
     uint64_t context;
-    struct Textbuffer* textbuffer;
+    Textbuffer* textbuffer;
     struct Stack* next;
 };
 typedef struct Stack Stack;

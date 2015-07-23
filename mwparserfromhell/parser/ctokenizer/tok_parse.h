@@ -24,6 +24,12 @@ SOFTWARE.
 
 #include "common.h"
 
+static const char MARKERS[] = {
+    '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
+    '-', '!', '\n', '\0'};
+
+#define NUM_MARKERS 19
+
 /* Functions */
 
 PyObject* Tokenizer_parse(Tokenizer*, uint64_t, int);

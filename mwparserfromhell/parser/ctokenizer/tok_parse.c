@@ -30,11 +30,6 @@ SOFTWARE.
 #define HEXDIGITS "0123456789abcdefABCDEF"
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 
-static const char MARKERS[] = {
-    '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
-    '-', '!', '\n', '\0'};
-
-#define NUM_MARKERS 19
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
 
@@ -44,12 +39,6 @@ static const char MARKERS[] = {
 #define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL, NULL))
 #define IS_SCHEME(scheme, slashes, reverse) \
     (call_def_func("is_scheme", scheme, slashes ? Py_True : Py_False, reverse ? Py_True : Py_False))
-
-#ifdef IS_PY3K
-    #define NEW_INT_FUNC      PyLong_FromSsize_t
-#else
-    #define NEW_INT_FUNC      PyInt_FromSsize_t
-#endif
 
 typedef struct {
     PyObject* title;
@@ -798,7 +787,11 @@ static int Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
-    level = NEW_INT_FUNC(heading->level);
+#ifdef IS_PY3K
+    level = PyLong_FromSsize_t(heading->level);
+#else
+    level = PyInt_FromSsize_t(heading->level);
+#endif
     if (!level) {
         Py_DECREF(heading->title);
         free(heading);
