@@ -82,21 +82,11 @@ class Template(Node):
             if char in node:
                 code.replace(node, node.replace(char, replacement), False)
 
-    def _blank_param_value(self, value):
-        """Remove the content from *value* while keeping its whitespace.
-
-        Replace *value*\ 's nodes with two text nodes, the first containing
-        whitespace from before its content and the second containing whitespace
-        from after its content.
-        """
-        match = re.search(r"^(\s*).*?(\s*)$", str(value), FLAGS)
-        value.nodes = [Text(match.group(1)), Text(match.group(2))]
-
     def _select_theory(self, theories):
         """Return the most likely spacing convention given different options.
 
-        Given a dictionary of convention options as keys and their occurrence as
-        values, return the convention that occurs the most, or ``None`` if
+        Given a dictionary of convention options as keys and their occurrence
+        as values, return the convention that occurs the most, or ``None`` if
         there is no clear preferred style.
         """
         if theories:
@@ -129,33 +119,46 @@ class Template(Node):
         after = self._select_theory(after_theories)
         return before, after
 
-    def _remove_with_field(self, param, i, name):
-        """Return True if a parameter name should be kept, otherwise False."""
-        if param.showkey:
-            following = self.params[i+1:]
-            better_matches = [after.name.strip() == name and not after.showkey for after in following]
-            if any(better_matches):
-                return False
-        return True
+    def _blank_param_value(self, value):
+        """Remove the content from *value* while keeping its whitespace.
 
-    def _remove_without_field(self, param, i):
-        """Return False if a parameter name should be kept, otherwise True."""
-        if not param.showkey:
-            dependents = [not after.showkey for after in self.params[i+1:]]
-            if any(dependents):
-                return False
-        return True
+        Replace *value*\ 's nodes with two text nodes, the first containing
+        whitespace from before its content and the second containing whitespace
+        from after its content.
+        """
+        match = re.search(r"^(\s*).*?(\s*)$", str(value), FLAGS)
+        value.nodes = [Text(match.group(1)), Text(match.group(2))]
+
+    def _fix_dependendent_params(self, i):
+        """Unhide keys if necessary after removing the param at index *i*."""
+        if not self.params[i].showkey:
+            for param in self.params[i + 1:]:
+                if not param.showkey:
+                    param.showkey = True
 
     def _remove_exact(self, needle, keep_field):
         """Remove a specific parameter, *needle*, from the template."""
         for i, param in enumerate(self.params):
             if param is needle:
-                if keep_field or not self._remove_without_field(param, i):
+                if keep_field:
                     self._blank_param_value(param.value)
                 else:
+                    self._fix_dependendent_params(i)
                     self.params.pop(i)
                 return
         raise ValueError(needle)
+
+    def _should_remove(self, i, name):
+        """Look ahead for a parameter with the same name, but hidden.
+
+        If one exists, we should remove the given one rather than blanking it.
+        """
+        if self.params[i].showkey:
+            following = self.params[i + 1:]
+            better_matches = [after.name.strip() == name and not after.showkey
+                              for after in following]
+            return any(better_matches)
+        return False
 
     @property
     def name(self):
@@ -293,36 +296,39 @@ class Template(Node):
         and :meth:`get`.
 
         If *keep_field* is ``True``, we will keep the parameter's name, but
-        blank its value. Otherwise, we will remove the parameter completely
-        *unless* other parameters are dependent on it (e.g. removing ``bar``
-        from ``{{foo|bar|baz}}`` is unsafe because ``{{foo|baz}}`` is not what
-        we expected, so ``{{foo||baz}}`` will be produced instead).
+        blank its value. Otherwise, we will remove the parameter completely.
+
+        When removing a parameter with a hidden name, subsequent parameters
+        with hidden names will be made visible. For example, removing ``bar``
+        from ``{{foo|bar|baz}}`` produces ``{{foo|2=baz}}`` because
+        ``{{foo|baz}}`` is incorrect.
 
         If the parameter shows up multiple times in the template and *param* is
         not a :class:`.Parameter` object, we will remove all instances of it
-        (and keep only one if *keep_field* is ``True`` - the first instance if
-        none have dependents, otherwise the one with dependents will be kept).
+        (and keep only one if *keep_field* is ``True`` - either the one with a
+        hidden name, if it exists, or the first instance).
         """
         if isinstance(param, Parameter):
             return self._remove_exact(param, keep_field)
+
         name = str(param).strip()
         removed = False
         to_remove = []
+
         for i, param in enumerate(self.params):
             if param.name.strip() == name:
                 if keep_field:
-                    if self._remove_with_field(param, i, name):
+                    if self._should_remove(i, name):
+                        to_remove.append(i)
+                    else:
                         self._blank_param_value(param.value)
                         keep_field = False
-                    else:
-                        to_remove.append(i)
                 else:
-                    if self._remove_without_field(param, i):
-                        to_remove.append(i)
-                    else:
-                        self._blank_param_value(param.value)
+                    self._fix_dependendent_params(i)
+                    to_remove.append(i)
                 if not removed:
                     removed = True
+
         if not removed:
             raise ValueError(name)
         for i in reversed(to_remove):

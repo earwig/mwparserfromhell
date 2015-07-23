@@ -13,8 +13,8 @@ Unreleased
 - Added support for Python 3.5.
 - ``<`` and ``>`` are now disallowed in wikilink titles and template names.
   This includes when denoting tags, but not comments.
-- Fixed the behavior of *preserve_spacing* in :func:`~.Template.add` on
-  parameters with hidden keys.
+- Fixed the behavior of *preserve_spacing* in :func:`~.Template.add` and
+  *keep_field* in :func:`~.Template.remove` on parameters with hidden keys.
 - Fixed some bugs in the release scripts.
 
 v0.4
