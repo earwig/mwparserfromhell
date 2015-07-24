@@ -8,6 +8,9 @@ v0.4.1 (unreleased):
   includes when denoting tags, but not comments.
 - Fixed the behavior of preserve_spacing in Template.add() and keep_field in
   Template.remove() on parameters with hidden keys.
+- Fixed parser bugs involving:
+  - templates with completely blank names;
+  - templates with newlines and comments.
 - Fixed some bugs in the release scripts.
 
 v0.4 (released May 23, 2015):

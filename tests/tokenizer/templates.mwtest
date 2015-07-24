@@ -686,5 +686,5 @@ output: [Text(text="{{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ 
 
 name:   recursion_opens_and_closes
 label:  test potentially dangerous recursion: template openings and closings
-input:  "{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}"
-output: [Text(text="{{|"), TemplateOpen(), TemplateClose(), Text(text="{{|"), TemplateOpen(), TemplateClose(), TemplateOpen(), TemplateParamSeparator(), TemplateOpen(), TemplateClose(), Text(text="{{"), TemplateParamSeparator(), Text(text="{{"), TemplateClose(), Text(text="{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}")]
+input:  "{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}"
+output: [Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), TemplateOpen(), Text(text="x"), TemplateParamSeparator(), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x"), TemplateParamSeparator(), Text(text="{{x"), TemplateClose(), Text(text="{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}")]
