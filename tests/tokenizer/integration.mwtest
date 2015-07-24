@@ -244,6 +244,13 @@ output: [Text(text="{{foobar\n<!|key=value}}")]
 
 ---
 
+name:   newline_and_comment_in_template_name_8
+label:  a template name containing a newline followed by a comment
+input:  "{{<!-- comment -->\nfoobar\n<!-- comment -->}}"
+output: [TemplateOpen(), CommentStart(), Text(text=" comment "), CommentEnd(), Text(text="\nfoobar\n"), CommentStart(), Text(text=" comment "), CommentEnd(), TemplateClose()]
+
+---
+
 name:   tag_in_link_title
 label:  HTML tags are invalid in link titles, even when complete
 input:  "[[foo<i>bar</i>baz]]"
