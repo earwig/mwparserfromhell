@@ -121,12 +121,16 @@ static PyObject* strip_tag_name(PyObject* token, int take_attr)
 /*
     Parse a template at the head of the wikicode string.
 */
-static int Tokenizer_parse_template(Tokenizer* self)
+static int Tokenizer_parse_template(Tokenizer* self, int has_content)
 {
     PyObject *template;
     Py_ssize_t reset = self->head;
+    uint64_t context = LC_TEMPLATE_NAME;
 
-    template = Tokenizer_parse(self, LC_TEMPLATE_NAME, 1);
+    if (has_content)
+        context |= LC_HAS_TEMPLATE;
+
+    template = Tokenizer_parse(self, context, 1);
     if (BAD_ROUTE) {
         self->head = reset;
         return 0;
@@ -182,6 +186,7 @@ static int Tokenizer_parse_argument(Tokenizer* self)
 static int Tokenizer_parse_template_or_argument(Tokenizer* self)
 {
     unsigned int braces = 2, i;
+    int has_content = 0;
     PyObject *tokenlist;
 
     self->head += 2;
@@ -198,7 +203,7 @@ static int Tokenizer_parse_template_or_argument(Tokenizer* self)
             return 0;
         }
         if (braces == 2) {
-            if (Tokenizer_parse_template(self))
+            if (Tokenizer_parse_template(self, has_content))
                 return -1;
             if (BAD_ROUTE) {
                 RESET_ROUTE();
@@ -212,7 +217,7 @@ static int Tokenizer_parse_template_or_argument(Tokenizer* self)
             return -1;
         if (BAD_ROUTE) {
             RESET_ROUTE();
-            if (Tokenizer_parse_template(self))
+            if (Tokenizer_parse_template(self, has_content))
                 return -1;
             if (BAD_ROUTE) {
                 char text[MAX_BRACES + 1];
@@ -228,8 +233,10 @@ static int Tokenizer_parse_template_or_argument(Tokenizer* self)
         }
         else
             braces -= 3;
-        if (braces)
+        if (braces) {
+            has_content = 1;
             self->head++;
+        }
     }
     tokenlist = Tokenizer_pop(self);
     if (!tokenlist)
@@ -251,8 +258,13 @@ static int Tokenizer_handle_template_param(Tokenizer* self)
 {
     PyObject *stack;
 
-    if (self->topstack->context & LC_TEMPLATE_NAME)
+    if (self->topstack->context & LC_TEMPLATE_NAME) {
+        if (!(self->topstack->context & (LC_HAS_TEXT | LC_HAS_TEMPLATE))) {
+            Tokenizer_fail_route(self);
+            return -1;
+        }
         self->topstack->context ^= LC_TEMPLATE_NAME;
+    }
     else if (self->topstack->context & LC_TEMPLATE_PARAM_VALUE)
         self->topstack->context ^= LC_TEMPLATE_PARAM_VALUE;
     if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
@@ -303,7 +315,11 @@ static PyObject* Tokenizer_handle_template_end(Tokenizer* self)
 {
     PyObject* stack;
 
-    if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
+    if (self->topstack->context & LC_TEMPLATE_NAME) {
+        if (!(self->topstack->context & (LC_HAS_TEXT | LC_HAS_TEMPLATE)))
+            return Tokenizer_fail_route(self);
+    }
+    else if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
         stack = Tokenizer_pop_keeping_context(self);
         if (!stack)
             return NULL;
@@ -2428,30 +2444,26 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
     if (context & LC_TAG_CLOSE)
         return (data == '<') ? -1 : 0;
     if (context & LC_TEMPLATE_NAME) {
-        if (data == '{' || data == '}' || data == '[') {
+        if (data == '{') {
+            self->topstack->context |= LC_HAS_TEMPLATE | LC_FAIL_NEXT;
+            return 0;
+        }
+        if (data == '}' || (data == '<' && Tokenizer_READ(self, 1) == '!')) {
             self->topstack->context |= LC_FAIL_NEXT;
             return 0;
         }
-        if (data == ']' || data == '>' || (data == '<' &&
-                                           Tokenizer_READ(self, 1) != '!')) {
+        if (data == '[' || data == ']' || data == '<' || data == '>') {
             return -1;
         }
         if (data == '|')
             return 0;
         if (context & LC_HAS_TEXT) {
             if (context & LC_FAIL_ON_TEXT) {
-                if (!Py_UNICODE_ISSPACE(data)) {
-                    if (data == '<' && Tokenizer_READ(self, 1) == '!') {
-                        self->topstack->context |= LC_FAIL_NEXT;
-                        return 0;
-                    }
+                if (!Py_UNICODE_ISSPACE(data))
                     return -1;
-                }
             }
-            else {
-                if (data == '\n')
-                    self->topstack->context |= LC_FAIL_ON_TEXT;
-            }
+            else if (data == '\n')
+                self->topstack->context |= LC_FAIL_ON_TEXT;
         }
         else if (!Py_UNICODE_ISSPACE(data))
             self->topstack->context |= LC_HAS_TEXT;
