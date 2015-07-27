@@ -32,12 +32,12 @@ typedef struct {
     Textbuffer* pad_first;
     Textbuffer* pad_before_eq;
     Textbuffer* pad_after_eq;
-    Py_UNICODE quoter;
+    Unicode quoter;
     Py_ssize_t reset;
 } TagData;
 
 /* Functions */
 
-TagData* TagData_new(void);
+TagData* TagData_new(TokenizerInput*);
 void TagData_dealloc(TagData*);
 int TagData_reset_buffers(TagData*);

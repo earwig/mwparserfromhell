@@ -31,7 +31,6 @@ uint64_t route_context;
 
 char** entitydefs;
 
-PyObject* EMPTY;
 PyObject* NOARGS;
 PyObject* definitions;
 
@@ -121,13 +120,13 @@ static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
 #ifdef PEP_393
     if (PyUnicode_READY(input) < 0)
         return -1;
-    text->length = PyUnicode_GET_LENGTH(input);
     text->kind = PyUnicode_KIND(input);
     text->data = PyUnicode_DATA(input);
 #else
-    text->length = PyUnicode_GET_SIZE(input);
     text->buf = PyUnicode_AS_UNICODE(input);
 #endif
+    text->length = PyUnicode_GET_LENGTH(input);
+    return 0;
 }
 
 /*
@@ -301,9 +300,8 @@ PyMODINIT_FUNC INIT_FUNC_NAME(void)
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
     Py_INCREF(Py_True);
     PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
-    EMPTY = PyUnicode_FromString("");
     NOARGS = PyTuple_New(0);
-    if (!EMPTY || !NOARGS || load_entities() || load_tokens() || load_defs())
+    if (!NOARGS || load_entities() || load_tokens() || load_defs())
         INIT_ERROR;
 #ifdef IS_PY3K
     return module;

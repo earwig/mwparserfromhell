@@ -57,6 +57,7 @@ SOFTWARE.
 #define Unicode Py_UNICODE
 #define PyUnicode_FROM_SINGLE(chr)                                            \
     PyUnicode_FromUnicode(&(chr), 1)
+#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
 #endif
 
 /* Error handling macros */
@@ -73,15 +74,21 @@ SOFTWARE.
 
 extern char** entitydefs;
 
-extern PyObject* EMPTY;
 extern PyObject* NOARGS;
 extern PyObject* definitions;
 
 /* Structs */
 
 typedef struct {
-    Py_ssize_t size;
-    Unicode* data;
+    Py_ssize_t capacity;
+    Py_ssize_t length;
+#ifdef PEP_393
+    PyObject* object;
+    int kind;
+    void* data;
+#else
+    Py_UNICODE* data;
+#endif
 } Textbuffer;
 
 struct Stack {

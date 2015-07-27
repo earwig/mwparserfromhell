@@ -37,7 +37,7 @@ int Tokenizer_push(Tokenizer* self, uint64_t context)
     }
     top->stack = PyList_New(0);
     top->context = context;
-    top->textbuffer = Textbuffer_new();
+    top->textbuffer = Textbuffer_new(&self->text);
     if (!top->textbuffer)
         return -1;
     top->next = self->topstack;
@@ -55,7 +55,7 @@ int Tokenizer_push_textbuffer(Tokenizer* self)
     PyObject *text, *kwargs, *token;
     Textbuffer* buffer = self->topstack->textbuffer;
 
-    if (buffer->size == 0 && !buffer->next)
+    if (buffer->length == 0)
         return 0;
     text = Textbuffer_render(buffer);
     if (!text)
@@ -76,9 +76,7 @@ int Tokenizer_push_textbuffer(Tokenizer* self)
         return -1;
     }
     Py_DECREF(token);
-    Textbuffer_dealloc(buffer);
-    self->topstack->textbuffer = Textbuffer_new();
-    if (!self->topstack->textbuffer)
+    if (Textbuffer_reset(buffer))
         return -1;
     return 0;
 }
@@ -200,7 +198,7 @@ int Tokenizer_emit_token_kwargs(Tokenizer* self, PyObject* token,
 */
 int Tokenizer_emit_char(Tokenizer* self, Unicode code)
 {
-    return Textbuffer_write(&(self->topstack->textbuffer), code);
+    return Textbuffer_write(self->topstack->textbuffer, code);
 }
 
 /*
@@ -222,36 +220,11 @@ int Tokenizer_emit_text(Tokenizer* self, const char* text)
     Write the contents of another textbuffer to the current textbuffer,
     deallocating it in the process.
 */
-int
-Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
+int Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer)
 {
-    Textbuffer *original = buffer;
-    Py_ssize_t i;
-
-    if (reverse) {
-        do {
-            for (i = buffer->size - 1; i >= 0; i--) {
-                if (Tokenizer_emit_char(self, buffer->data[i])) {
-                    Textbuffer_dealloc(original);
-                    return -1;
-                }
-            }
-        } while ((buffer = buffer->next));
-    }
-    else {
-        while (buffer->next)
-            buffer = buffer->next;
-        do {
-            for (i = 0; i < buffer->size; i++) {
-                if (Tokenizer_emit_char(self, buffer->data[i])) {
-                    Textbuffer_dealloc(original);
-                    return -1;
-                }
-            }
-        } while ((buffer = buffer->prev));
-    }
-    Textbuffer_dealloc(original);
-    return 0;
+    int retval = Textbuffer_concat(self->topstack->textbuffer, buffer);
+    Textbuffer_dealloc(buffer);
+    return retval;
 }
 
 /*
@@ -272,7 +245,7 @@ int Tokenizer_emit_all(Tokenizer* self, PyObject* tokenlist)
             case 1: {
                 pushed = 1;
                 buffer = self->topstack->textbuffer;
-                if (buffer->size == 0 && !buffer->next)
+                if (buffer->length == 0)
                     break;
                 left = Textbuffer_render(buffer);
                 if (!left)
@@ -290,9 +263,7 @@ int Tokenizer_emit_all(Tokenizer* self, PyObject* tokenlist)
                     return -1;
                 }
                 Py_DECREF(text);
-                Textbuffer_dealloc(buffer);
-                self->topstack->textbuffer = Textbuffer_new();
-                if (!self->topstack->textbuffer)
+                if (Textbuffer_reset(buffer))
                     return -1;
                 break;
             }
@@ -356,7 +327,7 @@ Unicode Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
     Py_ssize_t index = self->head + delta;
 
     if (index >= self->text.length)
-        return EMPTY;
+        return '\0';
     return read_codepoint(&self->text, index);
 }
 
@@ -368,7 +339,7 @@ Unicode Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
     Py_ssize_t index;
 
     if (delta > self->head)
-        return EMPTY;
+        return '\0';
     index = self->head - delta;
     return read_codepoint(&self->text, index);
 }

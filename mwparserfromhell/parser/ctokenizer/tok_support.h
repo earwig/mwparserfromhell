@@ -37,7 +37,7 @@ int Tokenizer_emit_token(Tokenizer*, PyObject*, int);
 int Tokenizer_emit_token_kwargs(Tokenizer*, PyObject*, PyObject*, int);
 int Tokenizer_emit_char(Tokenizer*, Unicode);
 int Tokenizer_emit_text(Tokenizer*, const char*);
-int Tokenizer_emit_textbuffer(Tokenizer*, Textbuffer*, int);
+int Tokenizer_emit_textbuffer(Tokenizer*, Textbuffer*);
 int Tokenizer_emit_all(Tokenizer*, PyObject*);
 int Tokenizer_emit_text_then_stack(Tokenizer*, const char*);
 
