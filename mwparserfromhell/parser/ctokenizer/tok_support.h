@@ -35,24 +35,20 @@ void* Tokenizer_fail_route(Tokenizer*);
 
 int Tokenizer_emit_token(Tokenizer*, PyObject*, int);
 int Tokenizer_emit_token_kwargs(Tokenizer*, PyObject*, PyObject*, int);
-int Tokenizer_emit_char(Tokenizer*, Py_UNICODE);
+int Tokenizer_emit_char(Tokenizer*, Unicode);
 int Tokenizer_emit_text(Tokenizer*, const char*);
 int Tokenizer_emit_textbuffer(Tokenizer*, Textbuffer*, int);
 int Tokenizer_emit_all(Tokenizer*, PyObject*);
 int Tokenizer_emit_text_then_stack(Tokenizer*, const char*);
 
-PyObject* Tokenizer_read(Tokenizer*, Py_ssize_t);
-PyObject* Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
+Unicode Tokenizer_read(Tokenizer*, Py_ssize_t);
+Unicode Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
 
 /* Macros */
 
 #define MAX_DEPTH 40
 #define MAX_CYCLES 100000
 
-#define Tokenizer_READ(self, delta)                                           \
-    (*PyUnicode_AS_UNICODE(Tokenizer_read(self, delta)))
-#define Tokenizer_READ_BACKWARDS(self, delta)                                 \
-    (*PyUnicode_AS_UNICODE(Tokenizer_read_backwards(self, delta)))
 #define Tokenizer_CAN_RECURSE(self)                                           \
     (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
 

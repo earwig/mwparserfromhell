@@ -52,12 +52,20 @@ Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
 }
 
 /*
+    Deallocate the given tokenizer's text field.
+*/
+static void dealloc_tokenizer_text(TokenizerInput* text)
+{
+    Py_XDECREF(text->object);
+}
+
+/*
     Deallocate the given tokenizer object.
 */
 static void Tokenizer_dealloc(Tokenizer* self)
 {
     Stack *this = self->topstack, *next;
-    Py_XDECREF(self->text);
+    dealloc_tokenizer_text(&self->text);
 
     while (this) {
         Py_DECREF(this->stack);
@@ -70,6 +78,22 @@ static void Tokenizer_dealloc(Tokenizer* self)
 }
 
 /*
+    Initialize a new tokenizer instance's text field.
+*/
+static void init_tokenizer_text(TokenizerInput* text)
+{
+    text->object = Py_None;
+    Py_INCREF(Py_None);
+    text->length = 0;
+#ifdef PEP_393
+    text->kind = PyUnicode_WCHAR_KIND;
+    text->data = NULL;
+#else
+    text->buf = NULL;
+#endif
+}
+
+/*
     Initialize a new tokenizer instance by setting instance attributes.
 */
 static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
@@ -78,12 +102,32 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 
     if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
         return -1;
-    self->text = Py_None;
-    Py_INCREF(Py_None);
+    init_tokenizer_text(&self->text);
     self->topstack = NULL;
-    self->head = self->length = self->global = self->depth = self->cycles = 0;
+    self->head = self->global = self->depth = self->cycles = 0;
     self->route_context = self->route_state = 0;
+    self->skip_style_tags = 0;
     return 0;
+}
+
+/*
+    Load input text into the tokenizer.
+*/
+static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
+{
+    dealloc_tokenizer_text(text);
+    text->object = input;
+
+#ifdef PEP_393
+    if (PyUnicode_READY(input) < 0)
+        return -1;
+    text->length = PyUnicode_GET_LENGTH(input);
+    text->kind = PyUnicode_KIND(input);
+    text->data = PyUnicode_DATA(input);
+#else
+    text->length = PyUnicode_GET_SIZE(input);
+    text->buf = PyUnicode_AS_UNICODE(input);
+#endif
 }
 
 /*
@@ -91,33 +135,30 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 */
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
-    PyObject *text, *temp, *tokens;
+    PyObject *input, *tokens;
     uint64_t context = 0;
     int skip_style_tags = 0;
 
-    if (PyArg_ParseTuple(args, "U|ii", &text, &context, &skip_style_tags)) {
-        Py_XDECREF(self->text);
-        self->text = PySequence_Fast(text, "expected a sequence");
+    if (PyArg_ParseTuple(args, "U|ii", &input, &context, &skip_style_tags)) {
+        if (load_tokenizer_text(&self->text, input))
+            return NULL;
     }
     else {
-        const char* encoded;
+        const char *encoded;
         Py_ssize_t size;
+
         /* Failed to parse a Unicode object; try a string instead. */
         PyErr_Clear();
         if (!PyArg_ParseTuple(args, "s#|ii", &encoded, &size, &context,
                               &skip_style_tags))
             return NULL;
-        temp = PyUnicode_FromStringAndSize(encoded, size);
-        if (!text)
+        if (!(input = PyUnicode_FromStringAndSize(encoded, size)))
             return NULL;
-        Py_XDECREF(self->text);
-        text = PySequence_Fast(temp, "expected a sequence");
-        Py_XDECREF(temp);
-        self->text = text;
+        if (load_tokenizer_text(&self->text, input))
+            return NULL;
     }
 
     self->head = self->global = self->depth = self->cycles = 0;
-    self->length = PyList_GET_SIZE(self->text);
     self->skip_style_tags = skip_style_tags;
     tokens = Tokenizer_parse(self, context, 1);
 

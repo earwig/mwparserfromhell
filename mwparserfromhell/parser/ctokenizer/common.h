@@ -51,8 +51,12 @@ SOFTWARE.
 
 #ifdef PEP_393
 #define Unicode Py_UCS4
+#define PyUnicode_FROM_SINGLE(chr)                                            \
+    PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, &(chr), 1)
 #else
 #define Unicode Py_UNICODE
+#define PyUnicode_FROM_SINGLE(chr)                                            \
+    PyUnicode_FromUnicode(&(chr), 1)
 #endif
 
 /* Error handling macros */
@@ -77,7 +81,7 @@ extern PyObject* definitions;
 
 typedef struct {
     Py_ssize_t size;
-    Py_UNICODE* data;
+    Unicode* data;
 } Textbuffer;
 
 struct Stack {
@@ -89,11 +93,21 @@ struct Stack {
 typedef struct Stack Stack;
 
 typedef struct {
+    PyObject* object;        /* base PyUnicodeObject object */
+    Py_ssize_t length;       /* length of object, in code points */
+#ifdef PEP_393
+    int kind;                /* object's kind value */
+    void* data;              /* object's raw unicode buffer */
+#else
+    Py_UNICODE* buf;         /* object's internal buffer */
+#endif
+} TokenizerInput;
+
+typedef struct {
     PyObject_HEAD
-    PyObject* text;          /* text to tokenize */
+    TokenizerInput text;     /* text to tokenize */
     Stack* topstack;         /* topmost stack */
     Py_ssize_t head;         /* current position in text */
-    Py_ssize_t length;       /* length of text */
     int global;              /* global context */
     int depth;               /* stack recursion depth */
     int cycles;              /* total number of stack recursions */
