@@ -53,9 +53,9 @@ static int Tokenizer_handle_dl_term(Tokenizer*);
 static int Tokenizer_parse_tag(Tokenizer*);
 
 /*
-    Determine whether the given Py_UNICODE is a marker.
+    Determine whether the given code point is a marker.
 */
-static int is_marker(Py_UNICODE this)
+static int is_marker(Unicode this)
 {
     int i;
 
@@ -420,7 +420,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
     static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
     Textbuffer* buffer;
     PyObject* scheme;
-    Py_UNICODE this;
+    Unicode this;
     int slashes, i;
 
     if (Tokenizer_push(self, LC_EXT_LINK_URI))
@@ -492,7 +492,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
     Textbuffer *scheme_buffer = Textbuffer_new(&self->text);
     PyObject *scheme;
-    Py_UNICODE chunk;
+    Unicode chunk;
     Py_ssize_t i;
     int slashes, j;
 
@@ -549,9 +549,8 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
 /*
     Handle text in a free external link, including trailing punctuation.
 */
-static int
-Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
-                                Textbuffer* tail, Py_UNICODE this)
+static int Tokenizer_handle_free_link_text(
+    Tokenizer* self, int* parens, Textbuffer* tail, Unicode this)
 {
     #define PUSH_TAIL_BUFFER(tail, error)                            \
         if (tail->length > 0) {                                      \
@@ -578,10 +577,10 @@ Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
     Return whether the current head is the end of a free link.
 */
 static int
-Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
+Tokenizer_is_free_link(Tokenizer* self, Unicode this, Unicode next)
 {
     // Built from Tokenizer_parse()'s end sentinels:
-    Py_UNICODE after = Tokenizer_read(self, 2);
+    Unicode after = Tokenizer_read(self, 2);
     uint64_t ctx = self->topstack->context;
 
     return (!this || this == '\n' || this == '[' || this == ']' ||
@@ -599,7 +598,7 @@ static PyObject*
 Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
                                      Textbuffer* extra)
 {
-    Py_UNICODE this, next;
+    Unicode this, next;
     int parens = 0;
 
     if (brackets ? Tokenizer_parse_bracketed_uri_scheme(self) :
@@ -898,7 +897,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self)
 static int Tokenizer_really_parse_entity(Tokenizer* self)
 {
     PyObject *kwargs, *charobj, *textobj;
-    Py_UNICODE this;
+    Unicode this;
     int numeric, hexadecimal, i, j, zeroes, test;
     char *valid, *text, *buffer, *def;
 
@@ -1073,7 +1072,7 @@ static int Tokenizer_parse_comment(Tokenizer* self)
 {
     Py_ssize_t reset = self->head + 3;
     PyObject *comment;
-    Py_UNICODE this;
+    Unicode this;
 
     self->head += 4;
     if (Tokenizer_push(self, 0))
@@ -1172,8 +1171,8 @@ static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 /*
     Handle whitespace inside of an HTML open tag.
 */
-static int
-Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
+static int Tokenizer_handle_tag_space(
+    Tokenizer* self, TagData* data, Unicode text)
 {
     uint64_t ctx = data->context;
     uint64_t end_of_value = (ctx & TAG_ATTR_VALUE &&
@@ -1205,9 +1204,9 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
 /*
     Handle regular text inside of an HTML open tag.
 */
-static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
+static int Tokenizer_handle_tag_text(Tokenizer* self, Unicode text)
 {
-    Py_UNICODE next = Tokenizer_read(self, 1);
+    Unicode next = Tokenizer_read(self, 1);
 
     if (!is_marker(text) || !Tokenizer_CAN_RECURSE(self))
         return Tokenizer_emit_char(self, text);
@@ -1223,8 +1222,8 @@ static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 /*
     Handle all sorts of text data inside of an HTML open tag.
 */
-static int
-Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
+static int Tokenizer_handle_tag_data(
+    Tokenizer* self, TagData* data, Unicode chunk)
 {
     PyObject *trash;
     int first_time, escaped;
@@ -1400,7 +1399,7 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
 {
     Textbuffer* buffer;
     PyObject *buf_tmp, *end_tag, *start_tag;
-    Py_UNICODE this, next;
+    Unicode this, next;
     Py_ssize_t reset;
     int cmp;
 
@@ -1548,7 +1547,7 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
 {
     TagData *data = TagData_new(&self->text);
     PyObject *token, *text, *trash;
-    Py_UNICODE this, next;
+    Unicode this, next;
     int can_exit;
 
     if (!data)
@@ -1631,7 +1630,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     Py_ssize_t reset = self->head + 1, pos = 0;
     Textbuffer* buf;
     PyObject *name, *tag;
-    Py_UNICODE this;
+    Unicode this;
 
     self->head += 2;
     buf = Textbuffer_new(&self->text);
@@ -1928,7 +1927,7 @@ static PyObject* Tokenizer_parse_style(Tokenizer* self)
 static int Tokenizer_handle_list_marker(Tokenizer* self)
 {
     PyObject *kwargs, *markup;
-    Py_UNICODE code = Tokenizer_read(self, 0);
+    Unicode code = Tokenizer_read(self, 0);
 
     if (code == ';')
         self->topstack->context |= LC_DLTERM;
@@ -1955,7 +1954,7 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
 */
 static int Tokenizer_handle_list(Tokenizer* self)
 {
-    Py_UNICODE marker = Tokenizer_read(self, 1);
+    Unicode marker = Tokenizer_read(self, 1);
 
     if (Tokenizer_handle_list_marker(self))
         return -1;
@@ -2113,7 +2112,7 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
 {
     TagData *data = TagData_new(&self->text);
     PyObject *padding, *trash;
-    Py_UNICODE this;
+    Unicode this;
     int can_exit;
 
     if (!data)
@@ -2413,7 +2412,7 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
     everything is safe, or -1 if the route must be failed.
 */
 static int
-Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
+Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Unicode data)
 {
     if (context & LC_FAIL_NEXT)
         return -1;
@@ -2498,7 +2497,7 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
 static int Tokenizer_has_leading_whitespace(Tokenizer* self)
 {
     int offset = 1;
-    Py_UNICODE current_character;
+    Unicode current_character;
     while (1) {
         current_character = Tokenizer_read_backwards(self, offset);
         if (!current_character || current_character == '\n')
@@ -2516,7 +2515,7 @@ static int Tokenizer_has_leading_whitespace(Tokenizer* self)
 PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
 {
     uint64_t this_context;
-    Py_UNICODE this, next, next_next, last;
+    Unicode this, next, next_next, last;
     PyObject* temp;
 
     if (push) {

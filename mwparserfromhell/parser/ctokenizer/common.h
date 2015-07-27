@@ -45,7 +45,7 @@ SOFTWARE.
 
 /* Unicode support macros */
 
-#if defined(IS_PY3K) && PYTHON_MINOR_VERSION >= 3
+#if defined(IS_PY3K) && PY_MINOR_VERSION >= 3
 #define PEP_393
 #endif
 
