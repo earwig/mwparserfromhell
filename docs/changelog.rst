@@ -20,7 +20,13 @@ Unreleased
   - templates with completely blank names;
   - templates with newlines and comments.
 
-- Heavy refactoring and fixes to the C tokenizer.
+- Heavy refactoring and fixes to the C tokenizer, including:
+
+  - corrected a design flaw in text handling, allowing for substantial speed
+    improvements when parsing long strings of plain text;
+  - implemented new Python 3.3
+    `PEP 393 <https://www.python.org/dev/peps/pep-0393/>`_ Unicode APIs.
+
 - Fixed some bugs in the release scripts.
 
 v0.4
