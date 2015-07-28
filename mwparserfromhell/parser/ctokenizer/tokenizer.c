@@ -139,6 +139,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     int skip_style_tags = 0;
 
     if (PyArg_ParseTuple(args, "U|ii", &input, &context, &skip_style_tags)) {
+        Py_INCREF(input);
         if (load_tokenizer_text(&self->text, input))
             return NULL;
     }
