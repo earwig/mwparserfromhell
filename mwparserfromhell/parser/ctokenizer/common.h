@@ -40,8 +40,9 @@ SOFTWARE.
 #define uint64_t unsigned PY_LONG_LONG
 #endif
 
-#define malloc PyObject_Malloc  // XXX: yuck
-#define free   PyObject_Free
+#define malloc  PyObject_Malloc  // XXX: yuck
+#define realloc PyObject_Realloc
+#define free    PyObject_Free
 
 /* Unicode support macros */
 

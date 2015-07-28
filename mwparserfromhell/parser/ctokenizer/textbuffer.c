@@ -22,28 +22,95 @@ SOFTWARE.
 
 #include "textbuffer.h"
 
-#define TEXTBUFFER_BLOCKSIZE 1024
+#define INITIAL_CAPACITY 32
+#define RESIZE_FACTOR 2
+#define CONCAT_EXTRA 32
+
+/*
+    Internal allocation function for textbuffers.
+*/
+static int internal_alloc(Textbuffer* self, Unicode maxchar)
+{
+    self->capacity = INITIAL_CAPACITY;
+    self->length = 0;
+
+#ifdef PEP_393
+    self->object = PyUnicode_New(self->capacity, maxchar);
+    if (!self->object)
+        return -1;
+    self->kind = PyUnicode_KIND(self->object);
+    self->data = PyUnicode_DATA(self->object);
+#else
+    (void) maxchar;  // Unused
+    self->data = malloc(sizeof(Unicode) * self->capacity);
+    if (!self->data)
+        return -1;
+#endif
+
+    return 0;
+}
+
+/*
+    Internal deallocation function for textbuffers.
+*/
+static void internal_dealloc(Textbuffer* self)
+{
+#ifdef PEP_393
+    Py_DECREF(self->object);
+#else
+    free(self->data);
+#endif
+}
+
+/*
+    Internal resize function.
+*/
+static int internal_resize(Textbuffer* self, Py_ssize_t new_cap)
+{
+#ifdef PEP_393
+    PyObject *newobj;
+    void *newdata;
+
+    newobj = PyUnicode_New(new_cap, PyUnicode_MAX_CHAR_VALUE(self->object));
+    if (!newobj)
+        return -1;
+    newdata = PyUnicode_DATA(newobj);
+    memcpy(newdata, self->data, self->length * self->kind);
+    Py_DECREF(self->object);
+    self->object = newobj;
+    self->data = newdata;
+#else
+    if (!(self->data = realloc(self->data, sizeof(Unicode) * new_cap)))
+        return -1;
+#endif
+
+    self->capacity = new_cap;
+    return 0;
+}
 
 /*
     Create a new textbuffer object.
 */
-Textbuffer* Textbuffer_new(void)
+Textbuffer* Textbuffer_new(TokenizerInput* text)
 {
-    Textbuffer* buffer = malloc(sizeof(Textbuffer));
+    Textbuffer* self = malloc(sizeof(Textbuffer));
+    Unicode maxchar = 0;
 
-    if (!buffer) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->size = 0;
-    buffer->data = malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
-    if (!buffer->data) {
-        free(buffer);
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->prev = buffer->next = NULL;
-    return buffer;
+#ifdef PEP_393
+    maxchar = PyUnicode_MAX_CHAR_VALUE(text->object);
+#endif
+
+    if (!self)
+        goto fail_nomem;
+    if (internal_alloc(self, maxchar) < 0)
+        goto fail_dealloc;
+    return self;
+
+    fail_dealloc:
+    free(self);
+    fail_nomem:
+    PyErr_NoMemory();
+    return NULL;
 }
 
 /*
@@ -51,33 +118,58 @@ Textbuffer* Textbuffer_new(void)
 */
 void Textbuffer_dealloc(Textbuffer* self)
 {
-    Textbuffer* next;
+    internal_dealloc(self);
+    free(self);
+}
 
-    while (self) {
-        free(self->data);
-        next = self->next;
-        free(self);
-        self = next;
-    }
+/*
+    Reset a textbuffer to its initial, empty state.
+*/
+int Textbuffer_reset(Textbuffer* self)
+{
+    Unicode maxchar = 0;
+
+#ifdef PEP_393
+    maxchar = PyUnicode_MAX_CHAR_VALUE(self->object);
+#endif
+
+    internal_dealloc(self);
+    if (internal_alloc(self, maxchar))
+        return -1;
+    return 0;
 }
 
 /*
     Write a Unicode codepoint to the given textbuffer.
 */
-int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
+int Textbuffer_write(Textbuffer* self, Unicode code)
 {
-    Textbuffer* self = *this;
-
-    if (self->size == TEXTBUFFER_BLOCKSIZE) {
-        Textbuffer* new = Textbuffer_new();
-        if (!new)
+    if (self->length >= self->capacity) {
+        if (internal_resize(self, self->capacity * RESIZE_FACTOR) < 0)
             return -1;
-        new->next = self;
-        self->prev = new;
-        *this = self = new;
     }
-    self->data[self->size++] = code;
+
+#ifdef PEP_393
+    PyUnicode_WRITE(self->kind, self->data, self->length++, code);
+#else
+    self->data[self->length++] = code;
+#endif
+
     return 0;
+}
+
+/*
+    Read a Unicode codepoint from the given index of the given textbuffer.
+
+    This function does not check for bounds.
+*/
+Unicode Textbuffer_read(Textbuffer* self, Py_ssize_t index)
+{
+#ifdef PEP_393
+    return PyUnicode_READ(self->kind, self->data, index);
+#else
+    return self->data[index];
+#endif
 }
 
 /*
@@ -85,16 +177,56 @@ int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
 */
 PyObject* Textbuffer_render(Textbuffer* self)
 {
-    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
-    PyObject *left, *concat;
+#ifdef PEP_393
+    return PyUnicode_FromKindAndData(self->kind, self->data, self->length);
+#else
+    return PyUnicode_FromUnicode(self->data, self->length);
+#endif
+}
 
-    while (self->next) {
-        self = self->next;
-        left = PyUnicode_FromUnicode(self->data, self->size);
-        concat = PyUnicode_Concat(left, result);
-        Py_DECREF(left);
-        Py_DECREF(result);
-        result = concat;
+/*
+    Concatenate the 'other' textbuffer onto the end of the given textbuffer.
+*/
+int Textbuffer_concat(Textbuffer* self, Textbuffer* other)
+{
+    Py_ssize_t newlen = self->length + other->length;
+
+    if (newlen > self->capacity) {
+        if (internal_resize(self, newlen + CONCAT_EXTRA) < 0)
+            return -1;
     }
-    return result;
+
+#ifdef PEP_393
+    assert(self->kind == other->kind);
+    memcpy(((Py_UCS1*) self->data) + self->kind * self->length, other->data,
+           other->length * other->kind);
+#else
+    memcpy(self->data + self->length, other->data,
+           other->length * sizeof(Unicode));
+#endif
+
+    self->length = newlen;
+    return 0;
+}
+
+/*
+    Reverse the contents of the given textbuffer.
+*/
+void Textbuffer_reverse(Textbuffer* self)
+{
+    Py_ssize_t i, mid = self->length / 2;
+    Unicode tmp;
+
+    for (i = 0; i < mid; i++) {
+#ifdef PEP_393
+        tmp = PyUnicode_READ(self->kind, self->data, i);
+        PyUnicode_WRITE(self->kind, self->data, i,
+                        PyUnicode_READ(self->kind, self->data, mid + i));
+        PyUnicode_WRITE(self->kind, self->data, mid + i, tmp);
+#else
+        tmp = self->data[i];
+        self->data[i] = self->data[mid + i];
+        self->data[mid + i] = tmp;
+#endif
+    }
 }
