@@ -214,19 +214,19 @@ int Textbuffer_concat(Textbuffer* self, Textbuffer* other)
 */
 void Textbuffer_reverse(Textbuffer* self)
 {
-    Py_ssize_t i, mid = self->length / 2;
+    Py_ssize_t i, end = self->length - 1;
     Unicode tmp;
 
-    for (i = 0; i < mid; i++) {
+    for (i = 0; i < self->length / 2; i++) {
 #ifdef PEP_393
         tmp = PyUnicode_READ(self->kind, self->data, i);
         PyUnicode_WRITE(self->kind, self->data, i,
-                        PyUnicode_READ(self->kind, self->data, mid + i));
-        PyUnicode_WRITE(self->kind, self->data, mid + i, tmp);
+                        PyUnicode_READ(self->kind, self->data, end - i));
+        PyUnicode_WRITE(self->kind, self->data, end - i, tmp);
 #else
         tmp = self->data[i];
-        self->data[i] = self->data[mid + i];
-        self->data[mid + i] = tmp;
+        self->data[i] = self->data[end - i];
+        self->data[end - i] = tmp;
 #endif
     }
 }
