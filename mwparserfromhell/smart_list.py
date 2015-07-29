@@ -27,6 +27,7 @@ reflect changes made to the main list, and vice-versa.
 """
 
 from __future__ import unicode_literals
+from weakref import ref
 
 from .compat import maxsize, py3k
 
@@ -80,13 +81,6 @@ class SmartList(_SliceNormalizerMixIn, list):
         [2, 3, 4]
         >>> parent
         [0, 1, 2, 3, 4]
-
-    The parent needs to keep a list of its children in order to update them,
-    which prevents them from being garbage-collected. If you are keeping the
-    parent around for a while but creating many children, it is advisable to
-    call :meth:`._ListProxy.detach` when you're finished with them. Certain
-    parent methods, like :meth:`reverse` and :meth:`sort`, will do this
-    automatically.
     """
 
     def __init__(self, iterable=None):
@@ -102,7 +96,8 @@ class SmartList(_SliceNormalizerMixIn, list):
         key = self._normalize_slice(key)
         sliceinfo = [key.start, key.stop, key.step]
         child = _ListProxy(self, sliceinfo)
-        self._children[id(child)] = (child, sliceinfo)
+        child_ref = ref(child, self._delete_child)
+        self._children[id(child_ref)] = (child_ref, sliceinfo)
         return child
 
     def __setitem__(self, key, item):
@@ -112,13 +107,14 @@ class SmartList(_SliceNormalizerMixIn, list):
         super(SmartList, self).__setitem__(key, item)
         key = self._normalize_slice(key)
         diff = len(item) + (key.start - key.stop) // key.step
+        if not diff:
+            return
         values = self._children.values if py3k else self._children.itervalues
-        if diff:
-            for child, (start, stop, step) in values():
-                if start > key.stop:
-                    self._children[id(child)][1][0] += diff
-                if stop >= key.stop and stop != maxsize:
-                    self._children[id(child)][1][1] += diff
+        for child, (start, stop, step) in values():
+            if start > key.stop:
+                self._children[id(child)][1][0] += diff
+            if stop >= key.stop and stop != maxsize:
+                self._children[id(child)][1][1] += diff
 
     def __delitem__(self, key):
         super(SmartList, self).__delitem__(key)
@@ -154,10 +150,16 @@ class SmartList(_SliceNormalizerMixIn, list):
         self.extend(other)
         return self
 
+    def _delete_child(self, child_ref):
+        """Remove a child reference that is about to be garbage-collected."""
+        del self._children[id(child_ref)]
+
     def _detach_children(self):
+        """Remove all children and give them independent parent copies."""
         children = [val[0] for val in self._children.values()]
         for child in children:
-            child.detach()
+            child()._parent = list(self)
+        self._children.clear()
 
     @inheritdoc
     def append(self, item):
@@ -226,7 +228,6 @@ class _ListProxy(_SliceNormalizerMixIn, list):
         super(_ListProxy, self).__init__()
         self._parent = parent
         self._sliceinfo = sliceinfo
-        self._detached = False
 
     def __repr__(self):
         return repr(self._render())
@@ -455,18 +456,6 @@ class _ListProxy(_SliceNormalizerMixIn, list):
                 kwargs["reverse"] = reverse
             item.sort(**kwargs)
             self._parent[self._start:self._stop:self._step] = item
-
-    def detach(self):
-        """Detach the child so it operates like a normal list.
-
-        This allows children to be properly garbage-collected if their parent
-        is being kept around for a long time. This method has no effect if the
-        child is already detached.
-        """
-        if not self._detached:
-            self._parent._children.pop(id(self))
-            self._parent = list(self._parent)
-            self._detached = True
 
 
 del inheritdoc

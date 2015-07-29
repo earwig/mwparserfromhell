@@ -13,8 +13,10 @@ Unreleased
 - Added support for Python 3.5.
 - ``<`` and ``>`` are now disallowed in wikilink titles and template names.
   This includes when denoting tags, but not comments.
-- Fixed the behavior of *preserve_spacing* in :func:`~.Template.add` and
-  *keep_field* in :func:`~.Template.remove` on parameters with hidden keys.
+- Fixed the behavior of *preserve_spacing* in :meth:`.Template.add` and
+  *keep_field* in :meth:`.Template.remove` on parameters with hidden keys.
+- Removed :meth:`._ListProxy.detach`. :class:`.SmartList`\ s now use weak
+  references and their children are garbage-collected properly.
 - Fixed parser bugs involving:
 
   - templates with completely blank names;

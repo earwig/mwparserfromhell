@@ -389,28 +389,20 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
 
-        child1.detach()
+        del child1
         self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
         self.assertEqual(1, len(parent._children))
 
         parent.remove(1.9)
         parent.remove(1.8)
         self.assertEqual([1, 4, 3, 2, 5, 6, 7, 8, 8.1, 8.2], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2], child2)
 
         parent.reverse()
         self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2], child2)
         self.assertEqual(0, len(parent._children))
-
-        child2.detach()
-        self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
-        self.assertEqual([4, 3, 2], child2)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
