@@ -80,18 +80,12 @@ upload_to_pypi() {
     echo " done."
 }
 
-windows_build() {
-    echo "PyPI: building/uploading Windows binaries..."
-    echo "*** Run in Windows: ./scripts/win_build.py"
-    echo "*** Press enter when done."
-    read
-}
-
 post_release() {
     echo
     echo "*** Release completed."
     echo "*** Update: https://github.com/earwig/mwparserfromhell/releases/tag/v$VERSION"
     echo "*** Verify: https://pypi.python.org/pypi/mwparserfromhell"
+    echo "*** Verify: https://ci.appveyor.com/project/earwig/mwparserfromhell"
     echo "*** Verify: https://mwparserfromhell.readthedocs.org"
     echo "*** Press enter to sanity-check the release."
     read
@@ -164,7 +158,6 @@ update_changelog
 update_docs_changelog
 do_git_stuff
 upload_to_pypi
-windows_build
 post_release
 test_release
 
