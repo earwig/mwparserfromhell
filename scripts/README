@@ -1,0 +1,3 @@
+This directory contains support files used for *developing* mwparserfromhell,
+not running it. If you are looking for code examples, read the documentation
+or explore the source code.

@@ -1,5 +1,4 @@
 /*
-Tokenizer for MWParserFromHell
 Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
@@ -21,12 +20,42 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 */
 
-#include "tokenizer.h"
+#include "tok_parse.h"
+#include "contexts.h"
+#include "tag_data.h"
+#include "tok_support.h"
+#include "tokens.h"
+
+#define DIGITS    "0123456789"
+#define HEXDIGITS "0123456789abcdefABCDEF"
+#define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+#define MAX_BRACES 255
+#define MAX_ENTITY_SIZE 8
+
+#define GET_HTML_TAG(markup) (markup == ':' ? "dd" : markup == ';' ? "dt" : "li")
+#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL))
+#define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL))
+#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL))
+#define IS_SCHEME(scheme, slashes) \
+    (call_def_func("is_scheme", scheme, slashes ? Py_True : Py_False))
+
+typedef struct {
+    PyObject* title;
+    int level;
+} HeadingData;
+
+/* Forward declarations */
+
+static int Tokenizer_parse_entity(Tokenizer*);
+static int Tokenizer_parse_comment(Tokenizer*);
+static int Tokenizer_handle_dl_term(Tokenizer*);
+static int Tokenizer_parse_tag(Tokenizer*);
 
 /*
-    Determine whether the given Py_UNICODE is a marker.
+    Determine whether the given code point is a marker.
 */
-static int is_marker(Py_UNICODE this)
+static int is_marker(Unicode this)
 {
     int i;
 
@@ -40,7 +69,7 @@ static int is_marker(Py_UNICODE this)
 /*
     Given a context, return the heading level encoded within it.
 */
-static int heading_level_from_context(int n)
+static int heading_level_from_context(uint64_t n)
 {
     int level;
 
@@ -51,14 +80,13 @@ static int heading_level_from_context(int n)
 }
 
 /*
-    Call the given function in definitions.py, using 'in1', 'in2', and 'in3' as
+    Call the given function in definitions.py, using 'in1' and 'in2' as
     parameters, and return its output as a bool.
 */
-static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2,
-                         PyObject* in3)
+static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2)
 {
     PyObject* func = PyObject_GetAttrString(definitions, funcname);
-    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, in3, NULL);
+    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, NULL);
     int ans = (result == Py_True) ? 1 : 0;
 
     Py_DECREF(func);
@@ -87,496 +115,6 @@ static PyObject* strip_tag_name(PyObject* token, int take_attr)
     lowered = PyObject_CallMethod(rstripped, "lower", NULL);
     Py_DECREF(rstripped);
     return lowered;
-}
-
-static Textbuffer* Textbuffer_new(void)
-{
-    Textbuffer* buffer = malloc(sizeof(Textbuffer));
-
-    if (!buffer) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->size = 0;
-    buffer->data = malloc(sizeof(Py_UNICODE) * TEXTBUFFER_BLOCKSIZE);
-    if (!buffer->data) {
-        free(buffer);
-        PyErr_NoMemory();
-        return NULL;
-    }
-    buffer->prev = buffer->next = NULL;
-    return buffer;
-}
-
-static void Textbuffer_dealloc(Textbuffer* self)
-{
-    Textbuffer* next;
-
-    while (self) {
-        free(self->data);
-        next = self->next;
-        free(self);
-        self = next;
-    }
-}
-
-/*
-    Write a Unicode codepoint to the given textbuffer.
-*/
-static int Textbuffer_write(Textbuffer** this, Py_UNICODE code)
-{
-    Textbuffer* self = *this;
-
-    if (self->size == TEXTBUFFER_BLOCKSIZE) {
-        Textbuffer* new = Textbuffer_new();
-        if (!new)
-            return -1;
-        new->next = self;
-        self->prev = new;
-        *this = self = new;
-    }
-    self->data[self->size++] = code;
-    return 0;
-}
-
-/*
-    Return the contents of the textbuffer as a Python Unicode object.
-*/
-static PyObject* Textbuffer_render(Textbuffer* self)
-{
-    PyObject *result = PyUnicode_FromUnicode(self->data, self->size);
-    PyObject *left, *concat;
-
-    while (self->next) {
-        self = self->next;
-        left = PyUnicode_FromUnicode(self->data, self->size);
-        concat = PyUnicode_Concat(left, result);
-        Py_DECREF(left);
-        Py_DECREF(result);
-        result = concat;
-    }
-    return result;
-}
-
-static TagData* TagData_new(void)
-{
-    TagData *self = malloc(sizeof(TagData));
-
-    #define ALLOC_BUFFER(name)     \
-        name = Textbuffer_new();   \
-        if (!name) {               \
-            TagData_dealloc(self); \
-            return NULL;           \
-        }
-
-    if (!self) {
-        PyErr_NoMemory();
-        return NULL;
-    }
-    self->context = TAG_NAME;
-    ALLOC_BUFFER(self->pad_first)
-    ALLOC_BUFFER(self->pad_before_eq)
-    ALLOC_BUFFER(self->pad_after_eq)
-    self->quoter = self->reset = 0;
-    return self;
-}
-
-static void TagData_dealloc(TagData* self)
-{
-    #define DEALLOC_BUFFER(name) \
-        if (name)                \
-            Textbuffer_dealloc(name);
-
-    DEALLOC_BUFFER(self->pad_first);
-    DEALLOC_BUFFER(self->pad_before_eq);
-    DEALLOC_BUFFER(self->pad_after_eq);
-    free(self);
-}
-
-static int TagData_reset_buffers(TagData* self)
-{
-    #define RESET_BUFFER(name)    \
-        Textbuffer_dealloc(name); \
-        name = Textbuffer_new();  \
-        if (!name)                \
-            return -1;
-
-    RESET_BUFFER(self->pad_first)
-    RESET_BUFFER(self->pad_before_eq)
-    RESET_BUFFER(self->pad_after_eq)
-    return 0;
-}
-
-static PyObject*
-Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
-{
-    Tokenizer* self = (Tokenizer*) type->tp_alloc(type, 0);
-    return (PyObject*) self;
-}
-
-static void Tokenizer_dealloc(Tokenizer* self)
-{
-    Stack *this = self->topstack, *next;
-    Py_XDECREF(self->text);
-
-    while (this) {
-        Py_DECREF(this->stack);
-        Textbuffer_dealloc(this->textbuffer);
-        next = this->next;
-        free(this);
-        this = next;
-    }
-    Py_TYPE(self)->tp_free((PyObject*) self);
-}
-
-static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
-{
-    static char* kwlist[] = {NULL};
-
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
-        return -1;
-    self->text = Py_None;
-    Py_INCREF(Py_None);
-    self->topstack = NULL;
-    self->head = self->length = self->global = self->depth = self->cycles = 0;
-    return 0;
-}
-
-/*
-    Add a new token stack, context, and textbuffer to the list.
-*/
-static int Tokenizer_push(Tokenizer* self, uint64_t context)
-{
-    Stack* top = malloc(sizeof(Stack));
-
-    if (!top) {
-        PyErr_NoMemory();
-        return -1;
-    }
-    top->stack = PyList_New(0);
-    top->context = context;
-    top->textbuffer = Textbuffer_new();
-    if (!top->textbuffer)
-        return -1;
-    top->next = self->topstack;
-    self->topstack = top;
-    self->depth++;
-    self->cycles++;
-    return 0;
-}
-
-/*
-    Push the textbuffer onto the stack as a Text node and clear it.
-*/
-static int Tokenizer_push_textbuffer(Tokenizer* self)
-{
-    PyObject *text, *kwargs, *token;
-    Textbuffer* buffer = self->topstack->textbuffer;
-
-    if (buffer->size == 0 && !buffer->next)
-        return 0;
-    text = Textbuffer_render(buffer);
-    if (!text)
-        return -1;
-    kwargs = PyDict_New();
-    if (!kwargs) {
-        Py_DECREF(text);
-        return -1;
-    }
-    PyDict_SetItemString(kwargs, "text", text);
-    Py_DECREF(text);
-    token = PyObject_Call(Text, NOARGS, kwargs);
-    Py_DECREF(kwargs);
-    if (!token)
-        return -1;
-    if (PyList_Append(self->topstack->stack, token)) {
-        Py_DECREF(token);
-        return -1;
-    }
-    Py_DECREF(token);
-    Textbuffer_dealloc(buffer);
-    self->topstack->textbuffer = Textbuffer_new();
-    if (!self->topstack->textbuffer)
-        return -1;
-    return 0;
-}
-
-/*
-    Pop and deallocate the top token stack/context/textbuffer.
-*/
-static void Tokenizer_delete_top_of_stack(Tokenizer* self)
-{
-    Stack* top = self->topstack;
-
-    Py_DECREF(top->stack);
-    Textbuffer_dealloc(top->textbuffer);
-    self->topstack = top->next;
-    free(top);
-    self->depth--;
-}
-
-/*
-    Pop the current stack/context/textbuffer, returing the stack.
-*/
-static PyObject* Tokenizer_pop(Tokenizer* self)
-{
-    PyObject* stack;
-
-    if (Tokenizer_push_textbuffer(self))
-        return NULL;
-    stack = self->topstack->stack;
-    Py_INCREF(stack);
-    Tokenizer_delete_top_of_stack(self);
-    return stack;
-}
-
-/*
-    Pop the current stack/context/textbuffer, returing the stack. We will also
-    replace the underlying stack's context with the current stack's.
-*/
-static PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
-{
-    PyObject* stack;
-    uint64_t context;
-
-    if (Tokenizer_push_textbuffer(self))
-        return NULL;
-    stack = self->topstack->stack;
-    Py_INCREF(stack);
-    context = self->topstack->context;
-    Tokenizer_delete_top_of_stack(self);
-    self->topstack->context = context;
-    return stack;
-}
-
-/*
-    Fail the current tokenization route. Discards the current
-    stack/context/textbuffer and sets the BAD_ROUTE flag.
-*/
-static void* Tokenizer_fail_route(Tokenizer* self)
-{
-    uint64_t context = self->topstack->context;
-    PyObject* stack = Tokenizer_pop(self);
-
-    Py_XDECREF(stack);
-    FAIL_ROUTE(context);
-    return NULL;
-}
-
-/*
-    Write a token to the current token stack.
-*/
-static int Tokenizer_emit_token(Tokenizer* self, PyObject* token, int first)
-{
-    PyObject* instance;
-
-    if (Tokenizer_push_textbuffer(self))
-        return -1;
-    instance = PyObject_CallObject(token, NULL);
-    if (!instance)
-        return -1;
-    if (first ? PyList_Insert(self->topstack->stack, 0, instance) :
-                PyList_Append(self->topstack->stack, instance)) {
-        Py_DECREF(instance);
-        return -1;
-    }
-    Py_DECREF(instance);
-    return 0;
-}
-
-/*
-    Write a token to the current token stack, with kwargs. Steals a reference
-    to kwargs.
-*/
-static int Tokenizer_emit_token_kwargs(Tokenizer* self, PyObject* token,
-                                       PyObject* kwargs, int first)
-{
-    PyObject* instance;
-
-    if (Tokenizer_push_textbuffer(self)) {
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    instance = PyObject_Call(token, NOARGS, kwargs);
-    if (!instance) {
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    if (first ? PyList_Insert(self->topstack->stack, 0, instance):
-                PyList_Append(self->topstack->stack, instance)) {
-        Py_DECREF(instance);
-        Py_DECREF(kwargs);
-        return -1;
-    }
-    Py_DECREF(instance);
-    Py_DECREF(kwargs);
-    return 0;
-}
-
-/*
-    Write a Unicode codepoint to the current textbuffer.
-*/
-static int Tokenizer_emit_char(Tokenizer* self, Py_UNICODE code)
-{
-    return Textbuffer_write(&(self->topstack->textbuffer), code);
-}
-
-/*
-    Write a string of text to the current textbuffer.
-*/
-static int Tokenizer_emit_text(Tokenizer* self, const char* text)
-{
-    int i = 0;
-
-    while (text[i]) {
-        if (Tokenizer_emit_char(self, text[i]))
-            return -1;
-        i++;
-    }
-    return 0;
-}
-
-/*
-    Write the contents of another textbuffer to the current textbuffer,
-    deallocating it in the process.
-*/
-static int
-Tokenizer_emit_textbuffer(Tokenizer* self, Textbuffer* buffer, int reverse)
-{
-    Textbuffer *original = buffer;
-    long i;
-
-    if (reverse) {
-        do {
-            for (i = buffer->size - 1; i >= 0; i--) {
-                if (Tokenizer_emit_char(self, buffer->data[i])) {
-                    Textbuffer_dealloc(original);
-                    return -1;
-                }
-            }
-        } while ((buffer = buffer->next));
-    }
-    else {
-        while (buffer->next)
-            buffer = buffer->next;
-        do {
-            for (i = 0; i < buffer->size; i++) {
-                if (Tokenizer_emit_char(self, buffer->data[i])) {
-                    Textbuffer_dealloc(original);
-                    return -1;
-                }
-            }
-        } while ((buffer = buffer->prev));
-    }
-    Textbuffer_dealloc(original);
-    return 0;
-}
-
-/*
-    Write a series of tokens to the current stack at once.
-*/
-static int Tokenizer_emit_all(Tokenizer* self, PyObject* tokenlist)
-{
-    int pushed = 0;
-    PyObject *stack, *token, *left, *right, *text;
-    Textbuffer* buffer;
-    Py_ssize_t size;
-
-    if (PyList_GET_SIZE(tokenlist) > 0) {
-        token = PyList_GET_ITEM(tokenlist, 0);
-        switch (PyObject_IsInstance(token, Text)) {
-            case 0:
-                break;
-            case 1: {
-                pushed = 1;
-                buffer = self->topstack->textbuffer;
-                if (buffer->size == 0 && !buffer->next)
-                    break;
-                left = Textbuffer_render(buffer);
-                if (!left)
-                    return -1;
-                right = PyObject_GetAttrString(token, "text");
-                if (!right)
-                    return -1;
-                text = PyUnicode_Concat(left, right);
-                Py_DECREF(left);
-                Py_DECREF(right);
-                if (!text)
-                    return -1;
-                if (PyObject_SetAttrString(token, "text", text)) {
-                    Py_DECREF(text);
-                    return -1;
-                }
-                Py_DECREF(text);
-                Textbuffer_dealloc(buffer);
-                self->topstack->textbuffer = Textbuffer_new();
-                if (!self->topstack->textbuffer)
-                    return -1;
-                break;
-            }
-            case -1:
-                return -1;
-        }
-    }
-    if (!pushed) {
-        if (Tokenizer_push_textbuffer(self))
-            return -1;
-    }
-    stack = self->topstack->stack;
-    size = PyList_GET_SIZE(stack);
-    if (PyList_SetSlice(stack, size, size, tokenlist))
-        return -1;
-    return 0;
-}
-
-/*
-    Pop the current stack, write text, and then write the stack. 'text' is a
-    NULL-terminated array of chars.
-*/
-static int Tokenizer_emit_text_then_stack(Tokenizer* self, const char* text)
-{
-    PyObject* stack = Tokenizer_pop(self);
-
-    if (Tokenizer_emit_text(self, text)) {
-        Py_DECREF(stack);
-        return -1;
-    }
-    if (stack) {
-        if (PyList_GET_SIZE(stack) > 0) {
-            if (Tokenizer_emit_all(self, stack)) {
-                Py_DECREF(stack);
-                return -1;
-            }
-        }
-        Py_DECREF(stack);
-    }
-    self->head--;
-    return 0;
-}
-
-/*
-    Read the value at a relative point in the wikicode, forwards.
-*/
-static PyObject* Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
-{
-    Py_ssize_t index = self->head + delta;
-
-    if (index >= self->length)
-        return EMPTY;
-    return PyList_GET_ITEM(self->text, index);
-}
-
-/*
-    Read the value at a relative point in the wikicode, backwards.
-*/
-static PyObject* Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
-{
-    Py_ssize_t index;
-
-    if (delta > self->head)
-        return EMPTY;
-    index = self->head - delta;
-    return PyList_GET_ITEM(self->text, index);
 }
 
 /*
@@ -651,7 +189,7 @@ static int Tokenizer_parse_template_or_argument(Tokenizer* self)
     PyObject *tokenlist;
 
     self->head += 2;
-    while (Tokenizer_READ(self, 0) == '{' && braces < MAX_BRACES) {
+    while (Tokenizer_read(self, 0) == '{' && braces < MAX_BRACES) {
         self->head++;
         braces++;
     }
@@ -882,21 +420,21 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
     static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
     Textbuffer* buffer;
     PyObject* scheme;
-    Py_UNICODE this;
+    Unicode this;
     int slashes, i;
 
     if (Tokenizer_push(self, LC_EXT_LINK_URI))
         return -1;
-    if (Tokenizer_READ(self, 0) == '/' && Tokenizer_READ(self, 1) == '/') {
+    if (Tokenizer_read(self, 0) == '/' && Tokenizer_read(self, 1) == '/') {
         if (Tokenizer_emit_text(self, "//"))
             return -1;
         self->head += 2;
     }
     else {
-        buffer = Textbuffer_new();
+        buffer = Textbuffer_new(&self->text);
         if (!buffer)
             return -1;
-        while ((this = Tokenizer_READ(self, 0))) {
+        while ((this = Tokenizer_read(self, 0))) {
             i = 0;
             while (1) {
                 if (!valid[i])
@@ -905,7 +443,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
                     break;
                 i++;
             }
-            Textbuffer_write(&buffer, this);
+            Textbuffer_write(buffer, this);
             if (Tokenizer_emit_char(self, this)) {
                 Textbuffer_dealloc(buffer);
                 return -1;
@@ -923,8 +461,8 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
             return -1;
         }
         self->head++;
-        slashes = (Tokenizer_READ(self, 0) == '/' &&
-                   Tokenizer_READ(self, 1) == '/');
+        slashes = (Tokenizer_read(self, 0) == '/' &&
+                   Tokenizer_read(self, 1) == '/');
         if (slashes) {
             if (Tokenizer_emit_text(self, "//")) {
                 Textbuffer_dealloc(buffer);
@@ -936,7 +474,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(buffer);
         if (!scheme)
             return -1;
-        if (!IS_SCHEME(scheme, slashes, 0)) {
+        if (!IS_SCHEME(scheme, slashes)) {
             Py_DECREF(scheme);
             Tokenizer_fail_route(self);
             return 0;
@@ -952,46 +490,40 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
 static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
 {
     static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
-    Textbuffer *scheme_buffer = Textbuffer_new(), *temp_buffer;
+    Textbuffer *scheme_buffer = Textbuffer_new(&self->text);
     PyObject *scheme;
-    Py_UNICODE chunk;
-    long i;
+    Unicode chunk;
+    Py_ssize_t i;
     int slashes, j;
 
     if (!scheme_buffer)
         return -1;
     // We have to backtrack through the textbuffer looking for our scheme since
     // it was just parsed as text:
-    temp_buffer = self->topstack->textbuffer;
-    while (temp_buffer) {
-        for (i = temp_buffer->size - 1; i >= 0; i--) {
-            chunk = temp_buffer->data[i];
-            if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
-                goto end_of_loop;
-            j = 0;
-            while (1) {
-                if (!valid[j]) {
-                    Textbuffer_dealloc(scheme_buffer);
-                    FAIL_ROUTE(0);
-                    return 0;
-                }
-                if (chunk == valid[j])
-                    break;
-                j++;
+    for (i = self->topstack->textbuffer->length - 1; i >= 0; i--) {
+        chunk = Textbuffer_read(self->topstack->textbuffer, i);
+        if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
+            goto end_of_loop;
+        j = 0;
+        do {
+            if (!valid[j]) {
+                Textbuffer_dealloc(scheme_buffer);
+                FAIL_ROUTE(0);
+                return 0;
             }
-            Textbuffer_write(&scheme_buffer, chunk);
-        }
-        temp_buffer = temp_buffer->next;
+        } while (chunk != valid[j++]);
+        Textbuffer_write(scheme_buffer, chunk);
     }
     end_of_loop:
+    Textbuffer_reverse(scheme_buffer);
     scheme = Textbuffer_render(scheme_buffer);
     if (!scheme) {
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
-    slashes = (Tokenizer_READ(self, 0) == '/' &&
-               Tokenizer_READ(self, 1) == '/');
-    if (!IS_SCHEME(scheme, slashes, 1)) {
+    slashes = (Tokenizer_read(self, 0) == '/' &&
+               Tokenizer_read(self, 1) == '/');
+    if (!IS_SCHEME(scheme, slashes)) {
         Py_DECREF(scheme);
         Textbuffer_dealloc(scheme_buffer);
         FAIL_ROUTE(0);
@@ -1002,7 +534,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
-    if (Tokenizer_emit_textbuffer(self, scheme_buffer, 1))
+    if (Tokenizer_emit_textbuffer(self, scheme_buffer))
         return -1;
     if (Tokenizer_emit_char(self, ':'))
         return -1;
@@ -1017,29 +549,27 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
 /*
     Handle text in a free external link, including trailing punctuation.
 */
-static int
-Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
-                                Textbuffer** tail, Py_UNICODE this)
+static int Tokenizer_handle_free_link_text(
+    Tokenizer* self, int* parens, Textbuffer* tail, Unicode this)
 {
-    #define PUSH_TAIL_BUFFER(tail, error)                 \
-        if ((tail)->size || (tail)->next) {               \
-            if (Tokenizer_emit_textbuffer(self, tail, 0)) \
-                return error;                             \
-            tail = Textbuffer_new();                      \
-            if (!(tail))                                  \
-                return error;                             \
+    #define PUSH_TAIL_BUFFER(tail, error)                            \
+        if (tail->length > 0) {                                      \
+            if (Textbuffer_concat(self->topstack->textbuffer, tail)) \
+                return error;                                        \
+            if (Textbuffer_reset(tail))                              \
+                return error;                                        \
         }
 
     if (this == '(' && !(*parens)) {
         *parens = 1;
-        PUSH_TAIL_BUFFER(*tail, -1)
+        PUSH_TAIL_BUFFER(tail, -1)
     }
     else if (this == ',' || this == ';' || this == '\\' || this == '.' ||
              this == ':' || this == '!' || this == '?' ||
              (!(*parens) && this == ')'))
         return Textbuffer_write(tail, this);
     else
-        PUSH_TAIL_BUFFER(*tail, -1)
+        PUSH_TAIL_BUFFER(tail, -1)
     return Tokenizer_emit_char(self, this);
 }
 
@@ -1047,10 +577,10 @@ Tokenizer_handle_free_link_text(Tokenizer* self, int* parens,
     Return whether the current head is the end of a free link.
 */
 static int
-Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
+Tokenizer_is_free_link(Tokenizer* self, Unicode this, Unicode next)
 {
     // Built from Tokenizer_parse()'s end sentinels:
-    Py_UNICODE after = Tokenizer_READ(self, 2);
+    Unicode after = Tokenizer_read(self, 2);
     uint64_t ctx = self->topstack->context;
 
     return (!this || this == '\n' || this == '[' || this == ']' ||
@@ -1066,9 +596,9 @@ Tokenizer_is_free_link(Tokenizer* self, Py_UNICODE this, Py_UNICODE next)
 */
 static PyObject*
 Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
-                                     Textbuffer** extra)
+                                     Textbuffer* extra)
 {
-    Py_UNICODE this, next;
+    Unicode this, next;
     int parens = 0;
 
     if (brackets ? Tokenizer_parse_bracketed_uri_scheme(self) :
@@ -1076,23 +606,23 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
         return NULL;
     if (BAD_ROUTE)
         return NULL;
-    this = Tokenizer_READ(self, 0);
+    this = Tokenizer_read(self, 0);
     if (!this || this == '\n' || this == ' ' || this == ']')
         return Tokenizer_fail_route(self);
     if (!brackets && this == '[')
         return Tokenizer_fail_route(self);
     while (1) {
-        this = Tokenizer_READ(self, 0);
-        next = Tokenizer_READ(self, 1);
+        this = Tokenizer_read(self, 0);
+        next = Tokenizer_read(self, 1);
         if (this == '&') {
-            PUSH_TAIL_BUFFER(*extra, NULL)
+            PUSH_TAIL_BUFFER(extra, NULL)
             if (Tokenizer_parse_entity(self))
                 return NULL;
         }
         else if (this == '<' && next == '!'
-                 && Tokenizer_READ(self, 2) == '-'
-                 && Tokenizer_READ(self, 3) == '-') {
-            PUSH_TAIL_BUFFER(*extra, NULL)
+                 && Tokenizer_read(self, 2) == '-'
+                 && Tokenizer_read(self, 3) == '-') {
+            PUSH_TAIL_BUFFER(extra, NULL)
             if (Tokenizer_parse_comment(self))
                 return NULL;
         }
@@ -1103,7 +633,7 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
         else if (!this || this == '\n')
             return Tokenizer_fail_route(self);
         else if (this == '{' && next == '{' && Tokenizer_CAN_RECURSE(self)) {
-            PUSH_TAIL_BUFFER(*extra, NULL)
+            PUSH_TAIL_BUFFER(extra, NULL)
             if (Tokenizer_parse_template_or_argument(self))
                 return NULL;
         }
@@ -1143,7 +673,6 @@ Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
     PyObject *text = PyObject_GetAttrString(PyList_GET_ITEM(link, 0), "text"),
              *split, *scheme;
     Py_ssize_t length;
-    Textbuffer* temp;
 
     if (!text)
         return -1;
@@ -1152,19 +681,9 @@ Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
     if (!split)
         return -1;
     scheme = PyList_GET_ITEM(split, 0);
-    length = PyUnicode_GET_SIZE(scheme);
-    while (length) {
-        temp = self->topstack->textbuffer;
-        if (length <= temp->size) {
-            temp->size -= length;
-            break;
-        }
-        length -= temp->size;
-        self->topstack->textbuffer = temp->next;
-        free(temp->data);
-        free(temp);
-    }
+    length = PyUnicode_GET_LENGTH(scheme);
     Py_DECREF(split);
+    self->topstack->textbuffer->length -= length;
     return 0;
 }
 
@@ -1177,20 +696,20 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
     #define NOT_A_LINK                                        \
         if (!brackets && self->topstack->context & LC_DLTERM) \
             return Tokenizer_handle_dl_term(self);            \
-        return Tokenizer_emit_char(self, Tokenizer_READ(self, 0))
+        return Tokenizer_emit_char(self, Tokenizer_read(self, 0))
 
     Py_ssize_t reset = self->head;
     PyObject *link, *kwargs;
-    Textbuffer *extra = 0;
+    Textbuffer *extra;
 
     if (INVALID_CONTEXT || !(Tokenizer_CAN_RECURSE(self))) {
         NOT_A_LINK;
     }
-    extra = Textbuffer_new();
+    extra = Textbuffer_new(&self->text);
     if (!extra)
         return -1;
     self->head++;
-    link = Tokenizer_really_parse_external_link(self, brackets, &extra);
+    link = Tokenizer_really_parse_external_link(self, brackets, extra);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
@@ -1230,8 +749,8 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
         Textbuffer_dealloc(extra);
         return -1;
     }
-    if (extra->size || extra->next)
-        return Tokenizer_emit_textbuffer(self, extra, 0);
+    if (extra->length > 0)
+        return Tokenizer_emit_textbuffer(self, extra);
     Textbuffer_dealloc(extra);
     return 0;
 }
@@ -1248,7 +767,7 @@ static int Tokenizer_parse_heading(Tokenizer* self)
 
     self->global |= GL_HEADING;
     self->head += 1;
-    while (Tokenizer_READ(self, 0) == '=') {
+    while (Tokenizer_read(self, 0) == '=') {
         best++;
         self->head++;
     }
@@ -1264,7 +783,11 @@ static int Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
-    level = NEW_INT_FUNC(heading->level);
+#ifdef IS_PY3K
+    level = PyLong_FromSsize_t(heading->level);
+#else
+    level = PyInt_FromSsize_t(heading->level);
+#endif
     if (!level) {
         Py_DECREF(heading->title);
         free(heading);
@@ -1319,7 +842,7 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self)
 
     self->head += 1;
     best = 1;
-    while (Tokenizer_READ(self, 0) == '=') {
+    while (Tokenizer_read(self, 0) == '=') {
         best++;
         self->head++;
     }
@@ -1373,8 +896,8 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self)
 */
 static int Tokenizer_really_parse_entity(Tokenizer* self)
 {
-    PyObject *kwargs, *textobj;
-    Py_UNICODE this;
+    PyObject *kwargs, *charobj, *textobj;
+    Unicode this;
     int numeric, hexadecimal, i, j, zeroes, test;
     char *valid, *text, *buffer, *def;
 
@@ -1387,7 +910,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
     if (Tokenizer_emit(self, HTMLEntityStart))
         return -1;
     self->head++;
-    this = Tokenizer_READ(self, 0);
+    this = Tokenizer_read(self, 0);
     if (!this) {
         Tokenizer_fail_route(self);
         return 0;
@@ -1397,7 +920,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
         if (Tokenizer_emit(self, HTMLEntityNumeric))
             return -1;
         self->head++;
-        this = Tokenizer_READ(self, 0);
+        this = Tokenizer_read(self, 0);
         if (!this) {
             Tokenizer_fail_route(self);
             return 0;
@@ -1407,7 +930,12 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
             kwargs = PyDict_New();
             if (!kwargs)
                 return -1;
-            PyDict_SetItemString(kwargs, "char", Tokenizer_read(self, 0));
+            if (!(charobj = PyUnicode_FROM_SINGLE(this))) {
+                Py_DECREF(kwargs);
+                return -1;
+            }
+            PyDict_SetItemString(kwargs, "char", charobj);
+            Py_DECREF(charobj);
             if (Tokenizer_emit_kwargs(self, HTMLEntityHex, kwargs))
                 return -1;
             self->head++;
@@ -1431,7 +959,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
     i = 0;
     zeroes = 0;
     while (1) {
-        this = Tokenizer_READ(self, 0);
+        this = Tokenizer_read(self, 0);
         if (this == ';') {
             if (i == 0)
                 FAIL_ROUTE_AND_EXIT()
@@ -1544,21 +1072,21 @@ static int Tokenizer_parse_comment(Tokenizer* self)
 {
     Py_ssize_t reset = self->head + 3;
     PyObject *comment;
-    Py_UNICODE this;
+    Unicode this;
 
     self->head += 4;
     if (Tokenizer_push(self, 0))
         return -1;
     while (1) {
-        this = Tokenizer_READ(self, 0);
+        this = Tokenizer_read(self, 0);
         if (!this) {
             comment = Tokenizer_pop(self);
             Py_XDECREF(comment);
             self->head = reset;
             return Tokenizer_emit_text(self, "<!--");
         }
-        if (this == '-' && Tokenizer_READ(self, 1) == this &&
-                            Tokenizer_READ(self, 2) == '>') {
+        if (this == '-' && Tokenizer_read(self, 1) == this &&
+                            Tokenizer_read(self, 2) == '>') {
             if (Tokenizer_emit_first(self, CommentStart))
                 return -1;
             if (Tokenizer_emit(self, CommentEnd))
@@ -1595,7 +1123,7 @@ static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
         kwargs = PyDict_New();
         if (!kwargs)
             return -1;
-        tmp = PyUnicode_FromUnicode(&data->quoter, 1);
+        tmp = PyUnicode_FROM_SINGLE(data->quoter);
         if (!tmp)
             return -1;
         PyDict_SetItemString(kwargs, "char", tmp);
@@ -1643,8 +1171,8 @@ static int Tokenizer_push_tag_buffer(Tokenizer* self, TagData* data)
 /*
     Handle whitespace inside of an HTML open tag.
 */
-static int
-Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
+static int Tokenizer_handle_tag_space(
+    Tokenizer* self, TagData* data, Unicode text)
 {
     uint64_t ctx = data->context;
     uint64_t end_of_value = (ctx & TAG_ATTR_VALUE &&
@@ -1659,7 +1187,7 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
         data->context = TAG_ATTR_READY;
     else if (ctx & TAG_ATTR_NAME) {
         data->context |= TAG_NOTE_EQUALS;
-        if (Textbuffer_write(&(data->pad_before_eq), text))
+        if (Textbuffer_write(data->pad_before_eq, text))
             return -1;
     }
     if (ctx & TAG_QUOTED && !(ctx & TAG_NOTE_SPACE)) {
@@ -1667,18 +1195,18 @@ Tokenizer_handle_tag_space(Tokenizer* self, TagData* data, Py_UNICODE text)
             return -1;
     }
     else if (data->context & TAG_ATTR_READY)
-        return Textbuffer_write(&(data->pad_first), text);
+        return Textbuffer_write(data->pad_first, text);
     else if (data->context & TAG_ATTR_VALUE)
-        return Textbuffer_write(&(data->pad_after_eq), text);
+        return Textbuffer_write(data->pad_after_eq, text);
     return 0;
 }
 
 /*
     Handle regular text inside of an HTML open tag.
 */
-static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
+static int Tokenizer_handle_tag_text(Tokenizer* self, Unicode text)
 {
-    Py_UNICODE next = Tokenizer_READ(self, 1);
+    Unicode next = Tokenizer_read(self, 1);
 
     if (!is_marker(text) || !Tokenizer_CAN_RECURSE(self))
         return Tokenizer_emit_char(self, text);
@@ -1694,8 +1222,8 @@ static int Tokenizer_handle_tag_text(Tokenizer* self, Py_UNICODE text)
 /*
     Handle all sorts of text data inside of an HTML open tag.
 */
-static int
-Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
+static int Tokenizer_handle_tag_data(
+    Tokenizer* self, TagData* data, Unicode chunk)
 {
     PyObject *trash;
     int first_time, escaped;
@@ -1748,8 +1276,8 @@ Tokenizer_handle_tag_data(Tokenizer* self, TagData* data, Py_UNICODE chunk)
         }
     }
     else {  // data->context & TAG_ATTR_VALUE assured
-        escaped = (Tokenizer_READ_BACKWARDS(self, 1) == '\\' &&
-                   Tokenizer_READ_BACKWARDS(self, 2) != '\\');
+        escaped = (Tokenizer_read_backwards(self, 1) == '\\' &&
+                   Tokenizer_read_backwards(self, 2) != '\\');
         if (data->context & TAG_NOTE_QUOTE) {
             data->context ^= TAG_NOTE_QUOTE;
             if ((chunk == '"' || chunk == '\'') && !escaped) {
@@ -1871,22 +1399,22 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
 {
     Textbuffer* buffer;
     PyObject *buf_tmp, *end_tag, *start_tag;
-    Py_UNICODE this, next;
+    Unicode this, next;
     Py_ssize_t reset;
     int cmp;
 
     while (1) {
-        this = Tokenizer_READ(self, 0);
-        next = Tokenizer_READ(self, 1);
+        this = Tokenizer_read(self, 0);
+        next = Tokenizer_read(self, 1);
         if (!this)
             return Tokenizer_fail_route(self);
         else if (this == '<' && next == '/') {
             self->head += 2;
             reset = self->head - 1;
-            buffer = Textbuffer_new();
+            buffer = Textbuffer_new(&self->text);
             if (!buffer)
                 return NULL;
-            while ((this = Tokenizer_READ(self, 0))) {
+            while ((this = Tokenizer_read(self, 0)), 1) {
                 if (this == '>') {
                     buf_tmp = Textbuffer_render(buffer);
                     if (!buf_tmp)
@@ -1906,7 +1434,7 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
                         goto no_matching_end;
                     if (Tokenizer_emit(self, TagOpenClose))
                         return NULL;
-                    if (Tokenizer_emit_textbuffer(self, buffer, 0))
+                    if (Tokenizer_emit_textbuffer(self, buffer))
                         return NULL;
                     if (Tokenizer_emit(self, TagCloseClose))
                         return NULL;
@@ -1920,7 +1448,7 @@ static PyObject* Tokenizer_handle_blacklisted_tag(Tokenizer* self)
                         return NULL;
                     break;
                 }
-                Textbuffer_write(&buffer, this);
+                Textbuffer_write(buffer, this);
                 self->head++;
             }
         }
@@ -2017,9 +1545,9 @@ static PyObject* Tokenizer_handle_single_tag_end(Tokenizer* self)
 */
 static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
 {
-    TagData *data = TagData_new();
+    TagData *data = TagData_new(&self->text);
     PyObject *token, *text, *trash;
-    Py_UNICODE this, next;
+    Unicode this, next;
     int can_exit;
 
     if (!data)
@@ -2033,8 +1561,8 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
         return NULL;
     }
     while (1) {
-        this = Tokenizer_READ(self, 0);
-        next = Tokenizer_READ(self, 1);
+        this = Tokenizer_read(self, 0);
+        next = Tokenizer_read(self, 1);
         can_exit = (!(data->context & (TAG_QUOTED | TAG_NAME)) ||
                     data->context & TAG_NOTE_SPACE);
         if (!this) {
@@ -2102,14 +1630,14 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
     Py_ssize_t reset = self->head + 1, pos = 0;
     Textbuffer* buf;
     PyObject *name, *tag;
-    Py_UNICODE this;
+    Unicode this;
 
     self->head += 2;
-    buf = Textbuffer_new();
+    buf = Textbuffer_new(&self->text);
     if (!buf)
         return -1;
     while (1) {
-        this = Tokenizer_READ(self, pos);
+        this = Tokenizer_read(self, pos);
         if (Py_UNICODE_ISSPACE(this) || is_marker(this)) {
             name = Textbuffer_render(buf);
             if (!name) {
@@ -2121,7 +1649,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
             Py_DECREF(name);
             break;
         }
-        Textbuffer_write(&buf, this);
+        Textbuffer_write(buf, this);
         pos++;
     }
     Textbuffer_dealloc(buf);
@@ -2336,7 +1864,7 @@ static PyObject* Tokenizer_parse_style(Tokenizer* self)
     uint64_t context = self->topstack->context, ticks = 2, i;
 
     self->head += 2;
-    while (Tokenizer_READ(self, 0) == '\'') {
+    while (Tokenizer_read(self, 0) == '\'') {
         self->head++;
         ticks++;
     }
@@ -2398,15 +1926,20 @@ static PyObject* Tokenizer_parse_style(Tokenizer* self)
 */
 static int Tokenizer_handle_list_marker(Tokenizer* self)
 {
-    PyObject *markup = Tokenizer_read(self, 0), *kwargs;
-    Py_UNICODE code = *PyUnicode_AS_UNICODE(markup);
+    PyObject *kwargs, *markup;
+    Unicode code = Tokenizer_read(self, 0);
 
     if (code == ';')
         self->topstack->context |= LC_DLTERM;
     kwargs = PyDict_New();
     if (!kwargs)
         return -1;
+    if (!(markup = PyUnicode_FROM_SINGLE(code))) {
+        Py_DECREF(kwargs);
+        return -1;
+    }
     PyDict_SetItemString(kwargs, "wiki_markup", markup);
+    Py_DECREF(markup);
     if (Tokenizer_emit_kwargs(self, TagOpenOpen, kwargs))
         return -1;
     if (Tokenizer_emit_text(self, GET_HTML_TAG(code)))
@@ -2421,7 +1954,7 @@ static int Tokenizer_handle_list_marker(Tokenizer* self)
 */
 static int Tokenizer_handle_list(Tokenizer* self)
 {
-    Py_UNICODE marker = Tokenizer_READ(self, 1);
+    Unicode marker = Tokenizer_read(self, 1);
 
     if (Tokenizer_handle_list_marker(self))
         return -1;
@@ -2430,7 +1963,7 @@ static int Tokenizer_handle_list(Tokenizer* self)
         self->head++;
         if (Tokenizer_handle_list_marker(self))
             return -1;
-        marker = Tokenizer_READ(self, 1);
+        marker = Tokenizer_read(self, 1);
     }
     return 0;
 }
@@ -2441,18 +1974,18 @@ static int Tokenizer_handle_list(Tokenizer* self)
 static int Tokenizer_handle_hr(Tokenizer* self)
 {
     PyObject *markup, *kwargs;
-    Textbuffer *buffer = Textbuffer_new();
+    Textbuffer *buffer = Textbuffer_new(&self->text);
     int i;
 
     if (!buffer)
         return -1;
     self->head += 3;
     for (i = 0; i < 4; i++) {
-        if (Textbuffer_write(&buffer, '-'))
+        if (Textbuffer_write(buffer, '-'))
             return -1;
     }
-    while (Tokenizer_READ(self, 1) == '-') {
-        if (Textbuffer_write(&buffer, '-'))
+    while (Tokenizer_read(self, 1) == '-') {
+        if (Textbuffer_write(buffer, '-'))
             return -1;
         self->head++;
     }
@@ -2480,7 +2013,7 @@ static int Tokenizer_handle_hr(Tokenizer* self)
 static int Tokenizer_handle_dl_term(Tokenizer* self)
 {
     self->topstack->context ^= LC_DLTERM;
-    if (Tokenizer_READ(self, 0) == ':')
+    if (Tokenizer_read(self, 0) == ':')
         return Tokenizer_handle_list_marker(self);
     return Tokenizer_emit_char(self, '\n');
 }
@@ -2577,9 +2110,9 @@ Tokenizer_emit_table_tag(Tokenizer* self, const char* open_open_markup,
 */
 static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
 {
-    TagData *data = TagData_new();
+    TagData *data = TagData_new(&self->text);
     PyObject *padding, *trash;
-    Py_UNICODE this;
+    Unicode this;
     int can_exit;
 
     if (!data)
@@ -2587,7 +2120,7 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
     data->context = TAG_ATTR_READY;
 
     while (1) {
-        this = Tokenizer_READ(self, 0);
+        this = Tokenizer_read(self, 0);
         can_exit = (!(data->context & TAG_QUOTED) || data->context & TAG_NOTE_SPACE);
         if (this == end_token && can_exit) {
             if (data->context & (TAG_ATTR_NAME | TAG_ATTR_VALUE)) {
@@ -2597,7 +2130,7 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
                 }
             }
             if (Py_UNICODE_ISSPACE(this))
-                Textbuffer_write(&(data->pad_first), this);
+                Textbuffer_write(data->pad_first, this);
             padding = Textbuffer_render(data->pad_first);
             TagData_dealloc(data);
             if (!padding)
@@ -2879,7 +2412,7 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
     everything is safe, or -1 if the route must be failed.
 */
 static int
-Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
+Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Unicode data)
 {
     if (context & LC_FAIL_NEXT)
         return -1;
@@ -2889,7 +2422,7 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
         } else if (data == '\n' || data == '[' || data == '}' || data == '>') {
             return -1;
         } else if (data == '<') {
-            if (Tokenizer_READ(self, 1) == '!')
+            if (Tokenizer_read(self, 1) == '!')
                 self->topstack->context |= LC_FAIL_NEXT;
             else
                 return -1;
@@ -2905,7 +2438,7 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
             self->topstack->context |= LC_HAS_TEMPLATE | LC_FAIL_NEXT;
             return 0;
         }
-        if (data == '}' || (data == '<' && Tokenizer_READ(self, 1) == '!')) {
+        if (data == '}' || (data == '<' && Tokenizer_read(self, 1) == '!')) {
             self->topstack->context |= LC_FAIL_NEXT;
             return 0;
         }
@@ -2932,8 +2465,8 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
             }
         }
         else if (context & LC_FAIL_ON_LBRACE) {
-            if (data == '{' || (Tokenizer_READ_BACKWARDS(self, 1) == '{' &&
-                                Tokenizer_READ_BACKWARDS(self, 2) == '{')) {
+            if (data == '{' || (Tokenizer_read_backwards(self, 1) == '{' &&
+                                Tokenizer_read_backwards(self, 2) == '{')) {
                 if (context & LC_TEMPLATE)
                     self->topstack->context |= LC_FAIL_ON_EQUALS;
                 else
@@ -2964,9 +2497,9 @@ Tokenizer_verify_safe(Tokenizer* self, uint64_t context, Py_UNICODE data)
 static int Tokenizer_has_leading_whitespace(Tokenizer* self)
 {
     int offset = 1;
-    Py_UNICODE current_character;
+    Unicode current_character;
     while (1) {
-        current_character = Tokenizer_READ_BACKWARDS(self, offset);
+        current_character = Tokenizer_read_backwards(self, offset);
         if (!current_character || current_character == '\n')
             return 1;
         else if (!Py_UNICODE_ISSPACE(current_character))
@@ -2979,10 +2512,10 @@ static int Tokenizer_has_leading_whitespace(Tokenizer* self)
     Parse the wikicode string, using context for when to stop. If push is true,
     we will push a new context, otherwise we won't and context will be ignored.
 */
-static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
+PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
 {
     uint64_t this_context;
-    Py_UNICODE this, next, next_next, last;
+    Unicode this, next, next_next, last;
     PyObject* temp;
 
     if (push) {
@@ -2990,7 +2523,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
             return NULL;
     }
     while (1) {
-        this = Tokenizer_READ(self, 0);
+        this = Tokenizer_read(self, 0);
         this_context = self->topstack->context;
         if (this_context & AGG_UNSAFE) {
             if (Tokenizer_verify_safe(self, this_context, this) < 0) {
@@ -3009,8 +2542,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
         }
         if (!this)
             return Tokenizer_handle_end(self, this_context);
-        next = Tokenizer_READ(self, 1);
-        last = Tokenizer_READ_BACKWARDS(self, 1);
+        next = Tokenizer_read(self, 1);
+        last = Tokenizer_read_backwards(self, 1);
         if (this == next && next == '{') {
             if (Tokenizer_CAN_RECURSE(self)) {
                 if (Tokenizer_parse_template_or_argument(self))
@@ -3034,7 +2567,7 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 return NULL;
         }
         else if (this == next && next == '}' && this_context & LC_ARGUMENT) {
-            if (Tokenizer_READ(self, 2) == '}') {
+            if (Tokenizer_read(self, 2) == '}') {
                 return Tokenizer_handle_argument_end(self);
             }
             if (Tokenizer_emit_char(self, this))
@@ -3081,15 +2614,15 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 return NULL;
         }
         else if (this == '<' && next == '!') {
-            next_next = Tokenizer_READ(self, 2);
-            if (next_next == Tokenizer_READ(self, 3) && next_next == '-') {
+            next_next = Tokenizer_read(self, 2);
+            if (next_next == Tokenizer_read(self, 3) && next_next == '-') {
                 if (Tokenizer_parse_comment(self))
                     return NULL;
             }
             else if (Tokenizer_emit_char(self, this))
                 return NULL;
         }
-        else if (this == '<' && next == '/' && Tokenizer_READ(self, 2)) {
+        else if (this == '<' && next == '/' && Tokenizer_read(self, 2)) {
             if (this_context & LC_TAG_BODY ?
                 Tokenizer_handle_tag_open_close(self) :
                 Tokenizer_handle_invalid_tag_start(self))
@@ -3115,8 +2648,8 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 return NULL;
         }
         else if ((!last || last == '\n') && (this == '-' && this == next &&
-                 this == Tokenizer_READ(self, 2) &&
-                 this == Tokenizer_READ(self, 3))) {
+                 this == Tokenizer_read(self, 2) &&
+                 this == Tokenizer_read(self, 3))) {
             if (Tokenizer_handle_hr(self))
                 return NULL;
         }
@@ -3209,229 +2742,4 @@ static PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
             return NULL;
         self->head++;
     }
-}
-
-/*
-    Build a list of tokens from a string of wikicode and return it.
-*/
-static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
-{
-    PyObject *text, *temp, *tokens;
-    uint64_t context = 0;
-    int skip_style_tags = 0;
-
-    if (PyArg_ParseTuple(args, "U|ii", &text, &context, &skip_style_tags)) {
-        Py_XDECREF(self->text);
-        self->text = PySequence_Fast(text, "expected a sequence");
-    }
-    else {
-        const char* encoded;
-        Py_ssize_t size;
-        /* Failed to parse a Unicode object; try a string instead. */
-        PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "s#|ii", &encoded, &size, &context,
-                              &skip_style_tags))
-            return NULL;
-        temp = PyUnicode_FromStringAndSize(encoded, size);
-        if (!text)
-            return NULL;
-        Py_XDECREF(self->text);
-        text = PySequence_Fast(temp, "expected a sequence");
-        Py_XDECREF(temp);
-        self->text = text;
-    }
-
-    self->head = self->global = self->depth = self->cycles = 0;
-    self->length = PyList_GET_SIZE(self->text);
-    self->skip_style_tags = skip_style_tags;
-    tokens = Tokenizer_parse(self, context, 1);
-
-    if ((!tokens && !PyErr_Occurred()) || self->topstack) {
-        if (!ParserError) {
-            if (load_exceptions())
-                return NULL;
-        }
-        if (BAD_ROUTE) {
-            RESET_ROUTE();
-            PyErr_SetString(ParserError, "C tokenizer exited with BAD_ROUTE");
-        }
-        else if (self->topstack)
-            PyErr_SetString(ParserError,
-                            "C tokenizer exited with non-empty token stack");
-        else
-            PyErr_SetString(ParserError, "C tokenizer exited unexpectedly");
-        return NULL;
-    }
-    return tokens;
-}
-
-static int load_entities(void)
-{
-    PyObject *tempmod, *defmap, *deflist;
-    unsigned numdefs, i;
-#ifdef IS_PY3K
-    PyObject *string;
-#endif
-
-    tempmod = PyImport_ImportModule(ENTITYDEFS_MODULE);
-    if (!tempmod)
-        return -1;
-    defmap = PyObject_GetAttrString(tempmod, "entitydefs");
-    if (!defmap)
-        return -1;
-    Py_DECREF(tempmod);
-    deflist = PyDict_Keys(defmap);
-    if (!deflist)
-        return -1;
-    Py_DECREF(defmap);
-    numdefs = (unsigned) PyList_GET_SIZE(defmap);
-    entitydefs = calloc(numdefs + 1, sizeof(char*));
-    if (!entitydefs)
-        return -1;
-    for (i = 0; i < numdefs; i++) {
-#ifdef IS_PY3K
-        string = PyUnicode_AsASCIIString(PyList_GET_ITEM(deflist, i));
-        if (!string)
-            return -1;
-        entitydefs[i] = PyBytes_AsString(string);
-#else
-        entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
-#endif
-        if (!entitydefs[i])
-            return -1;
-    }
-    Py_DECREF(deflist);
-    return 0;
-}
-
-static int load_tokens(void)
-{
-    PyObject *tempmod, *tokens,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("tokens");
-    char *name = "mwparserfromhell.parser";
-
-    if (!fromlist || !modname)
-        return -1;
-    PyList_SET_ITEM(fromlist, 0, modname);
-    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
-    Py_DECREF(fromlist);
-    if (!tempmod)
-        return -1;
-    tokens = PyObject_GetAttrString(tempmod, "tokens");
-    Py_DECREF(tempmod);
-
-    Text = PyObject_GetAttrString(tokens, "Text");
-
-    TemplateOpen = PyObject_GetAttrString(tokens, "TemplateOpen");
-    TemplateParamSeparator = PyObject_GetAttrString(tokens,
-                                                    "TemplateParamSeparator");
-    TemplateParamEquals = PyObject_GetAttrString(tokens,
-                                                 "TemplateParamEquals");
-    TemplateClose = PyObject_GetAttrString(tokens, "TemplateClose");
-
-    ArgumentOpen = PyObject_GetAttrString(tokens, "ArgumentOpen");
-    ArgumentSeparator = PyObject_GetAttrString(tokens, "ArgumentSeparator");
-    ArgumentClose = PyObject_GetAttrString(tokens, "ArgumentClose");
-
-    WikilinkOpen = PyObject_GetAttrString(tokens, "WikilinkOpen");
-    WikilinkSeparator = PyObject_GetAttrString(tokens, "WikilinkSeparator");
-    WikilinkClose = PyObject_GetAttrString(tokens, "WikilinkClose");
-
-    ExternalLinkOpen = PyObject_GetAttrString(tokens, "ExternalLinkOpen");
-    ExternalLinkSeparator = PyObject_GetAttrString(tokens,
-                                                   "ExternalLinkSeparator");
-    ExternalLinkClose = PyObject_GetAttrString(tokens, "ExternalLinkClose");
-
-    HTMLEntityStart = PyObject_GetAttrString(tokens, "HTMLEntityStart");
-    HTMLEntityNumeric = PyObject_GetAttrString(tokens, "HTMLEntityNumeric");
-    HTMLEntityHex = PyObject_GetAttrString(tokens, "HTMLEntityHex");
-    HTMLEntityEnd = PyObject_GetAttrString(tokens, "HTMLEntityEnd");
-
-    HeadingStart = PyObject_GetAttrString(tokens, "HeadingStart");
-    HeadingEnd = PyObject_GetAttrString(tokens, "HeadingEnd");
-
-    CommentStart = PyObject_GetAttrString(tokens, "CommentStart");
-    CommentEnd = PyObject_GetAttrString(tokens, "CommentEnd");
-
-    TagOpenOpen = PyObject_GetAttrString(tokens, "TagOpenOpen");
-    TagAttrStart = PyObject_GetAttrString(tokens, "TagAttrStart");
-    TagAttrEquals = PyObject_GetAttrString(tokens, "TagAttrEquals");
-    TagAttrQuote = PyObject_GetAttrString(tokens, "TagAttrQuote");
-    TagCloseOpen = PyObject_GetAttrString(tokens, "TagCloseOpen");
-    TagCloseSelfclose = PyObject_GetAttrString(tokens, "TagCloseSelfclose");
-    TagOpenClose = PyObject_GetAttrString(tokens, "TagOpenClose");
-    TagCloseClose = PyObject_GetAttrString(tokens, "TagCloseClose");
-
-    Py_DECREF(tokens);
-    return 0;
-}
-
-static int load_defs(void)
-{
-    PyObject *tempmod,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("definitions");
-    char *name = "mwparserfromhell";
-
-    if (!fromlist || !modname)
-        return -1;
-    PyList_SET_ITEM(fromlist, 0, modname);
-    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
-    Py_DECREF(fromlist);
-    if (!tempmod)
-        return -1;
-    definitions = PyObject_GetAttrString(tempmod, "definitions");
-    Py_DECREF(tempmod);
-    return 0;
-}
-
-static int load_exceptions(void)
-{
-    PyObject *tempmod, *parsermod,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("parser");
-    char *name = "mwparserfromhell";
-
-    if (!fromlist || !modname)
-        return -1;
-    PyList_SET_ITEM(fromlist, 0, modname);
-    tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
-    Py_DECREF(fromlist);
-    if (!tempmod)
-        return -1;
-    parsermod = PyObject_GetAttrString(tempmod, "parser");
-    Py_DECREF(tempmod);
-    ParserError = PyObject_GetAttrString(parsermod, "ParserError");
-    Py_DECREF(parsermod);
-    return 0;
-}
-
-PyMODINIT_FUNC INIT_FUNC_NAME(void)
-{
-    PyObject *module;
-
-    TokenizerType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&TokenizerType) < 0)
-        INIT_ERROR;
-    module = CREATE_MODULE;
-    if (!module)
-        INIT_ERROR;
-    Py_INCREF(&TokenizerType);
-    PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
-    Py_INCREF(Py_True);
-    PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
-    EMPTY = PyUnicode_FromString("");
-    NOARGS = PyTuple_New(0);
-    if (!EMPTY || !NOARGS || load_entities() || load_tokens() || load_defs())
-        INIT_ERROR;
-#ifdef IS_PY3K
-    return module;
-#endif
 }

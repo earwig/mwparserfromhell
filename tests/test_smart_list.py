@@ -52,6 +52,7 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([0, 1, 2], list1[:3])
         self.assertEqual([0, 1, 2, 3, "one", "two"], list1[:])
         self.assertEqual([3, "one", "two"], list1[3:])
+        self.assertEqual([3, "one", "two"], list1[3:100])
         self.assertEqual(["one", "two"], list1[-2:])
         self.assertEqual([0, 1], list1[:-4])
         self.assertEqual([], list1[6:])
@@ -389,28 +390,35 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
 
-        child1.detach()
-        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        child3 = parent[9:]
+        self.assertEqual([8, 8.1, 8.2], child3)
+
+        del parent[8:]
+        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6], child1)
+        self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
+        self.assertEqual([], child3)
+
+        del child1
+        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)
+        self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
+        self.assertEqual([], child3)
+        self.assertEqual(2, len(parent._children))
+
+        del child3
+        self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
         self.assertEqual(1, len(parent._children))
 
         parent.remove(1.9)
         parent.remove(1.8)
-        self.assertEqual([1, 4, 3, 2, 5, 6, 7, 8, 8.1, 8.2], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([1, 4, 3, 2, 5, 6], parent)
         self.assertEqual([4, 3, 2], child2)
 
         parent.reverse()
-        self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
+        self.assertEqual([6, 5, 2, 3, 4, 1], parent)
         self.assertEqual([4, 3, 2], child2)
         self.assertEqual(0, len(parent._children))
-
-        child2.detach()
-        self.assertEqual([8.2, 8.1, 8, 7, 6, 5, 2, 3, 4, 1], parent)
-        self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6, 7, 8, 8.1, 8.2], child1)
-        self.assertEqual([4, 3, 2], child2)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

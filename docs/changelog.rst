@@ -13,13 +13,24 @@ Unreleased
 - Added support for Python 3.5.
 - ``<`` and ``>`` are now disallowed in wikilink titles and template names.
   This includes when denoting tags, but not comments.
-- Fixed the behavior of *preserve_spacing* in :func:`~.Template.add` and
-  *keep_field* in :func:`~.Template.remove` on parameters with hidden keys.
+- Fixed the behavior of *preserve_spacing* in :meth:`.Template.add` and
+  *keep_field* in :meth:`.Template.remove` on parameters with hidden keys.
+- Removed :meth:`._ListProxy.detach`. :class:`.SmartList`\ s now use weak
+  references and their children are garbage-collected properly.
 - Fixed parser bugs involving:
 
   - templates with completely blank names;
   - templates with newlines and comments.
 
+- Heavy refactoring and fixes to the C tokenizer, including:
+
+  - corrected a design flaw in text handling, allowing for substantial speed
+    improvements when parsing long strings of plain text;
+  - implemented new Python 3.3
+    `PEP 393 <https://www.python.org/dev/peps/pep-0393/>`_ Unicode APIs.
+
+- Fixed various bugs in :class:`.SmartList`, including one that was causing
+  memory issues on 64-bit builds of Python 2 on Windows.
 - Fixed some bugs in the release scripts.
 
 v0.4

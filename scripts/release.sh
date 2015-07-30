@@ -31,6 +31,13 @@ update_version() {
     echo " done."
 }
 
+update_appveyor() {
+    filename="appveyor.yml"
+    echo -n "Updating $filename..."
+    sed -e "s/version: .*/version: $VERSION-b{build}/" -i "" $filename
+    echo " done."
+}
+
 update_changelog() {
     filename="CHANGELOG"
     echo -n "Updating $filename..."
@@ -67,18 +74,10 @@ do_git_stuff() {
 }
 
 upload_to_pypi() {
-    # TODO: check whether these commands give output
     echo -n "PyPI: uploading source tarball and docs..."
-    python setup.py register sdist upload -s
-    python setup.py upload_docs
+    python setup.py -q register sdist upload -s
+    python setup.py -q upload_docs
     echo " done."
-}
-
-windows_build() {
-    echo "PyPI: building/uploading Windows binaries..."
-    echo "*** Run in Windows: ./scripts/win_build.py"
-    echo "*** Press enter when done."
-    read
 }
 
 post_release() {
@@ -86,6 +85,7 @@ post_release() {
     echo "*** Release completed."
     echo "*** Update: https://github.com/earwig/mwparserfromhell/releases/tag/v$VERSION"
     echo "*** Verify: https://pypi.python.org/pypi/mwparserfromhell"
+    echo "*** Verify: https://ci.appveyor.com/project/earwig/mwparserfromhell"
     echo "*** Verify: https://mwparserfromhell.readthedocs.org"
     echo "*** Press enter to sanity-check the release."
     read
@@ -153,11 +153,11 @@ cd "$SCRIPT_DIR/.."
 
 check_git
 update_version
+update_appveyor
 update_changelog
 update_docs_changelog
 do_git_stuff
 upload_to_pypi
-windows_build
 post_release
 test_release
 
