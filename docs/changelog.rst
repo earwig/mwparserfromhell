@@ -4,8 +4,8 @@ Changelog
 v0.4.1
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4...develop>`__):
+`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4...v0.4.1>`__):
 
 - The process for building Windows binaries has been fixed, and these should be
   distributed along with new releases. Windows users can now take advantage of
