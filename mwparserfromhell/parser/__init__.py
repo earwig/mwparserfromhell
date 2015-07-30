@@ -40,11 +40,11 @@ class ParserError(Exception):
 
 
 from .builder import Builder
-from .tokenizer import Tokenizer
 try:
     from ._tokenizer import CTokenizer
     use_c = True
 except ImportError:
+    from .tokenizer import Tokenizer
     CTokenizer = None
     use_c = False
 
@@ -70,6 +70,7 @@ class Parser(object):
         if use_c and CTokenizer:
             self._tokenizer = CTokenizer()
         else:
+            from .tokenizer import Tokenizer
             self._tokenizer = Tokenizer()
         self._builder = Builder()
 

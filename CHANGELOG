@@ -1,4 +1,27 @@
-v0.4 (unreleased):
+v0.4.1 (released July 30, 2015):
+
+- The process for building Windows binaries has been fixed, and these should be
+  distributed along with new releases. Windows users can now take advantage of
+  C speedups without having a compiler of their own.
+- Added support for Python 3.5.
+- '<' and '>' are now disallowed in wikilink titles and template names. This
+  includes when denoting tags, but not comments.
+- Fixed the behavior of preserve_spacing in Template.add() and keep_field in
+  Template.remove() on parameters with hidden keys.
+- Removed _ListProxy.detach(). SmartLists now use weak references and their
+  children are garbage-collected properly.
+- Fixed parser bugs involving:
+  - templates with completely blank names;
+  - templates with newlines and comments.
+- Heavy refactoring and fixes to the C tokenizer, including:
+  - corrected a design flaw in text handling, allowing for substantial speed
+    improvements when parsing long strings of plain text;
+  - implemented new Python 3.3 PEP 393 Unicode APIs.
+- Fixed various bugs in SmartList, including one that was causing memory issues
+  on 64-bit builds of Python 2 on Windows.
+- Fixed some bugs in the release scripts.
+
+v0.4 (released May 23, 2015):
 
 - The parser now falls back on pure Python mode if C extensions cannot be
   built. This fixes an issue that prevented some Windows users from installing

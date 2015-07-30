@@ -1,17 +1,3 @@
-name:   blank
-label:  template with no content
-input:  "{{}}"
-output: [TemplateOpen(), TemplateClose()]
-
----
-
-name:   blank_with_params
-label:  template with no content, but pipes and equal signs
-input:  "{{||=|}}"
-output: [TemplateOpen(), TemplateParamSeparator(), TemplateParamSeparator(), TemplateParamEquals(), TemplateParamSeparator(), TemplateClose()]
-
----
-
 name:   no_params
 label:  simplest type of template
 input:  "{{template}}"
@@ -58,6 +44,13 @@ name:   multiple_mixed_params2
 label:  basic template with multiple unnamed/named parameters in another order
 input:  "{{foo|bar|baz|biz=buzz|buff=baff|usr=bin}}"
 output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamSeparator(), Text(text="baz"), TemplateParamSeparator(), Text(text="biz"), TemplateParamEquals(), Text(text="buzz"), TemplateParamSeparator(), Text(text="buff"), TemplateParamEquals(), Text(text="baff"), TemplateParamSeparator(), Text(text="usr"), TemplateParamEquals(), Text(text="bin"), TemplateClose()]
+
+---
+
+name:   blank_params
+label:  template with blank parameters (mix of pipes and equal signs)
+input:  "{{,||=|}}"
+output: [TemplateOpen(), Text(text=","), TemplateParamSeparator(), TemplateParamSeparator(), TemplateParamEquals(), TemplateParamSeparator(), TemplateClose()]
 
 ---
 
@@ -390,6 +383,34 @@ output: [TemplateOpen(), Text(text="foo\n  "), TemplateParamSeparator(), Text(te
 
 ---
 
+name:   invalid_blank
+label:  invalid template with no content
+input:  "{{}}"
+output: [Text(text="{{}}")]
+
+---
+
+name:   invalid_blank_whitespace
+label:  invalid template with no content, but whitespace
+input:  "{{  }}"
+output: [Text(text="{{  }}")]
+
+---
+
+name:   invalid_blank_pipe
+label:  invalid template with no content, but a parameter
+input:  "{{|foo}}"
+output: [Text(text="{{|foo}}")]
+
+---
+
+name:   invalid_blank_whitespace_pipe
+label:  invalid template with no content, but whitespace and a parameter
+input:  "{{  |foo}}"
+output: [Text(text="{{  |foo}}")]
+
+---
+
 name:   invalid_name_left_brace_middle
 label:  invalid characters in template name: left brace in middle
 input:  "{{foo{bar}}"
@@ -506,6 +527,20 @@ name:   invalid_param_name_double_braces
 label:  invalid characters in template parameter name: double left and right braces
 input:  "{{foo|bar{{in\nvalid}}=baz}}"
 output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar{{in\nvalid"), TemplateClose(), Text(text="=baz}}")]
+
+---
+
+name:   invalid_left_angle_bracket
+label:  invalid template: left angle bracket in name
+input:  "{{foo<bar}}"
+output: [Text(text="{{foo<bar}}")]
+
+---
+
+name:   invalid_right_angle_bracket
+label:  invalid template: right angle bracket in name
+input:  "{{foo>bar}}"
+output: [Text(text="{{foo>bar}}")]
 
 ---
 
@@ -651,5 +686,5 @@ output: [Text(text="{{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ {{ 
 
 name:   recursion_opens_and_closes
 label:  test potentially dangerous recursion: template openings and closings
-input:  "{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}"
-output: [Text(text="{{|"), TemplateOpen(), TemplateClose(), Text(text="{{|"), TemplateOpen(), TemplateClose(), TemplateOpen(), TemplateParamSeparator(), TemplateOpen(), TemplateClose(), Text(text="{{"), TemplateParamSeparator(), Text(text="{{"), TemplateClose(), Text(text="{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}{{|{{}}")]
+input:  "{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}"
+output: [Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), TemplateOpen(), Text(text="x"), TemplateParamSeparator(), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x"), TemplateParamSeparator(), Text(text="{{x"), TemplateClose(), Text(text="{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}")]

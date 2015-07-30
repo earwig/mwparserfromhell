@@ -1,0 +1,64 @@
+# This config file is used by appveyor.com to build Windows release binaries
+
+version: 0.4.1-b{build}
+
+branches:
+  only:
+    - master
+
+skip_tags: true
+
+environment:
+  global:
+    # See: http://stackoverflow.com/a/13751649/163740
+    WRAPPER: "cmd /E:ON /V:ON /C .\\scripts\\win_wrapper.cmd"
+    PIP:     "%WRAPPER% %PYTHON%\\Scripts\\pip.exe"
+    SETUPPY: "%WRAPPER% %PYTHON%\\python setup.py --with-extension"
+    PYPI_USERNAME: "earwigbot"
+    PYPI_PASSWORD:
+      secure: gOIcvPxSC2ujuhwOzwj3v8xjq3CCYd8keFWVnguLM+gcL0e02qshDHy7gwZZwj0+
+
+  matrix:
+    - PYTHON:         "C:\\Python27"
+      PYTHON_VERSION: "2.7"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python27-x64"
+      PYTHON_VERSION: "2.7"
+      PYTHON_ARCH:    "64"
+
+    - PYTHON:         "C:\\Python33"
+      PYTHON_VERSION: "3.3"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python33-x64"
+      PYTHON_VERSION: "3.3"
+      PYTHON_ARCH:    "64"
+
+    - PYTHON:         "C:\\Python34"
+      PYTHON_VERSION: "3.4"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python34-x64"
+      PYTHON_VERSION: "3.4"
+      PYTHON_ARCH:    "64"
+
+install:
+  - "%PIP% install wheel twine"
+
+build_script:
+  - "%SETUPPY% build"
+
+test_script:
+  - "%SETUPPY% -q test"
+
+after_test:
+  - "%SETUPPY% bdist_wheel"
+
+on_success:
+  - "twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+
+artifacts:
+  - path: dist\*
+
+deploy: off

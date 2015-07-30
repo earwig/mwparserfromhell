@@ -139,7 +139,7 @@ If you're not using a library, you can parse any page using the following code
     from urllib.parse import urlencode
     from urllib.request import urlopen
     import mwparserfromhell
-    API_URL = "http://en.wikipedia.org/w/api.php"
+    API_URL = "https://en.wikipedia.org/w/api.php"
 
     def parse(title):
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
@@ -156,7 +156,6 @@ If you're not using a library, you can parse any page using the following code
 .. _Legoktm:                http://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _Python Package Index:   http://pypi.python.org
-.. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 .. _get pip:                http://pypi.python.org/pypi/pip
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot

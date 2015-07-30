@@ -5,6 +5,8 @@ python:
     - 3.2
     - 3.3
     - 3.4
+    - 3.5-dev
+sudo: false
 install:
     - pip install coveralls
     - python setup.py build

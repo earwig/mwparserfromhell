@@ -192,11 +192,14 @@ class Tokenizer(object):
                 self._fail_route()
             return self.END
 
-    def _parse_template(self):
+    def _parse_template(self, has_content):
         """Parse a template at the head of the wikicode string."""
         reset = self._head
+        context = contexts.TEMPLATE_NAME
+        if has_content:
+            context |= contexts.HAS_TEMPLATE
         try:
-            template = self._parse(contexts.TEMPLATE_NAME)
+            template = self._parse(context)
         except BadRoute:
             self._head = reset
             raise
@@ -223,6 +226,7 @@ class Tokenizer(object):
         while self._read() == "{":
             self._head += 1
             braces += 1
+        has_content = False
         self._push()
 
         while braces:
@@ -230,7 +234,7 @@ class Tokenizer(object):
                 return self._emit_text_then_stack("{")
             if braces == 2:
                 try:
-                    self._parse_template()
+                    self._parse_template(has_content)
                 except BadRoute:
                     return self._emit_text_then_stack("{{")
                 break
@@ -239,11 +243,12 @@ class Tokenizer(object):
                 braces -= 3
             except BadRoute:
                 try:
-                    self._parse_template()
+                    self._parse_template(has_content)
                     braces -= 2
                 except BadRoute:
                     return self._emit_text_then_stack("{" * braces)
             if braces:
+                has_content = True
                 self._head += 1
 
         self._emit_all(self._pop())
@@ -253,6 +258,8 @@ class Tokenizer(object):
     def _handle_template_param(self):
         """Handle a template parameter at the head of the string."""
         if self._context & contexts.TEMPLATE_NAME:
+            if not self._context & (contexts.HAS_TEXT | contexts.HAS_TEMPLATE):
+                self._fail_route()
             self._context ^= contexts.TEMPLATE_NAME
         elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
@@ -271,7 +278,10 @@ class Tokenizer(object):
 
     def _handle_template_end(self):
         """Handle the end of a template at the head of the string."""
-        if self._context & contexts.TEMPLATE_PARAM_KEY:
+        if self._context & contexts.TEMPLATE_NAME:
+            if not self._context & (contexts.HAS_TEXT | contexts.HAS_TEMPLATE):
+                self._fail_route()
+        elif self._context & contexts.TEMPLATE_PARAM_KEY:
             self._emit_all(self._pop(keep_context=True))
         self._head += 1
         return self._pop()
@@ -610,7 +620,7 @@ class Tokenizer(object):
                 self._head += 2
                 if self._context & contexts.FAIL_NEXT:
                     # _verify_safe() sets this flag while parsing a template
-                    # name when it encounters what might be a comment -- we
+                    # or link when it encounters what might be a comment -- we
                     # must unset it to let _verify_safe() know it was correct:
                     self._context ^= contexts.FAIL_NEXT
                 return
@@ -1172,29 +1182,33 @@ class Tokenizer(object):
         if context & contexts.WIKILINK_TITLE:
             if this == "]" or this == "{":
                 self._context |= contexts.FAIL_NEXT
-            elif this == "\n" or this == "[" or this == "}":
+            elif this == "\n" or this == "[" or this == "}" or this == ">":
                 return False
+            elif this == "<":
+                if self._read(1) == "!":
+                    self._context |= contexts.FAIL_NEXT
+                else:
+                    return False
             return True
         elif context & contexts.EXT_LINK_TITLE:
             return this != "\n"
         elif context & contexts.TEMPLATE_NAME:
-            if this == "{" or this == "}" or this == "[":
+            if this == "{":
+                self._context |= contexts.HAS_TEMPLATE | contexts.FAIL_NEXT
+                return True
+            if this == "}" or (this == "<" and self._read(1) == "!"):
                 self._context |= contexts.FAIL_NEXT
                 return True
-            if this == "]":
+            if this == "[" or this == "]" or this == "<" or this == ">":
                 return False
             if this == "|":
                 return True
             if context & contexts.HAS_TEXT:
                 if context & contexts.FAIL_ON_TEXT:
                     if this is self.END or not this.isspace():
-                        if this == "<" and self._read(1) == "!":
-                            self._context |= contexts.FAIL_NEXT
-                            return True
                         return False
-                else:
-                    if this == "\n":
-                        self._context |= contexts.FAIL_ON_TEXT
+                elif this == "\n":
+                    self._context |= contexts.FAIL_ON_TEXT
             elif this is self.END or not this.isspace():
                 self._context |= contexts.HAS_TEXT
             return True

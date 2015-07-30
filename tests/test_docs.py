@@ -115,8 +115,8 @@ class TestDocs(unittest.TestCase):
     @unittest.skipIf("NOWEB" in os.environ, "web test disabled by environ var")
     def test_readme_5(self):
         """test a block of example code in the README; includes a web call"""
-        url1 = "http://en.wikipedia.org/w/api.php"
-        url2 = "http://en.wikipedia.org/w/index.php?title={0}&action=raw"
+        url1 = "https://en.wikipedia.org/w/api.php"
+        url2 = "https://en.wikipedia.org/w/index.php?title={0}&action=raw"
         title = "Test"
         data = {"action": "query", "prop": "revisions", "rvlimit": 1,
                 "rvprop": "content", "format": "json", "titles": title}

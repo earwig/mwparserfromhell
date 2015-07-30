@@ -17,24 +17,22 @@ Development occurs on GitHub_.
 Installation
 ------------
 
-The easiest way to install the parser is through the `Python Package Index`_,
-so you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). Alternatively, get the latest development version::
+The easiest way to install the parser is through the `Python Package Index`_;
+you can install the latest release with ``pip install mwparserfromhell``
+(`get pip`_). On Windows, make sure you have the latest version of pip
+installed by running ``pip install --upgrade pip``.
+
+Alternatively, get the latest development version::
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
     python setup.py install
 
-If you get ``error: Unable to find vcvarsall.bat`` while installing, this is
-because Windows can't find the compiler for C extensions. Consult this
-`StackOverflow question`_ for help. You can also set ``ext_modules`` in
-``setup.py`` to an empty list to prevent the extension from building.
-
-You can run the comprehensive unit testing suite with ``python setup.py test``.
+You can run the comprehensive unit testing suite with
+``python setup.py test -q``.
 
 .. _Python Package Index:   http://pypi.python.org
 .. _get pip:                http://pypi.python.org/pypi/pip
-.. _StackOverflow question: http://stackoverflow.com/questions/2817869/error-unable-to-find-vcvarsall-bat
 
 Contents
 --------

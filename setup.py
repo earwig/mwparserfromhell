@@ -21,88 +21,67 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import os
+from __future__ import print_function
+from distutils.errors import DistutilsError, CCompilerError
+from glob import glob
+from os import environ
 import sys
 
-if (sys.version_info[0] == 2 and sys.version_info[1] < 6) or \
-   (sys.version_info[1] == 3 and sys.version_info[1] < 2):
-    raise Exception("mwparserfromhell needs Python 2.6+ or 3.2+")
-
-if sys.version_info >= (3, 0):
-    basestring = (str, )
+if ((sys.version_info[0] == 2 and sys.version_info[1] < 6) or
+    (sys.version_info[1] == 3 and sys.version_info[1] < 2)):
+    raise RuntimeError("mwparserfromhell needs Python 2.6+ or 3.2+")
 
 from setuptools import setup, find_packages, Extension
+from setuptools.command.build_ext import build_ext
 
 from mwparserfromhell import __version__
 from mwparserfromhell.compat import py26, py3k
 
-with open("README.rst", **{'encoding':'utf-8'} if py3k else {}) as fp:
+with open("README.rst", **({'encoding':'utf-8'} if py3k else {})) as fp:
     long_docs = fp.read()
 
-tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=["mwparserfromhell/parser/tokenizer.c"],
-                      depends=["mwparserfromhell/parser/tokenizer.h"])
+use_extension = True
+fallback = True
 
-use_extension=True
+# Allow env var WITHOUT_EXTENSION and args --with[out]-extension:
 
-# Allow env var WITHOUT_EXTENSION and args --with[out]-extension
-if '--without-extension' in sys.argv:
+env_var = environ.get("WITHOUT_EXTENSION")
+if "--without-extension" in sys.argv:
     use_extension = False
-elif '--with-extension' in sys.argv:
-    pass
-elif os.environ.get('WITHOUT_EXTENSION', '0') == '1':
-    use_extension = False
+elif "--with-extension" in sys.argv:
+    fallback = False
+elif env_var is not None:
+    if env_var == "1":
+        use_extension = False
+    elif env_var == "0":
+        fallback = False
 
-# Remove the command line argument as it isnt understood by
-# setuptools/distutils
+# Remove the command line argument as it isn't understood by setuptools:
+
 sys.argv = [arg for arg in sys.argv
-            if not arg.startswith('--with')
-            and not arg.endswith('-extension')]
+            if arg != "--without-extension" and arg != "--with-extension"]
 
+def build_ext_patched(self):
+    try:
+        build_ext_original(self)
+    except (DistutilsError, CCompilerError) as exc:
+        print("error: " + str(exc))
+        print("Falling back to pure Python mode.")
+        del self.extensions[:]
 
-def optional_compile_setup(func=setup, use_ext=use_extension,
-                           *args, **kwargs):
-    """
-    Wrap setup to allow optional compilation of extensions.
+if fallback:
+    build_ext.run, build_ext_original = build_ext_patched, build_ext.run
 
-    Falls back to pure python mode (no extensions)
-    if compilation of extensions fails.
-    """
-    extensions = kwargs.get('ext_modules', None)
+# Project-specific part begins here:
 
-    if use_ext and extensions:
-        try:
-            func(*args, **kwargs)
-            return
-        except SystemExit as e:
-            assert(e.args)
-            if e.args[0] is False:
-                raise
-            elif isinstance(e.args[0], basestring):
-                if e.args[0].startswith('usage: '):
-                    raise
-                else:
-                    # Fallback to pure python mode
-                    print('setup with extension failed: %s' % repr(e))
-                    pass
-        except Exception as e:
-            print('setup with extension failed: %s' % repr(e))
+tokenizer = Extension("mwparserfromhell.parser._tokenizer",
+                      sources=glob("mwparserfromhell/parser/ctokenizer/*.c"),
+                      depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
 
-    if extensions:
-        if use_ext:
-            print('Falling back to pure python mode.')
-        else:
-            print('Using pure python mode.')
-
-        del kwargs['ext_modules']
-
-    func(*args, **kwargs)
-
-
-optional_compile_setup(
+setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
-    ext_modules = [tokenizer],
+    ext_modules = [tokenizer] if use_extension else [],
     tests_require = ["unittest2"] if py26 else [],
     test_suite = "tests.discover",
     version = __version__,
@@ -126,6 +105,7 @@ optional_compile_setup(
         "Programming Language :: Python :: 3.2",
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
+        "Programming Language :: Python :: 3.5",
         "Topic :: Text Processing :: Markup"
     ],
 )
