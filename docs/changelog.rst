@@ -4,8 +4,8 @@ Changelog
 v0.4.2
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.1...develop>`__):
+`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.1...v0.4.2>`__):
 
 - Fixed setup script not including header files in releases.
 - Fixed Windows binary uploads.

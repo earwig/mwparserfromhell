@@ -1,4 +1,4 @@
-v0.4.2 (unreleased):
+v0.4.2 (released July 30, 2015):
 
 - Fixed setup script not including header files in releases.
 - Fixed Windows binary uploads.
