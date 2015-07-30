@@ -17,6 +17,8 @@ v0.4.1 (unreleased):
   - corrected a design flaw in text handling, allowing for substantial speed
     improvements when parsing long strings of plain text;
   - implemented new Python 3.3 PEP 393 Unicode APIs.
+- Fixed various bugs in SmartList, including one that was causing memory issues
+  on 64-bit builds of Python 2 on Windows.
 - Fixed some bugs in the release scripts.
 
 v0.4 (released May 23, 2015):

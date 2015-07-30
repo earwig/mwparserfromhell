@@ -29,6 +29,8 @@ Unreleased
   - implemented new Python 3.3
     `PEP 393 <https://www.python.org/dev/peps/pep-0393/>`_ Unicode APIs.
 
+- Fixed various bugs in :class:`.SmartList`, including one that was causing
+  memory issues on 64-bit builds of Python 2 on Windows.
 - Fixed some bugs in the release scripts.
 
 v0.4

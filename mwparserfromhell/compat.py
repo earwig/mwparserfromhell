@@ -18,14 +18,12 @@ if py3k:
     bytes = bytes
     str = str
     range = range
-    maxsize = sys.maxsize
     import html.entities as htmlentities
 
 else:
     bytes = str
     str = unicode
     range = xrange
-    maxsize = sys.maxint
     import htmlentitydefs as htmlentities
 
 del sys

@@ -27,9 +27,10 @@ reflect changes made to the main list, and vice-versa.
 """
 
 from __future__ import unicode_literals
+from sys import maxsize
 from weakref import ref
 
-from .compat import maxsize, py3k
+from .compat import py3k
 
 __all__ = ["SmartList"]
 
@@ -46,16 +47,16 @@ def inheritdoc(method):
 class _SliceNormalizerMixIn(object):
     """MixIn that provides a private method to normalize slices."""
 
-    def _normalize_slice(self, key):
+    def _normalize_slice(self, key, clamp=False):
         """Return a slice equivalent to the input *key*, standardized."""
-        if key.start is not None:
-            start = (len(self) + key.start) if key.start < 0 else key.start
-        else:
+        if key.start is None:
             start = 0
-        if key.stop is not None:
-            stop = (len(self) + key.stop) if key.stop < 0 else key.stop
         else:
-            stop = maxsize
+            start = (len(self) + key.start) if key.start < 0 else key.start
+        if key.stop is None or key.stop == maxsize:
+            stop = len(self) if clamp else None
+        else:
+            stop = (len(self) + key.stop) if key.stop < 0 else key.stop
         return slice(start, stop, key.step or 1)
 
 
@@ -93,7 +94,7 @@ class SmartList(_SliceNormalizerMixIn, list):
     def __getitem__(self, key):
         if not isinstance(key, slice):
             return super(SmartList, self).__getitem__(key)
-        key = self._normalize_slice(key)
+        key = self._normalize_slice(key, clamp=False)
         sliceinfo = [key.start, key.stop, key.step]
         child = _ListProxy(self, sliceinfo)
         child_ref = ref(child, self._delete_child)
@@ -105,7 +106,7 @@ class SmartList(_SliceNormalizerMixIn, list):
             return super(SmartList, self).__setitem__(key, item)
         item = list(item)
         super(SmartList, self).__setitem__(key, item)
-        key = self._normalize_slice(key)
+        key = self._normalize_slice(key, clamp=True)
         diff = len(item) + (key.start - key.stop) // key.step
         if not diff:
             return
@@ -113,13 +114,13 @@ class SmartList(_SliceNormalizerMixIn, list):
         for child, (start, stop, step) in values():
             if start > key.stop:
                 self._children[id(child)][1][0] += diff
-            if stop >= key.stop and stop != maxsize:
+            if stop is not None and stop >= key.stop:
                 self._children[id(child)][1][1] += diff
 
     def __delitem__(self, key):
         super(SmartList, self).__delitem__(key)
         if isinstance(key, slice):
-            key = self._normalize_slice(key)
+            key = self._normalize_slice(key, clamp=True)
         else:
             key = slice(key, key + 1, 1)
         diff = (key.stop - key.start) // key.step
@@ -127,7 +128,7 @@ class SmartList(_SliceNormalizerMixIn, list):
         for child, (start, stop, step) in values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
-            if stop >= key.stop and stop != maxsize:
+            if stop is not None and stop >= key.stop:
                 self._children[id(child)][1][1] -= diff
 
     if not py3k:
@@ -274,24 +275,20 @@ class _ListProxy(_SliceNormalizerMixIn, list):
 
     def __getitem__(self, key):
         if isinstance(key, slice):
-            key = self._normalize_slice(key)
-            if key.stop == maxsize:
-                keystop = self._stop
-            else:
-                keystop = key.stop + self._start
-            adjusted = slice(key.start + self._start, keystop, key.step)
+            key = self._normalize_slice(key, clamp=True)
+            keystart = min(self._start + key.start, self._stop)
+            keystop = min(self._start + key.stop, self._stop)
+            adjusted = slice(keystart, keystop, key.step)
             return self._parent[adjusted]
         else:
             return self._render()[key]
 
     def __setitem__(self, key, item):
         if isinstance(key, slice):
-            key = self._normalize_slice(key)
-            if key.stop == maxsize:
-                keystop = self._stop
-            else:
-                keystop = key.stop + self._start
-            adjusted = slice(key.start + self._start, keystop, key.step)
+            key = self._normalize_slice(key, clamp=True)
+            keystart = min(self._start + key.start, self._stop)
+            keystop = min(self._start + key.stop, self._stop)
+            adjusted = slice(keystart, keystop, key.step)
             self._parent[adjusted] = item
         else:
             length = len(self)
@@ -303,12 +300,10 @@ class _ListProxy(_SliceNormalizerMixIn, list):
 
     def __delitem__(self, key):
         if isinstance(key, slice):
-            key = self._normalize_slice(key)
-            if key.stop == maxsize:
-                keystop = self._stop
-            else:
-                keystop = key.stop + self._start
-            adjusted = slice(key.start + self._start, keystop, key.step)
+            key = self._normalize_slice(key, clamp=True)
+            keystart = min(self._start + key.start, self._stop)
+            keystop = min(self._start + key.stop, self._stop)
+            adjusted = slice(keystart, keystop, key.step)
             del self._parent[adjusted]
         else:
             length = len(self)
@@ -371,7 +366,7 @@ class _ListProxy(_SliceNormalizerMixIn, list):
     @property
     def _stop(self):
         """The ending index of this list, exclusive."""
-        if self._sliceinfo[1] == maxsize:
+        if self._sliceinfo[1] is None:
             return len(self._parent)
         return self._sliceinfo[1]
 
