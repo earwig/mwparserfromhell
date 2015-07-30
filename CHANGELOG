@@ -1,3 +1,8 @@
+v0.4.2 (unreleased):
+
+- Fixed setup script not including header files in releases.
+- Fixed Windows binary uploads.
+
 v0.4.1 (released July 30, 2015):
 
 - The process for building Windows binaries has been fixed, and these should be

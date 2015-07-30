@@ -1,6 +1,15 @@
 Changelog
 =========
 
+v0.4.2
+------
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.1...develop>`__):
+
+- Fixed setup script not including header files in releases.
+- Fixed Windows binary uploads.
+
 v0.4.1
 ------
 
