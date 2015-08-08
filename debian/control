@@ -1,0 +1,13 @@
+Source: python3-mwparserfromhell
+Maintainer: Ben Kurtovic <ben.kurtovic@gmail.com>
+Section: python
+Priority: optional
+Build-Depends: python3-setuptools, python3-all, debhelper (>= 9)
+Standards-Version: 3.9.6
+
+Package: python3-mwparserfromhell
+Architecture: all
+Depends: ${misc:Depends}, ${python3:Depends}
+Description: **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
+ that provides an easy-to-use and outrageously powerful parser for MediaWiki_
+ wikicode.
