@@ -1,0 +1,5 @@
+python3-mwparserfromhell (0.5) UNRELEASED; urgency=medium
+
+  * Initial version of the package
+
+ -- yuvipanda <yuvipanda@riseup.net>  Fri, 07 Aug 2015 18:16:37 -0700
