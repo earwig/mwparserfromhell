@@ -1,8 +1,10 @@
 Source: python-mwparserfromhell
 Maintainer: Ben Kurtovic <ben.kurtovic@gmail.com>
+Uploader: Yuvi Panda <yuvipanda@riseup.net>
 Section: python
 Priority: optional
 Build-Depends: python3-setuptools, python3-all, python-setuptools, python-all, debhelper (>= 9)
+Homepage: https://github.com/earwig/mwparserfromhell
 Standards-Version: 3.9.6
 
 Package: python3-mwparserfromhell
