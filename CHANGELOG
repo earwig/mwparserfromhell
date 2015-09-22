@@ -1,6 +1,6 @@
 v0.5 (unreleased):
 
--
+- Fixed edge cases involving wikilinks inside of external links and vice versa.
 
 v0.4.2 (released July 30, 2015):
 

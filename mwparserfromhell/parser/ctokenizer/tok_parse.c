@@ -47,6 +47,8 @@ typedef struct {
 
 /* Forward declarations */
 
+static PyObject* Tokenizer_really_parse_external_link(
+    Tokenizer*, int, Textbuffer*);
 static int Tokenizer_parse_entity(Tokenizer*);
 static int Tokenizer_parse_comment(Tokenizer*);
 static int Tokenizer_handle_dl_term(Tokenizer*);
@@ -362,30 +364,70 @@ static PyObject* Tokenizer_handle_argument_end(Tokenizer* self)
 static int Tokenizer_parse_wikilink(Tokenizer* self)
 {
     Py_ssize_t reset;
-    PyObject *wikilink;
+    PyObject *extlink, *wikilink, *kwargs;
 
+    reset = self->head + 1;
     self->head += 2;
-    reset = self->head - 1;
-    wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE, 1);
+    // If the wikilink looks like an external link, parse it as such:
+    extlink = Tokenizer_really_parse_external_link(self, 1, NULL);
     if (BAD_ROUTE) {
         RESET_ROUTE();
+        self->head = reset + 1;
+        // Otherwise, actually parse it as a wikilink:
+        wikilink = Tokenizer_parse(self, LC_WIKILINK_TITLE, 1);
+        if (BAD_ROUTE) {
+            RESET_ROUTE();
+            self->head = reset;
+            if (Tokenizer_emit_text(self, "[["))
+                return -1;
+            return 0;
+        }
+        if (!wikilink)
+            return -1;
+        if (Tokenizer_emit(self, WikilinkOpen)) {
+            Py_DECREF(wikilink);
+            return -1;
+        }
+        if (Tokenizer_emit_all(self, wikilink)) {
+            Py_DECREF(wikilink);
+            return -1;
+        }
+        Py_DECREF(wikilink);
+        if (Tokenizer_emit(self, WikilinkClose))
+            return -1;
+        return 0;
+    }
+    if (!extlink)
+        return -1;
+    if (self->topstack->context & LC_EXT_LINK_TITLE) {
+        // In this exceptional case, an external link that looks like a
+        // wikilink inside of an external link is parsed as text:
+        Py_DECREF(extlink);
         self->head = reset;
         if (Tokenizer_emit_text(self, "[["))
             return -1;
         return 0;
     }
-    if (!wikilink)
-        return -1;
-    if (Tokenizer_emit(self, WikilinkOpen)) {
-        Py_DECREF(wikilink);
+    if (Tokenizer_emit_text(self, "[")) {
+        Py_DECREF(extlink);
         return -1;
     }
-    if (Tokenizer_emit_all(self, wikilink)) {
-        Py_DECREF(wikilink);
+    kwargs = PyDict_New();
+    if (!kwargs) {
+        Py_DECREF(extlink);
         return -1;
     }
-    Py_DECREF(wikilink);
-    if (Tokenizer_emit(self, WikilinkClose))
+    PyDict_SetItemString(kwargs, "brackets", Py_True);
+    if (Tokenizer_emit_kwargs(self, ExternalLinkOpen, kwargs)) {
+        Py_DECREF(extlink);
+        return -1;
+    }
+    if (Tokenizer_emit_all(self, extlink)) {
+        Py_DECREF(extlink);
+        return -1;
+    }
+    Py_DECREF(extlink);
+    if (Tokenizer_emit(self, ExternalLinkClose))
         return -1;
     return 0;
 }
@@ -553,7 +595,7 @@ static int Tokenizer_handle_free_link_text(
     Tokenizer* self, int* parens, Textbuffer* tail, Unicode this)
 {
     #define PUSH_TAIL_BUFFER(tail, error)                            \
-        if (tail->length > 0) {                                      \
+        if (tail && tail->length > 0) {                              \
             if (Textbuffer_concat(self->topstack->textbuffer, tail)) \
                 return error;                                        \
             if (Textbuffer_reset(tail))                              \

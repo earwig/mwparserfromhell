@@ -7,7 +7,7 @@ v0.5
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.2...develop>`__):
 
--
+- Fixed edge cases involving wikilinks inside of external links and vice versa.
 
 v0.4.2
 ------

@@ -299,17 +299,34 @@ class Tokenizer(object):
 
     def _parse_wikilink(self):
         """Parse an internal wikilink at the head of the wikicode string."""
+        reset = self._head + 1
         self._head += 2
-        reset = self._head - 1
         try:
-            wikilink = self._parse(contexts.WIKILINK_TITLE)
+            # If the wikilink looks like an external link, parse it as such:
+            link, extra, delta = self._really_parse_external_link(True)
         except BadRoute:
-            self._head = reset
-            self._emit_text("[[")
+            self._head = reset + 1
+            try:
+                # Otherwise, actually parse it as a wikilink:
+                wikilink = self._parse(contexts.WIKILINK_TITLE)
+            except BadRoute:
+                self._head = reset
+                self._emit_text("[[")
+            else:
+                self._emit(tokens.WikilinkOpen())
+                self._emit_all(wikilink)
+                self._emit(tokens.WikilinkClose())
         else:
-            self._emit(tokens.WikilinkOpen())
-            self._emit_all(wikilink)
-            self._emit(tokens.WikilinkClose())
+            if self._context & contexts.EXT_LINK_TITLE:
+                # In this exceptional case, an external link that looks like a
+                # wikilink inside of an external link is parsed as text:
+                self._head = reset
+                self._emit_text("[[")
+                return
+            self._emit_text("[")
+            self._emit(tokens.ExternalLinkOpen(brackets=True))
+            self._emit_all(link)
+            self._emit(tokens.ExternalLinkClose())
 
     def _handle_wikilink_separator(self):
         """Handle the separator between a wikilink's title and its text."""
