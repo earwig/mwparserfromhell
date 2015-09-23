@@ -20,7 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""Contains data about certain markup, like HTML tags and external links."""
+"""
+Contains data about certain markup, like HTML tags and external links.
+
+When updating this file, please also update the the C tokenizer version:
+- mwparserfromhell/parser/ctokenizer/definitions.c
+- mwparserfromhell/parser/ctokenizer/definitions.h
+"""
 
 from __future__ import unicode_literals
 

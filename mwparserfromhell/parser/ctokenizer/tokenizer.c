@@ -162,11 +162,12 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
     self->skip_style_tags = skip_style_tags;
     tokens = Tokenizer_parse(self, context, 1);
 
-    if ((!tokens && !PyErr_Occurred()) || self->topstack) {
-        if (!ParserError) {
-            if (load_exceptions())
-                return NULL;
-        }
+    if (!tokens || self->topstack) {
+        Py_XDECREF(tokens);
+        if (PyErr_Occurred())
+            return NULL;
+        if (!ParserError && load_exceptions() < 0)
+            return NULL;
         if (BAD_ROUTE) {
             RESET_ROUTE();
             PyErr_SetString(ParserError, "C tokenizer exited with BAD_ROUTE");

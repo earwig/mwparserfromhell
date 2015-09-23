@@ -22,6 +22,7 @@ SOFTWARE.
 
 #include "tok_parse.h"
 #include "contexts.h"
+#include "definitions.h"
 #include "tag_data.h"
 #include "tok_support.h"
 #include "tokens.h"
@@ -32,13 +33,6 @@ SOFTWARE.
 
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
-
-#define GET_HTML_TAG(markup) (markup == ':' ? "dd" : markup == ';' ? "dt" : "li")
-#define IS_PARSABLE(tag) (call_def_func("is_parsable", tag, NULL))
-#define IS_SINGLE(tag) (call_def_func("is_single", tag, NULL))
-#define IS_SINGLE_ONLY(tag) (call_def_func("is_single_only", tag, NULL))
-#define IS_SCHEME(scheme, slashes) \
-    (call_def_func("is_scheme", scheme, slashes ? Py_True : Py_False))
 
 typedef struct {
     PyObject* title;
@@ -79,21 +73,6 @@ static int heading_level_from_context(uint64_t n)
     for (level = 1; n > 1; n >>= 1)
         level++;
     return level;
-}
-
-/*
-    Call the given function in definitions.py, using 'in1' and 'in2' as
-    parameters, and return its output as a bool.
-*/
-static int call_def_func(const char* funcname, PyObject* in1, PyObject* in2)
-{
-    PyObject* func = PyObject_GetAttrString(definitions, funcname);
-    PyObject* result = PyObject_CallFunctionObjArgs(func, in1, in2, NULL);
-    int ans = (result == Py_True) ? 1 : 0;
-
-    Py_DECREF(func);
-    Py_DECREF(result);
-    return ans;
 }
 
 /*
@@ -516,7 +495,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
         Textbuffer_dealloc(buffer);
         if (!scheme)
             return -1;
-        if (!IS_SCHEME(scheme, slashes)) {
+        if (!is_scheme(scheme, slashes)) {
             Py_DECREF(scheme);
             Tokenizer_fail_route(self);
             return 0;
@@ -565,7 +544,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     }
     slashes = (Tokenizer_read(self, 0) == '/' &&
                Tokenizer_read(self, 1) == '/');
-    if (!IS_SCHEME(scheme, slashes)) {
+    if (!is_scheme(scheme, slashes)) {
         Py_DECREF(scheme);
         Textbuffer_dealloc(scheme_buffer);
         FAIL_ROUTE(0);
@@ -1634,11 +1613,11 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
             text = PyObject_GetAttrString(token, "text");
             if (!text)
                 return NULL;
-            if (IS_SINGLE_ONLY(text)) {
+            if (is_single_only(text)) {
                 Py_DECREF(text);
                 return Tokenizer_handle_single_only_tag_end(self);
             }
-            if (IS_PARSABLE(text)) {
+            if (is_parsable(text)) {
                 Py_DECREF(text);
                 return Tokenizer_parse(self, 0, 0);
             }
@@ -1686,7 +1665,7 @@ static int Tokenizer_handle_invalid_tag_start(Tokenizer* self)
                 Textbuffer_dealloc(buf);
                 return -1;
             }
-            if (!IS_SINGLE_ONLY(name))
+            if (!is_single_only(name))
                 FAIL_ROUTE(0);
             Py_DECREF(name);
             break;
@@ -2428,7 +2407,7 @@ static PyObject* Tokenizer_handle_end(Tokenizer* self, uint64_t context)
             text = PyObject_GetAttrString(token, "text");
             if (!text)
                 return NULL;
-            single = IS_SINGLE(text);
+            single = is_single(text);
             Py_DECREF(text);
             if (single)
                 return Tokenizer_handle_single_tag_end(self);
