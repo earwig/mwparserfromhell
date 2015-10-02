@@ -30,6 +30,7 @@ SOFTWARE.
 #define DIGITS    "0123456789"
 #define HEXDIGITS "0123456789abcdefABCDEF"
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define URISCHEME "abcdefghijklmnopqrstuvwxyz0123456789+.-"
 
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
@@ -438,7 +439,7 @@ static PyObject* Tokenizer_handle_wikilink_end(Tokenizer* self)
 */
 static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
 {
-    static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
+    static const char* valid = URISCHEME;
     Textbuffer* buffer;
     PyObject* scheme;
     Unicode this;
@@ -510,7 +511,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
 */
 static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
 {
-    static const char* valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-";
+    static const char* valid = URISCHEME;
     Textbuffer *scheme_buffer = Textbuffer_new(&self->text);
     PyObject *scheme;
     Unicode chunk;
@@ -2129,7 +2130,7 @@ Tokenizer_emit_table_tag(Tokenizer* self, const char* open_open_markup,
 /*
     Handle style attributes for a table until an ending token.
 */
-static PyObject* Tokenizer_handle_table_style(Tokenizer* self, char end_token)
+static PyObject* Tokenizer_handle_table_style(Tokenizer* self, Unicode end_token)
 {
     TagData *data = TagData_new(&self->text);
     PyObject *padding, *trash;

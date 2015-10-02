@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "common.h"
 
-static const char MARKERS[] = {
+static const Unicode MARKERS[] = {
     '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
     '-', '!', '\n', '\0'};
 
