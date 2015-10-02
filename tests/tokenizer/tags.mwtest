@@ -632,3 +632,17 @@ name:   unparsable_with_intermediates_normalize
 label:  an unparsable tag with intermediate tags inside of it, requiring normalization
 input:  "<nowiki><ref></ref></nowIKI  >"
 output: [TagOpenOpen(), Text(text="nowiki"), TagCloseOpen(padding=""), Text(text="<ref></ref>"), TagOpenClose(), Text(text="nowIKI  "), TagCloseClose()]
+
+---
+
+name:   non_ascii_open
+label:  a open tag containing non-ASCII characters
+input:  "<éxamplé>"
+output: [Text(text="<éxamplé>")]
+
+---
+
+name:   non_ascii_full
+label:  an open/close tag pair containing non-ASCII characters
+input:  "<éxamplé></éxamplé>"
+output: [TagOpenOpen(), Text(text="éxamplé"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="éxamplé"), TagCloseClose()]
