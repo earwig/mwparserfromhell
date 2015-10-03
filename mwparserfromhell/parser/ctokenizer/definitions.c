@@ -65,8 +65,11 @@ static PyObject* unicode_to_lcase_ascii(PyObject *input, const char **string)
         return NULL;
     bytes = PyUnicode_AsASCIIString(lower);
     Py_DECREF(lower);
-    if (!bytes)
+    if (!bytes) {
+        if (PyErr_Occurred() && PyErr_ExceptionMatches(PyExc_UnicodeEncodeError))
+            PyErr_Clear();
         return NULL;
+    }
     *string = PyBytes_AS_STRING(bytes);
     return bytes;
 }
