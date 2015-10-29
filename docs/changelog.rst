@@ -4,8 +4,8 @@ Changelog
 v0.4.3
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.2...develop>`__):
+`Released October 29, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.2...v0.4.3>`__):
 
 - Added Windows binaries for Python 3.5.
 - Fixed edge cases involving wikilinks inside of external links and vice versa.
