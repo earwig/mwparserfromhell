@@ -54,7 +54,7 @@ environment:
       PYTHON_ARCH:    "64"
 
 install:
-  - "%PIP% install --disable-pip-version-check --upgrade pip"
+  - "%PIP% install --disable-pip-version-check --user --upgrade pip"
   - "%PIP% install wheel twine"
 
 build_script:
