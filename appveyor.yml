@@ -5,6 +5,7 @@ version: 0.4.2-b{build}
 branches:
   only:
     - master
+    - develop
 
 skip_tags: true
 
@@ -65,7 +66,7 @@ after_test:
   - "%SETUPPY% bdist_wheel"
 
 on_success:
-  - "%PYMOD% twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+  - "IF %APPVEYOR_REPO_BRANCH%==master %PYMOD% twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
 
 artifacts:
   - path: dist\*
