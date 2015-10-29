@@ -1,3 +1,9 @@
+v0.4.3 (released October 29, 2015):
+
+- Added Windows binaries for Python 3.5.
+- Fixed edge cases involving wikilinks inside of external links and vice versa.
+- Fixed a C tokenizer crash when a keyboard interrupt happens while parsing.
+
 v0.4.2 (released July 30, 2015):
 
 - Fixed setup script not including header files in releases.

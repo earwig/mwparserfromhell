@@ -82,6 +82,13 @@ output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com"), Exter
 
 ---
 
+name:   brackets_recursive_2
+label:  bracket-enclosed link with a double bracket-enclosed link as the title
+input:  "[http://example.com [[http://example.com]]]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkSeparator(), Text(text="[[http://example.com"), ExternalLinkClose(), Text(text="]]")]
+
+---
+
 name:   period_after
 label:  a period after a free link that is excluded
 input:  "http://example.com."

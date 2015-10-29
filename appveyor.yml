@@ -1,10 +1,11 @@
 # This config file is used by appveyor.com to build Windows release binaries
 
-version: 0.4.2-b{build}
+version: 0.4.3-b{build}
 
 branches:
   only:
     - master
+    - develop
 
 skip_tags: true
 
@@ -44,7 +45,16 @@ environment:
       PYTHON_VERSION: "3.4"
       PYTHON_ARCH:    "64"
 
+    - PYTHON:         "C:\\Python35"
+      PYTHON_VERSION: "3.5"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python35-x64"
+      PYTHON_VERSION: "3.5"
+      PYTHON_ARCH:    "64"
+
 install:
+  - "%PIP% install --disable-pip-version-check --user --upgrade pip"
   - "%PIP% install wheel twine"
 
 build_script:
@@ -57,7 +67,7 @@ after_test:
   - "%SETUPPY% bdist_wheel"
 
 on_success:
-  - "%PYMOD% twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+  - "IF %APPVEYOR_REPO_BRANCH%==master %PYMOD% twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
 
 artifacts:
   - path: dist\*

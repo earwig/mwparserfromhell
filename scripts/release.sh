@@ -65,7 +65,7 @@ do_git_stuff() {
     git commit -qam "release/$VERSION"
     git tag v$VERSION -s -m "version $VERSION"
     git checkout -q master
-    git merge -q --no-ff develop -m "Merge branch 'develop'"
+    git merge -q --no-ff develop -m "Merge develop into master (release/$VERSION)"
     echo -n " pushing..."
     git push -q --tags origin master
     git checkout -q develop

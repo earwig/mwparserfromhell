@@ -175,7 +175,7 @@ output: [WikilinkOpen(), Text(text="File:Example.png"), WikilinkSeparator(), Tex
 ---
 
 name:   external_link_inside_wikilink_title
-label:  an external link inside a wikilink title, which is invalid
+label:  an external link inside a wikilink title, which is not parsed
 input:  "[[File:Example.png http://example.com]]"
 output: [WikilinkOpen(), Text(text="File:Example.png http://example.com"), WikilinkClose()]
 
@@ -318,3 +318,17 @@ name:   incomplete_comment_in_link_title_6
 label:  incomplete comments are invalid in link titles
 input:  "[[foo<!--bar"
 output: [Text(text="[[foo<!--bar")]
+
+---
+
+name:   wikilink_to_external_link_fallback
+label:  an external link enclosed in an extra pair of brackets (see issue #120)
+input:  "[[http://example.com foo bar]]"
+output: [Text(text="["), ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkSeparator(), Text(text="foo bar"), ExternalLinkClose(), Text(text="]")]
+
+---
+
+name:   wikilink_to_external_link_fallback_2
+label:  an external link enclosed in an extra pair of brackets (see issue #120)
+input:  "[[http://example.com]]"
+output: [Text(text="["), ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkClose(), Text(text="]")]
