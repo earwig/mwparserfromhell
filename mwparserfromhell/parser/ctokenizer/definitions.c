@@ -81,11 +81,11 @@ static int unicode_in_string_list(PyObject *input, const char **list)
 {
     const char *string;
     PyObject *temp = unicode_to_lcase_ascii(input, &string);
+    int retval = 0;
 
     if (!temp)
         return 0;
 
-    int retval = 0;
     while (*list) {
         if (!strcmp(*(list++), string)) {
             retval = 1;
