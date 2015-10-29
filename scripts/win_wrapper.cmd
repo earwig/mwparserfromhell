@@ -26,7 +26,6 @@ SET WIN_WDK=c:\Program Files (x86)\Windows Kits\10\Include\wdf
 SET MAJOR_PYTHON_VERSION=%PYTHON_VERSION:~0,1%
 SET MINOR_PYTHON_VERSION=%PYTHON_VERSION:~2%
 
-SET NO_SET_SDK_64=N
 IF %MAJOR_PYTHON_VERSION% == 2 (
     SET WINDOWS_SDK_VERSION="v7.0"
 ) ELSE IF %MAJOR_PYTHON_VERSION% == 3 (
@@ -39,18 +38,18 @@ IF %MAJOR_PYTHON_VERSION% == 2 (
     EXIT 1
 )
 
-IF "%NO_SET_SDK_64%"=="Y" (
+IF "%PYTHON_ARCH%"=="32" (
+    call %COMMAND_TO_RUN% || EXIT 1
+) ELSE IF "%NO_SET_SDK_64%"=="Y" (
     IF EXIST "%WIN_WDK%" (
         :: See: https://connect.microsoft.com/VisualStudio/feedback/details/1610302/
         REN "%WIN_WDK%" 0wdf
     )
    call %COMMAND_TO_RUN% || EXIT 1
-) ELSE IF "%PYTHON_ARCH%"=="64" (
+) ELSE (
     SET DISTUTILS_USE_SDK=1
     SET MSSdk=1
     "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Setup\WindowsSdkVer.exe" -q -version:%WINDOWS_SDK_VERSION%
     "%WIN_SDK_ROOT%\%WINDOWS_SDK_VERSION%\Bin\SetEnv.cmd" /x64 /release
-    call %COMMAND_TO_RUN% || EXIT 1
-) ELSE (
     call %COMMAND_TO_RUN% || EXIT 1
 )
