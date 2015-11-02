@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.5
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.3...develop>`__):
+
+-
+
 v0.4.3
 ------
 
