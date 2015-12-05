@@ -332,3 +332,17 @@ name:   wikilink_to_external_link_fallback_2
 label:  an external link enclosed in an extra pair of brackets (see issue #120)
 input:  "[[http://example.com]]"
 output: [Text(text="["), ExternalLinkOpen(brackets=True), Text(text="http://example.com"), ExternalLinkClose(), Text(text="]")]
+
+---
+
+name:   tables_in_templates
+label:  catch error handling mistakes when wikitables are inside templates
+input:  "{{hello|test\n{|\n|} }}"
+output: [TemplateOpen(), Text(text="hello"), TemplateParamSeparator(), Text(text="test\n"), TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose(), Text(text=" "), TemplateClose()]
+
+---
+
+name:   tables_in_templates_2
+label:  catch error handling mistakes when wikitables are inside templates
+input:  "{{hello|test\n{|\n| }}"
+output: [TemplateOpen(), Text(text="hello"), TemplateParamSeparator(), Text(text="test\n{"), TemplateParamSeparator(), Text(text="\n"), TemplateParamSeparator(), Text(text=" "), TemplateClose()]

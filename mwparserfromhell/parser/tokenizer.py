@@ -1074,14 +1074,14 @@ class Tokenizer(object):
 
     def _parse_table(self):
         """Parse a wikicode table by starting with the first line."""
-        reset = self._head + 1
+        reset = self._head
         self._head += 2
         self._push(contexts.TABLE_OPEN)
         try:
             padding = self._handle_table_style("\n")
         except BadRoute:
             self._head = reset
-            self._emit_text("{|")
+            self._emit_text("{")
             return
         style = self._pop()
 
@@ -1090,7 +1090,7 @@ class Tokenizer(object):
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
             self._head = reset
-            self._emit_text("{|")
+            self._emit_text("{")
             return
 
         self._emit_table_tag("{|", "table", style, padding, None, table, "|}")
@@ -1352,7 +1352,7 @@ class Tokenizer(object):
                 if self._can_recurse():
                     self._parse_table()
                 else:
-                    self._emit_text("{|")
+                    self._emit_text("{")
             elif self._context & contexts.TABLE_OPEN:
                 if this == next == "|" and self._context & contexts.TABLE_TD_LINE:
                     if self._context & contexts.TABLE_CELL_OPEN:

@@ -7,7 +7,10 @@ v0.5
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.3...develop>`__):
 
--
+- Fixed parsing bugs involving:
+
+  - wikitables nested in templates;
+  - wikitable error recovery when unable to recurse.
 
 v0.4.3
 ------
