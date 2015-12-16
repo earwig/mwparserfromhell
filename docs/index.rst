@@ -41,6 +41,7 @@ Contents
    :maxdepth: 2
 
    usage
+   caveats
    integration
    changelog
    API Reference <api/modules>
