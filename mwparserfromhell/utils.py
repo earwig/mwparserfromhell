@@ -62,6 +62,8 @@ def parse_anything(value, context=0, skip_style_tags=False):
         return Parser().parse(str(value), context, skip_style_tags)
     elif value is None:
         return Wikicode(SmartList())
+    elif hasattr(value, "read"):
+        return parse_anything(value.read(), context, skip_style_tags)
     try:
         nodelist = SmartList()
         for item in value:

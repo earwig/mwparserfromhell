@@ -12,6 +12,8 @@ Unreleased
   - wikitables nested in templates;
   - wikitable error recovery when unable to recurse.
 
+- Fixed parsing file-like objects.
+
 v0.4.3
 ------
 
