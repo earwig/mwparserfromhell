@@ -19,8 +19,7 @@ Installation
 
 The easiest way to install the parser is through the `Python Package Index`_;
 you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). On Windows, make sure you have the latest version of pip
-installed by running ``pip install --upgrade pip``.
+(`get pip`_). Make sure your pip is up-to-date first, especially on Windows.
 
 Alternatively, get the latest development version::
 
