@@ -10,7 +10,8 @@ Unreleased
 - Fixed parsing bugs involving:
 
   - wikitables nested in templates;
-  - wikitable error recovery when unable to recurse.
+  - wikitable error recovery when unable to recurse;
+  - templates nested in template parameters before other parameters.
 
 - Fixed parsing file-like objects.
 
