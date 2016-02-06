@@ -222,6 +222,13 @@ output: [TemplateOpen(), TemplateOpen(), TemplateOpen(), TemplateOpen(), Text(te
 
 ---
 
+name:   nested_two_args
+label:  template whose first parameter is unnamed with two templates, followed by a named parameter
+input:  "{{a|{{b}}{{c}}|d=e}}"
+output: [TemplateOpen(), Text(text="a"), TemplateParamSeparator(), TemplateOpen(), Text(text="b"), TemplateClose(), TemplateOpen(), Text(text="c"), TemplateClose(), TemplateParamSeparator(), Text(text="d"), TemplateParamEquals(), Text(text="e"), TemplateClose()]
+
+---
+
 name:   newlines_start
 label:  a newline at the start of a template name
 input:  "{{\nfoobar}}"
@@ -365,7 +372,7 @@ output: [TemplateOpen(), Text(text="\nfoo\n"), TemplateParamSeparator(), Text(te
 name:   newlines_wildcard_redux_invalid
 label:  a variation of the newlines_wildcard_redux test that is invalid
 input:  "{{\nfoo\n|\n{{\nb\nar\n|\nb\naz\n=\nb\niz\n}}\n=\nb\nuzz\n}}"
-output: [Text(text="{{\nfoo\n|\n{{\nb\nar\n|\nb\naz\n=\nb\niz\n}}\n=\nb\nuzz\n}}")]
+output: [TemplateOpen(), Text(text="\nfoo\n"), TemplateParamSeparator(), Text(text="\n{{\nb\nar\n"), TemplateParamSeparator(), Text(text="\nb\naz\n"), TemplateParamEquals(), Text(text="\nb\niz\n"), TemplateClose(), Text(text="\n=\nb\nuzz\n}}")]
 
 ---
 
