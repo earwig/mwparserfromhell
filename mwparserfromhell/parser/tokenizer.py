@@ -264,14 +264,14 @@ class Tokenizer(object):
         elif self._context & contexts.TEMPLATE_PARAM_VALUE:
             self._context ^= contexts.TEMPLATE_PARAM_VALUE
         else:
-            self._emit_all(self._pop(keep_context=True))
+            self._emit_all(self._pop())
         self._context |= contexts.TEMPLATE_PARAM_KEY
         self._emit(tokens.TemplateParamSeparator())
         self._push(self._context)
 
     def _handle_template_param_value(self):
         """Handle a template parameter's value at the head of the string."""
-        self._emit_all(self._pop(keep_context=True))
+        self._emit_all(self._pop())
         self._context ^= contexts.TEMPLATE_PARAM_KEY
         self._context |= contexts.TEMPLATE_PARAM_VALUE
         self._emit(tokens.TemplateParamEquals())
@@ -282,7 +282,7 @@ class Tokenizer(object):
             if not self._context & (contexts.HAS_TEXT | contexts.HAS_TEMPLATE):
                 self._fail_route()
         elif self._context & contexts.TEMPLATE_PARAM_KEY:
-            self._emit_all(self._pop(keep_context=True))
+            self._emit_all(self._pop())
         self._head += 1
         return self._pop()
 
@@ -1338,9 +1338,10 @@ class Tokenizer(object):
                 if result is not None:
                     return result
             elif self._read(-1) in ("\n", self.START) and this in ("#", "*", ";", ":"):
-                    self._handle_list()
-            elif self._read(-1) in ("\n", self.START) and this == next == self._read(2) == self._read(3) == "-":
-                    self._handle_hr()
+                self._handle_list()
+            elif self._read(-1) in ("\n", self.START) and (
+                    this == next == self._read(2) == self._read(3) == "-"):
+                self._handle_hr()
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
                 if this == "\n":

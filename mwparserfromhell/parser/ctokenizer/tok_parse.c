@@ -249,7 +249,7 @@ static int Tokenizer_handle_template_param(Tokenizer* self)
     else if (self->topstack->context & LC_TEMPLATE_PARAM_VALUE)
         self->topstack->context ^= LC_TEMPLATE_PARAM_VALUE;
     if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
-        stack = Tokenizer_pop_keeping_context(self);
+        stack = Tokenizer_pop(self);
         if (!stack)
             return -1;
         if (Tokenizer_emit_all(self, stack)) {
@@ -274,7 +274,7 @@ static int Tokenizer_handle_template_param_value(Tokenizer* self)
 {
     PyObject *stack;
 
-    stack = Tokenizer_pop_keeping_context(self);
+    stack = Tokenizer_pop(self);
     if (!stack)
         return -1;
     if (Tokenizer_emit_all(self, stack)) {
@@ -301,7 +301,7 @@ static PyObject* Tokenizer_handle_template_end(Tokenizer* self)
             return Tokenizer_fail_route(self);
     }
     else if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
-        stack = Tokenizer_pop_keeping_context(self);
+        stack = Tokenizer_pop(self);
         if (!stack)
             return NULL;
         if (Tokenizer_emit_all(self, stack)) {
