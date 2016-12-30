@@ -1,10 +1,13 @@
 v0.5 (unreleased):
 
+- Added support for Python 3.6.
 - Fixed parsing bugs involving:
   - wikitables nested in templates;
   - wikitable error recovery when unable to recurse;
   - templates nested in template parameters before other parameters.
 - Fixed parsing file-like objects.
+- Made builds deterministic.
+- Documented caveats.
 
 v0.4.3 (released October 29, 2015):
 

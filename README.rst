@@ -149,8 +149,8 @@ If you're using Pywikibot_, your code might look like this::
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse any page using the following Python 3 code
-(via the API_)::
+If you're not using a library, you can parse any page using the following
+Python 3 code (via the API_)::
 
     import json
     from urllib.parse import urlencode
