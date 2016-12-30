@@ -75,7 +75,7 @@ if fallback:
 # Project-specific part begins here:
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=glob("mwparserfromhell/parser/ctokenizer/*.c"),
+                      sources=sorted(glob("mwparserfromhell/parser/ctokenizer/*.c")),
                       depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
 
 setup(
