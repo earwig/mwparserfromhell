@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.5
-----
+v0.4.4
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.3...develop>`__):
+`Released December 30, 2016 <https://github.com/earwig/mwparserfromhell/tree/v0.4.4>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.3...v0.4.4>`__):
 
 - Added support for Python 3.6.
 - Fixed parsing bugs involving:
