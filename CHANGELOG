@@ -1,3 +1,7 @@
+v0.5 (unreleased):
+
+- Fixed release script after changes to PyPI.
+
 v0.4.4 (released December 30, 2016):
 
 - Added support for Python 3.6.
