@@ -21,8 +21,7 @@ Installation
 
 The easiest way to install the parser is through the `Python Package Index`_;
 you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). On Windows, make sure you have the latest version of pip
-installed by running ``pip install --upgrade pip``.
+(`get pip`_). Make sure your pip is up-to-date first, especially on Windows.
 
 Alternatively, get the latest development version::
 
@@ -114,6 +113,24 @@ saving the page!) by calling ``str()`` on it::
 
 Likewise, use ``unicode(code)`` in Python 2.
 
+Caveats
+-------
+
+An inherent limitation in wikicode prevents us from generating complete parse
+trees in certain cases. For example, the string ``{{echo|''Hello}}, world!''``
+produces the valid output ``<i>Hello, world!</i>`` in MediaWiki, assuming
+``{{echo}}`` is a template that returns its first parameter. But since
+representing this in mwparserfromhell's node tree would be impossible, we
+compromise by treating the first node (i.e., the template) as plain text,
+parsing only the italics.
+
+The current workaround for cases where you are not interested in text
+formatting is to pass ``skip_style_tags=True`` to ``mwparserfromhell.parse()``.
+This treats ``''`` and ``'''`` like plain text.
+
+A future version of mwparserfromhell will include multiple parsing modes to get
+around this restriction.
+
 Integration
 -----------
 
@@ -132,8 +149,8 @@ If you're using Pywikibot_, your code might look like this::
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse any page using the following code
-(via the API_)::
+If you're not using a library, you can parse any page using the following
+Python 3 code (via the API_)::
 
     import json
     from urllib.parse import urlencode

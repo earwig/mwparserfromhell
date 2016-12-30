@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -62,6 +62,8 @@ def parse_anything(value, context=0, skip_style_tags=False):
         return Parser().parse(str(value), context, skip_style_tags)
     elif value is None:
         return Wikicode(SmartList())
+    elif hasattr(value, "read"):
+        return parse_anything(value.read(), context, skip_style_tags)
     try:
         nodelist = SmartList()
         for item in value:

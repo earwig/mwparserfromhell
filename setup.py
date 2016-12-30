@@ -1,7 +1,7 @@
 #! /usr/bin/env python
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -75,7 +75,7 @@ if fallback:
 # Project-specific part begins here:
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=glob("mwparserfromhell/parser/ctokenizer/*.c"),
+                      sources=sorted(glob("mwparserfromhell/parser/ctokenizer/*.c")),
                       depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
 
 setup(
@@ -106,6 +106,7 @@ setup(
         "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
+        "Programming Language :: Python :: 3.6",
         "Topic :: Text Processing :: Markup"
     ],
 )

@@ -6,6 +6,8 @@ python:
     - 3.3
     - 3.4
     - 3.5
+    - 3.6
+    - nightly
 sudo: false
 install:
     - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install coverage==3.7.1; fi

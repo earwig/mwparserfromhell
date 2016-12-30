@@ -1,6 +1,6 @@
 # This config file is used by appveyor.com to build Windows release binaries
 
-version: 0.4.3-b{build}
+version: 0.4.4-b{build}
 
 branches:
   only:
@@ -15,7 +15,6 @@ environment:
     WRAPPER: "cmd /E:ON /V:ON /C .\\scripts\\win_wrapper.cmd"
     PIP:     "%WRAPPER% %PYTHON%\\Scripts\\pip.exe"
     SETUPPY: "%WRAPPER% %PYTHON%\\python setup.py --with-extension"
-    PYMOD:   "%WRAPPER% %PYTHON%\\python -m"
     PYPI_USERNAME: "earwigbot"
     PYPI_PASSWORD:
       secure: gOIcvPxSC2ujuhwOzwj3v8xjq3CCYd8keFWVnguLM+gcL0e02qshDHy7gwZZwj0+
@@ -67,7 +66,7 @@ after_test:
   - "%SETUPPY% bdist_wheel"
 
 on_success:
-  - "IF %APPVEYOR_REPO_BRANCH%==master %PYMOD% twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+  - "IF %APPVEYOR_REPO_BRANCH%==master %WRAPPER% %PYTHON%\\python -m twine upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
 
 artifacts:
   - path: dist\*

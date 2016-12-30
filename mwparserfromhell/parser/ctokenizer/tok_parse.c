@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2015 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -249,7 +249,7 @@ static int Tokenizer_handle_template_param(Tokenizer* self)
     else if (self->topstack->context & LC_TEMPLATE_PARAM_VALUE)
         self->topstack->context ^= LC_TEMPLATE_PARAM_VALUE;
     if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
-        stack = Tokenizer_pop_keeping_context(self);
+        stack = Tokenizer_pop(self);
         if (!stack)
             return -1;
         if (Tokenizer_emit_all(self, stack)) {
@@ -274,7 +274,7 @@ static int Tokenizer_handle_template_param_value(Tokenizer* self)
 {
     PyObject *stack;
 
-    stack = Tokenizer_pop_keeping_context(self);
+    stack = Tokenizer_pop(self);
     if (!stack)
         return -1;
     if (Tokenizer_emit_all(self, stack)) {
@@ -301,7 +301,7 @@ static PyObject* Tokenizer_handle_template_end(Tokenizer* self)
             return Tokenizer_fail_route(self);
     }
     else if (self->topstack->context & LC_TEMPLATE_PARAM_KEY) {
-        stack = Tokenizer_pop_keeping_context(self);
+        stack = Tokenizer_pop(self);
         if (!stack)
             return NULL;
         if (Tokenizer_emit_all(self, stack)) {
@@ -2190,7 +2190,7 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, Unicode end_token
 */
 static int Tokenizer_parse_table(Tokenizer* self)
 {
-    Py_ssize_t reset = self->head + 1;
+    Py_ssize_t reset = self->head;
     PyObject *style, *padding;
     PyObject *table = NULL;
     self->head += 2;
@@ -2201,7 +2201,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
     if (BAD_ROUTE) {
         RESET_ROUTE();
         self->head = reset;
-        if (Tokenizer_emit_text(self, "{|"))
+        if (Tokenizer_emit_char(self, '{'))
             return -1;
         return 0;
     }
@@ -2220,7 +2220,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
         Py_DECREF(padding);
         Py_DECREF(style);
         self->head = reset;
-        if (Tokenizer_emit_text(self, "{|"))
+        if (Tokenizer_emit_char(self, '{'))
             return -1;
         return 0;
     }
@@ -2689,10 +2689,8 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 if (Tokenizer_parse_table(self))
                     return NULL;
             }
-            else if (Tokenizer_emit_char(self, this) || Tokenizer_emit_char(self, next))
+            else if (Tokenizer_emit_char(self, this))
                 return NULL;
-            else
-                self->head++;
         }
         else if (this_context & LC_TABLE_OPEN) {
             if (this == '|' && next == '|' && this_context & LC_TABLE_TD_LINE) {

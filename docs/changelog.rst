@@ -1,6 +1,23 @@
 Changelog
 =========
 
+v0.4.4
+------
+
+`Released December 30, 2016 <https://github.com/earwig/mwparserfromhell/tree/v0.4.4>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.3...v0.4.4>`__):
+
+- Added support for Python 3.6.
+- Fixed parsing bugs involving:
+
+  - wikitables nested in templates;
+  - wikitable error recovery when unable to recurse;
+  - templates nested in template parameters before other parameters.
+
+- Fixed parsing file-like objects.
+- Made builds deterministic.
+- Documented caveats.
+
 v0.4.3
 ------
 
