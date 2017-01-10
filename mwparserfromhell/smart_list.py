@@ -271,7 +271,7 @@ class _ListProxy(_SliceNormalizerMixIn, list):
             return bool(self._render())
 
     def __len__(self):
-        return (self._stop - self._start) // self._step
+        return max((self._stop - self._start) // self._step, 0)
 
     def __getitem__(self, key):
         if isinstance(key, slice):
