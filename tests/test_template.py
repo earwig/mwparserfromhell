@@ -216,6 +216,7 @@ class TestTemplate(TreeEqualityTestCase):
         node39 = Template(wraptext("a"), [pgenh("1", " b ")])
         node40 = Template(wraptext("a"), [pgenh("1", " b"), pgenh("2", " c")])
         node41 = Template(wraptext("a"), [pgens("1", " b"), pgens("2", " c")])
+        node42 = Template(wraptext("a"), [pgens("b", "  \n")])
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -261,6 +262,7 @@ class TestTemplate(TreeEqualityTestCase):
         node39.add("1", "c")
         node40.add("3", "d")
         node41.add("3", "d")
+        node42.add("b", "hello")
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -308,6 +310,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a|c}}", node39)
         self.assertEqual("{{a| b| c|d}}", node40)
         self.assertEqual("{{a|1= b|2= c|3= d}}", node41)
+        self.assertEqual("{{a|b=hello  \n}}", node42)
 
     def test_remove(self):
         """test Template.remove()"""

@@ -7,7 +7,10 @@ v0.5
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...develop>`__):
 
-- Fixed :meth:`.Wikicode.matches` on iterables besides lists and tuples.
+- Made :meth:`Template.remove(keep_field=True) <.Template.remove>` behave more
+  reasonably when the parameter is already empty.
+- Fixed :meth:`.Wikicode.matches`\ 's behavior on iterables besides lists and
+  tuples.
 - Fixed ``len()`` sometimes raising ``ValueError`` on empty node lists.
 - Fixed release script after changes to PyPI.
 

@@ -1,6 +1,8 @@
 v0.5 (unreleased):
 
-- Fixed Wikicode.matches() on iterables besides lists and tuples.
+- Made Template.remove(keep_field=True) behave more reasonably when the
+  parameter is already empty.
+- Fixed Wikicode.matches()'s behavior on iterables besides lists and tuples.
 - Fixed len() sometimes raising ValueError on empty node lists.
 - Fixed release script after changes to PyPI.
 
