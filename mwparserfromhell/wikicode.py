@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from itertools import chain
 import re
 
-from .compat import py3k, range, str
+from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
 from .string_mixin import StringMixIn
@@ -413,22 +413,23 @@ class Wikicode(StringMixIn):
         """Do a loose equivalency test suitable for comparing page names.
 
         *other* can be any string-like object, including :class:`.Wikicode`, or
-        a tuple of these. This operation is symmetric; both sides are adjusted.
-        Specifically, whitespace and markup is stripped and the first letter's
-        case is normalized. Typical usage is
+        an iterable of these. This operation is symmetric; both sides are
+        adjusted. Specifically, whitespace and markup is stripped and the first
+        letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
         cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
                             if a and b else a == b)
         this = self.strip_code().strip()
-        if isinstance(other, (tuple, list)):
-            for obj in other:
-                that = parse_anything(obj).strip_code().strip()
-                if cmp(this, that):
-                    return True
-            return False
-        that = parse_anything(other).strip_code().strip()
-        return cmp(this, that)
+        if isinstance(other, (str, bytes, Wikicode, Node)):
+            that = parse_anything(other).strip_code().strip()
+            return cmp(this, that)
+
+        for obj in other:
+            that = parse_anything(obj).strip_code().strip()
+            if cmp(this, that):
+                return True
+        return False
 
     def ifilter(self, recursive=True, matches=None, flags=FLAGS,
                 forcetype=None):
