@@ -9,6 +9,9 @@ Unreleased
 
 - Made :meth:`Template.remove(keep_field=True) <.Template.remove>` behave more
   reasonably when the parameter is already empty.
+- :class:`.Wikicode` objects can now be pickled properly (fixed infinite
+  recursion error on incompletely-constructed :class:`.StringMixIn`
+  subclasses).
 - Fixed :meth:`.Wikicode.matches`\ 's behavior on iterables besides lists and
   tuples.
 - Fixed ``len()`` sometimes raising ``ValueError`` on empty node lists.
