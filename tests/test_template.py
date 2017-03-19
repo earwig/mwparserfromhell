@@ -67,12 +67,19 @@ class TestTemplate(TreeEqualityTestCase):
     def test_strip(self):
         """test Template.__strip__()"""
         node1 = Template(wraptext("foobar"))
-        node2 = Template(wraptext("foo"),
-                         [pgenh("1", "bar"), pgens("abc", "def")])
-        for a in (True, False):
-            for b in (True, False):
-                self.assertEqual(None, node1.__strip__(a, b))
-                self.assertEqual(None, node2.__strip__(a, b))
+        node2 = Template(wraptext("foo"), [
+            pgenh("1", "bar"), pgens("foo", ""), pgens("abc", "def")])
+        node3 = Template(wraptext("foo"), [
+            pgenh("1", "foo"),
+            Parameter(wraptext("2"), wrap([Template(wraptext("hello"))]),
+                      showkey=False),
+            pgenh("3", "bar")])
+
+        self.assertEqual(None, node1.__strip__(keep_template_params=False))
+        self.assertEqual(None, node2.__strip__(keep_template_params=False))
+        self.assertEqual("", node1.__strip__(keep_template_params=True))
+        self.assertEqual("bar def", node2.__strip__(keep_template_params=True))
+        self.assertEqual("foo bar", node3.__strip__(keep_template_params=True))
 
     def test_showtree(self):
         """test Template.__showtree__()"""

@@ -37,7 +37,7 @@ class Text(Node):
     def __unicode__(self):
         return self.value
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         return self
 
     def __showtree__(self, write, get, mark):

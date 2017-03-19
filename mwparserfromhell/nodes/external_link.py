@@ -49,12 +49,12 @@ class ExternalLink(Node):
         if self.title is not None:
             yield self.title
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         if self.brackets:
             if self.title:
-                return self.title.strip_code(normalize, collapse)
+                return self.title.strip_code(**kwargs)
             return None
-        return self.url.strip_code(normalize, collapse)
+        return self.url.strip_code(**kwargs)
 
     def __showtree__(self, write, get, mark):
         if self.brackets:

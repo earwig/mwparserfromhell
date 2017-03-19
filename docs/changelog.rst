@@ -9,6 +9,8 @@ Unreleased
 
 - Made :meth:`Template.remove(keep_field=True) <.Template.remove>` behave more
   reasonably when the parameter is already empty.
+- Added the *keep_template_params* argument to :meth:`.Wikicode.strip_code`.
+  If *True*, then template parameters will be preserved in the output.
 - :class:`.Wikicode` objects can now be pickled properly (fixed infinite
   recursion error on incompletely-constructed :class:`.StringMixIn`
   subclasses).

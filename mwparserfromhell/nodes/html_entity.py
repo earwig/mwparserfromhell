@@ -58,8 +58,8 @@ class HTMLEntity(Node):
             return "&#{0}{1};".format(self.hex_char, self.value)
         return "&#{0};".format(self.value)
 
-    def __strip__(self, normalize, collapse):
-        if normalize:
+    def __strip__(self, **kwargs):
+        if kwargs.get("normalize"):
             return self.normalize()
         return self
 

@@ -58,6 +58,12 @@ class Template(Node):
                 yield param.name
             yield param.value
 
+    def __strip__(self, **kwargs):
+        if kwargs.get("keep_template_params"):
+            parts = [param.value.strip_code(**kwargs) for param in self.params]
+            return " ".join(part for part in parts if part)
+        return None
+
     def __showtree__(self, write, get, mark):
         write("{{")
         get(self.name)

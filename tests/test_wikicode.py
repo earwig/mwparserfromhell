@@ -433,7 +433,7 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.strip_code()"""
         # Since individual nodes have test cases for their __strip__ methods,
         # we're only going to do an integration test:
-        code = parse("Foo [[bar]]\n\n{{baz}}\n\n[[a|b]] &Sigma;")
+        code = parse("Foo [[bar]]\n\n{{baz|hello}}\n\n[[a|b]] &Sigma;")
         self.assertEqual("Foo bar\n\nb Σ",
                          code.strip_code(normalize=True, collapse=True))
         self.assertEqual("Foo bar\n\n\n\nb Σ",
@@ -442,6 +442,9 @@ class TestWikicode(TreeEqualityTestCase):
                          code.strip_code(normalize=False, collapse=True))
         self.assertEqual("Foo bar\n\n\n\nb &Sigma;",
                          code.strip_code(normalize=False, collapse=False))
+        self.assertEqual("Foo bar\n\nhello\n\nb Σ",
+                         code.strip_code(normalize=True, collapse=True,
+                                         keep_template_params=True))
 
     def test_get_tree(self):
         """test Wikicode.get_tree()"""

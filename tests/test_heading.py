@@ -52,9 +52,7 @@ class TestHeading(TreeEqualityTestCase):
     def test_strip(self):
         """test Heading.__strip__()"""
         node = Heading(wraptext("foobar"), 3)
-        for a in (True, False):
-            for b in (True, False):
-                self.assertEqual("foobar", node.__strip__(a, b))
+        self.assertEqual("foobar", node.__strip__())
 
     def test_showtree(self):
         """test Heading.__showtree__()"""

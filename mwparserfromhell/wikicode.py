@@ -531,23 +531,33 @@ class Wikicode(StringMixIn):
         # Ensure that earlier sections are earlier in the returned list:
         return [section for i, section in sorted(sections)]
 
-    def strip_code(self, normalize=True, collapse=True):
+    def strip_code(self, normalize=True, collapse=True,
+                   keep_template_params=False):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
         :meth:`~.Node.__strip__` method of :class:`.Node` objects, which
         generally return a subset of their nodes or ``None``. For example,
         templates and tags are removed completely, links are stripped to just
-        their display part, headings are stripped to just their title. If
-        *normalize* is ``True``, various things may be done to strip code
+        their display part, headings are stripped to just their title.
+
+        If *normalize* is ``True``, various things may be done to strip code
         further, such as converting HTML entities like ``&Sigma;``, ``&#931;``,
         and ``&#x3a3;`` to ``Σ``. If *collapse* is ``True``, we will try to
         remove excess whitespace as well (three or more newlines are converted
-        to two, for example).
+        to two, for example). If *keep_template_params* is ``True``, then
+        template parameters will be preserved in the output (normally, they are
+        removed completely).
         """
+        kwargs = {
+            "normalize": normalize,
+            "collapse": collapse,
+            "keep_template_params": keep_template_params
+        }
+
         nodes = []
         for node in self.nodes:
-            stripped = node.__strip__(normalize, collapse)
+            stripped = node.__strip__(**kwargs)
             if stripped:
                 nodes.append(str(stripped))
 
