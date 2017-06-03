@@ -113,6 +113,10 @@ saving the page!) by calling ``str()`` on it::
 
 Likewise, use ``unicode(code)`` in Python 2.
 
+You can get the parent of a node using::
+
+    wikicode.get(wikicode.index(node, True))
+
 Caveats
 -------
 
