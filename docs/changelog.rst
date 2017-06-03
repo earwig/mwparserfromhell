@@ -7,6 +7,11 @@ v0.5
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...develop>`__):
 
+- Added :meth:`.Wikicode.contains` to determine whether a :class:`.Node` or
+  :class:`.Wikicode` object is contained within another :class:`.Wikicode`
+  object.
+- Added :meth:`.Wikicode.get_ancestors` and :meth:`.Wikicode.get_parent` to
+  find all ancestors and the direct parent of a :class:`.Node`, respectively.
 - Made :meth:`Template.remove(keep_field=True) <.Template.remove>` behave more
   reasonably when the parameter is already empty.
 - Added the *keep_template_params* argument to :meth:`.Wikicode.strip_code`.

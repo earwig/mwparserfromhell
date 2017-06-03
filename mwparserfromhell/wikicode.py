@@ -275,6 +275,21 @@ class Wikicode(StringMixIn):
         else:
             self.nodes.pop(index)
 
+    def contains(self, obj):
+        """Return whether this Wikicode object contains *obj*.
+
+        If *obj* is a :class:`.Node` or :class:`.Wikicode` object, then we
+        search for it exactly among all of our children, recursively.
+        Otherwise, this method just uses :meth:`.__contains__` on the string.
+        """
+        if not isinstance(obj, (Node, Wikicode)):
+            return obj in self
+        try:
+            self._do_strong_search(obj, recursive=True)
+        except ValueError:
+            return False
+        return True
+
     def index(self, obj, recursive=False):
         """Return the index of *obj* in the list of nodes.
 
@@ -293,6 +308,52 @@ class Wikicode(StringMixIn):
             elif equivalent(obj, node):
                 return i
         raise ValueError(obj)
+
+    def get_ancestors(self, obj):
+        """Return a list of all ancestor nodes of the :class:`.Node` *obj*.
+
+        The list is ordered from the most shallow ancestor (greatest great-
+        grandparent) to the direct parent. The node itself is not included in
+        the list. For example::
+
+            >>> text = "{{a|{{b|{{c|{{d}}}}}}}}"
+            >>> code = mwparserfromhell.parse(text)
+            >>> node = code.filter_templates(matches=lambda n: n == "{{d}}")[0]
+            >>> code.get_ancestors(node)
+            ['{{a|{{b|{{c|{{d}}}}}}}}', '{{b|{{c|{{d}}}}}}', '{{c|{{d}}}}']
+
+        Will return an empty list if *obj* is at the top level of this Wikicode
+        object. Will raise :exc:`ValueError` if it wasn't found.
+        """
+        def _get_ancestors(code, needle):
+            for node in code.nodes:
+                if node is needle:
+                    return []
+                for code in node.__children__():
+                    ancestors = _get_ancestors(code, needle)
+                    if ancestors is not None:
+                        return [node] + ancestors
+
+        if isinstance(obj, Wikicode):
+            obj = obj.get(0)
+        elif not isinstance(obj, Node):
+            raise ValueError(obj)
+
+        ancestors = _get_ancestors(self, obj)
+        if ancestors is None:
+            raise ValueError(obj)
+        return ancestors
+
+    def get_parent(self, obj):
+        """Return the direct parent node of the :class:`.Node` *obj*.
+
+        This function is equivalent to calling :meth:`.get_ancestors` and
+        taking the last element of the resulting list. Will return None if
+        the node exists but does not have a parent; i.e., it is at the top
+        level of the Wikicode object.
+        """
+        ancestors = self.get_ancestors(obj)
+        return ancestors[-1] if ancestors else None
 
     def insert(self, index, value):
         """Insert *value* at *index* in the list of nodes.
