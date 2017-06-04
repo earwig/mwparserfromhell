@@ -115,21 +115,24 @@ Likewise, use ``unicode(code)`` in Python 2.
 
 Caveats
 -------
+mwparserfromhell generates an abstract syntax tree instead of HTML.
+This has several implications:
 
-An inherent limitation in wikicode prevents us from generating complete parse
-trees in certain cases. For example, the string ``{{echo|''Hello}}, world!''``
-produces the valid output ``<i>Hello, world!</i>`` in MediaWiki, assuming
-``{{echo}}`` is a template that returns its first parameter. But since
-representing this in mwparserfromhell's node tree would be impossible, we
-compromise by treating the first node (i.e., the template) as plain text,
-parsing only the italics.
+* Crossed constructs like ``{{echo|''Hello}}, world!''`` are not supported,
+  since they cannot be represented in the node tree. We compromise by treating
+  the first node (i.e. the template) as plain text, parsing only the italics.
 
-The current workaround for cases where you are not interested in text
-formatting is to pass ``skip_style_tags=True`` to ``mwparserfromhell.parse()``.
-This treats ``''`` and ``'''`` like plain text.
+  The current workaround for cases where you are not interested in text
+  formatting is to pass ``skip_style_tags=True`` to ``mwparserfromhell.parse()``.
+  This treats ``''`` and ``'''`` like plain text.
 
-A future version of mwparserfromhell will include multiple parsing modes to get
-around this restriction.
+  A future version of mwparserfromhell will include multiple parsing modes to get
+  around this restriction.
+
+* Templates adjacent to external links e.g. ``http://example.com{{foo}}`` are
+  considered part of the link, since mwparserfromhell does not know the
+  definition of templates and even if it did the template could only be
+  partially part of the link which also couldn't be represented in the AST.
 
 Integration
 -----------
