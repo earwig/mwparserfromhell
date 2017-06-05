@@ -143,8 +143,8 @@ Configuration unawareness
 * Localized namespace names aren't recognized, e.g. ``[[File:...]]``
   links are treated as regular wikilinks.
 
-* Anything that looks like an XML tag is parsed as a tag since,
-  the available tags are extension-dependent.
+* Anything that looks like an XML tag is parsed as a tag
+  since the available tags are extension-dependent.
 
 Integration
 -----------
