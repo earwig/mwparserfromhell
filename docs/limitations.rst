@@ -32,7 +32,7 @@ the source code only. This has several implications:
 
 Additionally, the parser lacks awareness of certain wiki-specific settings:
 
-* `word-ending links`_ are not supported, since the linktrail rules are
+* `Word-ending links`_ are not supported, since the linktrail rules are
   language-specific.
 
 * Localized namespace names aren't recognized, so file links (such as
@@ -42,4 +42,4 @@ Additionally, the parser lacks awareness of certain wiki-specific settings:
   recognized tag name, since the list of valid tags depends on loaded MediaWiki
   extensions.
 
-.. _word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
+.. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail

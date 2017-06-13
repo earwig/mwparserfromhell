@@ -147,7 +147,7 @@ the source code only. This has several implications:
 
 Additionally, the parser lacks awareness of certain wiki-specific settings:
 
-* `word-ending links`_ are not supported, since the linktrail rules are
+* `Word-ending links`_ are not supported, since the linktrail rules are
   language-specific.
 
 * Localized namespace names aren't recognized, so file links (such as
@@ -200,7 +200,7 @@ Python 3 code (via the API_)::
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _Python Package Index:   http://pypi.python.org
 .. _get pip:                http://pypi.python.org/pypi/pip
-.. _word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
+.. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                    http://mediawiki.org/wiki/API
