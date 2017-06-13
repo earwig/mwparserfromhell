@@ -40,7 +40,7 @@ Contents
    :maxdepth: 2
 
    usage
-   caveats
+   limitations
    integration
    changelog
    API Reference <api/modules>
