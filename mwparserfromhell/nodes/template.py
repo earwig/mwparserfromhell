@@ -136,6 +136,11 @@ class Template(Node):
                 component = str(param.value)
             match = re.search(r"^(\s*).*?(\s*)$", component, FLAGS)
             before, after = match.group(1), match.group(2)
+            if not use_names and component.isspace() and "\n" in before:
+                # If the value is empty, we expect newlines in the whitespace
+                # to be after the content, not before it:
+                before, after = before.split("\n", 1)
+                after = "\n" + after
             before_theories[before] += 1
             after_theories[after] += 1
 
