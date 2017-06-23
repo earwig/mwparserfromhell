@@ -3,6 +3,7 @@
  *		binary search tree), header file
  *
  * Written in 2014-2016 by Eric Biggers <ebiggers3@gmail.com>
+ * Slight changes for compatibility by Ben Kurtovic <ben.kurtovic@gmail.com>
  *
  * To the extent possible under law, the author(s) have dedicated all copyright
  * and related and neighboring rights to this software to the public domain
@@ -20,7 +21,6 @@
 #ifndef _AVL_TREE_H_
 #define _AVL_TREE_H_
 
-#include <stdbool.h>
 #include <stddef.h>
 #include <inttypes.h> /* for uintptr_t */
 
@@ -78,7 +78,7 @@ avl_tree_node_set_unlinked(struct avl_tree_node *node)
 /* Returns true iff the specified AVL tree node has been marked with
  * avl_tree_node_set_unlinked() and has not subsequently been inserted into a
  * tree.  */
-static AVL_INLINE bool
+static AVL_INLINE int
 avl_tree_node_is_unlinked(const struct avl_tree_node *node)
 {
 	return node->parent_balance == (uintptr_t)node;

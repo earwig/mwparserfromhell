@@ -3,6 +3,7 @@
  *		binary search tree), implementation file
  *
  * Written in 2014-2016 by Eric Biggers <ebiggers3@gmail.com>
+ * Slight changes for compatibility by Ben Kurtovic <ben.kurtovic@gmail.com>
  *
  * To the extent possible under law, the author(s) have dedicated all copyright
  * and related and neighboring rights to this software to the public domain
@@ -16,6 +17,11 @@
  * You should have received a copy of the CC0 along with this software; if not
  * see <http://creativecommons.org/publicdomain/zero/1.0/>.
  */
+
+#define false 0
+#define true  1
+
+typedef int bool;
 
 #include "avl_tree.h"
 
