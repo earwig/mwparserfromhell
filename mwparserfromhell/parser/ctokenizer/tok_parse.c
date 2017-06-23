@@ -1548,6 +1548,14 @@ static PyObject* Tokenizer_handle_single_tag_end(Tokenizer* self)
             if (depth == 0)
                 break;
         }
+        is_instance = PyObject_IsInstance(token, TagCloseSelfclose);
+        if (is_instance == -1)
+            return NULL;
+        else if (is_instance == 1) {
+            depth--;
+            if (depth == 0)  // Should never happen
+                return NULL;
+        }
     }
     if (!token || depth > 0)
         return NULL;

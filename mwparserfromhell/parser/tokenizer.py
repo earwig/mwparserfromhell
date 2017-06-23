@@ -819,6 +819,12 @@ class Tokenizer(object):
                 depth -= 1
                 if depth == 0:
                     break
+            elif isinstance(token, tokens.TagCloseSelfclose):
+                depth -= 1
+                if depth == 0:  # pragma: no cover (untestable/exceptional)
+                    raise ParserError(
+                        "_handle_single_tag_end() got an unexpected "
+                        "TagCloseSelfclose")
         else:  # pragma: no cover (untestable/exceptional case)
             raise ParserError("_handle_single_tag_end() missed a TagCloseOpen")
         padding = stack[index].padding

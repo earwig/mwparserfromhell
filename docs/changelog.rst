@@ -27,6 +27,8 @@ Unreleased
 - Fixed :meth:`.Wikicode.matches`\ 's behavior on iterables besides lists and
   tuples.
 - Fixed ``len()`` sometimes raising ``ValueError`` on empty node lists.
+- Fixed a rare parsing bug involving self-closing tags inside the attributes of
+  unpaired tags.
 - Fixed release script after changes to PyPI.
 
 v0.4.4
