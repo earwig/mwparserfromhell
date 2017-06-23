@@ -22,7 +22,7 @@
 #define _AVL_TREE_H_
 
 #include <stddef.h>
-#include <inttypes.h> /* for uintptr_t */
+#include <stdint.h>
 
 #ifdef __GNUC__
 #  define AVL_INLINE inline __attribute__((always_inline))
