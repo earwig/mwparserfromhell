@@ -4,8 +4,8 @@ Changelog
 v0.5
 ----
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...develop>`__):
+`Released June 23, 2017 <https://github.com/earwig/mwparserfromhell/tree/v0.5>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...v0.5>`__):
 
 - Added :meth:`.Wikicode.contains` to determine whether a :class:`.Node` or
   :class:`.Wikicode` object is contained within another :class:`.Wikicode`
