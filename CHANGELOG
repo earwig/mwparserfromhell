@@ -4,6 +4,10 @@ v0.5 (unreleased):
   contained within another Wikicode object.
 - Added Wikicode.get_ancestors() and Wikicode.get_parent() to find all
   ancestors and the direct parent of a Node, respectively.
+- Fixed a long-standing performance issue with deeply nested, invalid syntax
+  (issue #42). The parser should be much faster on certain complex pages. The
+  "max cycle" restriction has also been removed, so some situations where
+  templates at the end of a page were being skipped are now resolved.
 - Made Template.remove(keep_field=True) behave more reasonably when the
   parameter is already empty.
 - Added the keep_template_params argument to Wikicode.strip_code(). If True,

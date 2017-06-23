@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -32,6 +32,7 @@ void Tokenizer_delete_top_of_stack(Tokenizer*);
 PyObject* Tokenizer_pop(Tokenizer*);
 PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
 void* Tokenizer_fail_route(Tokenizer*);
+int Tokenizer_check_route(Tokenizer*, uint64_t);
 
 int Tokenizer_emit_token(Tokenizer*, PyObject*, int);
 int Tokenizer_emit_token_kwargs(Tokenizer*, PyObject*, PyObject*, int);
@@ -47,10 +48,11 @@ Unicode Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
 /* Macros */
 
 #define MAX_DEPTH 40
-#define MAX_CYCLES 100000
-
 #define Tokenizer_CAN_RECURSE(self)                                           \
-    (self->depth < MAX_DEPTH && self->cycles < MAX_CYCLES)
+    (self->depth < MAX_DEPTH)
+#define Tokenizer_IS_CURRENT_STACK(self, id)                                  \
+    (self->topstack->ident.head    == (id).head &&                            \
+     self->topstack->ident.context == (id).context)
 
 #define Tokenizer_emit(self, token)                                           \
     Tokenizer_emit_token(self, token, 0)

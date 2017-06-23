@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -80,6 +80,8 @@ SOFTWARE.
 #define LC_TABLE_ROW_OPEN           0x0000000400000000
 #define LC_TABLE_TD_LINE            0x0000000800000000
 #define LC_TABLE_TH_LINE            0x0000001000000000
+
+#define LC_HTML_ENTITY              0x0000002000000000
 
 /* Global contexts */
 

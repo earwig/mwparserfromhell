@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -445,6 +445,8 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
     Unicode this;
     int slashes, i;
 
+    if (Tokenizer_check_route(self, LC_EXT_LINK_URI) < 0)
+        return 0;
     if (Tokenizer_push(self, LC_EXT_LINK_URI))
         return -1;
     if (Tokenizer_read(self, 0) == '/' && Tokenizer_read(self, 1) == '/') {
@@ -461,7 +463,7 @@ static int Tokenizer_parse_bracketed_uri_scheme(Tokenizer* self)
             while (1) {
                 if (!valid[i])
                     goto end_of_loop;
-                if (this == valid[i])
+                if (this == (Unicode) valid[i])
                     break;
                 i++;
             }
@@ -533,7 +535,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
                 FAIL_ROUTE(0);
                 return 0;
             }
-        } while (chunk != valid[j++]);
+        } while (chunk != (Unicode) valid[j++]);
         Textbuffer_write(scheme_buffer, chunk);
     }
     end_of_loop:
@@ -552,7 +554,12 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         return 0;
     }
     Py_DECREF(scheme);
-    if (Tokenizer_push(self, self->topstack->context | LC_EXT_LINK_URI)) {
+    uint64_t new_context = self->topstack->context | LC_EXT_LINK_URI;
+    if (Tokenizer_check_route(self, new_context) < 0) {
+        Textbuffer_dealloc(scheme_buffer);
+        return 0;
+    }
+    if (Tokenizer_push(self, new_context)) {
         Textbuffer_dealloc(scheme_buffer);
         return -1;
     }
@@ -1000,7 +1007,7 @@ static int Tokenizer_really_parse_entity(Tokenizer* self)
         while (1) {
             if (!valid[j])
                 FAIL_ROUTE_AND_EXIT()
-            if (this == valid[j])
+            if (this == (Unicode) valid[j])
                 break;
             j++;
         }
@@ -1065,11 +1072,14 @@ static int Tokenizer_parse_entity(Tokenizer* self)
     Py_ssize_t reset = self->head;
     PyObject *tokenlist;
 
-    if (Tokenizer_push(self, 0))
+    if (Tokenizer_check_route(self, LC_HTML_ENTITY) < 0)
+        goto on_bad_route;
+    if (Tokenizer_push(self, LC_HTML_ENTITY))
         return -1;
     if (Tokenizer_really_parse_entity(self))
         return -1;
     if (BAD_ROUTE) {
+        on_bad_route:
         RESET_ROUTE();
         self->head = reset;
         if (Tokenizer_emit_char(self, '&'))
@@ -1573,6 +1583,8 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
     int can_exit;
 
     if (!data)
+        return NULL;
+    if (Tokenizer_check_route(self, LC_TAG_OPEN) < 0)
         return NULL;
     if (Tokenizer_push(self, LC_TAG_OPEN)) {
         TagData_dealloc(data);
@@ -2191,14 +2203,17 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, Unicode end_token
 static int Tokenizer_parse_table(Tokenizer* self)
 {
     Py_ssize_t reset = self->head;
-    PyObject *style, *padding;
+    PyObject *style, *padding, *trash;
     PyObject *table = NULL;
     self->head += 2;
 
-    if(Tokenizer_push(self, LC_TABLE_OPEN))
+    if (Tokenizer_check_route(self, LC_TABLE_OPEN) < 0)
+        goto on_bad_route;
+    if (Tokenizer_push(self, LC_TABLE_OPEN))
         return -1;
     padding = Tokenizer_handle_table_style(self, '\n');
     if (BAD_ROUTE) {
+        on_bad_route:
         RESET_ROUTE();
         self->head = reset;
         if (Tokenizer_emit_char(self, '{'))
@@ -2214,11 +2229,16 @@ static int Tokenizer_parse_table(Tokenizer* self)
     }
 
     self->head++;
+    StackIdent restore_point = self->topstack->ident;
     table = Tokenizer_parse(self, LC_TABLE_OPEN, 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();
         Py_DECREF(padding);
         Py_DECREF(style);
+        while (!Tokenizer_IS_CURRENT_STACK(self, restore_point)) {
+            trash = Tokenizer_pop(self);
+            Py_XDECREF(trash);
+        }
         self->head = reset;
         if (Tokenizer_emit_char(self, '{'))
             return -1;
@@ -2243,7 +2263,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
 */
 static int Tokenizer_handle_table_row(Tokenizer* self)
 {
-    PyObject *padding, *style, *row, *trash;
+    PyObject *padding, *style, *row;
     self->head += 2;
 
     if (!Tokenizer_CAN_RECURSE(self)) {
@@ -2253,14 +2273,13 @@ static int Tokenizer_handle_table_row(Tokenizer* self)
         return 0;
     }
 
-    if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
+    if (Tokenizer_check_route(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN) < 0)
+        return 0;
+    if (Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_ROW_OPEN))
         return -1;
     padding = Tokenizer_handle_table_style(self, '\n');
-    if (BAD_ROUTE) {
-        trash = Tokenizer_pop(self);
-        Py_XDECREF(trash);
+    if (BAD_ROUTE)
         return 0;
-    }
     if (!padding)
         return -1;
     style = Tokenizer_pop(self);
@@ -2319,8 +2338,8 @@ Tokenizer_handle_table_cell(Tokenizer* self, const char *markup,
     if (cell_context & LC_TABLE_CELL_STYLE) {
         Py_DECREF(cell);
         self->head = reset;
-        if(Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
-                          line_context))
+        if (Tokenizer_push(self, LC_TABLE_OPEN | LC_TABLE_CELL_OPEN |
+                           line_context))
             return -1;
         padding = Tokenizer_handle_table_style(self, '|');
         if (!padding)
@@ -2541,6 +2560,8 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
     PyObject* temp;
 
     if (push) {
+        if (Tokenizer_check_route(self, context) < 0)
+            return NULL;
         if (Tokenizer_push(self, context))
             return NULL;
     }

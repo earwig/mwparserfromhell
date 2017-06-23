@@ -346,3 +346,10 @@ name:   tables_in_templates_2
 label:  catch error handling mistakes when wikitables are inside templates
 input:  "{{hello|test\n{|\n| }}"
 output: [TemplateOpen(), Text(text="hello"), TemplateParamSeparator(), Text(text="test\n{"), TemplateParamSeparator(), Text(text="\n"), TemplateParamSeparator(), Text(text=" "), TemplateClose()]
+
+---
+
+name:   many_invalid_nested_tags
+label:  many unending nested tags that should be treated as plain text, followed by valid wikitext (see issues #42, #183)
+input:  "<b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b>[[{{x}}"
+output: [Text(text="<b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b><b>[["), TemplateOpen(), Text(text="x"), TemplateClose()]

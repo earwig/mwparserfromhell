@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -103,8 +103,9 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
         return -1;
     init_tokenizer_text(&self->text);
     self->topstack = NULL;
-    self->head = self->global = self->depth = self->cycles = 0;
+    self->head = self->global = self->depth = 0;
     self->route_context = self->route_state = 0;
+    self->bad_routes = NULL;
     self->skip_style_tags = 0;
     return 0;
 }
@@ -158,9 +159,16 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
             return NULL;
     }
 
-    self->head = self->global = self->depth = self->cycles = 0;
+    self->head = self->global = self->depth = 0;
     self->skip_style_tags = skip_style_tags;
+    self->bad_routes = NULL;
+
     tokens = Tokenizer_parse(self, context, 1);
+
+    route_tree_node *n;
+    avl_tree_for_each_in_postorder(n, self->bad_routes, route_tree_node, node)
+        free(n);
+    self->bad_routes = NULL;
 
     if (!tokens || self->topstack) {
         Py_XDECREF(tokens);
