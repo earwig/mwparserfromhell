@@ -58,7 +58,7 @@ class Node(StringMixIn):
         return
         yield  # pragma: no cover (this is a generator that yields nothing)
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         return None
 
     def __showtree__(self, write, get, mark):

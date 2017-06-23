@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -58,6 +58,12 @@ class Template(Node):
                 yield param.name
             yield param.value
 
+    def __strip__(self, **kwargs):
+        if kwargs.get("keep_template_params"):
+            parts = [param.value.strip_code(**kwargs) for param in self.params]
+            return " ".join(part for part in parts if part)
+        return None
+
     def __showtree__(self, write, get, mark):
         write("{{")
         get(self.name)
@@ -70,7 +76,8 @@ class Template(Node):
             get(param.value)
         write("}}")
 
-    def _surface_escape(self, code, char):
+    @staticmethod
+    def _surface_escape(code, char):
         """Return *code* with *char* escaped as an HTML entity.
 
         The main use of this is to escape pipes (``|``) or equal signs (``=``)
@@ -82,7 +89,8 @@ class Template(Node):
             if char in node:
                 code.replace(node, node.replace(char, replacement), False)
 
-    def _select_theory(self, theories):
+    @staticmethod
+    def _select_theory(theories):
         """Return the most likely spacing convention given different options.
 
         Given a dictionary of convention options as keys and their occurrence
@@ -95,6 +103,22 @@ class Template(Node):
             confidence = float(best) / sum(values)
             if confidence >= 0.75:
                 return tuple(theories.keys())[values.index(best)]
+
+    @staticmethod
+    def _blank_param_value(value):
+        """Remove the content from *value* while keeping its whitespace.
+
+        Replace *value*\ 's nodes with two text nodes, the first containing
+        whitespace from before its content and the second containing whitespace
+        from after its content.
+        """
+        sval = str(value)
+        if sval.isspace():
+            before, after = "", sval
+        else:
+            match = re.search(r"^(\s*).*?(\s*)$", sval, FLAGS)
+            before, after = match.group(1), match.group(2)
+        value.nodes = [Text(before), Text(after)]
 
     def _get_spacing_conventions(self, use_names):
         """Try to determine the whitespace conventions for parameters.
@@ -112,22 +136,17 @@ class Template(Node):
                 component = str(param.value)
             match = re.search(r"^(\s*).*?(\s*)$", component, FLAGS)
             before, after = match.group(1), match.group(2)
+            if not use_names and component.isspace() and "\n" in before:
+                # If the value is empty, we expect newlines in the whitespace
+                # to be after the content, not before it:
+                before, after = before.split("\n", 1)
+                after = "\n" + after
             before_theories[before] += 1
             after_theories[after] += 1
 
         before = self._select_theory(before_theories)
         after = self._select_theory(after_theories)
         return before, after
-
-    def _blank_param_value(self, value):
-        """Remove the content from *value* while keeping its whitespace.
-
-        Replace *value*\ 's nodes with two text nodes, the first containing
-        whitespace from before its content and the second containing whitespace
-        from after its content.
-        """
-        match = re.search(r"^(\s*).*?(\s*)$", str(value), FLAGS)
-        value.nodes = [Text(match.group(1)), Text(match.group(2))]
 
     def _fix_dependendent_params(self, i):
         """Unhide keys if necessary after removing the param at index *i*."""

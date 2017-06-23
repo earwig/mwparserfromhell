@@ -46,10 +46,10 @@ class Wikilink(Node):
         if self.text is not None:
             yield self.text
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         if self.text is not None:
-            return self.text.strip_code(normalize, collapse)
-        return self.title.strip_code(normalize, collapse)
+            return self.text.strip_code(**kwargs)
+        return self.title.strip_code(**kwargs)
 
     def __showtree__(self, write, get, mark):
         write("[[")

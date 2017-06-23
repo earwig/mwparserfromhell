@@ -66,12 +66,11 @@ class TestExternalLink(TreeEqualityTestCase):
         node2 = ExternalLink(wraptext("http://example.com"))
         node3 = ExternalLink(wraptext("http://example.com"), wrap([]))
         node4 = ExternalLink(wraptext("http://example.com"), wraptext("Link"))
-        for a in (True, False):
-            for b in (True, False):
-                self.assertEqual("http://example.com", node1.__strip__(a, b))
-                self.assertEqual(None, node2.__strip__(a, b))
-                self.assertEqual(None, node3.__strip__(a, b))
-                self.assertEqual("Link", node4.__strip__(a, b))
+
+        self.assertEqual("http://example.com", node1.__strip__())
+        self.assertEqual(None, node2.__strip__())
+        self.assertEqual(None, node3.__strip__())
+        self.assertEqual("Link", node4.__strip__())
 
     def test_showtree(self):
         """test ExternalLink.__showtree__()"""

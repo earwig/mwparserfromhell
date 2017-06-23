@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -40,10 +40,11 @@ int Tokenizer_push(Tokenizer* self, uint64_t context)
     top->textbuffer = Textbuffer_new(&self->text);
     if (!top->textbuffer)
         return -1;
+    top->ident.head = self->head;
+    top->ident.context = context;
     top->next = self->topstack;
     self->topstack = top;
     self->depth++;
-    self->cycles++;
     return 0;
 }
 
@@ -130,17 +131,85 @@ PyObject* Tokenizer_pop_keeping_context(Tokenizer* self)
 }
 
 /*
+    Compare two route_tree_nodes that are in their avl_tree_node forms.
+*/
+static int compare_nodes(
+    const struct avl_tree_node* na, const struct avl_tree_node* nb)
+{
+    route_tree_node *a = avl_tree_entry(na, route_tree_node, node);
+    route_tree_node *b = avl_tree_entry(nb, route_tree_node, node);
+
+    if (a->id.head < b->id.head)
+        return -1;
+    if (a->id.head > b->id.head)
+        return 1;
+    return (a->id.context > b->id.context) - (a->id.context < b->id.context);
+}
+
+/*
     Fail the current tokenization route. Discards the current
-    stack/context/textbuffer and sets the BAD_ROUTE flag.
+    stack/context/textbuffer and sets the BAD_ROUTE flag. Also records the
+    ident of the failed stack so future parsing attempts down this route can be
+    stopped early.
 */
 void* Tokenizer_fail_route(Tokenizer* self)
 {
     uint64_t context = self->topstack->context;
-    PyObject* stack = Tokenizer_pop(self);
+    PyObject* stack;
 
+    route_tree_node *node = malloc(sizeof(route_tree_node));
+    if (node) {
+        node->id = self->topstack->ident;
+        if (avl_tree_insert(&self->bad_routes, &node->node, compare_nodes))
+            free(node);
+    }
+
+    stack = Tokenizer_pop(self);
     Py_XDECREF(stack);
     FAIL_ROUTE(context);
     return NULL;
+}
+
+/*
+    Check if pushing a new route here with the given context would definitely
+    fail, based on a previous call to Tokenizer_fail_route() with the same
+    stack.
+
+    Return 0 if safe and -1 if unsafe. The BAD_ROUTE flag will be set in the
+    latter case.
+
+    This function is not necessary to call and works as an optimization
+    implementation detail. (The Python tokenizer checks every route on push,
+    but this would introduce too much overhead in C tokenizer due to the need
+    to check for a bad route after every call to Tokenizer_push.)
+*/
+int Tokenizer_check_route(Tokenizer* self, uint64_t context)
+{
+    StackIdent ident = {self->head, context};
+    struct avl_tree_node *node = (struct avl_tree_node*) (&ident + 1);
+
+    if (avl_tree_lookup_node(self->bad_routes, node, compare_nodes)) {
+        FAIL_ROUTE(context);
+        return -1;
+    }
+    return 0;
+}
+
+/*
+    Free the tokenizer's bad route cache tree. Intended to be called by the
+    main tokenizer function after parsing is finished.
+*/
+void Tokenizer_free_bad_route_tree(Tokenizer *self)
+{
+    struct avl_tree_node *cur = avl_tree_first_in_postorder(self->bad_routes);
+    struct avl_tree_node *parent;
+    while (cur) {
+        route_tree_node *node = avl_tree_entry(cur, route_tree_node, node);
+        parent = avl_get_parent(cur);
+        free(node);
+        cur = avl_tree_next_in_postorder(cur, parent);
+    }
+    self->bad_routes = NULL;
 }
 
 /*

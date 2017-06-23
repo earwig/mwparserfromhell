@@ -398,6 +398,7 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([4, 3, 2, 1.9, 1.8, 5, 6], child1)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
         self.assertEqual([], child3)
+        self.assertEqual(0, len(child3))
 
         del child1
         self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)

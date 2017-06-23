@@ -67,12 +67,19 @@ class TestTemplate(TreeEqualityTestCase):
     def test_strip(self):
         """test Template.__strip__()"""
         node1 = Template(wraptext("foobar"))
-        node2 = Template(wraptext("foo"),
-                         [pgenh("1", "bar"), pgens("abc", "def")])
-        for a in (True, False):
-            for b in (True, False):
-                self.assertEqual(None, node1.__strip__(a, b))
-                self.assertEqual(None, node2.__strip__(a, b))
+        node2 = Template(wraptext("foo"), [
+            pgenh("1", "bar"), pgens("foo", ""), pgens("abc", "def")])
+        node3 = Template(wraptext("foo"), [
+            pgenh("1", "foo"),
+            Parameter(wraptext("2"), wrap([Template(wraptext("hello"))]),
+                      showkey=False),
+            pgenh("3", "bar")])
+
+        self.assertEqual(None, node1.__strip__(keep_template_params=False))
+        self.assertEqual(None, node2.__strip__(keep_template_params=False))
+        self.assertEqual("", node1.__strip__(keep_template_params=True))
+        self.assertEqual("bar def", node2.__strip__(keep_template_params=True))
+        self.assertEqual("foo bar", node3.__strip__(keep_template_params=True))
 
     def test_showtree(self):
         """test Template.__showtree__()"""
@@ -216,6 +223,7 @@ class TestTemplate(TreeEqualityTestCase):
         node39 = Template(wraptext("a"), [pgenh("1", " b ")])
         node40 = Template(wraptext("a"), [pgenh("1", " b"), pgenh("2", " c")])
         node41 = Template(wraptext("a"), [pgens("1", " b"), pgens("2", " c")])
+        node42 = Template(wraptext("a"), [pgens("b", "  \n")])
 
         node1.add("e", "f", showkey=True)
         node2.add(2, "g", showkey=False)
@@ -261,6 +269,7 @@ class TestTemplate(TreeEqualityTestCase):
         node39.add("1", "c")
         node40.add("3", "d")
         node41.add("3", "d")
+        node42.add("b", "hello")
 
         self.assertEqual("{{a|b=c|d|e=f}}", node1)
         self.assertEqual("{{a|b=c|d|g}}", node2)
@@ -308,6 +317,7 @@ class TestTemplate(TreeEqualityTestCase):
         self.assertEqual("{{a|c}}", node39)
         self.assertEqual("{{a| b| c|d}}", node40)
         self.assertEqual("{{a|1= b|2= c|3= d}}", node41)
+        self.assertEqual("{{a|b=hello  \n}}", node42)
 
     def test_remove(self):
         """test Template.remove()"""

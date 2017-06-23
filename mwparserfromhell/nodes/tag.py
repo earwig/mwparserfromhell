@@ -98,9 +98,9 @@ class Tag(Node):
         if not self.self_closing and not self.wiki_markup and self.closing_tag:
             yield self.closing_tag
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         if self.contents and is_visible(self.tag):
-            return self.contents.strip_code(normalize, collapse)
+            return self.contents.strip_code(**kwargs)
         return None
 
     def __showtree__(self, write, get, mark):

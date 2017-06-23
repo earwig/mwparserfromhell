@@ -85,6 +85,17 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertRaises(IndexError, code.set, 3, "{{baz}}")
         self.assertRaises(IndexError, code.set, -4, "{{baz}}")
 
+    def test_contains(self):
+        """test Wikicode.contains()"""
+        code = parse("Here is {{aaa|{{bbb|xyz{{ccc}}}}}} and a [[page|link]]")
+        tmpl1, tmpl2, tmpl3 = code.filter_templates()
+        tmpl4 = parse("{{ccc}}").filter_templates()[0]
+        self.assertTrue(code.contains(tmpl1))
+        self.assertTrue(code.contains(tmpl3))
+        self.assertFalse(code.contains(tmpl4))
+        self.assertTrue(code.contains(str(tmpl4)))
+        self.assertTrue(code.contains(tmpl2.params[0].value))
+
     def test_index(self):
         """test Wikicode.index()"""
         code = parse("Have a {{template}} and a [[page|link]]")
@@ -101,6 +112,22 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertRaises(ValueError, code.index, "{{baz}}", recursive=False)
         self.assertRaises(ValueError, code.index,
                           code.get(1).get(1).value, recursive=False)
+
+    def test_get_ancestors_parent(self):
+        """test Wikicode.get_ancestors() and Wikicode.get_parent()"""
+        code = parse("{{a|{{b|{{d|{{e}}{{f}}}}{{g}}}}}}{{c}}")
+        tmpl = code.filter_templates(matches=lambda n: n.name == "f")[0]
+        parent1 = code.filter_templates(matches=lambda n: n.name == "d")[0]
+        parent2 = code.filter_templates(matches=lambda n: n.name == "b")[0]
+        parent3 = code.filter_templates(matches=lambda n: n.name == "a")[0]
+        fake = parse("{{f}}").get(0)
+
+        self.assertEqual([parent3, parent2, parent1], code.get_ancestors(tmpl))
+        self.assertIs(parent1, code.get_parent(tmpl))
+        self.assertEqual([], code.get_ancestors(parent3))
+        self.assertIs(None, code.get_parent(parent3))
+        self.assertRaises(ValueError, code.get_ancestors, fake)
+        self.assertRaises(ValueError, code.get_parent, fake)
 
     def test_insert(self):
         """test Wikicode.insert()"""
@@ -433,7 +460,7 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.strip_code()"""
         # Since individual nodes have test cases for their __strip__ methods,
         # we're only going to do an integration test:
-        code = parse("Foo [[bar]]\n\n{{baz}}\n\n[[a|b]] &Sigma;")
+        code = parse("Foo [[bar]]\n\n{{baz|hello}}\n\n[[a|b]] &Sigma;")
         self.assertEqual("Foo bar\n\nb Σ",
                          code.strip_code(normalize=True, collapse=True))
         self.assertEqual("Foo bar\n\n\n\nb Σ",
@@ -442,6 +469,9 @@ class TestWikicode(TreeEqualityTestCase):
                          code.strip_code(normalize=False, collapse=True))
         self.assertEqual("Foo bar\n\n\n\nb &Sigma;",
                          code.strip_code(normalize=False, collapse=False))
+        self.assertEqual("Foo bar\n\nhello\n\nb Σ",
+                         code.strip_code(normalize=True, collapse=True,
+                                         keep_template_params=True))
 
     def test_get_tree(self):
         """test Wikicode.get_tree()"""

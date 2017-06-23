@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -65,7 +65,6 @@ class Tokenizer(object):
     MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
                ":", "/", "-", "!", "\n", START, END]
     MAX_DEPTH = 40
-    MAX_CYCLES = 100000
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\'\\]+)")
 
@@ -75,7 +74,8 @@ class Tokenizer(object):
         self._stacks = []
         self._global = 0
         self._depth = 0
-        self._cycles = 0
+        self._bad_routes = set()
+        self._skip_style_tags = False
 
     @property
     def _stack(self):
@@ -100,11 +100,24 @@ class Tokenizer(object):
     def _textbuffer(self, value):
         self._stacks[-1][2] = value
 
+    @property
+    def _stack_ident(self):
+        """An identifier for the current stack.
+
+        This is based on the starting head position and context. Stacks with
+        the same identifier are always parsed in the same way. This can be used
+        to cache intermediate parsing info.
+        """
+        return self._stacks[-1][3]
+
     def _push(self, context=0):
         """Add a new token stack, context, and textbuffer to the list."""
-        self._stacks.append([[], context, []])
+        new_ident = (self._head, context)
+        if new_ident in self._bad_routes:
+            raise BadRoute(context)
+
+        self._stacks.append([[], context, [], new_ident])
         self._depth += 1
-        self._cycles += 1
 
     def _push_textbuffer(self):
         """Push the textbuffer onto the stack as a Text node and clear it."""
@@ -129,7 +142,7 @@ class Tokenizer(object):
 
     def _can_recurse(self):
         """Return whether or not our max recursion depth has been exceeded."""
-        return self._depth < self.MAX_DEPTH and self._cycles < self.MAX_CYCLES
+        return self._depth < self.MAX_DEPTH
 
     def _fail_route(self):
         """Fail the current tokenization route.
@@ -138,6 +151,7 @@ class Tokenizer(object):
         :exc:`.BadRoute`.
         """
         context = self._context
+        self._bad_routes.add(self._stack_ident)
         self._pop()
         raise BadRoute(context)
 
@@ -609,8 +623,8 @@ class Tokenizer(object):
     def _parse_entity(self):
         """Parse an HTML entity at the head of the wikicode string."""
         reset = self._head
-        self._push()
         try:
+            self._push(contexts.HTML_ENTITY)
             self._really_parse_entity()
         except BadRoute:
             self._head = reset
@@ -650,8 +664,9 @@ class Tokenizer(object):
             self._emit_first(tokens.TagAttrQuote(char=data.quoter))
             self._emit_all(self._pop())
         buf = data.padding_buffer
-        self._emit_first(tokens.TagAttrStart(pad_first=buf["first"],
-            pad_before_eq=buf["before_eq"], pad_after_eq=buf["after_eq"]))
+        self._emit_first(tokens.TagAttrStart(
+            pad_first=buf["first"], pad_before_eq=buf["before_eq"],
+            pad_after_eq=buf["after_eq"]))
         self._emit_all(self._pop())
         for key in data.padding_buffer:
             data.padding_buffer[key] = ""
@@ -804,6 +819,12 @@ class Tokenizer(object):
                 depth -= 1
                 if depth == 0:
                     break
+            elif isinstance(token, tokens.TagCloseSelfclose):
+                depth -= 1
+                if depth == 0:  # pragma: no cover (untestable/exceptional)
+                    raise ParserError(
+                        "_handle_single_tag_end() got an unexpected "
+                        "TagCloseSelfclose")
         else:  # pragma: no cover (untestable/exceptional case)
             raise ParserError("_handle_single_tag_end() missed a TagCloseOpen")
         padding = stack[index].padding
@@ -1076,8 +1097,8 @@ class Tokenizer(object):
         """Parse a wikicode table by starting with the first line."""
         reset = self._head
         self._head += 2
-        self._push(contexts.TABLE_OPEN)
         try:
+            self._push(contexts.TABLE_OPEN)
             padding = self._handle_table_style("\n")
         except BadRoute:
             self._head = reset
@@ -1086,9 +1107,12 @@ class Tokenizer(object):
         style = self._pop()
 
         self._head += 1
+        restore_point = self._stack_ident
         try:
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
+            while self._stack_ident != restore_point:
+                self._pop()
             self._head = reset
             self._emit_text("{")
             return
@@ -1106,11 +1130,7 @@ class Tokenizer(object):
             return
 
         self._push(contexts.TABLE_OPEN | contexts.TABLE_ROW_OPEN)
-        try:
-            padding = self._handle_table_style("\n")
-        except BadRoute:
-            self._pop()
-            raise
+        padding = self._handle_table_style("\n")
         style = self._pop()
 
         # Don't parse the style separator:
@@ -1348,7 +1368,8 @@ class Tokenizer(object):
                     # Kill potential table contexts
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
             # Start of table parsing
-            elif this == "{" and next == "|" and (self._read(-1) in ("\n", self.START) or
+            elif this == "{" and next == "|" and (
+                    self._read(-1) in ("\n", self.START) or
                     (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
                 if self._can_recurse():
                     self._parse_table()
@@ -1374,7 +1395,7 @@ class Tokenizer(object):
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
                     self._emit_text(this)
                 elif (self._read(-1) in ("\n", self.START) or
-                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
+                      (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
                     if this == "|" and next == "}":
                         if self._context & contexts.TABLE_CELL_OPEN:
                             return self._handle_table_cell_end()
@@ -1406,10 +1427,12 @@ class Tokenizer(object):
 
     def tokenize(self, text, context=0, skip_style_tags=False):
         """Build a list of tokens from a string of wikicode and return it."""
-        self._skip_style_tags = skip_style_tags
         split = self.regex.split(text)
         self._text = [segment for segment in split if segment]
-        self._head = self._global = self._depth = self._cycles = 0
+        self._head = self._global = self._depth = 0
+        self._bad_routes = set()
+        self._skip_style_tags = skip_style_tags
+
         try:
             tokens = self._parse(context)
         except BadRoute:  # pragma: no cover (untestable/exceptional case)

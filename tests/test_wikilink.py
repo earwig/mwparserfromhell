@@ -58,10 +58,8 @@ class TestWikilink(TreeEqualityTestCase):
         """test Wikilink.__strip__()"""
         node = Wikilink(wraptext("foobar"))
         node2 = Wikilink(wraptext("foo"), wraptext("bar"))
-        for a in (True, False):
-            for b in (True, False):
-                self.assertEqual("foobar", node.__strip__(a, b))
-                self.assertEqual("bar", node2.__strip__(a, b))
+        self.assertEqual("foobar", node.__strip__())
+        self.assertEqual("bar", node2.__strip__())
 
     def test_showtree(self):
         """test Wikilink.__showtree__()"""

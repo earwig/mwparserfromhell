@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -100,6 +100,8 @@ Local (stack-specific) contexts:
     * :const:`TABLE_TH_LINE`
     * :const:`TABLE_CELL_LINE_CONTEXTS`
 
+* :const:`HTML_ENTITY`
+
 Global contexts:
 
 * :const:`GL_HEADING`
@@ -175,6 +177,8 @@ TABLE_TH_LINE =    1 << 36
 TABLE_CELL_LINE_CONTEXTS = TABLE_TD_LINE + TABLE_TH_LINE + TABLE_CELL_STYLE
 TABLE = (TABLE_OPEN + TABLE_CELL_OPEN + TABLE_CELL_STYLE + TABLE_ROW_OPEN +
          TABLE_TD_LINE + TABLE_TH_LINE)
+
+HTML_ENTITY = 1 << 37
 
 # Global contexts:
 

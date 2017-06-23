@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,7 @@ from __future__ import unicode_literals
 from itertools import chain
 import re
 
-from .compat import py3k, range, str
+from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
 from .string_mixin import StringMixIn
@@ -275,6 +275,21 @@ class Wikicode(StringMixIn):
         else:
             self.nodes.pop(index)
 
+    def contains(self, obj):
+        """Return whether this Wikicode object contains *obj*.
+
+        If *obj* is a :class:`.Node` or :class:`.Wikicode` object, then we
+        search for it exactly among all of our children, recursively.
+        Otherwise, this method just uses :meth:`.__contains__` on the string.
+        """
+        if not isinstance(obj, (Node, Wikicode)):
+            return obj in self
+        try:
+            self._do_strong_search(obj, recursive=True)
+        except ValueError:
+            return False
+        return True
+
     def index(self, obj, recursive=False):
         """Return the index of *obj* in the list of nodes.
 
@@ -293,6 +308,52 @@ class Wikicode(StringMixIn):
             elif equivalent(obj, node):
                 return i
         raise ValueError(obj)
+
+    def get_ancestors(self, obj):
+        """Return a list of all ancestor nodes of the :class:`.Node` *obj*.
+
+        The list is ordered from the most shallow ancestor (greatest great-
+        grandparent) to the direct parent. The node itself is not included in
+        the list. For example::
+
+            >>> text = "{{a|{{b|{{c|{{d}}}}}}}}"
+            >>> code = mwparserfromhell.parse(text)
+            >>> node = code.filter_templates(matches=lambda n: n == "{{d}}")[0]
+            >>> code.get_ancestors(node)
+            ['{{a|{{b|{{c|{{d}}}}}}}}', '{{b|{{c|{{d}}}}}}', '{{c|{{d}}}}']
+
+        Will return an empty list if *obj* is at the top level of this Wikicode
+        object. Will raise :exc:`ValueError` if it wasn't found.
+        """
+        def _get_ancestors(code, needle):
+            for node in code.nodes:
+                if node is needle:
+                    return []
+                for code in node.__children__():
+                    ancestors = _get_ancestors(code, needle)
+                    if ancestors is not None:
+                        return [node] + ancestors
+
+        if isinstance(obj, Wikicode):
+            obj = obj.get(0)
+        elif not isinstance(obj, Node):
+            raise ValueError(obj)
+
+        ancestors = _get_ancestors(self, obj)
+        if ancestors is None:
+            raise ValueError(obj)
+        return ancestors
+
+    def get_parent(self, obj):
+        """Return the direct parent node of the :class:`.Node` *obj*.
+
+        This function is equivalent to calling :meth:`.get_ancestors` and
+        taking the last element of the resulting list. Will return None if
+        the node exists but does not have a parent; i.e., it is at the top
+        level of the Wikicode object.
+        """
+        ancestors = self.get_ancestors(obj)
+        return ancestors[-1] if ancestors else None
 
     def insert(self, index, value):
         """Insert *value* at *index* in the list of nodes.
@@ -413,22 +474,23 @@ class Wikicode(StringMixIn):
         """Do a loose equivalency test suitable for comparing page names.
 
         *other* can be any string-like object, including :class:`.Wikicode`, or
-        a tuple of these. This operation is symmetric; both sides are adjusted.
-        Specifically, whitespace and markup is stripped and the first letter's
-        case is normalized. Typical usage is
+        an iterable of these. This operation is symmetric; both sides are
+        adjusted. Specifically, whitespace and markup is stripped and the first
+        letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
         cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
                             if a and b else a == b)
         this = self.strip_code().strip()
-        if isinstance(other, (tuple, list)):
-            for obj in other:
-                that = parse_anything(obj).strip_code().strip()
-                if cmp(this, that):
-                    return True
-            return False
-        that = parse_anything(other).strip_code().strip()
-        return cmp(this, that)
+        if isinstance(other, (str, bytes, Wikicode, Node)):
+            that = parse_anything(other).strip_code().strip()
+            return cmp(this, that)
+
+        for obj in other:
+            that = parse_anything(obj).strip_code().strip()
+            if cmp(this, that):
+                return True
+        return False
 
     def ifilter(self, recursive=True, matches=None, flags=FLAGS,
                 forcetype=None):
@@ -530,23 +592,33 @@ class Wikicode(StringMixIn):
         # Ensure that earlier sections are earlier in the returned list:
         return [section for i, section in sorted(sections)]
 
-    def strip_code(self, normalize=True, collapse=True):
+    def strip_code(self, normalize=True, collapse=True,
+                   keep_template_params=False):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
         :meth:`~.Node.__strip__` method of :class:`.Node` objects, which
         generally return a subset of their nodes or ``None``. For example,
         templates and tags are removed completely, links are stripped to just
-        their display part, headings are stripped to just their title. If
-        *normalize* is ``True``, various things may be done to strip code
+        their display part, headings are stripped to just their title.
+
+        If *normalize* is ``True``, various things may be done to strip code
         further, such as converting HTML entities like ``&Sigma;``, ``&#931;``,
         and ``&#x3a3;`` to ``Σ``. If *collapse* is ``True``, we will try to
         remove excess whitespace as well (three or more newlines are converted
-        to two, for example).
+        to two, for example). If *keep_template_params* is ``True``, then
+        template parameters will be preserved in the output (normally, they are
+        removed completely).
         """
+        kwargs = {
+            "normalize": normalize,
+            "collapse": collapse,
+            "keep_template_params": keep_template_params
+        }
+
         nodes = []
         for node in self.nodes:
-            stripped = node.__strip__(normalize, collapse)
+            stripped = node.__strip__(**kwargs)
             if stripped:
                 nodes.append(str(stripped))
 

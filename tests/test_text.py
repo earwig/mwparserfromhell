@@ -49,9 +49,7 @@ class TestText(unittest.TestCase):
     def test_strip(self):
         """test Text.__strip__()"""
         node = Text("foobar")
-        for a in (True, False):
-            for b in (True, False):
-                self.assertIs(node, node.__strip__(a, b))
+        self.assertIs(node, node.__strip__())
 
     def test_showtree(self):
         """test Text.__showtree__()"""

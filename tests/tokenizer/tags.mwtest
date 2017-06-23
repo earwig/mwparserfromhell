@@ -646,3 +646,10 @@ name:   non_ascii_full
 label:  an open/close tag pair containing non-ASCII characters
 input:  "<éxamplé></éxamplé>"
 output: [TagOpenOpen(), Text(text="éxamplé"), TagCloseOpen(padding=""), TagOpenClose(), Text(text="éxamplé"), TagCloseClose()]
+
+---
+
+name:   single_nested_selfclosing
+label:  a single (unpaired) tag with a self-closing tag in the middle (see issue #147)
+input:  "<li a <br/> c>foobar"
+output: [TagOpenOpen(), Text(text="li"), TagAttrStart(pad_first=" ", pad_after_eq="", pad_before_eq=" "), Text(text="a"), TagAttrStart(pad_first="", pad_after_eq="", pad_before_eq=" "), TagOpenOpen(), Text(text="br"), TagCloseSelfclose(padding=""), TagAttrStart(pad_first="", pad_after_eq="", pad_before_eq=""), Text(text="c"), TagCloseSelfclose(padding="", implicit=True), Text(text="foobar")]

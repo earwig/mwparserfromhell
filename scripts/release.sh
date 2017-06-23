@@ -117,11 +117,11 @@ test_release() {
     fi
     pip -q uninstall -y mwparserfromhell
     echo -n "Downloading mwparserfromhell source tarball and GPG signature..."
-    curl -sL "https://pypi.python.org/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
-    curl -sL "https://pypi.python.org/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz.asc" -o "mwparserfromhell.tar.gz.asc"
+    curl -sL "https://pypi.io/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
+    curl -sL "https://pypi.io/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz.asc" -o "mwparserfromhell.tar.gz.asc"
     echo " done."
     echo "Verifying tarball..."
-    gpg --verify mwparserfromhell.tar.gz.asc
+    gpg --verify mwparserfromhell.tar.gz.asc mwparserfromhell.tar.gz
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: GPG signature verification failed!"
         deactivate

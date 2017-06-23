@@ -1,3 +1,25 @@
+v0.5 (released June 23, 2017):
+
+- Added Wikicode.contains() to determine whether a Node or Wikicode object is
+  contained within another Wikicode object.
+- Added Wikicode.get_ancestors() and Wikicode.get_parent() to find all
+  ancestors and the direct parent of a Node, respectively.
+- Fixed a long-standing performance issue with deeply nested, invalid syntax
+  (issue #42). The parser should be much faster on certain complex pages. The
+  "max cycle" restriction has also been removed, so some situations where
+  templates at the end of a page were being skipped are now resolved.
+- Made Template.remove(keep_field=True) behave more reasonably when the
+  parameter is already empty.
+- Added the keep_template_params argument to Wikicode.strip_code(). If True,
+  then template parameters will be preserved in the output.
+- Wikicode objects can now be pickled properly (fixed infinite recursion error
+  on incompletely-constructed StringMixIn subclasses).
+- Fixed Wikicode.matches()'s behavior on iterables besides lists and tuples.
+- Fixed len() sometimes raising ValueError on empty node lists.
+- Fixed a rare parsing bug involving self-closing tags inside the attributes of
+  unpaired tags.
+- Fixed release script after changes to PyPI.
+
 v0.4.4 (released December 30, 2016):
 
 - Added support for Python 3.6.

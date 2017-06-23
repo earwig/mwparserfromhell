@@ -47,9 +47,9 @@ class Argument(Node):
         if self.default is not None:
             yield self.default
 
-    def __strip__(self, normalize, collapse):
+    def __strip__(self, **kwargs):
         if self.default is not None:
-            return self.default.strip_code(normalize, collapse)
+            return self.default.strip_code(**kwargs)
         return None
 
     def __showtree__(self, write, get, mark):

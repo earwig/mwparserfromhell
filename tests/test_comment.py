@@ -49,9 +49,7 @@ class TestComment(TreeEqualityTestCase):
     def test_strip(self):
         """test Comment.__strip__()"""
         node = Comment("foobar")
-        for a in (True, False):
-            for b in (True, False):
-                self.assertIs(None, node.__strip__(a, b))
+        self.assertIs(None, node.__strip__())
 
     def test_showtree(self):
         """test Comment.__showtree__()"""

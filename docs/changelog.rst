@@ -1,6 +1,36 @@
 Changelog
 =========
 
+v0.5
+----
+
+`Released June 23, 2017 <https://github.com/earwig/mwparserfromhell/tree/v0.5>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...v0.5>`__):
+
+- Added :meth:`.Wikicode.contains` to determine whether a :class:`.Node` or
+  :class:`.Wikicode` object is contained within another :class:`.Wikicode`
+  object.
+- Added :meth:`.Wikicode.get_ancestors` and :meth:`.Wikicode.get_parent` to
+  find all ancestors and the direct parent of a :class:`.Node`, respectively.
+- Fixed a long-standing performance issue with deeply nested, invalid syntax
+  (`issue #42 <https://github.com/earwig/mwparserfromhell/issues/42>`_). The
+  parser should be much faster on certain complex pages. The "max cycle"
+  restriction has also been removed, so some situations where templates at the
+  end of a page were being skipped are now resolved.
+- Made :meth:`Template.remove(keep_field=True) <.Template.remove>` behave more
+  reasonably when the parameter is already empty.
+- Added the *keep_template_params* argument to :meth:`.Wikicode.strip_code`.
+  If *True*, then template parameters will be preserved in the output.
+- :class:`.Wikicode` objects can now be pickled properly (fixed infinite
+  recursion error on incompletely-constructed :class:`.StringMixIn`
+  subclasses).
+- Fixed :meth:`.Wikicode.matches`\ 's behavior on iterables besides lists and
+  tuples.
+- Fixed ``len()`` sometimes raising ``ValueError`` on empty node lists.
+- Fixed a rare parsing bug involving self-closing tags inside the attributes of
+  unpaired tags.
+- Fixed release script after changes to PyPI.
+
 v0.4.4
 ------
 
@@ -31,7 +61,7 @@ v0.4.3
 v0.4.2
 ------
 
-`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.2>`_
+`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.2>`__
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.1...v0.4.2>`__):
 
 - Fixed setup script not including header files in releases.
@@ -40,7 +70,7 @@ v0.4.2
 v0.4.1
 ------
 
-`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.1>`_
+`Released July 30, 2015 <https://github.com/earwig/mwparserfromhell/tree/v0.4.1>`__
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4...v0.4.1>`__):
 
 - The process for building Windows binaries has been fixed, and these should be
