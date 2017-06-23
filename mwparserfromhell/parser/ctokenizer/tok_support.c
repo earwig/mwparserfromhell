@@ -155,6 +155,7 @@ static int compare_nodes(
 void* Tokenizer_fail_route(Tokenizer* self)
 {
     uint64_t context = self->topstack->context;
+    PyObject* stack;
 
     route_tree_node *node = malloc(sizeof(route_tree_node));
     if (node) {
@@ -163,8 +164,7 @@ void* Tokenizer_fail_route(Tokenizer* self)
             free(node);
     }
 
-    PyObject* stack = Tokenizer_pop(self);
-
+    stack = Tokenizer_pop(self);
     Py_XDECREF(stack);
     FAIL_ROUTE(context);
     return NULL;
