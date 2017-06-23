@@ -22,10 +22,17 @@
 #define _AVL_TREE_H_
 
 #include <stddef.h>
+
+#if defined(_MSC_VER) && (_MSC_VER < 1600)
+typedef unsigned long uintptr_t;
+#else
 #include <stdint.h>
+#endif
 
 #ifdef __GNUC__
 #  define AVL_INLINE inline __attribute__((always_inline))
+#elif defined(_MSC_VER) && (_MSC_VER < 1900)
+#  define AVL_INLINE __inline
 #else
 #  define AVL_INLINE inline
 #endif
