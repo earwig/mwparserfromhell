@@ -5,7 +5,7 @@ v0.6
 ----
 
 Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.4.4...develop>`__):
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5...develop>`__):
 
 - ...
 
