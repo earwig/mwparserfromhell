@@ -33,6 +33,7 @@ PyObject* Tokenizer_pop(Tokenizer*);
 PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
 void* Tokenizer_fail_route(Tokenizer*);
 int Tokenizer_check_route(Tokenizer*, uint64_t);
+void Tokenizer_free_bad_route_tree(Tokenizer*);
 
 int Tokenizer_emit_token(Tokenizer*, PyObject*, int);
 int Tokenizer_emit_token_kwargs(Tokenizer*, PyObject*, PyObject*, int);

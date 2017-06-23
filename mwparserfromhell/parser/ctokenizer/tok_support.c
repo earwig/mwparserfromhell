@@ -196,6 +196,23 @@ int Tokenizer_check_route(Tokenizer* self, uint64_t context)
 }
 
 /*
+    Free the tokenizer's bad route cache tree. Intended to be called by the
+    main tokenizer function after parsing is finished.
+*/
+void Tokenizer_free_bad_route_tree(Tokenizer *self)
+{
+    struct avl_tree_node *cur = avl_tree_first_in_postorder(self->bad_routes);
+    struct avl_tree_node *parent;
+    while (cur) {
+        route_tree_node *node = avl_tree_entry(cur, route_tree_node, node);
+        parent = avl_get_parent(cur);
+        free(node);
+        cur = avl_tree_next_in_postorder(cur, parent);
+    }
+    self->bad_routes = NULL;
+}
+
+/*
     Write a token to the current token stack.
 */
 int Tokenizer_emit_token(Tokenizer* self, PyObject* token, int first)

@@ -22,6 +22,7 @@ SOFTWARE.
 
 #include "tokenizer.h"
 #include "tok_parse.h"
+#include "tok_support.h"
 #include "tokens.h"
 
 /* Globals */
@@ -165,10 +166,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 
     tokens = Tokenizer_parse(self, context, 1);
 
-    route_tree_node *n;
-    avl_tree_for_each_in_postorder(n, self->bad_routes, route_tree_node, node)
-        free(n);
-    self->bad_routes = NULL;
+    Tokenizer_free_bad_route_tree(self);
 
     if (!tokens || self->topstack) {
         Py_XDECREF(tokens);
