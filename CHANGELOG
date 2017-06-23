@@ -1,3 +1,7 @@
+v0.6 (unreleased):
+
+- ...
+
 v0.5 (released June 23, 2017):
 
 - Added Wikicode.contains() to determine whether a Node or Wikicode object is
