@@ -519,6 +519,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     Unicode chunk;
     Py_ssize_t i;
     int slashes, j;
+    uint64_t new_context;
 
     if (!scheme_buffer)
         return -1;
@@ -554,7 +555,7 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
         return 0;
     }
     Py_DECREF(scheme);
-    uint64_t new_context = self->topstack->context | LC_EXT_LINK_URI;
+    new_context = self->topstack->context | LC_EXT_LINK_URI;
     if (Tokenizer_check_route(self, new_context) < 0) {
         Textbuffer_dealloc(scheme_buffer);
         return 0;
@@ -2205,6 +2206,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
     Py_ssize_t reset = self->head;
     PyObject *style, *padding, *trash;
     PyObject *table = NULL;
+    StackIdent restore_point;
     self->head += 2;
 
     if (Tokenizer_check_route(self, LC_TABLE_OPEN) < 0)
@@ -2229,7 +2231,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
     }
 
     self->head++;
-    StackIdent restore_point = self->topstack->ident;
+    restore_point = self->topstack->ident;
     table = Tokenizer_parse(self, LC_TABLE_OPEN, 1);
     if (BAD_ROUTE) {
         RESET_ROUTE();

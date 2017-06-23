@@ -23,9 +23,7 @@
 
 #include <stddef.h>
 
-#if defined(_MSC_VER) && (_MSC_VER < 1600)
-typedef unsigned long uintptr_t;
-#else
+#if !defined(_MSC_VER) || (_MSC_VER >= 1600)
 #include <stdint.h>
 #endif
 
