@@ -7,7 +7,8 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5...develop>`__):
 
-- ...
+- Improved behavior when adding parameters to templates (via
+  :meth:`.Template.add`) with poorly formatted whitespace conventions.
 
 v0.5
 ----

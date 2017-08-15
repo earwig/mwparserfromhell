@@ -1,6 +1,7 @@
 v0.6 (unreleased):
 
-- ...
+- Improved behavior when adding parameters to templates (via Template.add())
+  with poorly formatted whitespace conventions.
 
 v0.5 (released June 23, 2017):
 

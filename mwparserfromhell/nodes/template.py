@@ -101,7 +101,7 @@ class Template(Node):
             values = tuple(theories.values())
             best = max(values)
             confidence = float(best) / sum(values)
-            if confidence >= 0.75:
+            if confidence > 0.5:
                 return tuple(theories.keys())[values.index(best)]
 
     @staticmethod
@@ -130,6 +130,8 @@ class Template(Node):
         before_theories = defaultdict(lambda: 0)
         after_theories = defaultdict(lambda: 0)
         for param in self.params:
+            if not param.showkey:
+                continue
             if use_names:
                 component = str(param.name)
             else:

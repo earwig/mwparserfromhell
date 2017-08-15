@@ -27,7 +27,7 @@ outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
 """
 
 __author__ = "Ben Kurtovic"
-__copyright__ = "Copyright (C) 2012, 2013, 2014, 2015, 2016 Ben Kurtovic"
+__copyright__ = "Copyright (C) 2012-2017 Ben Kurtovic"
 __license__ = "MIT License"
 __version__ = "0.6.dev0"
 __email__ = "ben.kurtovic@gmail.com"
