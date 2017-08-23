@@ -21,6 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+from difflib import unified_diff
 
 try:
     import unittest2 as unittest
@@ -467,28 +468,15 @@ class TestTemplate(TreeEqualityTestCase):
 | ex image cap = Lamar County courthouse in Barnesville
 | district = 3rd
 | named for = [[Lucius Quintus Cincinnatus Lamar II]]
-}}""", """{{Infobox U.S. county
-| county = Lamar County
-| state = Georgia
-| seal =
-| founded = 1920
-| seat wl = Barnesville
-| largest city wl = Barnesville
-| area_total_sq_mi = 186
-| area_land_sq_mi = 184
-| area_water_sq_mi = 2.3
-| area percentage = 1.3%
-| census estimate yr = 2016
-| pop = 12345<ref>example ref</ref>
-| density_sq_mi = 100
-| time zone = Eastern
-| footnotes =
-| web = www.lamarcountyga.com
-| ex image = Lamar County Georgia Courthouse.jpg
-| ex image cap = Lamar County courthouse in Barnesville
-| district = 3rd
-| named for = [[Lucius Quintus Cincinnatus Lamar II]]
-}}"""),
+}}""",
+    """@@ -11,4 +11,4 @@
+ | area percentage = 1.3%
+-| census yr = 2010
+-| pop = 18317
++| census estimate yr = 2016
++| pop = 12345<ref>example ref</ref>
+ | density_sq_mi = 100"""),
+
     # https://en.wikipedia.org/w/index.php?title=Rockdale_County,_Georgia&oldid=792359760
     ("""{{Infobox U.S. County|
  county = Rockdale County |
@@ -509,26 +497,15 @@ class TestTemplate(TreeEqualityTestCase):
 | ex image cap = Rockdale County Courthouse in Conyers
 | district = 4th
 | time zone= Eastern
-}}""", """{{Infobox U.S. County|
- county = Rockdale County |
- state = Georgia |
- seal =  |
- founded = October 18, 1870 |
- seat wl = Conyers |
- largest city wl = Conyers |
- area_total_sq_mi = 132 |
- area_land_sq_mi = 130 |
- area_water_sq_mi = 2.3 |
- area percentage = 1.7% |
- census estimate yr = 2016 |
- pop = 12345<ref>example ref</ref> |
- density_sq_mi = 657 |
- web = www.rockdalecounty.org
-| ex image = Rockdale-county-courthouse.jpg
-| ex image cap = Rockdale County Courthouse in Conyers
-| district = 4th
-| time zone= Eastern
-}}"""),
+}}""",
+    """@@ -11,4 +11,4 @@
+  area percentage = 1.7% |
+- census yr = 2010|
+- pop = 85215 |
++ census estimate yr = 2016 |
++ pop = 12345<ref>example ref</ref> |
+  density_sq_mi = 657 |"""),
+
     # https://en.wikipedia.org/w/index.php?title=Spalding_County,_Georgia&oldid=792360413
     ("""{{Infobox U.S. County|
 | county = Spalding County |
@@ -550,27 +527,15 @@ class TestTemplate(TreeEqualityTestCase):
 | ex image cap = Spalding County Courthouse in Griffin
 | district = 3rd
 | time zone = Eastern
-}}""", """{{Infobox U.S. County|
-| county = Spalding County |
-| state = Georgia |
-| seal =  |
-| founded = 1851 |
-| seat wl = Griffin |
-| largest city wl = Griffin |
-| area_total_sq_mi = 200 |
-| area_land_sq_mi = 196 |
-| area_water_sq_mi = 3.1 |
-| area percentage = 1.6% |
-|
-| census estimate yr = 2016 | pop = 12345<ref>example ref</ref> |
-| density_sq_mi = 326 |
-| web = www.spaldingcounty.com |
-| named for = [[Thomas Spalding]]
-| ex image = Spalding County Courthouse (NE corner).JPG
-| ex image cap = Spalding County Courthouse in Griffin
-| district = 3rd
-| time zone = Eastern
-}}"""),
+}}""",
+    """@@ -11,4 +11,4 @@
+ | area percentage = 1.6% |
+-| census yr = 2010|
+-| pop = 64073 |
++|
++| census estimate yr = 2016 | pop = 12345<ref>example ref</ref> |
+ | density_sq_mi = 326 |"""),
+
     # https://en.wikipedia.org/w/index.php?title=Clinton_County,_Illinois&oldid=794694648
     ("""{{Infobox U.S. county
  |county  = Clinton County
@@ -592,27 +557,15 @@ class TestTemplate(TreeEqualityTestCase):
  |density_sq_mi = 80
  |web = www.clintonco.illinois.gov
 | district = 15th
-}}""", """{{Infobox U.S. county
- |county  = Clinton County
- |state = Illinois
-| ex image           = File:Clinton County Courthouse, Carlyle.jpg
-| ex image cap       = [[Clinton County Courthouse (Illinois)|Clinton County Courthouse]]
- |seal =
- |founded = 1824
- |named for = [[DeWitt Clinton]]
- |seat wl= Carlyle
-| largest city wl = Breese
- |time zone=Central
- |area_total_sq_mi = 503
- |area_land_sq_mi = 474
- |area_water_sq_mi = 29
- |area percentage = 5.8%
- |census estimate yr = 2016
- |pop = 12345<ref>example ref</ref>
- |density_sq_mi = 80
- |web = www.clintonco.illinois.gov
-| district = 15th
-}}"""),
+}}""",
+    """@@ -15,4 +15,4 @@
+  |area percentage = 5.8%
+- |census yr = 2010
+- |pop = 37762
++ |census estimate yr = 2016
++ |pop = 12345<ref>example ref</ref>
+  |density_sq_mi = 80"""),
+
     # https://en.wikipedia.org/w/index.php?title=Winnebago_County,_Illinois&oldid=789193800
     ("""{{Infobox U.S. county |
  county  = Winnebago County |
@@ -634,27 +587,14 @@ class TestTemplate(TreeEqualityTestCase):
 | time zone = Central
 | district = 16th
 | district2 = 17th
-}}""", """{{Infobox U.S. county |
- county  = Winnebago County |
- state = Illinois |
- seal = Winnebago County il seal.png |
- named for = [[Winnebago (tribe)|Winnebago Tribe]] |
- seat wl= Rockford |
- largest city wl = Rockford|
- area_total_sq_mi = 519 |
- area_land_sq_mi = 513|
- area_water_sq_mi = 5.9 |
- area percentage = 1.1% |
- census estimate yr = 2016|
- pop = 12345<ref>example ref</ref> |
- density_sq_mi = 575
-| web = www.wincoil.us
-| founded year = 1836
-| founded date = January 16
-| time zone = Central
-| district = 16th
-| district2 = 17th
-}}""")]
+}}""",
+    """@@ -11,4 +11,4 @@
+  area percentage = 1.1% |
+- census yr = 2010|
+- pop = 295266 |
++ census estimate yr = 2016|
++ pop = 12345<ref>example ref</ref> |
+  density_sq_mi = 575""")]
 
         for (original, expected) in tests:
             code = parse(original)
@@ -662,7 +602,12 @@ class TestTemplate(TreeEqualityTestCase):
             template.add("pop", "12345<ref>example ref</ref>")
             template.add('census estimate yr', "2016", before="pop")
             template.remove("census yr")
-            self.assertEqual(expected, str(code))
+
+            oldlines = original.splitlines(keepends=True)
+            newlines = str(code).splitlines(keepends=True)
+            difflines = unified_diff(oldlines, newlines, n=1)
+            diff = "".join(list(difflines)[2:]).strip()
+            self.assertEqual(expected, diff)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
