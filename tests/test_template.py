@@ -603,8 +603,8 @@ class TestTemplate(TreeEqualityTestCase):
             template.add('census estimate yr', "2016", before="pop")
             template.remove("census yr")
 
-            oldlines = original.splitlines(keepends=True)
-            newlines = str(code).splitlines(keepends=True)
+            oldlines = original.splitlines(True)
+            newlines = str(code).splitlines(True)
             difflines = unified_diff(oldlines, newlines, n=1)
             diff = "".join(list(difflines)[2:]).strip()
             self.assertEqual(expected, diff)
