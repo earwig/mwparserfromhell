@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -147,6 +147,22 @@ static int compare_nodes(
 }
 
 /*
+    Remember that the current route (head + context at push) is invalid.
+
+    This will be noticed when calling Tokenizer_check_route with the same head
+    and context, and the route will be failed immediately.
+*/
+void Tokenizer_memoize_bad_route(Tokenizer *self)
+{
+    route_tree_node *node = malloc(sizeof(route_tree_node));
+    if (node) {
+        node->id = self->topstack->ident;
+        if (avl_tree_insert(&self->bad_routes, &node->node, compare_nodes))
+            free(node);
+    }
+}
+
+/*
     Fail the current tokenization route. Discards the current
     stack/context/textbuffer and sets the BAD_ROUTE flag. Also records the
     ident of the failed stack so future parsing attempts down this route can be
@@ -157,13 +173,7 @@ void* Tokenizer_fail_route(Tokenizer* self)
     uint64_t context = self->topstack->context;
     PyObject* stack;
 
-    route_tree_node *node = malloc(sizeof(route_tree_node));
-    if (node) {
-        node->id = self->topstack->ident;
-        if (avl_tree_insert(&self->bad_routes, &node->node, compare_nodes))
-            free(node);
-    }
-
+    Tokenizer_memoize_bad_route(self);
     stack = Tokenizer_pop(self);
     Py_XDECREF(stack);
     FAIL_ROUTE(context);
@@ -173,7 +183,7 @@ void* Tokenizer_fail_route(Tokenizer* self)
 /*
     Check if pushing a new route here with the given context would definitely
     fail, based on a previous call to Tokenizer_fail_route() with the same
-    stack.
+    stack. (Or any other call to Tokenizer_memoize_bad_route().)
 
     Return 0 if safe and -1 if unsafe. The BAD_ROUTE flag will be set in the
     latter case.

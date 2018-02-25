@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -144,6 +144,14 @@ class Tokenizer(object):
         """Return whether or not our max recursion depth has been exceeded."""
         return self._depth < self.MAX_DEPTH
 
+    def _memoize_bad_route(self):
+        """Remember that the current route (head + context at push) is invalid.
+
+        This will be noticed when calling _push with the same head and context,
+        and the route will be failed immediately.
+        """
+        self._bad_routes.add(self._stack_ident)
+
     def _fail_route(self):
         """Fail the current tokenization route.
 
@@ -151,7 +159,7 @@ class Tokenizer(object):
         :exc:`.BadRoute`.
         """
         context = self._context
-        self._bad_routes.add(self._stack_ident)
+        self._memoize_bad_route()
         self._pop()
         raise BadRoute(context)
 
@@ -506,12 +514,16 @@ class Tokenizer(object):
 
     def _parse_external_link(self, brackets):
         """Parse an external link at the head of the wikicode string."""
+        if self._context & contexts.NO_EXT_LINKS or not self._can_recurse():
+            if not brackets and self._context & contexts.DL_TERM:
+                self._handle_dl_term()
+            else:
+                self._emit_text(self._read())
+            return
+
         reset = self._head
         self._head += 1
         try:
-            bad_context = self._context & contexts.NO_EXT_LINKS
-            if bad_context or not self._can_recurse():
-                raise BadRoute()
             link, extra, delta = self._really_parse_external_link(brackets)
         except BadRoute:
             self._head = reset
@@ -719,6 +731,7 @@ class Tokenizer(object):
             elif data.context & data.CX_NOTE_SPACE:
                 if data.context & data.CX_QUOTED:
                     data.context = data.CX_ATTR_VALUE
+                    self._memoize_bad_route()
                     self._pop()
                     self._head = data.reset - 1  # Will be auto-incremented
                     return  # Break early
@@ -743,7 +756,13 @@ class Tokenizer(object):
                         data.context |= data.CX_QUOTED
                         data.quoter = chunk
                         data.reset = self._head
-                        self._push(self._context)
+                        try:
+                            self._push(self._context)
+                        except BadRoute:
+                            # Already failed to parse this as a quoted string
+                            data.context = data.CX_ATTR_VALUE
+                            self._head -= 1
+                            return
                         continue
                 elif data.context & data.CX_QUOTED:
                     if chunk == data.quoter and not escaped:
@@ -845,6 +864,7 @@ class Tokenizer(object):
                     if data.context & data.CX_QUOTED:
                         # Unclosed attribute quote: reset, don't die
                         data.context = data.CX_ATTR_VALUE
+                        self._memoize_bad_route()
                         self._pop()
                         self._head = data.reset
                         continue
@@ -1084,6 +1104,7 @@ class Tokenizer(object):
                     if data.context & data.CX_QUOTED:
                         # Unclosed attribute quote: reset, don't die
                         data.context = data.CX_ATTR_VALUE
+                        self._memoize_bad_route()
                         self._pop()
                         self._head = data.reset
                         continue

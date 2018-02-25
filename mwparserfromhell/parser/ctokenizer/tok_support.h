@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -31,6 +31,7 @@ int Tokenizer_push_textbuffer(Tokenizer*);
 void Tokenizer_delete_top_of_stack(Tokenizer*);
 PyObject* Tokenizer_pop(Tokenizer*);
 PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
+void Tokenizer_memoize_bad_route(Tokenizer*);
 void* Tokenizer_fail_route(Tokenizer*);
 int Tokenizer_check_route(Tokenizer*, uint64_t);
 void Tokenizer_free_bad_route_tree(Tokenizer*);

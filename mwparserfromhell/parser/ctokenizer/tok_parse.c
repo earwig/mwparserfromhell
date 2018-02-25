@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -722,7 +722,6 @@ Tokenizer_remove_uri_scheme_from_textbuffer(Tokenizer* self, PyObject* link)
 */
 static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
 {
-    #define INVALID_CONTEXT self->topstack->context & AGG_NO_EXT_LINKS
     #define NOT_A_LINK                                        \
         if (!brackets && self->topstack->context & LC_DLTERM) \
             return Tokenizer_handle_dl_term(self);            \
@@ -732,7 +731,8 @@ static int Tokenizer_parse_external_link(Tokenizer* self, int brackets)
     PyObject *link, *kwargs;
     Textbuffer *extra;
 
-    if (INVALID_CONTEXT || !(Tokenizer_CAN_RECURSE(self))) {
+    if (self->topstack->context & AGG_NO_EXT_LINKS ||
+            !(Tokenizer_CAN_RECURSE(self))) {
         NOT_A_LINK;
     }
     extra = Textbuffer_new(&self->text);
@@ -1280,6 +1280,7 @@ static int Tokenizer_handle_tag_data(
     else if (data->context & TAG_NOTE_SPACE) {
         if (data->context & TAG_QUOTED) {
             data->context = TAG_ATTR_VALUE;
+            Tokenizer_memoize_bad_route(self);
             trash = Tokenizer_pop(self);
             Py_XDECREF(trash);
             self->head = data->reset - 1;  // Will be auto-incremented
@@ -1317,7 +1318,12 @@ static int Tokenizer_handle_tag_data(
                 data->context |= TAG_QUOTED;
                 data->quoter = chunk;
                 data->reset = self->head;
-                if (Tokenizer_push(self, self->topstack->context))
+                if (Tokenizer_check_route(self, self->topstack->context) < 0) {
+                    RESET_ROUTE();
+                    data->context = TAG_ATTR_VALUE;
+                    self->head--;
+                }
+                else if (Tokenizer_push(self, self->topstack->context))
                     return -1;
                 return 0;
             }
@@ -1613,6 +1619,7 @@ static PyObject* Tokenizer_really_parse_tag(Tokenizer* self)
                 if (data->context & TAG_QUOTED) {
                     // Unclosed attribute quote: reset, don't die
                     data->context = TAG_ATTR_VALUE;
+                    Tokenizer_memoize_bad_route(self);
                     trash = Tokenizer_pop(self);
                     Py_XDECREF(trash);
                     self->head = data->reset;
@@ -2185,6 +2192,7 @@ static PyObject* Tokenizer_handle_table_style(Tokenizer* self, Unicode end_token
                 if (data->context & TAG_QUOTED) {
                     // Unclosed attribute quote: reset, don't die
                     data->context = TAG_ATTR_VALUE;
+                    Tokenizer_memoize_bad_route(self);
                     trash = Tokenizer_pop(self);
                     Py_XDECREF(trash);
                     self->head = data->reset;

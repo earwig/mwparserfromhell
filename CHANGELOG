@@ -1,7 +1,9 @@
 v0.6 (unreleased):
 
 - Improved behavior when adding parameters to templates (via Template.add())
-  with poorly formatted whitespace conventions.
+  with poorly formatted whitespace conventions. (#185)
+- Fixed the parser getting stuck in deeply nested HTML tags with unclosed,
+  quoted attributes. (#190)
 
 v0.5 (released June 23, 2017):
 
