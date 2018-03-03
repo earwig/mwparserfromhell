@@ -1,10 +1,18 @@
 Changelog
 =========
 
+v0.6
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...develop>`__):
+
+- ...
+
 v0.5.1
 ------
 
-`Released March 03, 2018 <https://github.com/earwig/mwparserfromhell/tree/v0.5.1>`_
+`Released March 3, 2018 <https://github.com/earwig/mwparserfromhell/tree/v0.5.1>`_
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5...v0.5.1>`__):
 
 - Improved behavior when adding parameters to templates (via

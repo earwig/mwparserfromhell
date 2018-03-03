@@ -9,7 +9,7 @@ fi
 
 VERSION=$1
 SCRIPT_DIR=$(dirname "$0")
-RELEASE_DATE=$(date +"%B %d, %Y")
+RELEASE_DATE=$(date +"%B %-d, %Y")
 
 check_git() {
     if [[ -n "$(git status --porcelain --untracked-files=no)" ]]; then
@@ -76,9 +76,8 @@ do_git_stuff() {
 }
 
 upload_to_pypi() {
-    echo -n "PyPI: uploading source tarball and docs..."
+    echo -n "PyPI: uploading source tarball..."
     python setup.py -q register sdist upload -s
-    python setup.py -q upload_docs
     echo " done."
 }
 
@@ -88,7 +87,7 @@ post_release() {
     echo "*** Update: https://github.com/earwig/mwparserfromhell/releases/tag/v$VERSION"
     echo "*** Verify: https://pypi.python.org/pypi/mwparserfromhell"
     echo "*** Verify: https://ci.appveyor.com/project/earwig/mwparserfromhell"
-    echo "*** Verify: https://mwparserfromhell.readthedocs.org"
+    echo "*** Verify: https://mwparserfromhell.readthedocs.io"
     echo "*** Press enter to sanity-check the release."
     read
 }

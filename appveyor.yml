@@ -1,6 +1,6 @@
 # This config file is used by appveyor.com to build Windows release binaries
 
-version: 0.5.1-b{build}
+version: 0.6.dev0-b{build}
 
 branches:
   only:

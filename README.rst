@@ -193,7 +193,7 @@ Python 3 code (via the API_)::
         return mwparserfromhell.parse(text)
 
 .. _MediaWiki:              http://mediawiki.org
-.. _ReadTheDocs:            http://mwparserfromhell.readthedocs.org
+.. _ReadTheDocs:            http://mwparserfromhell.readthedocs.io
 .. _Earwig:                 http://en.wikipedia.org/wiki/User:The_Earwig
 .. _Σ:                      http://en.wikipedia.org/wiki/User:%CE%A3
 .. _Legoktm:                http://en.wikipedia.org/wiki/User:Legoktm
