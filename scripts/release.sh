@@ -1,5 +1,7 @@
 #! /usr/bin/env bash
 
+set -euo pipefail
+
 if [[ -z "$1" ]]; then
     echo "usage: $0 1.2.3"
     exit 1
