@@ -203,9 +203,9 @@ class Template(Node):
         is empty. Note that a template may have multiple parameters with the
         same name, but only the last one is read by the MediaWiki parser.
         """
-        name = str(name).strip()
+        name = str(name).strip().lower()
         for param in self.params:
-            if param.name.strip() == name:
+            if param.name.strip().lower() == name:
                 if ignore_empty and not param.value.strip():
                     continue
                 return True
@@ -223,9 +223,9 @@ class Template(Node):
         parameters can have the same name, we'll return the last match, since
         the last parameter is the only one read by the MediaWiki parser.
         """
-        name = str(name).strip()
+        name = str(name).strip().lower()
         for param in reversed(self.params):
-            if param.name.strip() == name:
+            if param.name.strip().lower() == name:
                 return param
         raise ValueError(name)
 
