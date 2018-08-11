@@ -38,15 +38,15 @@ class Wikilink(Node):
         'Fichier',  # French
         'Archivo',  # Spanish
         'Immagine',  # Italiano
-        'Imagem'  # Portuguese
-        'Plik'  # Polish
+        'Imagem',  # Portuguese
+        'Plik',  # Polish
         'Berkas',  # Indonesian
         'Bestand',  # Netherlands
         'चित्र',  # Hindi
-        'Payl', # Cebuano
-        'Paypay', # Waray
+        'Payl',  # Cebuano
+        'Paypay',  # Waray
         'Tập_tin',  # Vietnamese
-        'ファイル', # Japanese
+        'ファイル',  # Japanese
         # -- add here other start words of image wikilinks  --
     ]
 
