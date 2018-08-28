@@ -45,11 +45,12 @@ static const char* PARSER_BLACKLIST[] = {
 };
 
 static const char* SINGLE[] = {
-    "br", "hr", "meta", "link", "img", "li", "dt", "dd", "th", "td", "tr", NULL
+    "br", "hr", "meta", "link", "img", "li", "dt", "dd", "th", "td", "tr",
+    "wbr", NULL
 };
 
 static const char* SINGLE_ONLY[] = {
-    "br", "hr", "meta", "link", "img", NULL
+    "br", "hr", "meta", "link", "img", "wbr", NULL
 };
 
 /*
