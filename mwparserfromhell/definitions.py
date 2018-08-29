@@ -56,8 +56,8 @@ INVISIBLE_TAGS = [
     "section", "templatedata", "timeline"
 ]
 
-# [mediawiki/core.git]/includes/Sanitizer.php @ 87a0aef762
-SINGLE_ONLY = ["br", "hr", "meta", "link", "img"]
+# [mediawiki/core.git]/includes/Sanitizer.php @ 065bec63ea
+SINGLE_ONLY = ["br", "hr", "meta", "link", "img", "wbr"]
 SINGLE = SINGLE_ONLY + ["li", "dt", "dd", "th", "td", "tr"]
 
 MARKUP_TO_HTML = {
