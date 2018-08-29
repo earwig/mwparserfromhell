@@ -7,7 +7,8 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...develop>`__):
 
-- ...
+- Fixed `<wbr>` not being considered a single-only tag.
+  (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
 
 v0.5.1
 ------
