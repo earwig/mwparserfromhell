@@ -84,33 +84,33 @@ class TestStringMixIn(unittest.TestCase):
         str4 = "this is a fake string"
         str5 = "fake string, this is"
 
-        self.assertFalse(str1 > str2)
-        self.assertTrue(str1 >= str2)
-        self.assertTrue(str1 == str2)
-        self.assertFalse(str1 != str2)
-        self.assertFalse(str1 < str2)
-        self.assertTrue(str1 <= str2)
+        self.assertLessEqual(str1, str2)
+        self.assertGreaterEqual(str1, str2)
+        self.assertEqual(str1, str2)
+        self.assertEqual(str1, str2)
+        self.assertGreaterEqual(str1, str2)
+        self.assertLessEqual(str1, str2)
 
-        self.assertTrue(str1 > str3)
-        self.assertTrue(str1 >= str3)
-        self.assertFalse(str1 == str3)
-        self.assertTrue(str1 != str3)
-        self.assertFalse(str1 < str3)
-        self.assertFalse(str1 <= str3)
+        self.assertGreater(str1, str3)
+        self.assertGreaterEqual(str1, str3)
+        self.assertNotEqual(str1, str3)
+        self.assertNotEqual(str1, str3)
+        self.assertGreaterEqual(str1, str3)
+        self.assertGreater(str1, str3)
 
-        self.assertFalse(str1 > str4)
-        self.assertTrue(str1 >= str4)
-        self.assertTrue(str1 == str4)
-        self.assertFalse(str1 != str4)
-        self.assertFalse(str1 < str4)
-        self.assertTrue(str1 <= str4)
+        self.assertLessEqual(str1, str4)
+        self.assertGreaterEqual(str1, str4)
+        self.assertEqual(str1, str4)
+        self.assertEqual(str1, str4)
+        self.assertGreaterEqual(str1, str4)
+        self.assertLessEqual(str1, str4)
 
-        self.assertFalse(str5 > str1)
-        self.assertFalse(str5 >= str1)
-        self.assertFalse(str5 == str1)
-        self.assertTrue(str5 != str1)
-        self.assertTrue(str5 < str1)
-        self.assertTrue(str5 <= str1)
+        self.assertLessEqual(str5, str1)
+        self.assertLess(str5, str1)
+        self.assertNotEqual(str5, str1)
+        self.assertNotEqual(str5, str1)
+        self.assertLess(str5, str1)
+        self.assertLessEqual(str5, str1)
 
     def test_other_magics(self):
         """test other magically implemented features, like len() and iter()"""
@@ -155,13 +155,13 @@ class TestStringMixIn(unittest.TestCase):
         self.assertRaises(IndexError, lambda: str1[11])
         self.assertRaises(IndexError, lambda: str2[0])
 
-        self.assertTrue("k" in str1)
-        self.assertTrue("fake" in str1)
-        self.assertTrue("str" in str1)
-        self.assertTrue("" in str1)
-        self.assertTrue("" in str2)
-        self.assertFalse("real" in str1)
-        self.assertFalse("s" in str2)
+        self.assertIn("k", str1)
+        self.assertIn("fake", str1)
+        self.assertIn("str", str1)
+        self.assertIn("", str1)
+        self.assertIn("", str2)
+        self.assertNotIn("real", str1)
+        self.assertNotIn("s", str2)
 
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
