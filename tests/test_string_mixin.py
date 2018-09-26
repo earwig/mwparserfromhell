@@ -23,13 +23,9 @@
 from __future__ import unicode_literals
 from sys import getdefaultencoding
 from types import GeneratorType
+import unittest
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-from mwparserfromhell.compat import bytes, py3k, py32, range, str
+from mwparserfromhell.compat import bytes, py3k, range, str
 from mwparserfromhell.string_mixin import StringMixIn
 
 class _FakeString(StringMixIn):
@@ -54,9 +50,7 @@ class TestStringMixIn(unittest.TestCase):
             "rsplit", "rstrip", "split", "splitlines", "startswith", "strip",
             "swapcase", "title", "translate", "upper", "zfill"]
         if py3k:
-            if not py32:
-                methods.append("casefold")
-            methods.extend(["format_map", "isidentifier", "isprintable",
+            methods.extend(["casefold", "format_map", "isidentifier", "isprintable",
                             "maketrans"])
         else:
             methods.append("decode")
@@ -329,7 +323,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("", str15.lower())
         self.assertEqual("foobar", str16.lower())
         self.assertEqual("ß", str22.lower())
-        if py3k and not py32:
+        if py3k:
             self.assertEqual("", str15.casefold())
             self.assertEqual("foobar", str16.casefold())
             self.assertEqual("ss", str22.casefold())
@@ -378,7 +372,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEqual(actual, str25.rsplit(" ", 3))
-        if py3k and not py32:
+        if py3k:
             actual = ["   this is a", "sentence", "with", "whitespace"]
             self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
@@ -396,7 +390,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEqual(actual, str25.split(" ", 3))
-        if py3k and not py32:
+        if py3k:
             actual = ["this", "is", "a", "sentence with  whitespace "]
             self.assertEqual(actual, str25.split(maxsplit=3))
 

@@ -21,11 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.utils import parse_anything

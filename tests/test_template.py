@@ -22,11 +22,7 @@
 
 from __future__ import unicode_literals
 from difflib import unified_diff
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
