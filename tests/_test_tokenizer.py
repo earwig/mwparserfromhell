@@ -118,7 +118,7 @@ class TokenizerTestCase(object):
             if restrict and data["name"] != restrict:
                 continue
 
-            fname = "test_{0}{1}_{2}".format(name, number, data["name"])
+            fname = "test_{}{}_{}".format(name, number, data["name"])
             meth = cls._build_test_method(fname, data)
             setattr(cls, fname, meth)
 

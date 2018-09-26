@@ -109,7 +109,7 @@ class StringMixIn(object):
 
     def __getattr__(self, attr):
         if not hasattr(str, attr):
-            raise AttributeError("{0!r} object has no attribute {1!r}".format(
+            raise AttributeError("{!r} object has no attribute {!r}".format(
                 type(self).__name__, attr))
         return getattr(self.__unicode__(), attr)
 

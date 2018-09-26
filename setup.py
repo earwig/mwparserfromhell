@@ -89,7 +89,7 @@ setup(
     url = "https://github.com/earwig/mwparserfromhell",
     description = "MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description = long_docs,
-    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{0}".format(__version__),
+    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{}".format(__version__),
     keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license = "MIT License",
     classifiers = [
