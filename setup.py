@@ -27,15 +27,15 @@ from glob import glob
 from os import environ
 import sys
 
-if ((sys.version_info[0] == 2 and sys.version_info[1] < 6) or
-    (sys.version_info[1] == 3 and sys.version_info[1] < 2)):
-    raise RuntimeError("mwparserfromhell needs Python 2.6+ or 3.2+")
+if ((sys.version_info[0] == 2 and sys.version_info[1] < 7) or
+    (sys.version_info[1] == 3 and sys.version_info[1] < 4)):
+    raise RuntimeError("mwparserfromhell needs Python 2.7 or 3.4+")
 
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 from mwparserfromhell import __version__
-from mwparserfromhell.compat import py26, py3k
+from mwparserfromhell.compat import py3k
 
 with open("README.rst", **({'encoding':'utf-8'} if py3k else {})) as fp:
     long_docs = fp.read()
@@ -82,7 +82,6 @@ setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer] if use_extension else [],
-    tests_require = ["unittest2"] if py26 else [],
     test_suite = "tests.discover",
     version = __version__,
     author = "Ben Kurtovic",
@@ -90,7 +89,7 @@ setup(
     url = "https://github.com/earwig/mwparserfromhell",
     description = "MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description = long_docs,
-    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{0}".format(__version__),
+    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{}".format(__version__),
     keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license = "MIT License",
     classifiers = [
@@ -99,11 +98,9 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.6",
+        "Programming Language :: Python :: 2",
         "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",

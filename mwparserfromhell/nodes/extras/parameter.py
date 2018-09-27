@@ -41,7 +41,7 @@ class Parameter(StringMixIn):
     def __init__(self, name, value, showkey=True):
         super(Parameter, self).__init__()
         if not showkey and not self.can_hide_key(name):
-            raise ValueError("key {0!r} cannot be hidden".format(name))
+            raise ValueError("key {!r} cannot be hidden".format(name))
         self._name = name
         self._value = value
         self._showkey = showkey

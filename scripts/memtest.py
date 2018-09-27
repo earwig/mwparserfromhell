@@ -80,7 +80,7 @@ class MemoryTest(object):
                     raw = raw.encode("raw_unicode_escape")
                     data["input"] = raw.decode("unicode_escape")
             number = str(counter).zfill(digits)
-            fname = "test_{0}{1}_{2}".format(name, number, data["name"])
+            fname = "test_{}{}_{}".format(name, number, data["name"])
             self._tests.append((fname, data["input"]))
             counter += 1
 
@@ -117,7 +117,7 @@ class MemoryTest(object):
             tmpl = "{0}LEAKING{1}: {2:n} bytes, {3:.2%} inc ({4:n} bytes/loop)"
             sys.stdout.write(tmpl.format(Color.YELLOW, Color.RESET, d, p, bpt))
         else:
-            sys.stdout.write("{0}OK{1}".format(Color.GREEN, Color.RESET))
+            sys.stdout.write("{}OK{}".format(Color.GREEN, Color.RESET))
 
     def run(self):
         """Run the memory test suite."""

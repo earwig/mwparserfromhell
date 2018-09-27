@@ -44,7 +44,7 @@ class Token(dict):
                 args.append(key + "=" + repr(value[:97] + "..."))
             else:
                 args.append(key + "=" + repr(value))
-        return "{0}({1})".format(type(self).__name__, ", ".join(args))
+        return "{}({})".format(type(self).__name__, ", ".join(args))
 
     def __eq__(self, other):
         return isinstance(other, type(self)) and dict.__eq__(self, other)

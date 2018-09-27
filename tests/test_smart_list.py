@@ -21,11 +21,7 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from mwparserfromhell.compat import py3k, range
 from mwparserfromhell.smart_list import SmartList, _ListProxy
@@ -139,36 +135,36 @@ class TestSmartList(unittest.TestCase):
             self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
             self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
 
-        self.assertTrue(list1 < list3)
-        self.assertTrue(list1 <= list3)
-        self.assertFalse(list1 == list3)
-        self.assertTrue(list1 != list3)
-        self.assertFalse(list1 > list3)
-        self.assertFalse(list1 >= list3)
+        self.assertLess(list1, list3)
+        self.assertLessEqual(list1, list3)
+        self.assertNotEqual(list1, list3)
+        self.assertNotEqual(list1, list3)
+        self.assertLessEqual(list1, list3)
+        self.assertLess(list1, list3)
 
         other1 = [0, 2, 3, 4]
-        self.assertTrue(list1 < other1)
-        self.assertTrue(list1 <= other1)
-        self.assertFalse(list1 == other1)
-        self.assertTrue(list1 != other1)
-        self.assertFalse(list1 > other1)
-        self.assertFalse(list1 >= other1)
+        self.assertLess(list1, other1)
+        self.assertLessEqual(list1, other1)
+        self.assertNotEqual(list1, other1)
+        self.assertNotEqual(list1, other1)
+        self.assertLessEqual(list1, other1)
+        self.assertLess(list1, other1)
 
         other2 = [0, 0, 1, 2]
-        self.assertFalse(list1 < other2)
-        self.assertFalse(list1 <= other2)
-        self.assertFalse(list1 == other2)
-        self.assertTrue(list1 != other2)
-        self.assertTrue(list1 > other2)
-        self.assertTrue(list1 >= other2)
+        self.assertGreaterEqual(list1, other2)
+        self.assertGreater(list1, other2)
+        self.assertNotEqual(list1, other2)
+        self.assertNotEqual(list1, other2)
+        self.assertGreater(list1, other2)
+        self.assertGreaterEqual(list1, other2)
 
         other3 = [0, 1, 2, 3, "one", "two"]
-        self.assertFalse(list1 < other3)
-        self.assertTrue(list1 <= other3)
-        self.assertTrue(list1 == other3)
-        self.assertFalse(list1 != other3)
-        self.assertFalse(list1 > other3)
-        self.assertTrue(list1 >= other3)
+        self.assertGreaterEqual(list1, other3)
+        self.assertLessEqual(list1, other3)
+        self.assertEqual(list1, other3)
+        self.assertEqual(list1, other3)
+        self.assertLessEqual(list1, other3)
+        self.assertGreaterEqual(list1, other3)
 
         self.assertTrue(bool(list1))
         self.assertFalse(bool(list2))
@@ -198,10 +194,10 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
         self.assertEqual([], list(reversed(list2)))
 
-        self.assertTrue("one" in list1)
-        self.assertTrue(3 in list1)
-        self.assertFalse(10 in list1)
-        self.assertFalse(0 in list2)
+        self.assertIn("one", list1)
+        self.assertIn(3, list1)
+        self.assertNotIn(10, list1)
+        self.assertNotIn(0, list2)
 
         self.assertEqual([], list2 * 5)
         self.assertEqual([], 5 * list2)

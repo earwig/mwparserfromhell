@@ -53,10 +53,10 @@ class HTMLEntity(Node):
 
     def __unicode__(self):
         if self.named:
-            return "&{0};".format(self.value)
+            return "&{};".format(self.value)
         if self.hexadecimal:
-            return "&#{0}{1};".format(self.hex_char, self.value)
-        return "&#{0};".format(self.value)
+            return "&#{}{};".format(self.hex_char, self.value)
+        return "&#{};".format(self.value)
 
     def __strip__(self, **kwargs):
         if kwargs.get("normalize"):

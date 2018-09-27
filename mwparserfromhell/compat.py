@@ -10,9 +10,7 @@ meant to be imported directly from within the parser's modules.
 
 import sys
 
-py26 = (sys.version_info[0] == 2) and (sys.version_info[1] == 6)
 py3k = (sys.version_info[0] == 3)
-py32 = py3k and (sys.version_info[1] == 2)
 
 if py3k:
     bytes = bytes

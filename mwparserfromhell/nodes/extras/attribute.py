@@ -40,7 +40,7 @@ class Attribute(StringMixIn):
                  pad_before_eq="", pad_after_eq="", check_quotes=True):
         super(Attribute, self).__init__()
         if check_quotes and not quotes and self._value_needs_quotes(value):
-            raise ValueError("given value {0!r} requires quotes".format(value))
+            raise ValueError("given value {!r} requires quotes".format(value))
         self._name = name
         self._value = value
         self._quotes = quotes
@@ -79,7 +79,7 @@ class Attribute(StringMixIn):
         """Coerce a quote type into an acceptable value, or raise an error."""
         orig, quotes = quotes, str(quotes) if quotes else None
         if quotes not in [None, '"', "'"]:
-            raise ValueError("{0!r} is not a valid quote type".format(orig))
+            raise ValueError("{!r} is not a valid quote type".format(orig))
         return quotes
 
     @property

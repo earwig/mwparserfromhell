@@ -24,11 +24,7 @@ from __future__ import unicode_literals
 from functools import partial
 import re
 from types import GeneratorType
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,

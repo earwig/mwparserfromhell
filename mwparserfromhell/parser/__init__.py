@@ -35,7 +35,7 @@ class ParserError(Exception):
     can happen. Its appearance indicates a bug.
     """
     def __init__(self, extra):
-        msg = "This is a bug and should be reported. Info: {0}.".format(extra)
+        msg = "This is a bug and should be reported. Info: {}.".format(extra)
         super(ParserError, self).__init__(msg)
 
 
