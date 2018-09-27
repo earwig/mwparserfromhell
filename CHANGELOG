@@ -1,5 +1,6 @@
 v0.6 (unreleased):
 
+- Dropped support for end-of-life Python versions 2.6, 3.2, 3.3. (#199, #204)
 - Fixed <wbr> not being considered a single-only tag. (#200)
 
 v0.5.1 (released March 3, 2018):

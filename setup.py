@@ -76,13 +76,13 @@ if fallback:
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources=sorted(glob("mwparserfromhell/parser/ctokenizer/*.c")),
-                      depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
+                      depends=sorted(glob("mwparserfromhell/parser/ctokenizer/*.h")))
 
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer] if use_extension else [],
-    test_suite = "tests.discover",
+    test_suite = "tests",
     version = __version__,
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",

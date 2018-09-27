@@ -7,6 +7,9 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...develop>`__):
 
+- Dropped support for end-of-life Python versions 2.6, 3.2, 3.3.
+  (`#199 <https://github.com/earwig/mwparserfromhell/issues/199>`,
+  `#204 <https://github.com/earwig/mwparserfromhell/pull/204>`)
 - Fixed `<wbr>` not being considered a single-only tag.
   (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
 
