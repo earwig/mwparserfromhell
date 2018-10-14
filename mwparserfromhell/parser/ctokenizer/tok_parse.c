@@ -2603,6 +2603,8 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
         }
         if (!this)
             return Tokenizer_handle_end(self, this_context);
+        if (PyErr_CheckSignals())
+            return NULL;
         next = Tokenizer_read(self, 1);
         last = Tokenizer_read_backwards(self, 1);
         if (this == next && next == '{') {

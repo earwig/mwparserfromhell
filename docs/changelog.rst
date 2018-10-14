@@ -10,6 +10,9 @@ Unreleased
 - Dropped support for end-of-life Python versions 2.6, 3.2, 3.3.
   (`#199 <https://github.com/earwig/mwparserfromhell/issues/199>`,
   `#204 <https://github.com/earwig/mwparserfromhell/pull/204>`)
+- Fixed signals getting stuck inside the C tokenizer until parsing finishes,
+  in pathological cases.
+  (`#206 <https://github.com/earwig/mwparserfromhell/issues/206>`)
 - Fixed `<wbr>` not being considered a single-only tag.
   (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
 
