@@ -189,7 +189,7 @@ Python 3 code (via the API_)::
                 "rvprop": "content", "format": "json", "titles": title}
         raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
-        text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
+        text = list(res["query"]["pages"].values())[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
 
 .. _MediaWiki:              http://mediawiki.org
