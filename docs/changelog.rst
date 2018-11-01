@@ -15,6 +15,8 @@ Unreleased
   (`#206 <https://github.com/earwig/mwparserfromhell/issues/206>`)
 - Fixed `<wbr>` not being considered a single-only tag.
   (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
+- Fixed a C tokenizer crash on Python 3.7 when compiled with assertions.
+  (`#208 <https://github.com/earwig/mwparserfromhell/issues/208>`)
 
 v0.5.1
 ------

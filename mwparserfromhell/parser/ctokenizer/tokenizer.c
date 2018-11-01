@@ -207,7 +207,7 @@ static int load_entities(void)
     if (!deflist)
         return -1;
     Py_DECREF(defmap);
-    numdefs = (unsigned) PyList_GET_SIZE(defmap);
+    numdefs = (unsigned) PyList_GET_SIZE(deflist);
     entitydefs = calloc(numdefs + 1, sizeof(char*));
     if (!entitydefs)
         return -1;

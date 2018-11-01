@@ -4,6 +4,7 @@ v0.6 (unreleased):
 - Fixed signals getting stuck inside the C tokenizer until parsing finishes,
   in pathological cases. (#206)
 - Fixed <wbr> not being considered a single-only tag. (#200)
+- Fixed a C tokenizer crash on Python 3.7 when compiled with assertions. (#208)
 
 v0.5.1 (released March 3, 2018):
 
