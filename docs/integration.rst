@@ -32,7 +32,7 @@ If you're not using a library, you can parse any page using the following code
                 "rvprop": "content", "format": "json", "titles": title}
         raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
-        text = res["query"]["pages"].values()[0]["revisions"][0]["*"]
+        text = list(res["query"]["pages"].values())[0]["revisions"][0]["*"]
         return mwparserfromhell.parse(text)
 
 .. _EarwigBot:            https://github.com/earwig/earwigbot
