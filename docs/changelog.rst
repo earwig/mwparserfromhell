@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.6
+----
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.2...develop>`__):
+
+- ...
+
 v0.5.2
 ------
 
@@ -8,17 +16,17 @@ v0.5.2
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...v0.5.2>`__):
 
 - Dropped support for end-of-life Python versions 2.6, 3.2, 3.3.
-  (`#199 <https://github.com/earwig/mwparserfromhell/issues/199>`,
-  `#204 <https://github.com/earwig/mwparserfromhell/pull/204>`)
+  (`#199 <https://github.com/earwig/mwparserfromhell/issues/199>`_,
+  `#204 <https://github.com/earwig/mwparserfromhell/pull/204>`_)
 - Fixed signals getting stuck inside the C tokenizer until parsing finishes,
   in pathological cases.
-  (`#206 <https://github.com/earwig/mwparserfromhell/issues/206>`)
+  (`#206 <https://github.com/earwig/mwparserfromhell/issues/206>`_)
 - Fixed `<wbr>` not being considered a single-only tag.
-  (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
+  (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`_)
 - Fixed a C tokenizer crash on Python 3.7 when compiled with assertions.
-  (`#208 <https://github.com/earwig/mwparserfromhell/issues/208>`)
+  (`#208 <https://github.com/earwig/mwparserfromhell/issues/208>`_)
 - Cleaned up some minor documentation issues.
-  (`#207 <https://github.com/earwig/mwparserfromhell/pull/207>`)
+  (`#207 <https://github.com/earwig/mwparserfromhell/pull/207>`_)
 
 v0.5.1
 ------

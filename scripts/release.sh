@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-set -euo pipefail
-
 if [[ -z "$1" ]]; then
     echo "usage: $0 1.2.3"
     exit 1
@@ -77,7 +75,8 @@ do_git_stuff() {
 
 upload_to_pypi() {
     echo -n "PyPI: uploading source tarball..."
-    python setup.py -q register sdist upload -s
+    python setup.py -q sdist
+    twine upload -s dist/mwparserfromhell-$VERSION*
     echo " done."
 }
 
