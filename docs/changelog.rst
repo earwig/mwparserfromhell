@@ -4,8 +4,8 @@ Changelog
 v0.5.2
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...develop>`__):
+`Released November 1, 2018 <https://github.com/earwig/mwparserfromhell/tree/v0.5.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...v0.5.2>`__):
 
 - Dropped support for end-of-life Python versions 2.6, 3.2, 3.3.
   (`#199 <https://github.com/earwig/mwparserfromhell/issues/199>`,

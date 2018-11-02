@@ -1,4 +1,4 @@
-v0.5.2 (unreleased):
+v0.5.2 (released November 1, 2018):
 
 - Dropped support for end-of-life Python versions 2.6, 3.2, 3.3. (#199, #204)
 - Fixed signals getting stuck inside the C tokenizer until parsing finishes,
