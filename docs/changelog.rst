@@ -1,8 +1,8 @@
 Changelog
 =========
 
-v0.6
-----
+v0.5.2
+------
 
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.1...develop>`__):
@@ -17,6 +17,8 @@ Unreleased
   (`#200 <https://github.com/earwig/mwparserfromhell/pull/200>`)
 - Fixed a C tokenizer crash on Python 3.7 when compiled with assertions.
   (`#208 <https://github.com/earwig/mwparserfromhell/issues/208>`)
+- Cleaned up some minor documentation issues.
+  (`#207 <https://github.com/earwig/mwparserfromhell/pull/207>`)
 
 v0.5.1
 ------
