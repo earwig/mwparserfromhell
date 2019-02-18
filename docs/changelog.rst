@@ -7,7 +7,9 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.2...develop>`__):
 
-- ...
+- Fixed :class:`.Wikicode` transformation methods (:meth:`.Wikicode.replace`,
+  :meth:`.Wikicode.remove`, etc.) when passed an empty section as an argument.
+  (`#212 <https://github.com/earwig/mwparserfromhell/issues/212>`_)
 
 v0.5.2
 ------

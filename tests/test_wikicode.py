@@ -188,8 +188,8 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertRaises(ValueError, func, fake, "q", recursive=True)
         func("{{b}}{{c}}", "w", recursive=False)
         func("{{d}}{{e}}", "x", recursive=True)
-        func(wrap(code4.nodes[-2:]), "y", recursive=False)
-        func(wrap(code4.nodes[-2:]), "z", recursive=True)
+        func(Wikicode(code4.nodes[-2:]), "y", recursive=False)
+        func(Wikicode(code4.nodes[-2:]), "z", recursive=True)
         self.assertEqual(expected[3], code4)
         self.assertRaises(ValueError, func, "{{c}}{{d}}", "q", recursive=False)
         self.assertRaises(ValueError, func, "{{c}}{{d}}", "q", recursive=True)
@@ -218,6 +218,13 @@ class TestWikicode(TreeEqualityTestCase):
         func("{{foo}}{{baz}}", "{{lol}}")
         self.assertEqual(expected[6], code7)
 
+        code8 = parse("== header ==")
+        func = partial(meth, code8)
+        sec1, sec2 = code8.get_sections(include_headings=False)
+        func(sec1, "lead\n")
+        func(sec2, "\nbody")
+        self.assertEqual(expected[7], code8)
+
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
         meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -228,7 +235,9 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a}}w{{b}}{{c}}x{{d}}{{e}}{{f}}{{g}}{{h}}yz{{i}}{{j}}",
             "{{a|x{{b}}{{c}}|{{f|{{g}}=y{{h}}{{i}}}}}}",
             "here cdis {{some abtext and a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}"]
+            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}",
+            "lead\n== header ==\nbody",
+        ]
         self._test_search(meth, expected)
 
     def test_insert_after(self):
@@ -241,16 +250,24 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a}}{{b}}{{c}}w{{d}}{{e}}x{{f}}{{g}}{{h}}{{i}}{{j}}yz",
             "{{a|{{b}}{{c}}x|{{f|{{g}}={{h}}{{i}}y}}}}",
             "here is {{somecd text andab a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}"]
+            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}",
+            "lead\n== header ==\nbody",
+        ]
         self._test_search(meth, expected)
 
     def test_replace(self):
         """test Wikicode.replace()"""
         meth = lambda code, *args, **kw: code.replace(*args, **kw)
         expected = [
-            "{{a}}xz[[y]]{{e}}", "dcdffe", "{{a|x|{{c|d=y}}}}",
-            "{{a}}wx{{f}}{{g}}z", "{{a|x|{{f|{{g}}=y}}}}",
-            "here cd ab a {{template}}}}", "{{foo}}{{bar}}{{baz}}{{lol}}"]
+            "{{a}}xz[[y]]{{e}}",
+            "dcdffe",
+            "{{a|x|{{c|d=y}}}}",
+            "{{a}}wx{{f}}{{g}}z",
+            "{{a|x|{{f|{{g}}=y}}}}",
+            "here cd ab a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{lol}}",
+            "lead\n== header ==\nbody",
+        ]
         self._test_search(meth, expected)
 
     def test_append(self):
@@ -269,9 +286,15 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.remove()"""
         meth = lambda code, obj, value, **kw: code.remove(obj, **kw)
         expected = [
-            "{{a}}{{c}}", "", "{{a||{{c|d=}}}}", "{{a}}{{f}}",
-            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}"]
+            "{{a}}{{c}}",
+            "",
+            "{{a||{{c|d=}}}}",
+            "{{a}}{{f}}",
+            "{{a||{{f|{{g}}=}}}}",
+            "here   a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}",
+            "== header ==",
+        ]
         self._test_search(meth, expected)
 
     def test_matches(self):

@@ -27,6 +27,7 @@ import re
 from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
+from .smart_list import _ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -108,6 +109,23 @@ class Wikicode(StringMixIn):
             if (not forcetype or isinstance(node, forcetype)) and match(node):
                 yield (i, node)
 
+    def _is_child_wikicode(self, obj, recursive=True):
+        """Return whether the given :class:`.Wikicode` is a descendant."""
+        nodes = obj.nodes
+        if isinstance(nodes, _ListProxy):
+            nodes = nodes._parent  # pylint: disable=protected-access
+        if nodes is self.nodes:
+            return True
+        if recursive:
+            todo = [self]
+            while todo:
+                code = todo.pop()
+                if nodes is code.nodes:
+                    return True
+                for node in code.nodes:
+                    todo += list(node.__children__())
+        return False
+
     def _do_strong_search(self, obj, recursive=True):
         """Search for the specific element *obj* within the node list.
 
@@ -120,11 +138,16 @@ class Wikicode(StringMixIn):
         :class:`.Wikicode` contained by a node within ``self``. If *obj* is not
         found, :exc:`ValueError` is raised.
         """
+        if isinstance(obj, Wikicode):
+            if not self._is_child_wikicode(obj, recursive):
+                raise ValueError(obj)
+            return obj, slice(0, len(obj.nodes))
+
         if isinstance(obj, Node):
             mkslice = lambda i: slice(i, i + 1)
             if not recursive:
                 return self, mkslice(self.index(obj))
-            for i, node in enumerate(self.nodes):
+            for node in self.nodes:
                 for context, child in self._get_children(node, contexts=True):
                     if obj is child:
                         if not context:
@@ -132,11 +155,7 @@ class Wikicode(StringMixIn):
                         return context, mkslice(context.index(child))
             raise ValueError(obj)
 
-        context, ind = self._do_strong_search(obj.get(0), recursive)
-        for i in range(1, len(obj.nodes)):
-            if obj.get(i) is not context.get(ind.start + i):
-                raise ValueError(obj)
-        return context, slice(ind.start, ind.start + len(obj.nodes))
+        raise TypeError(obj)
 
     def _do_weak_search(self, obj, recursive):
         """Search for an element that looks like *obj* within the node list.
