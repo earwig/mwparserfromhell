@@ -111,16 +111,19 @@ class Wikicode(StringMixIn):
 
     def _is_child_wikicode(self, obj, recursive=True):
         """Return whether the given :class:`.Wikicode` is a descendant."""
-        nodes = obj.nodes
-        if isinstance(nodes, _ListProxy):
-            nodes = nodes._parent  # pylint: disable=protected-access
-        if nodes is self.nodes:
+        def deref(nodes):
+            if isinstance(nodes, _ListProxy):
+                return nodes._parent  # pylint: disable=protected-access
+            return nodes
+
+        target = deref(obj.nodes)
+        if target is deref(self.nodes):
             return True
         if recursive:
             todo = [self]
             while todo:
                 code = todo.pop()
-                if nodes is code.nodes:
+                if target is deref(code.nodes):
                     return True
                 for node in code.nodes:
                     todo += list(node.__children__())

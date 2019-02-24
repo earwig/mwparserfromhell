@@ -225,6 +225,13 @@ class TestWikicode(TreeEqualityTestCase):
         func(sec2, "\nbody")
         self.assertEqual(expected[7], code8)
 
+        code9 = parse("{{foo}}")
+        meth(code9.get_sections()[0], code9.get_sections()[0], "{{bar}}")
+        meth(code9.get_sections()[0], code9, "{{baz}}")
+        meth(code9, code9, "{{qux}}")
+        meth(code9, code9.get_sections()[0], "{{quz}}")
+        self.assertEqual(expected[8], code9)
+
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
         meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -237,6 +244,7 @@ class TestWikicode(TreeEqualityTestCase):
             "here cdis {{some abtext and a {{template}}}}",
             "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}",
             "lead\n== header ==\nbody",
+            "{{quz}}{{qux}}{{baz}}{{bar}}{{foo}}",
         ]
         self._test_search(meth, expected)
 
@@ -252,6 +260,7 @@ class TestWikicode(TreeEqualityTestCase):
             "here is {{somecd text andab a {{template}}}}",
             "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}",
             "lead\n== header ==\nbody",
+            "{{foo}}{{bar}}{{baz}}{{qux}}{{quz}}",
         ]
         self._test_search(meth, expected)
 
@@ -267,6 +276,7 @@ class TestWikicode(TreeEqualityTestCase):
             "here cd ab a {{template}}}}",
             "{{foo}}{{bar}}{{baz}}{{lol}}",
             "lead\n== header ==\nbody",
+            "{{quz}}",
         ]
         self._test_search(meth, expected)
 
@@ -294,6 +304,7 @@ class TestWikicode(TreeEqualityTestCase):
             "here   a {{template}}}}",
             "{{foo}}{{bar}}{{baz}}",
             "== header ==",
+            "",
         ]
         self._test_search(meth, expected)
 
