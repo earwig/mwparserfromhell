@@ -55,8 +55,8 @@ class Parser(object):
 
     Actual parsing is a two-step process: first, the text is split up into a
     series of tokens by the :class:`.Tokenizer`, and then the tokens are
-    converted into trees of :class:`.Wikicode` objects and :class:`.Node`\ s by
-    the :class:`.Builder`.
+    converted into trees of :class:`.Wikicode` objects and :class:`.Node`\\ s
+    by the :class:`.Builder`.
 
     Instances of this class or its dependents (:class:`.Tokenizer` and
     :class:`.Builder`) should not be shared between threads. :meth:`parse` can
@@ -79,7 +79,7 @@ class Parser(object):
 
         If given, *context* will be passed as a starting context to the parser.
         This is helpful when this function is used inside node attribute
-        setters. For example, :class:`.ExternalLink`\ 's
+        setters. For example, :class:`.ExternalLink`\\ 's
         :attr:`~.ExternalLink.url` setter sets *context* to
         :mod:`contexts.EXT_LINK_URI <.contexts>` to prevent the URL itself
         from becoming an :class:`.ExternalLink`.

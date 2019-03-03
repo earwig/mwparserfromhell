@@ -21,8 +21,8 @@
 # SOFTWARE.
 
 """
-This package contains objects used by :class:`.Node`\ s, but that are not nodes
-themselves. This includes template parameters and HTML tag attributes.
+This package contains objects used by :class:`.Node`\\ s, but that are not
+nodes themselves. This includes template parameters and HTML tag attributes.
 """
 
 from .attribute import Attribute

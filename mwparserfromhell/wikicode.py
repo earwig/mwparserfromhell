@@ -56,7 +56,7 @@ class Wikicode(StringMixIn):
 
     @staticmethod
     def _get_children(node, contexts=False, restrict=None, parent=None):
-        """Iterate over all child :class:`.Node`\ s of a given *node*."""
+        """Iterate over all child :class:`.Node`\\ s of a given *node*."""
         yield (parent, node) if contexts else node
         if restrict and isinstance(node, restrict):
             return
@@ -276,7 +276,7 @@ class Wikicode(StringMixIn):
         self._nodes = value
 
     def get(self, index):
-        """Return the *index*\ th node within the list of nodes."""
+        """Return the *index*\\ th node within the list of nodes."""
         return self.nodes[index]
 
     def set(self, index, value):

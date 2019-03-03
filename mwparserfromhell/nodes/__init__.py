@@ -56,6 +56,7 @@ class Node(StringMixIn):
 
     def __children__(self):
         return
+        # pylint: disable=unreachable
         yield  # pragma: no cover (this is a generator that yields nothing)
 
     def __strip__(self, **kwargs):

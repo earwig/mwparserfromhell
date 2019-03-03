@@ -455,7 +455,7 @@ class Tokenizer(object):
         else:
             self._parse_free_uri_scheme()
             invalid = ("\n", " ", "[", "]")
-            punct = tuple(",;\.:!?)")
+            punct = tuple(",;\\.:!?)")
         if self._read() is self.END or self._read()[0] in invalid:
             self._fail_route()
         tail = ""
