@@ -7,6 +7,8 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.2...develop>`__):
 
+- Fixed manual construction of Node objects, previously unsupported.
+(`#214 <https://github.com/earwig/mwparserfromhell/issues/214>`_)
 - Fixed :class:`.Wikicode` transformation methods (:meth:`.Wikicode.replace`,
   :meth:`.Wikicode.remove`, etc.) when passed an empty section as an argument.
   (`#212 <https://github.com/earwig/mwparserfromhell/issues/212>`_)

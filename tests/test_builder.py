@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -232,11 +232,11 @@ class TestBuilder(TreeEqualityTestCase):
         tests = [
             ([tokens.CommentStart(), tokens.Text(text="foobar"),
               tokens.CommentEnd()],
-             wrap([Comment(wraptext("foobar"))])),
+             wrap([Comment("foobar")])),
 
             ([tokens.CommentStart(), tokens.Text(text="spam"),
               tokens.Text(text="eggs"), tokens.CommentEnd()],
-             wrap([Comment(wraptext("spam", "eggs"))])),
+             wrap([Comment("spameggs")])),
         ]
         for test, valid in tests:
             self.assertWikicodeEqual(valid, self.builder.build(test))
@@ -412,7 +412,7 @@ class TestBuilder(TreeEqualityTestCase):
             wraptext("c"), params=[Parameter(wraptext("1"), wrap([Wikilink(
             wraptext("d")), Argument(wraptext("e"))]), showkey=False)])]),
             showkey=False)]), Wikilink(wraptext("f"), wrap([Argument(wraptext(
-            "g")), Comment(wraptext("h"))])), Template(wraptext("i"), params=[
+            "g")), Comment("h")])), Template(wraptext("i"), params=[
             Parameter(wraptext("j"), wrap([HTMLEntity("nbsp",
             named=True)]))])])
         self.assertWikicodeEqual(valid, self.builder.build(test))

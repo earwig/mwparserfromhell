@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,8 @@ class Heading(Node):
 
     def __init__(self, title, level):
         super(Heading, self).__init__()
-        self._title = title
-        self._level = level
+        self.title = title
+        self.level = level
 
     def __unicode__(self):
         return ("=" * self.level) + str(self.title) + ("=" * self.level)

@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -37,16 +37,15 @@ class Attribute(StringMixIn):
     """
 
     def __init__(self, name, value=None, quotes='"', pad_first=" ",
-                 pad_before_eq="", pad_after_eq="", check_quotes=True):
+                 pad_before_eq="", pad_after_eq=""):
         super(Attribute, self).__init__()
-        if check_quotes and not quotes and self._value_needs_quotes(value):
-            raise ValueError("given value {!r} requires quotes".format(value))
-        self._name = name
-        self._value = value
-        self._quotes = quotes
-        self._pad_first = pad_first
-        self._pad_before_eq = pad_before_eq
-        self._pad_after_eq = pad_after_eq
+        self.name = name
+        self._quotes = None
+        self.value = value
+        self.quotes = quotes
+        self.pad_first = pad_first
+        self.pad_before_eq = pad_before_eq
+        self.pad_after_eq = pad_after_eq
 
     def __unicode__(self):
         result = self.pad_first + str(self.name) + self.pad_before_eq
@@ -59,10 +58,17 @@ class Attribute(StringMixIn):
 
     @staticmethod
     def _value_needs_quotes(val):
-        """Return the preferred quotes for the given value, or None."""
-        if val and any(char.isspace() for char in val):
-            return ('"' in val and "'" in val) or ("'" if '"' in val else '"')
-        return None
+        """Return valid quotes for the given value, or None if unneeded."""
+        if not val:
+            return None
+        val = "".join(str(node) for node in val.filter_text(recursive=False))
+        if not any(char.isspace() for char in val):
+            return None
+        if "'" in val and '"' not in val:
+            return '"'
+        if '"' in val and "'" not in val:
+            return "'"
+        return "\"'"  # Either acceptable, " preferred over '
 
     def _set_padding(self, attr, value):
         """Setter for the value of a padding attribute."""
@@ -123,8 +129,8 @@ class Attribute(StringMixIn):
         else:
             code = parse_anything(newval)
             quotes = self._value_needs_quotes(code)
-            if quotes in ['"', "'"] or (quotes is True and not self.quotes):
-                self._quotes = quotes
+            if quotes and (not self.quotes or self.quotes not in quotes):
+                self._quotes = quotes[0]
             self._value = code
 
     @quotes.setter

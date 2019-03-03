@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -67,7 +67,7 @@ class TreeEqualityTestCase(TestCase):
 
     def assertCommentNodeEqual(self, expected, actual):
         """Assert that two Comment nodes have the same data."""
-        self.assertWikicodeEqual(expected.contents, actual.contents)
+        self.assertEqual(expected.contents, actual.contents)
 
     def assertHeadingNodeEqual(self, expected, actual):
         """Assert that two Heading nodes have the same data."""

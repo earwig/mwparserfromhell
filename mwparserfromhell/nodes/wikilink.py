@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,8 +33,8 @@ class Wikilink(Node):
 
     def __init__(self, title, text=None):
         super(Wikilink, self).__init__()
-        self._title = title
-        self._text = text
+        self.title = title
+        self.text = text
 
     def __unicode__(self):
         if self.text is not None:

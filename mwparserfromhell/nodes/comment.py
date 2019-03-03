@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -32,10 +32,10 @@ class Comment(Node):
 
     def __init__(self, contents):
         super(Comment, self).__init__()
-        self._contents = contents
+        self.contents = contents
 
     def __unicode__(self):
-        return "<!--" + str(self.contents) + "-->"
+        return "<!--" + self.contents + "-->"
 
     @property
     def contents(self):

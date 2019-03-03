@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -33,9 +33,9 @@ class ExternalLink(Node):
 
     def __init__(self, url, title=None, brackets=True):
         super(ExternalLink, self).__init__()
-        self._url = url
-        self._title = title
-        self._brackets = brackets
+        self.url = url
+        self.title = title
+        self.brackets = brackets
 
     def __unicode__(self):
         if self.brackets:

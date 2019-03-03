@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,28 +38,20 @@ class Tag(Node):
                  closing_tag=None, wiki_style_separator=None,
                  closing_wiki_markup=None):
         super(Tag, self).__init__()
-        self._tag = tag
-        if contents is None and not self_closing:
-            self._contents = parse_anything("")
-        else:
-            self._contents = contents
+        self.tag = tag
+        self.contents = contents
         self._attrs = attrs if attrs else []
-        self._wiki_markup = wiki_markup
-        self._self_closing = self_closing
-        self._invalid = invalid
-        self._implicit = implicit
-        self._padding = padding
-        if closing_tag:
-            self._closing_tag = closing_tag
-        else:
-            self._closing_tag = tag
-        self._wiki_style_separator = wiki_style_separator
+        self._closing_wiki_markup = None
+        self.wiki_markup = wiki_markup
+        self.self_closing = self_closing
+        self.invalid = invalid
+        self.implicit = implicit
+        self.padding = padding
+        if closing_tag is not None:
+            self.closing_tag = closing_tag
+        self.wiki_style_separator = wiki_style_separator
         if closing_wiki_markup is not None:
-            self._closing_wiki_markup = closing_wiki_markup
-        elif wiki_markup and not self_closing:
-            self._closing_wiki_markup = wiki_markup
-        else:
-            self._closing_wiki_markup = None
+            self.closing_wiki_markup = closing_wiki_markup
 
     def __unicode__(self):
         if self.wiki_markup:
@@ -69,10 +61,10 @@ class Tag(Node):
                 attrs = ""
             padding = self.padding or ""
             separator = self.wiki_style_separator or ""
-            close = self.closing_wiki_markup or ""
             if self.self_closing:
                 return self.wiki_markup + attrs + padding + separator
             else:
+                close = self.closing_wiki_markup or ""
                 return self.wiki_markup + attrs + padding + separator + \
                        str(self.contents) + close
 
@@ -93,10 +85,10 @@ class Tag(Node):
             yield attr.name
             if attr.value is not None:
                 yield attr.value
-        if self.contents:
+        if not self.self_closing:
             yield self.contents
-        if not self.self_closing and not self.wiki_markup and self.closing_tag:
-            yield self.closing_tag
+            if not self.wiki_markup and self.closing_tag:
+                yield self.closing_tag
 
     def __strip__(self, **kwargs):
         if self.contents and is_visible(self.tag):

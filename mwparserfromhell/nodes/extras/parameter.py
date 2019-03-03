@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -40,11 +40,9 @@ class Parameter(StringMixIn):
 
     def __init__(self, name, value, showkey=True):
         super(Parameter, self).__init__()
-        if not showkey and not self.can_hide_key(name):
-            raise ValueError("key {!r} cannot be hidden".format(name))
-        self._name = name
-        self._value = value
-        self._showkey = showkey
+        self.name = name
+        self.value = value
+        self.showkey = showkey
 
     def __unicode__(self):
         if self.showkey:
@@ -83,5 +81,6 @@ class Parameter(StringMixIn):
     def showkey(self, newval):
         newval = bool(newval)
         if not newval and not self.can_hide_key(self.name):
-            raise ValueError("parameter key cannot be hidden")
+            raise ValueError("parameter key {!r} cannot be hidden".format(
+                self.name))
         self._showkey = newval

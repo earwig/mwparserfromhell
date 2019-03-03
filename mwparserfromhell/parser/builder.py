@@ -48,7 +48,7 @@ def _add_handler(token_type):
 class Builder(object):
     """Builds a tree of nodes out of a sequence of tokens.
 
-    To use, pass a list of :class:`.Token`\ s to the :meth:`build` method. The
+    To use, pass a list of :class:`.Token`\\ s to the :meth:`build` method. The
     list will be exhausted as it is parsed and a :class:`.Wikicode` object
     containing the node tree will be returned.
     """
@@ -237,8 +237,7 @@ class Builder(object):
                 else:
                     name, value = self._pop(), None
                 return Attribute(name, value, quotes, start.pad_first,
-                                 start.pad_before_eq, start.pad_after_eq,
-                                 check_quotes=False)
+                                 start.pad_before_eq, start.pad_after_eq)
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_attribute() missed a close token")

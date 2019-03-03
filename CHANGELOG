@@ -1,5 +1,6 @@
 v0.6 (unreleased):
 
+- Fixed manual construction of Node objects, previously unsupported. (#214)
 - Fixed Wikicode transformation methods (replace(), remove(), etc.) when passed
   an empty section as an argument. (#212)
 
