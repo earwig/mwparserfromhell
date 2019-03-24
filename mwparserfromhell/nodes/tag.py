@@ -300,7 +300,10 @@ class Tag(Node):
         return attr
 
     def remove(self, name):
-        """Remove all attributes with the given *name*."""
+        """Remove all attributes with the given *name*.
+
+        Raises :exc:`ValueError` if none were found.
+        """
         attrs = [attr for attr in self.attributes if attr.name == name.strip()]
         if not attrs:
             raise ValueError(name)

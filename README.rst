@@ -189,11 +189,13 @@ Python 3 code (via the API_):
     API_URL = "https://en.wikipedia.org/w/api.php"
 
     def parse(title):
-        data = {"action": "query", "prop": "revisions", "rvlimit": 1,
-                "rvprop": "content", "format": "json", "titles": title}
+        data = {"action": "query", "prop": "revisions", "rvprop": "content",
+                "rvslots": "main", "rvlimit": 1, "titles": title,
+                "format": "json", "formatversion": "2"}
         raw = urlopen(API_URL, urlencode(data).encode()).read()
         res = json.loads(raw)
-        text = list(res["query"]["pages"].values())[0]["revisions"][0]["*"]
+        revision = res["query"]["pages"][0]["revisions"][0]
+        text = revision["slots"]["main"]["content"]
         return mwparserfromhell.parse(text)
 
 .. _MediaWiki:              http://mediawiki.org

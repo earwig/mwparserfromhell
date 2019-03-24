@@ -114,14 +114,16 @@ class TestDocs(unittest.TestCase):
         url1 = "https://en.wikipedia.org/w/api.php"
         url2 = "https://en.wikipedia.org/w/index.php?title={0}&action=raw"
         title = "Test"
-        data = {"action": "query", "prop": "revisions", "rvlimit": 1,
-                "rvprop": "content", "format": "json", "titles": title}
+        data = {"action": "query", "prop": "revisions", "rvprop": "content",
+                "rvslots": "main", "rvlimit": 1, "titles": title,
+                "format": "json", "formatversion": "2"}
         try:
             raw = urlopen(url1, urlencode(data).encode("utf8")).read()
         except IOError:
             self.skipTest("cannot continue because of unsuccessful web call")
         res = json.loads(raw.decode("utf8"))
-        text = list(res["query"]["pages"].values())[0]["revisions"][0]["*"]
+        revision = res["query"]["pages"][0]["revisions"][0]
+        text = revision["slots"]["main"]["content"]
         try:
             expected = urlopen(url2.format(title)).read().decode("utf8")
         except IOError:
