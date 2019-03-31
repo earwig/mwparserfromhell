@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.6
-----
+v0.5.3
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.2...develop>`__):
+`Released March 30, 2019 <https://github.com/earwig/mwparserfromhell/tree/v0.5.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.2...v0.5.3>`__):
 
 - Fixed manual construction of Node objects, previously unsupported.
   (`#214 <https://github.com/earwig/mwparserfromhell/issues/214>`_)
