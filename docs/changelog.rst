@@ -12,6 +12,8 @@ Unreleased
 - Fixed :class:`.Wikicode` transformation methods (:meth:`.Wikicode.replace`,
   :meth:`.Wikicode.remove`, etc.) when passed an empty section as an argument.
   (`#212 <https://github.com/earwig/mwparserfromhell/issues/212>`_)
+- Fixed the parser getting stuck inside malformed tables.
+  (`#206 <https://github.com/earwig/mwparserfromhell/issues/206>`_)
 
 v0.5.2
 ------

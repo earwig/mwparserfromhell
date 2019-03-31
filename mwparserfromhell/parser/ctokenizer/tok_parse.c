@@ -2254,6 +2254,7 @@ static int Tokenizer_parse_table(Tokenizer* self)
         Py_DECREF(padding);
         Py_DECREF(style);
         while (!Tokenizer_IS_CURRENT_STACK(self, restore_point)) {
+            Tokenizer_memoize_bad_route(self);
             trash = Tokenizer_pop(self);
             Py_XDECREF(trash);
         }

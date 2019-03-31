@@ -1133,6 +1133,7 @@ class Tokenizer(object):
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
             while self._stack_ident != restore_point:
+                self._memoize_bad_route()
                 self._pop()
             self._head = reset
             self._emit_text("{")
