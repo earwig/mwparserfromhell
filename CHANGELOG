@@ -1,3 +1,7 @@
+v0.6 (unreleased):
+
+- ...
+
 v0.5.3 (released March 30, 2019):
 
 - Fixed manual construction of Node objects, previously unsupported. (#214)
