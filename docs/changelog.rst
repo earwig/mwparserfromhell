@@ -1,13 +1,14 @@
 Changelog
 =========
 
-v0.6
+v0.5.4
 ----
 
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.3...develop>`__):
 
-- ...
+- Fixed an unlikely crash in the C tokenizer when interrupted while parsing
+  a heading.
 
 v0.5.3
 ------

@@ -1,6 +1,7 @@
-v0.6 (unreleased):
+v0.5.4 (unreleased):
 
-- ...
+- Fixed an unlikely crash in the C tokenizer when interrupted while parsing
+  a heading.
 
 v0.5.3 (released March 30, 2019):
 

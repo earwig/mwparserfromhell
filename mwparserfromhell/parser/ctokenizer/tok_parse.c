@@ -813,6 +813,9 @@ static int Tokenizer_parse_heading(Tokenizer* self)
         self->global ^= GL_HEADING;
         return 0;
     }
+    if (!heading) {
+        return -1;
+    }
 #ifdef IS_PY3K
     level = PyLong_FromSsize_t(heading->level);
 #else
@@ -892,6 +895,9 @@ static HeadingData* Tokenizer_handle_heading_end(Tokenizer* self)
         self->head = reset + best - 1;
     }
     else {
+        if (!after) {
+            return NULL;
+        }
         for (i = 0; i < best; i++) {
             if (Tokenizer_emit_char(self, '=')) {
                 Py_DECREF(after->title);
