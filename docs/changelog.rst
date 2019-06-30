@@ -7,7 +7,8 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.4...develop>`__):
 
-- ...
+- Updated Wikicode.matches() to recognize underscores as being equivalent
+  to spaces. (`#216 <https://github.com/earwig/mwparserfromhell/issues/216>`_)
 
 v0.5.4
 ------

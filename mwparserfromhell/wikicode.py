@@ -1,6 +1,6 @@
 # -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -501,16 +501,16 @@ class Wikicode(StringMixIn):
         letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
-        cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
-                            if a and b else a == b)
-        this = self.strip_code().strip()
+        normalize = lambda s: (s[0].upper() + s[1:]).replace("_", " ") if s else s
+        this = normalize(self.strip_code().strip())
+
         if isinstance(other, (str, bytes, Wikicode, Node)):
             that = parse_anything(other).strip_code().strip()
-            return cmp(this, that)
+            return this == normalize(that)
 
         for obj in other:
             that = parse_anything(obj).strip_code().strip()
-            if cmp(this, that):
+            if this == normalize(that):
                 return True
         return False
 

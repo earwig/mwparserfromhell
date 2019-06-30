@@ -312,7 +312,9 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.matches()"""
         code1 = parse("Cleanup")
         code2 = parse("\nstub<!-- TODO: make more specific -->")
-        code3 = parse("")
+        code3 = parse("Hello world!")
+        code4 = parse("World,_hello?")
+        code5 = parse("")
         self.assertTrue(code1.matches("Cleanup"))
         self.assertTrue(code1.matches("cleanup"))
         self.assertTrue(code1.matches("  cleanup\n"))
@@ -327,9 +329,15 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertFalse(code2.matches(["StuB", "sTUb", "foobar"]))
         self.assertTrue(code2.matches(("StuB", "sTUb", "foo", "bar", "Stub")))
         self.assertTrue(code2.matches(["StuB", "sTUb", "foo", "bar", "Stub"]))
-        self.assertTrue(code3.matches(""))
-        self.assertTrue(code3.matches("<!-- nothing -->"))
-        self.assertTrue(code3.matches(("a", "b", "")))
+        self.assertTrue(code3.matches("hello world!"))
+        self.assertTrue(code3.matches("hello_world!"))
+        self.assertFalse(code3.matches("hello__world!"))
+        self.assertTrue(code4.matches("World,_hello?"))
+        self.assertTrue(code4.matches("World, hello?"))
+        self.assertFalse(code4.matches("World,  hello?"))
+        self.assertTrue(code5.matches(""))
+        self.assertTrue(code5.matches("<!-- nothing -->"))
+        self.assertTrue(code5.matches(("a", "b", "")))
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""
