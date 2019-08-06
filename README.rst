@@ -177,23 +177,48 @@ If you're using Pywikibot_, your code might look like this:
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse any page using the following
-Python 3 code (via the API_):
+If you're using `PyWikiAPI library`_ via the API_:
 
 .. code-block:: python
 
-    import json
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
+    from pywikiapi import wikipedia
+    import mwparserfromhell
+    
+    def parse(title):
+        site = wikipedia('en', headers={'User-Agent': 'my bot name'})
+        # query() is a generator, get just the first result. Can also use for loop and break.
+        res = next(site.query(
+            titles=title,
+            prop='revisions',
+            rvprop='content',
+            rvslots='main',
+            rvlimit=1))
+        return mwparserfromhell.parse(res.pages[0].revisions[0].slots.main.content)
+
+If you're not using a library, you can parse any page using the following
+Python 3 code (via the API_ and the popular requests_ library):
+
+.. code-block:: python
+
+    import requests
     import mwparserfromhell
     API_URL = "https://en.wikipedia.org/w/api.php"
 
     def parse(title):
-        data = {"action": "query", "prop": "revisions", "rvprop": "content",
-                "rvslots": "main", "rvlimit": 1, "titles": title,
-                "format": "json", "formatversion": "2"}
-        raw = urlopen(API_URL, urlencode(data).encode()).read()
-        res = json.loads(raw)
+        params = dict(action="query",
+                      prop="revisions",
+                      rvprop="content",
+                      rvslots="main",
+                      rvlimit=1,
+                      titles=title,
+                      format="json",
+                      formatversion="2")
+    
+        r = requests.get(API_URL,
+                         headers={'User-Agent': 'name of my bot'},
+                         params=params)
+    
+        res = r.json()
         revision = res["query"]["pages"][0]["revisions"][0]
         text = revision["slots"]["main"]["content"]
         return mwparserfromhell.parse(text)
@@ -210,3 +235,5 @@ Python 3 code (via the API_):
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                    http://mediawiki.org/wiki/API
+.. _requests:               https://2.python-requests.org
+.. _PyWikiAPI library:      https://pypi.org/project/pywikiapi/
