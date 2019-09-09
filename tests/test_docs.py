@@ -114,9 +114,16 @@ class TestDocs(unittest.TestCase):
         url1 = "https://en.wikipedia.org/w/api.php"
         url2 = "https://en.wikipedia.org/w/index.php?title={0}&action=raw"
         title = "Test"
-        data = {"action": "query", "prop": "revisions", "rvprop": "content",
-                "rvslots": "main", "rvlimit": 1, "titles": title,
-                "format": "json", "formatversion": "2"}
+        data = {
+            "action": "query",
+            "prop": "revisions",
+            "rvprop": "content",
+            "rvslots": "main",
+            "rvlimit": 1,
+            "titles": title,
+            "format": "json",
+            "formatversion": "2",
+        }
         try:
             raw = urlopen(url1, urlencode(data).encode("utf8")).read()
         except IOError:

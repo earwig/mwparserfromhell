@@ -23,7 +23,7 @@
 """
 `mwparserfromhell <https://github.com/earwig/mwparserfromhell>`_ (the MediaWiki
 Parser from Hell) is a Python package that provides an easy-to-use and
-outrageously powerful parser for `MediaWiki <http://mediawiki.org>`_ wikicode.
+outrageously powerful parser for `MediaWiki <https://www.mediawiki.org>`_ wikicode.
 """
 
 __author__ = "Ben Kurtovic"

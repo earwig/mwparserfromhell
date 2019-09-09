@@ -3,7 +3,7 @@ mwparserfromhell
 
 .. image:: https://img.shields.io/travis/earwig/mwparserfromhell/develop.svg
   :alt: Build Status
-  :target: http://travis-ci.org/earwig/mwparserfromhell
+  :target: https://travis-ci.org/earwig/mwparserfromhell
 
 .. image:: https://img.shields.io/coveralls/earwig/mwparserfromhell/develop.svg
   :alt: Coverage Status
@@ -177,36 +177,44 @@ If you're using Pywikibot_, your code might look like this:
         text = page.get()
         return mwparserfromhell.parse(text)
 
-If you're not using a library, you can parse any page using the following
-Python 3 code (via the API_):
+If you're not using a library, you can parse any page with the following
+Python 3 code (using the API_ and the requests_ library):
 
 .. code-block:: python
 
-    import json
-    from urllib.parse import urlencode
-    from urllib.request import urlopen
+    import requests
     import mwparserfromhell
+
     API_URL = "https://en.wikipedia.org/w/api.php"
 
     def parse(title):
-        data = {"action": "query", "prop": "revisions", "rvprop": "content",
-                "rvslots": "main", "rvlimit": 1, "titles": title,
-                "format": "json", "formatversion": "2"}
-        raw = urlopen(API_URL, urlencode(data).encode()).read()
-        res = json.loads(raw)
+        params = {
+            "action": "query",
+            "prop": "revisions",
+            "rvprop": "content",
+            "rvslots": "main",
+            "rvlimit": 1,
+            "titles": title,
+            "format": "json",
+            "formatversion": "2",
+        }
+        headers = {"User-Agent": "My-Bot-Name/1.0"}
+        req = requests.get(API_URL, headers=headers, params=params)
+        res = req.json()
         revision = res["query"]["pages"][0]["revisions"][0]
         text = revision["slots"]["main"]["content"]
         return mwparserfromhell.parse(text)
 
-.. _MediaWiki:              http://mediawiki.org
-.. _ReadTheDocs:            http://mwparserfromhell.readthedocs.io
-.. _Earwig:                 http://en.wikipedia.org/wiki/User:The_Earwig
-.. _Σ:                      http://en.wikipedia.org/wiki/User:%CE%A3
-.. _Legoktm:                http://en.wikipedia.org/wiki/User:Legoktm
+.. _MediaWiki:              https://www.mediawiki.org
+.. _ReadTheDocs:            https://mwparserfromhell.readthedocs.io
+.. _Earwig:                 https://en.wikipedia.org/wiki/User:The_Earwig
+.. _Σ:                      https://en.wikipedia.org/wiki/User:%CE%A3
+.. _Legoktm:                https://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
-.. _Python Package Index:   http://pypi.python.org
-.. _get pip:                http://pypi.python.org/pypi/pip
+.. _Python Package Index:   https://pypi.org/
+.. _get pip:                https://pypi.org/project/pip/
 .. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
-.. _API:                    http://mediawiki.org/wiki/API
+.. _API:                    https://www.mediawiki.org/wiki/API:Main_page
+.. _requests:               https://2.python-requests.org

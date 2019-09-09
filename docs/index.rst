@@ -8,10 +8,10 @@ wikicode. It supports Python 2 and Python 3.
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Development occurs on GitHub_.
 
-.. _MediaWiki:            http://mediawiki.org
-.. _Earwig:               http://en.wikipedia.org/wiki/User:The_Earwig
-.. _Σ:                    http://en.wikipedia.org/wiki/User:%CE%A3
-.. _Legoktm:              http://en.wikipedia.org/wiki/User:Legoktm
+.. _MediaWiki:            https://www.mediawiki.org
+.. _Earwig:               https://en.wikipedia.org/wiki/User:The_Earwig
+.. _Σ:                    https://en.wikipedia.org/wiki/User:%CE%A3
+.. _Legoktm:              https://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:               https://github.com/earwig/mwparserfromhell
 
 Installation
@@ -30,8 +30,8 @@ Alternatively, get the latest development version::
 You can run the comprehensive unit testing suite with
 ``python setup.py test -q``.
 
-.. _Python Package Index:   http://pypi.python.org
-.. _get pip:                http://pypi.python.org/pypi/pip
+.. _Python Package Index:   https://pypi.org/
+.. _get pip:                https://pypi.org/project/pip/
 
 Contents
 --------
