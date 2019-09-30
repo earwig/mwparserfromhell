@@ -182,8 +182,8 @@ Python 3 code (using the API_ and the requests_ library):
 
 .. code-block:: python
 
-    import requests
     import mwparserfromhell
+    import requests
 
     API_URL = "https://en.wikipedia.org/w/api.php"
 

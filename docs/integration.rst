@@ -21,8 +21,8 @@ If you're using Pywikibot_, your code might look like this:
 If you're not using a library, you can parse any page with the following
 Python 3 code (using the API_ and the requests_ library):
 
-    import requests
     import mwparserfromhell
+    import requests
 
     API_URL = "https://en.wikipedia.org/w/api.php"
 
