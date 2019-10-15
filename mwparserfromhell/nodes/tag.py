@@ -92,6 +92,8 @@ class Tag(Node):
 
     def __strip__(self, **kwargs):
         if self.contents and is_visible(self.tag):
+            if self.tag == "ref":
+                return " " + self.contents.strip_code(**kwargs) + " "
             return self.contents.strip_code(**kwargs)
         return None
 

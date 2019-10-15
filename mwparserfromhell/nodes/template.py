@@ -33,6 +33,18 @@ __all__ = ["Template"]
 
 FLAGS = re.DOTALL | re.UNICODE
 
+TEMPLATES = {
+    "Esp": lambda x: f"* 10^{x.params[0]}",
+    "smallcaps": lambda x: f"{x.params[0]}",
+    "Unicode": lambda x: f"{x.params[0]}",
+    "IPA": lambda x: f"{x.params[0]}",
+    "transl": lambda x: f"{x.params[-1]}",
+    "IAST": lambda x: f"{x.params[0]}",
+    "ssub": lambda x: f"{x.params[0]}",
+    "SubatomicParticle": lambda x: f"{x.params[0]}",
+    "convert": lambda x: f"{x.params[0]} {x.params[1]}",
+}
+
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
@@ -59,9 +71,8 @@ class Template(Node):
             yield param.value
 
     def __strip__(self, **kwargs):
-        if kwargs.get("keep_template_params"):
-            parts = [param.value.strip_code(**kwargs) for param in self.params]
-            return " ".join(part for part in parts if part)
+        if str(self.name) in TEMPLATES:
+            return TEMPLATES[str(self.name)](self)
         return None
 
     def __showtree__(self, write, get, mark):
