@@ -10,9 +10,9 @@ python:
 sudo: false
 install:
     - pip install coveralls
-    - python setup.py build
+    - python setup.py develop
 script:
-    - coverage run --source=mwparserfromhell setup.py -q test
+    - coverage run --source=mwparserfromhell -m unittest discover
 after_success:
     - coveralls
 env:
