@@ -62,13 +62,21 @@ environment:
       PYTHON_VERSION: "3.7"
       PYTHON_ARCH:    "64"
 
+    - PYTHON:         "C:\\Python38"
+      PYTHON_VERSION: "3.8"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python38-x64"
+      PYTHON_VERSION: "3.8"
+      PYTHON_ARCH:    "64"
+
 install:
   - "%PIP% install --disable-pip-version-check --user --upgrade pip"
   - "%PIP% install wheel twine"
 
 build_script:
   - "%SETUPPY% build"
-  - "%SETUPPY% install --user"
+  - "%SETUPPY% develop --user"
 
 test_script:
   - "%PYEXE% -m unittest discover"

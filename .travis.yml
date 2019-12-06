@@ -6,8 +6,7 @@ python:
     - 3.5
     - 3.6
     - 3.7
-    - nightly
-sudo: false
+    - 3.8
 install:
     - pip install coveralls
     - python setup.py develop

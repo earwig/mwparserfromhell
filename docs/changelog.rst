@@ -7,6 +7,7 @@ v0.6
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.4...develop>`__):
 
+- Added support for Python 3.8.
 - Updated Wikicode.matches() to recognize underscores as being equivalent
   to spaces. (`#216 <https://github.com/earwig/mwparserfromhell/issues/216>`_)
 - Fixed a rare parsing bug involving deeply nested style tags.
