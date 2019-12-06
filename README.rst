@@ -30,7 +30,7 @@ Alternatively, get the latest development version::
     python setup.py install
 
 You can run the comprehensive unit testing suite with
-``python setup.py test -q``.
+``python -m unittest discover``.
 
 Usage
 -----

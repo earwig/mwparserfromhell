@@ -133,7 +133,8 @@ test_release() {
     rm mwparserfromhell.tar.gz mwparserfromhell.tar.gz.asc
     cd mwparserfromhell-$VERSION
     echo "Running unit tests..."
-    python setup.py -q test
+    python setup.py -q install
+    python -m unittest discover
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: Unit tests failed!"
         deactivate

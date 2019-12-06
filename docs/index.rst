@@ -28,7 +28,7 @@ Alternatively, get the latest development version::
     python setup.py install
 
 You can run the comprehensive unit testing suite with
-``python setup.py test -q``.
+``python -m unittest discover``.
 
 .. _Python Package Index:   https://pypi.org/
 .. _get pip:                https://pypi.org/project/pip/

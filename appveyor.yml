@@ -13,9 +13,10 @@ environment:
   global:
     # See: http://stackoverflow.com/a/13751649/163740
     WRAPPER: "cmd /E:ON /V:ON /C .\\scripts\\win_wrapper.cmd"
-    PIP:     "%WRAPPER% %PYTHON%\\python.exe -m pip"
-    SETUPPY: "%WRAPPER% %PYTHON%\\python.exe setup.py --with-extension"
-    TWINE:   "%WRAPPER% %PYTHON%\\python.exe -m twine"
+    PYEXE:   "%WRAPPER% %PYTHON%\\python.exe"
+    SETUPPY: "%PYEXE% setup.py --with-extension"
+    PIP:     "%PYEXE% -m pip"
+    TWINE:   "%PYEXE% -m twine"
     PYPI_USERNAME: "earwigbot"
     PYPI_PASSWORD:
       secure: gOIcvPxSC2ujuhwOzwj3v8xjq3CCYd8keFWVnguLM+gcL0e02qshDHy7gwZZwj0+
@@ -67,9 +68,10 @@ install:
 
 build_script:
   - "%SETUPPY% build"
+  - "%SETUPPY% install --user"
 
 test_script:
-  - "%SETUPPY% -q test"
+  - "%PYEXE% -m unittest discover"
 
 after_test:
   - "%SETUPPY% bdist_wheel"

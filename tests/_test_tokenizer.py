@@ -20,10 +20,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import print_function, unicode_literals
+from __future__ import unicode_literals
 import codecs
 from os import listdir, path
 import sys
+import warnings
 
 from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.parser import tokens
@@ -98,19 +99,19 @@ class TokenizerTestCase(object):
             except _TestParseError as err:
                 if data["name"]:
                     error = "Could not parse test '{0}' in '{1}':\n\t{2}"
-                    print(error.format(data["name"], filename, err))
+                    warnings.warn(error.format(data["name"], filename, err))
                 else:
                     error = "Could not parse a test in '{0}':\n\t{1}"
-                    print(error.format(filename, err))
+                    warnings.warn(error.format(filename, err))
                 continue
 
             if not data["name"]:
                 error = "A test in '{0}' was ignored because it lacked a name"
-                print(error.format(filename))
+                warnings.warn(error.format(filename))
                 continue
             if data["input"] is None or data["output"] is None:
                 error = "Test '{}' in '{}' was ignored because it lacked an input or an output"
-                print(error.format(data["name"], filename))
+                warnings.warn(error.format(data["name"], filename))
                 continue
 
             number = str(counter).zfill(digits)
