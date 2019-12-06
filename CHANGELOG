@@ -2,6 +2,7 @@ v0.6 (unreleased):
 
 - Updated Wikicode.matches() to recognize underscores as being equivalent
   to spaces. (#216)
+- Fixed a rare parsing bug involving deeply nested style tags. (#224)
 
 v0.5.4 (released May 15, 2019):
 

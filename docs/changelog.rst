@@ -9,6 +9,8 @@ Unreleased
 
 - Updated Wikicode.matches() to recognize underscores as being equivalent
   to spaces. (`#216 <https://github.com/earwig/mwparserfromhell/issues/216>`_)
+- Fixed a rare parsing bug involving deeply nested style tags.
+  (`#224 <https://github.com/earwig/mwparserfromhell/issues/224>`_)
 
 v0.5.4
 ------

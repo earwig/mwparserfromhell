@@ -1807,6 +1807,11 @@ static int Tokenizer_parse_italics(Tokenizer* self)
         if (BAD_ROUTE_CONTEXT & LC_STYLE_PASS_AGAIN) {
             context = LC_STYLE_ITALICS | LC_STYLE_SECOND_PASS;
             stack = Tokenizer_parse(self, context, 1);
+            if (BAD_ROUTE) {
+                RESET_ROUTE();
+                self->head = reset;
+                return Tokenizer_emit_text(self, "''");
+            }
         }
         else
             return Tokenizer_emit_text(self, "''");
