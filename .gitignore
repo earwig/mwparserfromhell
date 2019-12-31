@@ -12,3 +12,4 @@ dist
 docs/_build
 scripts/*.log
 htmlcov/
+.idea/
