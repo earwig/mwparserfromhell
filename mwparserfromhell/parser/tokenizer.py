@@ -393,7 +393,8 @@ class Tokenizer:
             # scheme since it was just parsed as text:
             for chunk in reversed(self._textbuffer):
                 for char in reversed(chunk):
-                    if char.isspace() or char in self.MARKERS:
+                    # stop at the first non-word character
+                    if re.fullmatch(r"\W", char):
                         raise StopIteration()
                     if char not in valid:
                         raise BadRoute()

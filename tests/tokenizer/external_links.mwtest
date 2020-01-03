@@ -478,3 +478,17 @@ name:   brackets_scheme_title_but_no_url
 label:  brackets around a scheme, colon, and slashes, with a title
 input:  "[http:// Example]"
 output: [Text(text="[http:// Example]")]
+
+---
+
+name:   url_preceded_by_non_word_character
+label:  non-word character immediately before a valid URL
+input:  "svn+ssh://server.domain.com:/reponame"
+output: [Text(text="svn+"), ExternalLinkOpen(brackets=False), Text(text="ssh://server.domain.com:/reponame"), ExternalLinkClose()]
+
+---
+
+name:   url_preceded_by_underscore
+label:  underscore immediately before a valid URL
+input:  "svn_ssh://server.domain.com:/reponame"
+output: [Text(text="svn_ssh://server.domain.com:/reponame")]
