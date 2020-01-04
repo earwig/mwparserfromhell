@@ -2632,7 +2632,11 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 return NULL;
         }
         else if (this == '=' && this_context & LC_TEMPLATE_PARAM_KEY) {
-            if (Tokenizer_handle_template_param_value(self))
+            if (!(self->global & GL_HEADING) && (!last || last == '\n') && next == '=') {
+                if (Tokenizer_parse_heading(self))
+                    return NULL;
+            }
+            else if (Tokenizer_handle_template_param_value(self))
                 return NULL;
         }
         else if (this == next && next == '}' && this_context & LC_TEMPLATE)
@@ -2672,7 +2676,7 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
         }
         else if (this == ']' && this_context & LC_EXT_LINK_TITLE)
             return Tokenizer_pop(self);
-        else if (this == '=' && !(self->global & GL_HEADING)) {
+        else if (this == '=' && !(self->global & GL_HEADING) && !(this_context & LC_TEMPLATE)) {
             if (!last || last == '\n') {
                 if (Tokenizer_parse_heading(self))
                     return NULL;

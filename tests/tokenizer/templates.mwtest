@@ -695,3 +695,31 @@ name:   recursion_opens_and_closes
 label:  test potentially dangerous recursion: template openings and closings
 input:  "{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}{{x|{{x}}"
 output: [Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose(), Text(text="{{x|"), TemplateOpen(), Text(text="x"), TemplateClose()]
+
+---
+
+name:   invalid_section_level_1
+label:  level 1 headings inside a template are always invalid
+input:  "{{foo|bar\n=baz=\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), TemplateParamEquals(), Text(text="baz=\n"), TemplateClose()]
+
+---
+
+name:   section_level_2
+label:  valid level 2 heading inside a template
+input:  "{{foo|bar\n==baz==\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar\n"), HeadingStart(level=2), Text(text="baz"), HeadingEnd(), Text(text="\n"), TemplateClose()]
+
+---
+
+name:   invalid_section_level_2
+label:  invalid level 2 heading inside a template
+input:  "{{foo|bar==baz==\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="=baz==\n"), TemplateClose()]
+
+---
+
+name:   section_level_2_after_template_parameter
+label:  level 2 heading inside a template after a parameter
+input:  "{{foo|bar=\n==baz==\n}}"
+output: [TemplateOpen(), Text(text="foo"), TemplateParamSeparator(), Text(text="bar"), TemplateParamEquals(), Text(text="\n==baz==\n"), TemplateClose()]
