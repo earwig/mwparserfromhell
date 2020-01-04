@@ -562,3 +562,17 @@ name:   brackets_terminated_by_right_angle
 label:  an external link terminated by a right angle
 input:  "[http://foo>bar]"
 output: [ExternalLinkOpen(brackets=True), Text(text="http://foo"), ExternalLinkSeparator(suppress_space=True), Text(text=">bar"), ExternalLinkClose()]
+
+---
+
+name:   scheme_case
+label:  a free link with uppercase letters in the URL scheme
+input:  "HtTp://example.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="HtTp://example.com/"), ExternalLinkClose()]
+
+---
+
+name:   bracket_scheme_case
+label:  an external link with uppercase letters in the URL scheme
+input:  "[HtTp://example.com/]"
+output: [ExternalLinkOpen(brackets=True), Text(text="HtTp://example.com/"), ExternalLinkClose()]

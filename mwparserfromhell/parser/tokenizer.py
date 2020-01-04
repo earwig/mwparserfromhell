@@ -366,7 +366,7 @@ class Tokenizer:
             self._emit_text("//")
             self._head += 2
         else:
-            valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+            valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
             all_valid = lambda: all(char in valid for char in self._read())
             scheme = ""
             while self._read() is not self.END and all_valid():
@@ -386,7 +386,7 @@ class Tokenizer:
 
     def _parse_free_uri_scheme(self):
         """Parse the URI scheme of a free (no brackets) external link."""
-        valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+        valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
         scheme = []
         try:
             # We have to backtrack through the textbuffer looking for our
