@@ -100,6 +100,66 @@ static PyObject* strip_tag_name(PyObject* token, int take_attr)
 }
 
 /*
+    Check if the given character is a non-word character.
+
+    Equivalent to this Python code:
+
+    def is_non_word_character(ch):
+        if re.fullmatch(r"\W", chunk):
+            return True
+        return False
+*/
+static int is_non_word_character(Py_UCS4 ch)
+{
+    int ret = 0;
+    PyObject* modname = NULL;
+    PyObject* module = NULL;
+    PyObject* fmatch = NULL;
+    PyObject* pattern = NULL;
+    PyObject* str = NULL;
+    PyObject* posArgs = NULL;
+    PyObject* match = NULL;
+
+    modname = PyUnicode_FromString("re");
+    if (modname == NULL)
+        goto error;
+    module = PyImport_Import(modname);
+    if (module == NULL)
+        goto error;
+    fmatch = PyObject_GetAttrString(module, "fullmatch");
+    if (fmatch == NULL)
+        goto error;
+    pattern = PyUnicode_FromString("\\W");
+    if (pattern == NULL)
+        goto error;
+    str = PyUnicode_FROM_SINGLE(ch);
+    if (str == NULL)
+        goto error;
+    posArgs = PyTuple_Pack(2, pattern, str);
+    if (posArgs == NULL)
+        goto error;
+    match = PyObject_Call(fmatch, posArgs, NULL);
+    if (match == NULL)
+        goto error;
+
+    if (match != Py_None)
+        ret = 1;
+    goto end;
+
+    error:
+    ret = -1;
+    end:
+    Py_XDECREF(match);
+    Py_XDECREF(posArgs);
+    Py_XDECREF(str);
+    Py_XDECREF(pattern);
+    Py_XDECREF(fmatch);
+    Py_XDECREF(module);
+    Py_XDECREF(modname);
+    return ret;
+}
+
+/*
     Parse a template at the head of the wikicode string.
 */
 static int Tokenizer_parse_template(Tokenizer* self, int has_content)
@@ -527,7 +587,13 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     // it was just parsed as text:
     for (i = self->topstack->textbuffer->length - 1; i >= 0; i--) {
         chunk = Textbuffer_read(self->topstack->textbuffer, i);
-        if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
+        // stop at the first non-word character
+        int is_non_word = is_non_word_character(chunk);
+        if (is_non_word < 0) {
+            Textbuffer_dealloc(scheme_buffer);
+            return -1;
+        }
+        else if (is_non_word == 1)
             goto end_of_loop;
         j = 0;
         do {
