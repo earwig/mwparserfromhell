@@ -27,15 +27,18 @@ __all__ = ["ExternalLink"]
 class ExternalLink(Node):
     """Represents an external link, like ``[http://example.com/ Example]``."""
 
-    def __init__(self, url, title=None, brackets=True):
+    def __init__(self, url, title=None, brackets=True, suppress_space=False):
         super().__init__()
         self.url = url
         self.title = title
         self.brackets = brackets
+        self.suppress_space = suppress_space
 
     def __str__(self):
         if self.brackets:
             if self.title is not None:
+                if self.suppress_space is True:
+                    return "[" + str(self.url) + str(self.title) + "]"
                 return "[" + str(self.url) + " " + str(self.title) + "]"
             return "[" + str(self.url) + "]"
         return str(self.url)

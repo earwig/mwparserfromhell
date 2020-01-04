@@ -673,14 +673,15 @@ static int Tokenizer_handle_free_link_text(
     Return whether the current head is the end of a free link.
 */
 static int
-Tokenizer_is_free_link(Tokenizer* self, Py_UCS4 this, Py_UCS4 next)
+Tokenizer_is_free_link_end(Tokenizer* self, Py_UCS4 this, Py_UCS4 next)
 {
     // Built from Tokenizer_parse()'s end sentinels:
     Py_UCS4 after = Tokenizer_read(self, 2);
     uint64_t ctx = self->topstack->context;
 
     return (!this || this == '\n' || this == '[' || this == ']' ||
-        this == '<' || this == '>'  || (this == '\'' && next == '\'') ||
+        this == '<' || this == '>' || this == '"' ||
+        (this == '\'' && next == '\'') ||
         (this == '|' && ctx & LC_TEMPLATE) ||
         (this == '=' && ctx & (LC_TEMPLATE_PARAM_KEY | LC_HEADING)) ||
         (this == '}' && next == '}' &&
@@ -722,7 +723,7 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
             if (Tokenizer_parse_comment(self))
                 return NULL;
         }
-        else if (!brackets && Tokenizer_is_free_link(self, this, next)) {
+        else if (!brackets && Tokenizer_is_free_link_end(self, this, next)) {
             self->head--;
             return Tokenizer_pop(self);
         }
@@ -735,16 +736,28 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
         }
         else if (this == ']')
             return Tokenizer_pop(self);
-        else if (this == ' ') {
+        else if (this == ' ' || Tokenizer_is_free_link_end(self, this, next)) {
             if (brackets) {
-                if (Tokenizer_emit(self, ExternalLinkSeparator))
-                    return NULL;
+                if (this == ' ') {
+                    if (Tokenizer_emit(self, ExternalLinkSeparator))
+                        return NULL;
+                }
+                else {
+                    PyObject* kwargs = PyDict_New();
+                    if (!kwargs)
+                        return NULL;
+                    if (this != ' ')
+                        PyDict_SetItemString(kwargs, "suppress_space", Py_True);
+                    if (Tokenizer_emit_kwargs(self, ExternalLinkSeparator, kwargs))
+                        return NULL;
+                }
                 self->topstack->context ^= LC_EXT_LINK_URI;
                 self->topstack->context |= LC_EXT_LINK_TITLE;
-                self->head++;
+                if (this == ' ')
+                    self->head++;
                 return Tokenizer_parse(self, 0, 0);
             }
-            if (Textbuffer_write(extra, ' '))
+            if (Textbuffer_write(extra, this))
                 return NULL;
             return Tokenizer_pop(self);
         }

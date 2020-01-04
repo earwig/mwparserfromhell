@@ -157,17 +157,20 @@ class Builder:
     @_add_handler(tokens.ExternalLinkOpen)
     def _handle_external_link(self, token):
         """Handle when an external link is at the head of the tokens."""
-        brackets, url = token.brackets, None
+        brackets, url, suppress_space = token.brackets, None, None
         self._push()
         while self._tokens:
             token = self._tokens.pop()
             if isinstance(token, tokens.ExternalLinkSeparator):
                 url = self._pop()
+                suppress_space = token.suppress_space
                 self._push()
             elif isinstance(token, tokens.ExternalLinkClose):
                 if url is not None:
-                    return ExternalLink(url, self._pop(), brackets)
-                return ExternalLink(self._pop(), brackets=brackets)
+                    return ExternalLink(url, self._pop(), brackets=brackets,
+                                        suppress_space=suppress_space is True)
+                return ExternalLink(self._pop(), brackets=brackets,
+                                    suppress_space=suppress_space is True)
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_external_link() missed a close token")
