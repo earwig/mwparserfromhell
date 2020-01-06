@@ -29,7 +29,7 @@ from __future__ import unicode_literals
 
 from .compat import bytes, str
 from .nodes import Node
-from .smart_list import SmartList
+from .smart_list import smart_list
 
 __all__ = ["parse_anything"]
 
@@ -53,7 +53,7 @@ def parse_anything(value, context=0, skip_style_tags=False):
     if isinstance(value, Wikicode):
         return value
     elif isinstance(value, Node):
-        return Wikicode(SmartList([value]))
+        return Wikicode(smart_list([value]))
     elif isinstance(value, str):
         return Parser().parse(value, context, skip_style_tags)
     elif isinstance(value, bytes):
@@ -61,11 +61,11 @@ def parse_anything(value, context=0, skip_style_tags=False):
     elif isinstance(value, int):
         return Parser().parse(str(value), context, skip_style_tags)
     elif value is None:
-        return Wikicode(SmartList())
+        return Wikicode(smart_list())
     elif hasattr(value, "read"):
         return parse_anything(value.read(), context, skip_style_tags)
     try:
-        nodelist = SmartList()
+        nodelist = smart_list()
         for item in value:
             nodelist += parse_anything(item, context, skip_style_tags).nodes
         return Wikicode(nodelist)

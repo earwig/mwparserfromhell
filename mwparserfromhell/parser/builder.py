@@ -27,7 +27,7 @@ from ..compat import str
 from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
                      Template, Text, Wikilink)
 from ..nodes.extras import Attribute, Parameter
-from ..smart_list import SmartList
+from ..smart_list import smart_list
 from ..wikicode import Wikicode
 
 __all__ = ["Builder"]
@@ -67,7 +67,7 @@ class Builder(object):
         The raw node list is wrapped in a :class:`.SmartList` and then in a
         :class:`.Wikicode` object.
         """
-        return Wikicode(SmartList(self._stacks.pop()))
+        return Wikicode(smart_list(self._stacks.pop()))
 
     def _write(self, item):
         """Append a node to the current node list."""
@@ -92,7 +92,7 @@ class Builder(object):
                 self._tokens.append(token)
                 value = self._pop()
                 if key is None:
-                    key = Wikicode(SmartList([Text(str(default))]))
+                    key = Wikicode(smart_list([Text(str(default))]))
                 return Parameter(key, value, showkey)
             else:
                 self._write(self._handle_token(token))

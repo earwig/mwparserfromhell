@@ -29,7 +29,7 @@ import unittest
 from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Node, Tag, Template, Text, Wikilink)
-from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.smart_list import smart_list
 from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
 
@@ -49,7 +49,7 @@ class TestWikicode(TreeEqualityTestCase):
         """test getter/setter for the nodes attribute"""
         code = parse("Have a {{template}}")
         self.assertEqual(["Have a ", "{{template}}"], code.nodes)
-        L1 = SmartList([Text("foobar"), Template(wraptext("abc"))])
+        L1 = smart_list([Text("foobar"), Template(wraptext("abc"))])
         L2 = [Text("barfoo"), Template(wraptext("cba"))]
         L3 = "abc{{def}}"
         code.nodes = L1

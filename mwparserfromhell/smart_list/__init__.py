@@ -27,4 +27,4 @@ This module contains the :class:`.SmartList` type, as well as its
 reflect changes made to the main list, and vice-versa.
 """
 
-from .SmartList import SmartList
+from .smart_list import smart_list
