@@ -32,7 +32,7 @@ typedef struct {
     Textbuffer* pad_first;
     Textbuffer* pad_before_eq;
     Textbuffer* pad_after_eq;
-    Unicode quoter;
+    Py_UCS4 quoter;
     Py_ssize_t reset;
 } TagData;
 

@@ -7,8 +7,7 @@ Normal usage is rather straightforward (where ``text`` is page text)::
     >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a :class:`mwparserfromhell.Wikicode <.Wikicode>` object, which
-acts like an ordinary ``str`` object (or ``unicode`` in Python 2) with some
-extra methods. For example::
+acts like an ordinary ``str`` object with some extra methods. For example::
 
     >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
     >>> wikicode = mwparserfromhell.parse(text)
@@ -78,7 +77,6 @@ saving the page!) by calling :func:`str` on it::
     >>> text == code
     True
 
-(Likewise, use :func:`unicode(code) <unicode>` in Python 2.)
 
 For more tips, check out :class:`Wikicode's full method list <.Wikicode>` and
 the :mod:`list of Nodes <.nodes>`.

@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #

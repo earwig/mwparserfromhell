@@ -24,7 +24,7 @@ SOFTWARE.
 
 #include "common.h"
 
-static const Unicode MARKERS[] = {
+static const Py_UCS4 MARKERS[] = {
     '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
     '-', '!', '\n', '\0'};
 

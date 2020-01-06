@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,12 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-
 import re
 from itertools import chain
 
-from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
 from .smart_list.ListProxy import _ListProxy
@@ -49,7 +45,7 @@ class Wikicode(StringMixIn):
     RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
-        super(Wikicode, self).__init__()
+        super().__init__()
         self._nodes = nodes
 
     def __unicode__(self):
@@ -64,8 +60,7 @@ class Wikicode(StringMixIn):
         for code in node.__children__():
             for child in code.nodes:
                 sub = Wikicode._get_children(child, contexts, restrict, code)
-                for result in sub:
-                    yield result
+                yield from sub
 
     @staticmethod
     def _slice_replace(code, index, old, new):
@@ -253,7 +248,7 @@ class Wikicode(StringMixIn):
                                       self.ifilter(forcetype=ftype, *a, **kw))
         make_filter = lambda ftype: (lambda self, *a, **kw:
                                      self.filter(forcetype=ftype, *a, **kw))
-        for name, ftype in (meths.items() if py3k else meths.iteritems()):
+        for name, ftype in meths.items():
             ifilter = make_ifilter(ftype)
             filter = make_filter(ftype)
             ifilter.__doc__ = doc.format(name, "ifilter", ftype)

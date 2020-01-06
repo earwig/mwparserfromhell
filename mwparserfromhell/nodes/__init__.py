@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -29,9 +28,7 @@ the name of a :class:`.Template` is a :class:`.Wikicode` object that can
 contain text or more templates.
 """
 
-from __future__ import unicode_literals
 
-from ..compat import str
 from ..string_mixin import StringMixIn
 
 __all__ = ["Argument", "Comment", "ExternalLink", "HTMLEntity", "Heading",

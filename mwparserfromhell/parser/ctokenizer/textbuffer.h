@@ -29,8 +29,8 @@ SOFTWARE.
 Textbuffer* Textbuffer_new(TokenizerInput*);
 void Textbuffer_dealloc(Textbuffer*);
 int Textbuffer_reset(Textbuffer*);
-int Textbuffer_write(Textbuffer*, Unicode);
-Unicode Textbuffer_read(Textbuffer*, Py_ssize_t);
+int Textbuffer_write(Textbuffer*, Py_UCS4);
+Py_UCS4 Textbuffer_read(Textbuffer*, Py_ssize_t);
 PyObject* Textbuffer_render(Textbuffer*);
 int Textbuffer_concat(Textbuffer*, Textbuffer*);
 void Textbuffer_reverse(Textbuffer*);

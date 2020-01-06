@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str
 from ..utils import parse_anything
 
 __all__ = ["ExternalLink"]
@@ -32,7 +29,7 @@ class ExternalLink(Node):
     """Represents an external link, like ``[http://example.com/ Example]``."""
 
     def __init__(self, url, title=None, brackets=True):
-        super(ExternalLink, self).__init__()
+        super().__init__()
         self.url = url
         self.title = title
         self.brackets = brackets

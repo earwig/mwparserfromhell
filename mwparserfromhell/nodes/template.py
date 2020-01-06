@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,13 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 from collections import defaultdict
 import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
-from ..compat import range, str
 from ..utils import parse_anything
 
 __all__ = ["Template"]
@@ -37,7 +34,7 @@ class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
     def __init__(self, name, params=None):
-        super(Template, self).__init__()
+        super().__init__()
         self.name = name
         if params:
             self._params = params

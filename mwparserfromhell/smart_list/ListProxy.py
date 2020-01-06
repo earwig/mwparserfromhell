@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
@@ -24,7 +23,6 @@
 # SmartList has to be a full import in order to avoid cyclical import errors
 import mwparserfromhell.smart_list.SmartList
 from .utils import _SliceNormalizerMixIn, inheritdoc
-from ..compat import py3k
 
 
 class _ListProxy(_SliceNormalizerMixIn, list):
@@ -36,7 +34,7 @@ class _ListProxy(_SliceNormalizerMixIn, list):
     """
 
     def __init__(self, parent, sliceinfo):
-        super(_ListProxy, self).__init__()
+        super().__init__()
         self._parent = parent
         self._sliceinfo = sliceinfo
 
@@ -73,12 +71,8 @@ class _ListProxy(_SliceNormalizerMixIn, list):
             return self._render() >= list(other)
         return self._render() >= other
 
-    if py3k:
-        def __bool__(self):
-            return bool(self._render())
-    else:
-        def __nonzero__(self):
-            return bool(self._render())
+    def __bool__(self):
+        return bool(self._render())
 
     def __len__(self):
         return max((self._stop - self._start) // self._step, 0)
@@ -137,16 +131,6 @@ class _ListProxy(_SliceNormalizerMixIn, list):
 
     def __contains__(self, item):
         return item in self._render()
-
-    if not py3k:
-        def __getslice__(self, start, stop):
-            return self.__getitem__(slice(start, stop))
-
-        def __setslice__(self, start, stop, iterable):
-            self.__setitem__(slice(start, stop), iterable)
-
-        def __delslice__(self, start, stop):
-            self.__delitem__(slice(start, stop))
 
     def __add__(self, other):
         return mwparserfromhell.smart_list.SmartList(list(self) + other)
@@ -237,27 +221,13 @@ class _ListProxy(_SliceNormalizerMixIn, list):
         item.reverse()
         self._parent[self._start:self._stop:self._step] = item
 
-    if py3k:
-        @inheritdoc
-        def sort(self, key=None, reverse=None):
-            item = self._render()
-            kwargs = {}
-            if key is not None:
-                kwargs["key"] = key
-            if reverse is not None:
-                kwargs["reverse"] = reverse
-            item.sort(**kwargs)
-            self._parent[self._start:self._stop:self._step] = item
-    else:
-        @inheritdoc
-        def sort(self, cmp=None, key=None, reverse=None):
-            item = self._render()
-            kwargs = {}
-            if cmp is not None:
-                kwargs["cmp"] = cmp
-            if key is not None:
-                kwargs["key"] = key
-            if reverse is not None:
-                kwargs["reverse"] = reverse
-            item.sort(**kwargs)
-            self._parent[self._start:self._stop:self._step] = item
+    @inheritdoc
+    def sort(self, key=None, reverse=None):
+        item = self._render()
+        kwargs = {}
+        if key is not None:
+            kwargs["key"] = key
+        if reverse is not None:
+            kwargs["reverse"] = reverse
+        item.sort(**kwargs)
+        self._parent[self._start:self._stop:self._step] = item

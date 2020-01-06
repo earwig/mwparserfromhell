@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser import tokens
 
 class TestTokens(unittest.TestCase):
@@ -64,14 +61,9 @@ class TestTokens(unittest.TestCase):
         hundredchars = ("earwig" * 100)[:97] + "..."
 
         self.assertEqual("Token()", repr(token1))
-        if py3k:
-            token2repr1 = "Token(foo='bar', baz=123)"
-            token2repr2 = "Token(baz=123, foo='bar')"
-            token3repr = "Text(text='" + hundredchars + "')"
-        else:
-            token2repr1 = "Token(foo=u'bar', baz=123)"
-            token2repr2 = "Token(baz=123, foo=u'bar')"
-            token3repr = "Text(text=u'" + hundredchars + "')"
+        token2repr1 = "Token(foo='bar', baz=123)"
+        token2repr2 = "Token(baz=123, foo='bar')"
+        token3repr = "Text(text='" + hundredchars + "')"
         token2repr = repr(token2)
         self.assertTrue(token2repr == token2repr1 or token2repr == token2repr2)
         self.assertEqual(token3repr, repr(token3))

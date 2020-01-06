@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -32,7 +31,7 @@ __license__ = "MIT License"
 __version__ = "0.6.dev0"
 __email__ = "ben.kurtovic@gmail.com"
 
-from . import (compat, definitions, nodes, parser, smart_list, string_mixin,
+from . import (definitions, nodes, parser, smart_list, string_mixin,
                utils, wikicode)
 
 parse = utils.parse_anything

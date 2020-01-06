@@ -275,7 +275,7 @@ int Tokenizer_emit_token_kwargs(Tokenizer* self, PyObject* token,
 /*
     Write a Unicode codepoint to the current textbuffer.
 */
-int Tokenizer_emit_char(Tokenizer* self, Unicode code)
+int Tokenizer_emit_char(Tokenizer* self, Py_UCS4 code)
 {
     return Textbuffer_write(self->topstack->textbuffer, code);
 }
@@ -389,19 +389,15 @@ int Tokenizer_emit_text_then_stack(Tokenizer* self, const char* text)
 /*
     Internal function to read the codepoint at the given index from the input.
 */
-static Unicode read_codepoint(TokenizerInput* text, Py_ssize_t index)
+static Py_UCS4 read_codepoint(TokenizerInput* text, Py_ssize_t index)
 {
-#ifdef PEP_393
     return PyUnicode_READ(text->kind, text->data, index);
-#else
-    return text->buf[index];
-#endif
 }
 
 /*
     Read the value at a relative point in the wikicode, forwards.
 */
-Unicode Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
+Py_UCS4 Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index = self->head + delta;
 
@@ -413,7 +409,7 @@ Unicode Tokenizer_read(Tokenizer* self, Py_ssize_t delta)
 /*
     Read the value at a relative point in the wikicode, backwards.
 */
-Unicode Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
+Py_UCS4 Tokenizer_read_backwards(Tokenizer* self, Py_ssize_t delta)
 {
     Py_ssize_t index;
 

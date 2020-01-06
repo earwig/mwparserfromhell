@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str
 
 __all__ = ["Comment"]
 
@@ -31,7 +28,7 @@ class Comment(Node):
     """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
 
     def __init__(self, contents):
-        super(Comment, self).__init__()
+        super().__init__()
         self.contents = contents
 
     def __unicode__(self):

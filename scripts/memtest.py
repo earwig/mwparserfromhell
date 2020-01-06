@@ -40,7 +40,6 @@ import sys
 
 import psutil
 
-from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser._tokenizer import CTokenizer
 
 if sys.version_info[0] == 2:
@@ -88,8 +87,6 @@ class MemoryTest(object):
         def load_file(filename):
             with open(filename, "rU") as fp:
                 text = fp.read()
-                if not py3k:
-                    text = text.decode("utf8")
                 name = path.split(filename)[1][:0-len(extension)]
                 self._parse_file(name, text)
 
