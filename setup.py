@@ -25,9 +25,6 @@ from glob import glob
 from os import environ
 import sys
 
-if sys.version_info[1] == 3 and sys.version_info[1] < 4:
-    raise RuntimeError("mwparserfromhell needs 3.4+")
-
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
@@ -80,6 +77,7 @@ setup(
     ext_modules = [tokenizer] if use_extension else [],
     test_suite = "tests",
     version = __version__,
+    python_requires = ">= 3.4",
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",
     url = "https://github.com/earwig/mwparserfromhell",
