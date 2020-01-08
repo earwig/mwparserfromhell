@@ -27,10 +27,10 @@ from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Tag, Template, Text, Wikilink)
 from mwparserfromhell.nodes.extras import Attribute, Parameter
-from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.smart_list import smart_list
 from mwparserfromhell.wikicode import Wikicode
 
-wrap = lambda L: Wikicode(SmartList(L))
+wrap = lambda L: Wikicode(smart_list(L))
 wraptext = lambda *args: wrap([Text(t) for t in args])
 
 class TreeEqualityTestCase(TestCase):

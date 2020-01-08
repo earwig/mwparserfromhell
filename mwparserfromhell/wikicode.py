@@ -28,7 +28,6 @@ from itertools import chain
 from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
-from .smart_list.ListProxy import _ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -113,8 +112,8 @@ class Wikicode(StringMixIn):
     def _is_child_wikicode(self, obj, recursive=True):
         """Return whether the given :class:`.Wikicode` is a descendant."""
         def deref(nodes):
-            if isinstance(nodes, _ListProxy):
-                return nodes._parent  # pylint: disable=protected-access
+            # if isinstance(nodes, SmartSlice) and (nodes._start is not None and nodes._stop is not None:
+            #     return nodes._parent  # pylint: disable=protected-access
             return nodes
 
         target = deref(obj.nodes)

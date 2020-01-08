@@ -25,10 +25,11 @@ from __future__ import unicode_literals
 import unittest
 
 from mwparserfromhell.compat import py3k, range
-from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.smart_list.ListProxy import _ListProxy
+from mwparserfromhell.smart_list import smart_list
+from mwparserfromhell.smart_list.smart_list import SmartSlice
 
 
+# noinspection DuplicatedCode
 class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
 
@@ -277,10 +278,10 @@ class TestSmartList(unittest.TestCase):
 
     def _dispatch_test_for_children(self, meth):
         """Run a test method on various different types of children."""
-        meth(lambda L: SmartList(list(L))[:])
-        meth(lambda L: SmartList([999] + list(L))[1:])
-        meth(lambda L: SmartList(list(L) + [999])[:-1])
-        meth(lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2])
+        meth(lambda lst: smart_list(list(lst))[:])
+        meth(lambda lst: smart_list([999] + list(lst))[1:])
+        meth(lambda lst: smart_list(list(lst) + [999])[:-1])
+        meth(lambda lst: smart_list([101, 102] + list(lst) + [201, 202])[2:-2])
 
     def test_docs(self):
         """make sure the methods of SmartList/_ListProxy have docstrings"""
@@ -288,14 +289,12 @@ class TestSmartList(unittest.TestCase):
                    "remove", "reverse", "sort"]
         for meth in methods:
             expected = getattr(list, meth).__doc__
-            smartlist_doc = getattr(SmartList, meth).__doc__
-            listproxy_doc = getattr(_ListProxy, meth).__doc__
+            smartlist_doc = getattr(SmartSlice, meth).__doc__
             self.assertEqual(expected, smartlist_doc)
-            self.assertEqual(expected, listproxy_doc)
 
     def test_doctest(self):
         """make sure the test embedded in SmartList's docstring passes"""
-        parent = SmartList([0, 1, 2, 3])
+        parent = smart_list([0, 1, 2, 3])
         self.assertEqual([0, 1, 2, 3], parent)
         child = parent[2:]
         self.assertEqual([2, 3], child)
@@ -305,19 +304,19 @@ class TestSmartList(unittest.TestCase):
 
     def test_parent_get_set_del(self):
         """make sure SmartList's getitem/setitem/delitem work"""
-        self._test_get_set_del_item(SmartList)
+        self._test_get_set_del_item(smart_list)
 
     def test_parent_add(self):
         """make sure SmartList's add/radd/iadd work"""
-        self._test_add_radd_iadd(SmartList)
+        self._test_add_radd_iadd(smart_list)
 
     def test_parent_other_magics(self):
         """make sure SmartList's other magically implemented features work"""
-        self._test_other_magic_methods(SmartList)
+        self._test_other_magic_methods(smart_list)
 
     def test_parent_methods(self):
         """make sure SmartList's non-magic methods work, like append()"""
-        self._test_list_methods(SmartList)
+        self._test_list_methods(smart_list)
 
     def test_child_get_set_del(self):
         """make sure _ListProxy's getitem/setitem/delitem work"""
@@ -337,13 +336,12 @@ class TestSmartList(unittest.TestCase):
 
     def test_influence(self):
         """make sure changes are propagated from parents to children"""
-        parent = SmartList([0, 1, 2, 3, 4, 5])
+        parent = smart_list([0, 1, 2, 3, 4, 5])
         child1 = parent[2:]
         child2 = parent[2:5]
         self.assertEqual([0, 1, 2, 3, 4, 5], parent)
         self.assertEqual([2, 3, 4, 5], child1)
         self.assertEqual([2, 3, 4], child2)
-        self.assertEqual(2, len(parent._children))
 
         parent.append(6)
         child1.append(7)
@@ -403,12 +401,10 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
         self.assertEqual([], child3)
-        self.assertEqual(2, len(parent._children))
 
         del child3
         self.assertEqual([1, 4, 3, 2, 1.9, 1.8, 5, 6], parent)
         self.assertEqual([4, 3, 2, 1.9, 1.8], child2)
-        self.assertEqual(1, len(parent._children))
 
         parent.remove(1.9)
         parent.remove(1.8)
@@ -417,8 +413,8 @@ class TestSmartList(unittest.TestCase):
 
         parent.reverse()
         self.assertEqual([6, 5, 2, 3, 4, 1], parent)
-        self.assertEqual([4, 3, 2], child2)
-        self.assertEqual(0, len(parent._children))
+        self.assertEqual([5, 2, 3], child2)
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -23,8 +23,6 @@
 
 from __future__ import unicode_literals
 
-from sys import maxsize
-
 __all__ = []
 
 
@@ -36,19 +34,3 @@ def inheritdoc(method):
     """
     method.__doc__ = getattr(list, method.__name__).__doc__
     return method
-
-
-class _SliceNormalizerMixIn(object):
-    """MixIn that provides a private method to normalize slices."""
-
-    def _normalize_slice(self, key, clamp=False):
-        """Return a slice equivalent to the input *key*, standardized."""
-        if key.start is None:
-            start = 0
-        else:
-            start = (len(self) + key.start) if key.start < 0 else key.start
-        if key.stop is None or key.stop == maxsize:
-            stop = len(self) if clamp else None
-        else:
-            stop = (len(self) + key.stop) if key.stop < 0 else key.stop
-        return slice(start, stop, key.step or 1)
