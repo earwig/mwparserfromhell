@@ -19,30 +19,31 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Text
 
-class TestText(unittest.TestCase):
+class TestText:
     """Test cases for the Text node."""
 
     def test_unicode(self):
         """test Text.__unicode__()"""
         node = Text("foobar")
-        self.assertEqual("foobar", str(node))
+        assert "foobar" == str(node)
         node2 = Text("fóóbar")
-        self.assertEqual("fóóbar", str(node2))
+        assert "fóóbar" == str(node2)
 
     def test_children(self):
         """test Text.__children__()"""
         node = Text("foobar")
         gen = node.__children__()
-        self.assertRaises(StopIteration, next, gen)
+        with pytest.raises(StopIteration):
+            next(gen)
 
     def test_strip(self):
         """test Text.__strip__()"""
         node = Text("foobar")
-        self.assertIs(node, node.__strip__())
+        assert node is node.__strip__()
 
     def test_showtree(self):
         """test Text.__showtree__()"""
@@ -54,16 +55,13 @@ class TestText(unittest.TestCase):
         node2.__showtree__(output.append, None, None)
         node3.__showtree__(output.append, None, None)
         res = ["foobar", r"f\xf3\xf3bar", "\\U00010332\\U0001033f\\U00010344"]
-        self.assertEqual(res, output)
+        assert res == output
 
     def test_value(self):
         """test getter/setter for the value attribute"""
         node = Text("foobar")
-        self.assertEqual("foobar", node.value)
-        self.assertIsInstance(node.value, str)
+        assert "foobar" == node.value
+        assert isinstance(node.value, str)
         node.value = "héhéhé"
-        self.assertEqual("héhéhé", node.value)
-        self.assertIsInstance(node.value, str)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert "héhéhé" == node.value
+        assert isinstance(node.value, str)

@@ -19,9 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
-from mwparserfromhell.nodes import Text
 from mwparserfromhell.nodes.extras import Parameter
 
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
@@ -32,9 +31,9 @@ class TestParameter(TreeEqualityTestCase):
     def test_unicode(self):
         """test Parameter.__unicode__()"""
         node = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
-        self.assertEqual("foo", str(node))
+        assert "foo" == str(node)
         node2 = Parameter(wraptext("foo"), wraptext("bar"))
-        self.assertEqual("foo=bar", str(node2))
+        assert "foo=bar" == str(node2)
 
     def test_name(self):
         """test getter/setter for the name attribute"""
@@ -42,8 +41,8 @@ class TestParameter(TreeEqualityTestCase):
         name2 = wraptext("foobar")
         node1 = Parameter(name1, wraptext("foobar"), showkey=False)
         node2 = Parameter(name2, wraptext("baz"))
-        self.assertIs(name1, node1.name)
-        self.assertIs(name2, node2.name)
+        assert name1 is node1.name
+        assert name2 is node2.name
         node1.name = "héhehé"
         node2.name = "héhehé"
         self.assertWikicodeEqual(wraptext("héhehé"), node1.name)
@@ -53,7 +52,7 @@ class TestParameter(TreeEqualityTestCase):
         """test getter/setter for the value attribute"""
         value = wraptext("bar")
         node = Parameter(wraptext("foo"), value)
-        self.assertIs(value, node.value)
+        assert value is node.value
         node.value = "héhehé"
         self.assertWikicodeEqual(wraptext("héhehé"), node.value)
 
@@ -61,13 +60,11 @@ class TestParameter(TreeEqualityTestCase):
         """test getter/setter for the showkey attribute"""
         node1 = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
         node2 = Parameter(wraptext("foo"), wraptext("bar"))
-        self.assertFalse(node1.showkey)
-        self.assertTrue(node2.showkey)
+        assert node1.showkey is False
+        assert node2.showkey is True
         node1.showkey = True
-        self.assertTrue(node1.showkey)
+        assert node1.showkey is True
         node1.showkey = ""
-        self.assertFalse(node1.showkey)
-        self.assertRaises(ValueError, setattr, node2, "showkey", False)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert node1.showkey is False
+        with pytest.raises(ValueError):
+            node2.__setattr__("showkey", False)

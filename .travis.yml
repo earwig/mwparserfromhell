@@ -7,10 +7,10 @@ python:
     - 3.7
     - 3.8
 install:
-    - pip install coveralls
+    - pip install coveralls pytest
     - python setup.py develop
 script:
-    - coverage run --source=mwparserfromhell -m unittest discover
+    - coverage run --source=mwparserfromhell -m pytest
 after_success:
     - coveralls
 env:

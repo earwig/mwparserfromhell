@@ -19,39 +19,40 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.parser import tokens
 
-class TestTokens(unittest.TestCase):
+class TestTokens:
     """Test cases for the Token class and its subclasses."""
 
-    def test_issubclass(self):
+    @pytest.mark.parametrize("name", tokens.__all__)
+    def test_issubclass(self, name):
         """check that all classes within the tokens module are really Tokens"""
-        for name in tokens.__all__:
-            klass = getattr(tokens, name)
-            self.assertTrue(issubclass(klass, tokens.Token))
-            self.assertIsInstance(klass(), klass)
-            self.assertIsInstance(klass(), tokens.Token)
+        klass = getattr(tokens, name)
+        assert issubclass(klass, tokens.Token) is True
+        assert isinstance(klass(), klass)
+        assert isinstance(klass(), tokens.Token)
 
     def test_attributes(self):
         """check that Token attributes can be managed properly"""
         token1 = tokens.Token()
         token2 = tokens.Token(foo="bar", baz=123)
 
-        self.assertEqual("bar", token2.foo)
-        self.assertEqual(123, token2.baz)
-        self.assertFalse(token1.foo)
-        self.assertFalse(token2.bar)
+        assert "bar" == token2.foo
+        assert 123 == token2.baz
+        assert token1.foo is None
+        assert token2.bar is None
 
         token1.spam = "eggs"
         token2.foo = "ham"
         del token2.baz
 
-        self.assertEqual("eggs", token1.spam)
-        self.assertEqual("ham", token2.foo)
-        self.assertFalse(token2.baz)
-        self.assertRaises(KeyError, delattr, token2, "baz")
+        assert "eggs" == token1.spam
+        assert "ham" == token2.foo
+        assert token2.baz is None
+        with pytest.raises(KeyError):
+            token2.__delattr__("baz")
 
     def test_repr(self):
         """check that repr() on a Token works as expected"""
@@ -60,13 +61,13 @@ class TestTokens(unittest.TestCase):
         token3 = tokens.Text(text="earwig" * 100)
         hundredchars = ("earwig" * 100)[:97] + "..."
 
-        self.assertEqual("Token()", repr(token1))
+        assert "Token()" == repr(token1)
         token2repr1 = "Token(foo='bar', baz=123)"
         token2repr2 = "Token(baz=123, foo='bar')"
         token3repr = "Text(text='" + hundredchars + "')"
         token2repr = repr(token2)
-        self.assertTrue(token2repr == token2repr1 or token2repr == token2repr2)
-        self.assertEqual(token3repr, repr(token3))
+        assert token2repr == token2repr1 or token2repr == token2repr2
+        assert token3repr == repr(token3)
 
     def test_equality(self):
         """check that equivalent tokens are considered equal"""
@@ -77,24 +78,20 @@ class TestTokens(unittest.TestCase):
         token5 = tokens.Text(text="asdf")
         token6 = tokens.TemplateOpen(text="asdf")
 
-        self.assertEqual(token1, token2)
-        self.assertEqual(token2, token1)
-        self.assertEqual(token4, token5)
-        self.assertEqual(token5, token4)
-        self.assertNotEqual(token1, token3)
-        self.assertNotEqual(token2, token3)
-        self.assertNotEqual(token4, token6)
-        self.assertNotEqual(token5, token6)
+        assert token1 == token2
+        assert token2 == token1
+        assert token4 == token5
+        assert token5 == token4
+        assert token1 != token3
+        assert token2 != token3
+        assert token4 != token6
+        assert token5 != token6
 
-    def test_repr_equality(self):
-        "check that eval(repr(token)) == token"
-        tests = [
-            tokens.Token(),
-            tokens.Token(foo="bar", baz=123),
-            tokens.Text(text="earwig")
-        ]
-        for token in tests:
-            self.assertEqual(token, eval(repr(token), vars(tokens)))
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    @pytest.mark.parametrize("token", [
+        tokens.Token(),
+        tokens.Token(foo="bar", baz=123),
+        tokens.Text(text="earwig")
+    ])
+    def test_repr_equality(self, token):
+        """check that eval(repr(token)) == token"""
+        assert token == eval(repr(token), vars(tokens))

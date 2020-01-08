@@ -75,7 +75,7 @@ setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer] if use_extension else [],
-    test_suite = "tests",
+    test_requires = ["pytest"],
     version = __version__,
     python_requires = ">= 3.4",
     author = "Ben Kurtovic",

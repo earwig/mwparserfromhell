@@ -20,7 +20,7 @@
 # SOFTWARE.
 
 from difflib import unified_diff
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import HTMLEntity, Template, Text
 from mwparserfromhell.nodes.extras import Parameter
@@ -37,10 +37,10 @@ class TestTemplate(TreeEqualityTestCase):
     def test_unicode(self):
         """test Template.__unicode__()"""
         node = Template(wraptext("foobar"))
-        self.assertEqual("{{foobar}}", str(node))
+        assert "{{foobar}}" == str(node)
         node2 = Template(wraptext("foo"),
                          [pgenh("1", "bar"), pgens("abc", "def")])
-        self.assertEqual("{{foo|bar|abc=def}}", str(node2))
+        assert "{{foo|bar|abc=def}}" == str(node2)
 
     def test_children(self):
         """test Template.__children__()"""
@@ -52,13 +52,15 @@ class TestTemplate(TreeEqualityTestCase):
 
         gen1 = node1.__children__()
         gen2 = node2.__children__()
-        self.assertEqual(node1.name, next(gen1))
-        self.assertEqual(node2.name, next(gen2))
-        self.assertEqual(node2.params[0].value, next(gen2))
-        self.assertEqual(node2.params[1].name, next(gen2))
-        self.assertEqual(node2.params[1].value, next(gen2))
-        self.assertRaises(StopIteration, next, gen1)
-        self.assertRaises(StopIteration, next, gen2)
+        assert node1.name == next(gen1)
+        assert node2.name == next(gen2)
+        assert node2.params[0].value == next(gen2)
+        assert node2.params[1].name == next(gen2)
+        assert node2.params[1].value == next(gen2)
+        with pytest.raises(StopIteration):
+            next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen2)
 
     def test_strip(self):
         """test Template.__strip__()"""
@@ -71,11 +73,11 @@ class TestTemplate(TreeEqualityTestCase):
                       showkey=False),
             pgenh("3", "bar")])
 
-        self.assertEqual(None, node1.__strip__(keep_template_params=False))
-        self.assertEqual(None, node2.__strip__(keep_template_params=False))
-        self.assertEqual("", node1.__strip__(keep_template_params=True))
-        self.assertEqual("bar def", node2.__strip__(keep_template_params=True))
-        self.assertEqual("foo bar", node3.__strip__(keep_template_params=True))
+        assert node1.__strip__(keep_template_params=False) is None
+        assert node2.__strip__(keep_template_params=False) is None
+        assert "" == node1.__strip__(keep_template_params=True)
+        assert "bar def" == node2.__strip__(keep_template_params=True)
+        assert "foo bar" == node3.__strip__(keep_template_params=True)
 
     def test_showtree(self):
         """test Template.__showtree__()"""
@@ -94,15 +96,15 @@ class TestTemplate(TreeEqualityTestCase):
             (getter, node2.params[0].value), "    | ", marker,
             (getter, node2.params[1].name), "    = ", marker,
             (getter, node2.params[1].value), "}}"]
-        self.assertEqual(valid, output)
+        assert valid == output
 
     def test_name(self):
         """test getter/setter for the name attribute"""
         name = wraptext("foobar")
         node1 = Template(name)
         node2 = Template(name, [pgenh("1", "bar")])
-        self.assertIs(name, node1.name)
-        self.assertIs(name, node2.name)
+        assert name is node1.name
+        assert name is node2.name
         node1.name = "asdf"
         node2.name = "téstïng"
         self.assertWikicodeEqual(wraptext("asdf"), node1.name)
@@ -113,8 +115,8 @@ class TestTemplate(TreeEqualityTestCase):
         node1 = Template(wraptext("foobar"))
         plist = [pgenh("1", "bar"), pgens("abc", "def")]
         node2 = Template(wraptext("foo"), plist)
-        self.assertEqual([], node1.params)
-        self.assertIs(plist, node2.params)
+        assert [] == node1.params
+        assert plist is node2.params
 
     def test_has(self):
         """test Template.has()"""
@@ -124,17 +126,17 @@ class TestTemplate(TreeEqualityTestCase):
         node3 = Template(wraptext("foo"),
                          [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
         node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
-        self.assertFalse(node1.has("foobar", False))
-        self.assertTrue(node2.has(1, False))
-        self.assertTrue(node2.has("abc", False))
-        self.assertFalse(node2.has("def", False))
-        self.assertTrue(node3.has("1", False))
-        self.assertTrue(node3.has(" b ", False))
-        self.assertTrue(node4.has("b", False))
-        self.assertTrue(node3.has("b", True))
-        self.assertFalse(node4.has("b", True))
-        self.assertFalse(node1.has_param("foobar", False))
-        self.assertTrue(node2.has_param(1, False))
+        assert node1.has("foobar", False) is False
+        assert node2.has(1, False) is True
+        assert node2.has("abc", False) is True
+        assert node2.has("def", False) is False
+        assert node3.has("1", False) is True
+        assert node3.has(" b ", False) is True
+        assert node4.has("b", False) is True
+        assert node3.has("b", True) is True
+        assert node4.has("b", True) is False
+        assert node1.has_param("foobar", False) is False
+        assert node2.has_param(1, False) is True
 
     def test_get(self):
         """test Template.get()"""
@@ -147,13 +149,15 @@ class TestTemplate(TreeEqualityTestCase):
         node3 = Template(wraptext("foo"), [pgenh("1", "a"), node3p1, node3p2])
         node4p1 = pgens(" b", " ")
         node4 = Template(wraptext("foo"), [pgenh("1", "a"), node4p1])
-        self.assertRaises(ValueError, node1.get, "foobar")
-        self.assertIs(node2p1, node2.get(1))
-        self.assertIs(node2p2, node2.get("abc"))
-        self.assertRaises(ValueError, node2.get, "def")
-        self.assertIs(node3p1, node3.get("b"))
-        self.assertIs(node3p2, node3.get("1"))
-        self.assertIs(node4p1, node4.get("b "))
+        with pytest.raises(ValueError):
+            node1.get("foobar")
+        assert node2p1 is node2.get(1)
+        assert node2p2 is node2.get("abc")
+        with pytest.raises(ValueError):
+            node2.get("def")
+        assert node3p1 is node3.get("b")
+        assert node3p2 is node3.get("1")
+        assert node4p1 is node4.get("b ")
 
     def test_add(self):
         """test Template.add()"""
@@ -227,12 +231,12 @@ class TestTemplate(TreeEqualityTestCase):
         node4.add("e", "f", showkey=True, before="b")
         node5.add("f", "g", showkey=True, before=" d     ")
         node6.add("f", "g", showkey=True, before="b")
-        self.assertRaises(ValueError, node7.add, "e", "f", showkey=True,
-                          before="q")
+        with pytest.raises(ValueError):
+            node7.add("e", "f", showkey=True, before="q")
         node8.add("e", "f", showkey=True, before=node8p)
         node9.add("e", "f", showkey=True, before=pgenh("1", "d"))
-        self.assertRaises(ValueError, node10.add, "e", "f", showkey=True,
-                          before=pgenh("1", "d"))
+        with pytest.raises(ValueError):
+            node10.add("e", "f", showkey=True, before=pgenh("1", "d"))
         node11.add("d", "foo=bar", showkey=True)
         node12.add("1", "foo=bar", showkey=False)
         node13.add("h", "i", showkey=True)
@@ -261,59 +265,60 @@ class TestTemplate(TreeEqualityTestCase):
         node36.add("d", "h", before="b")
         node37.add(1, "b")
         node38.add("1", "foo")
-        self.assertRaises(ValueError, node38.add, "z", "bar", showkey=False)
+        with pytest.raises(ValueError):
+            node38.add("z", "bar", showkey=False)
         node39.add("1", "c")
         node40.add("3", "d")
         node41.add("3", "d")
         node42.add("b", "hello")
 
-        self.assertEqual("{{a|b=c|d|e=f}}", node1)
-        self.assertEqual("{{a|b=c|d|g}}", node2)
-        self.assertEqual("{{a|b=c|d|e=foo&#124;bar}}", node3)
-        self.assertIsInstance(node3.params[2].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|e=f|b=c|d}}", node4)
-        self.assertEqual("{{a|b=c|f=g|    d =e}}", node5)
-        self.assertEqual("{{a|b=c|b=d|f=g|b=e}}", node6)
-        self.assertEqual("{{a|b=c|d}}", node7)
-        self.assertEqual("{{a|b=c|e=f|d}}", node8)
-        self.assertEqual("{{a|b=c|e=f|d}}", node9)
-        self.assertEqual("{{a|b=c|e}}", node10)
-        self.assertEqual("{{a|b=c|d=foo=bar}}", node11)
-        self.assertEqual("{{a|b=c|foo&#61;bar}}", node12)
-        self.assertIsInstance(node12.params[1].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|\nb = c|\nd = e|\nf = g|\nh = i}}", node13)
-        self.assertEqual("{{a\n|b =c\n|d = e|f =g\n|h = i\n|j =k\n}}", node14)
-        self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =g |\nh  = i}}", node15)
-        self.assertEqual("{{a|\nb = c|\nd = e|\nf = g|h=i}}", node16)
-        self.assertEqual("{{a|b|c}}", node17)
-        self.assertEqual("{{a|b|3=c}}", node18)
-        self.assertEqual("{{a|b|c=d}}", node19)
-        self.assertEqual("{{a|b|c|d|e|f}}", node20)
-        self.assertEqual("{{a|b|c|4=d|5=e|f}}", node21)
-        self.assertEqual("{{a|b|c|4=d|5=e|6=f}}", node22)
-        self.assertEqual("{{a|b|c=foo=bar}}", node23)
-        self.assertEqual("{{a|b|foo&#61;bar}}", node24)
-        self.assertIsInstance(node24.params[1].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|b=d}}", node25)
-        self.assertEqual("{{a|foo&#61;bar}}", node26)
-        self.assertIsInstance(node26.params[0].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|1=foo=bar}}", node27)
-        self.assertEqual("{{a|foo&#61;bar}}", node28)
-        self.assertIsInstance(node28.params[0].value.get(1), HTMLEntity)
-        self.assertEqual("{{a|\nb = c|\nd = foo|\nf = g}}", node29)
-        self.assertEqual("{{a\n|b =c\n|d = e|f =foo\n|h = i\n}}", node30)
-        self.assertEqual("{{a|b  = c\n|\nd  = e|\nf  =foo }}", node31)
-        self.assertEqual("{{a|\nb = c |\nd =foo|\nf = g }}", node32)
-        self.assertEqual("{{a|b=k|d=e|i=j}}", node33)
-        self.assertEqual("{{a|1=e|x=y|2=d}}", node34)
-        self.assertEqual("{{a|x=y|e|d}}", node35)
-        self.assertEqual("{{a|b=c|d=h|f=g}}", node36)
-        self.assertEqual("{{a|b}}", node37)
-        self.assertEqual("{{abc|foo}}", node38)
-        self.assertEqual("{{a|c}}", node39)
-        self.assertEqual("{{a| b| c|d}}", node40)
-        self.assertEqual("{{a|1= b|2= c|3= d}}", node41)
-        self.assertEqual("{{a|b=hello  \n}}", node42)
+        assert "{{a|b=c|d|e=f}}" == node1
+        assert "{{a|b=c|d|g}}" == node2
+        assert "{{a|b=c|d|e=foo&#124;bar}}" == node3
+        assert isinstance(node3.params[2].value.get(1), HTMLEntity)
+        assert "{{a|e=f|b=c|d}}" == node4
+        assert "{{a|b=c|f=g|    d =e}}" == node5
+        assert "{{a|b=c|b=d|f=g|b=e}}" == node6
+        assert "{{a|b=c|d}}" == node7
+        assert "{{a|b=c|e=f|d}}" == node8
+        assert "{{a|b=c|e=f|d}}" == node9
+        assert "{{a|b=c|e}}" == node10
+        assert "{{a|b=c|d=foo=bar}}" == node11
+        assert "{{a|b=c|foo&#61;bar}}" == node12
+        assert isinstance(node12.params[1].value.get(1), HTMLEntity)
+        assert "{{a|\nb = c|\nd = e|\nf = g|\nh = i}}" == node13
+        assert "{{a\n|b =c\n|d = e|f =g\n|h = i\n|j =k\n}}" == node14
+        assert "{{a|b  = c\n|\nd  = e|\nf  =g |\nh  = i}}" == node15
+        assert "{{a|\nb = c|\nd = e|\nf = g|h=i}}" == node16
+        assert "{{a|b|c}}" == node17
+        assert "{{a|b|3=c}}" == node18
+        assert "{{a|b|c=d}}" == node19
+        assert "{{a|b|c|d|e|f}}" == node20
+        assert "{{a|b|c|4=d|5=e|f}}" == node21
+        assert "{{a|b|c|4=d|5=e|6=f}}" == node22
+        assert "{{a|b|c=foo=bar}}" == node23
+        assert "{{a|b|foo&#61;bar}}" == node24
+        assert isinstance(node24.params[1].value.get(1), HTMLEntity)
+        assert "{{a|b=d}}" == node25
+        assert "{{a|foo&#61;bar}}" == node26
+        assert isinstance(node26.params[0].value.get(1), HTMLEntity)
+        assert "{{a|1=foo=bar}}" == node27
+        assert "{{a|foo&#61;bar}}" == node28
+        assert isinstance(node28.params[0].value.get(1), HTMLEntity)
+        assert "{{a|\nb = c|\nd = foo|\nf = g}}" == node29
+        assert "{{a\n|b =c\n|d = e|f =foo\n|h = i\n}}" == node30
+        assert "{{a|b  = c\n|\nd  = e|\nf  =foo }}" == node31
+        assert "{{a|\nb = c |\nd =foo|\nf = g }}" == node32
+        assert "{{a|b=k|d=e|i=j}}" == node33
+        assert "{{a|1=e|x=y|2=d}}" == node34
+        assert "{{a|x=y|e|d}}" == node35
+        assert "{{a|b=c|d=h|f=g}}" == node36
+        assert "{{a|b}}" == node37
+        assert "{{abc|foo}}" == node38
+        assert "{{a|c}}" == node39
+        assert "{{a| b| c|d}}" == node40
+        assert "{{a|1= b|2= c|3= d}}" == node41
+        assert "{{a|b=hello  \n}}" == node42
 
     def test_remove(self):
         """test Template.remove()"""
@@ -405,35 +410,39 @@ class TestTemplate(TreeEqualityTestCase):
         node25.remove(node25.params[3], keep_field=False)
         node26.remove(node26.params[3], keep_field=True)
 
-        self.assertRaises(ValueError, node1.remove, 1)
-        self.assertRaises(ValueError, node1.remove, "a")
-        self.assertRaises(ValueError, node2.remove, "1")
-        self.assertEqual("{{foo}}", node2)
-        self.assertEqual("{{foo||abc=}}", node3)
-        self.assertEqual("{{foo|2=baz}}", node4)
-        self.assertEqual("{{foo|b=c}}", node5)
-        self.assertEqual("{{foo| a=|b=c}}", node6)
-        self.assertEqual("{{foo|1  =|2=c}}", node7)
-        self.assertEqual("{{foo|2=c}}", node8)
-        self.assertEqual("{{foo||c}}", node9)
-        self.assertEqual("{{foo|2=c}}", node10)
-        self.assertEqual("{{foo|b=c|a =d}}", node11)
-        self.assertEqual("{{foo| a=|b=c|a =d}}", node12)
-        self.assertEqual("{{foo| a=b|a =d}}", node13)
-        self.assertEqual("{{foo| a=b|b=|a =d}}", node14)
-        self.assertEqual("{{foo| a=b|b=c}}", node15)
-        self.assertEqual("{{foo| a=b|b=c|a =}}", node16)
-        self.assertEqual("{{foo|b|c}}", node17)
-        self.assertEqual("{{foo|1  =|b|c}}", node18)
-        self.assertEqual("{{foo|1  =a|2=c}}", node19)
-        self.assertEqual("{{foo|1  =a||c}}", node20)
-        self.assertEqual("{{foo|c=d|e=f}}", node21)
-        self.assertEqual("{{foo|a=|c=d|e=f}}", node22)
-        self.assertEqual("{{foo|c=d|e=f|a=b|a=b}}", node23)
-        self.assertEqual("{{foo|a=|c=d|e=f|a=b|a=b}}", node24)
-        self.assertEqual("{{foo|a=b|c=d|e=f|a=b}}", node25)
-        self.assertEqual("{{foo|a=b|c=d|e=f|a=|a=b}}", node26)
-        self.assertRaises(ValueError, node27.remove, node28.get(1))
+        with pytest.raises(ValueError):
+            node1.remove(1)
+        with pytest.raises(ValueError):
+            node1.remove("a")
+        with pytest.raises(ValueError):
+            node2.remove("1")
+        assert "{{foo}}" == node2
+        assert "{{foo||abc=}}" == node3
+        assert "{{foo|2=baz}}" == node4
+        assert "{{foo|b=c}}" == node5
+        assert "{{foo| a=|b=c}}" == node6
+        assert "{{foo|1  =|2=c}}" == node7
+        assert "{{foo|2=c}}" == node8
+        assert "{{foo||c}}" == node9
+        assert "{{foo|2=c}}" == node10
+        assert "{{foo|b=c|a =d}}" == node11
+        assert "{{foo| a=|b=c|a =d}}" == node12
+        assert "{{foo| a=b|a =d}}" == node13
+        assert "{{foo| a=b|b=|a =d}}" == node14
+        assert "{{foo| a=b|b=c}}" == node15
+        assert "{{foo| a=b|b=c|a =}}" == node16
+        assert "{{foo|b|c}}" == node17
+        assert "{{foo|1  =|b|c}}" == node18
+        assert "{{foo|1  =a|2=c}}" == node19
+        assert "{{foo|1  =a||c}}" == node20
+        assert "{{foo|c=d|e=f}}" == node21
+        assert "{{foo|a=|c=d|e=f}}" == node22
+        assert "{{foo|c=d|e=f|a=b|a=b}}" == node23
+        assert "{{foo|a=|c=d|e=f|a=b|a=b}}" == node24
+        assert "{{foo|a=b|c=d|e=f|a=b}}" == node25
+        assert "{{foo|a=b|c=d|e=f|a=|a=b}}" == node26
+        with pytest.raises(ValueError):
+            node27.remove(node28.get(1))
 
     def test_formatting(self):
         """test realistic param manipulation with complex whitespace formatting
@@ -600,7 +609,4 @@ class TestTemplate(TreeEqualityTestCase):
             newlines = str(code).splitlines(True)
             difflines = unified_diff(oldlines, newlines, n=1)
             diff = "".join(list(difflines)[2:]).strip()
-            self.assertEqual(expected, diff)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+            assert expected == diff

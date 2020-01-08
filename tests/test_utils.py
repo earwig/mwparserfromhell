@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.utils import parse_anything
@@ -29,32 +29,29 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 class TestUtils(TreeEqualityTestCase):
     """Tests for the utils module, which provides parse_anything()."""
 
-    def test_parse_anything_valid(self):
+    @pytest.mark.parametrize("test,valid", [
+        (wraptext("foobar"), wraptext("foobar")),
+        (Template(wraptext("spam")), wrap([Template(wraptext("spam"))])),
+        ("fóóbar", wraptext("fóóbar")),
+        (b"foob\xc3\xa1r", wraptext("foobár")),
+        (123, wraptext("123")),
+        (True, wraptext("True")),
+        (None, wrap([])),
+        ([Text("foo"), Text("bar"), Text("baz")],
+         wraptext("foo", "bar", "baz")),
+        ([wraptext("foo"), Text("bar"), "baz", 123, 456],
+         wraptext("foo", "bar", "baz", "123", "456")),
+        ([[[([[((("foo",),),)], "bar"],)]]], wraptext("foo", "bar"))
+    ])
+    def test_parse_anything_valid(self, test, valid):
         """tests for valid input to utils.parse_anything()"""
-        tests = [
-            (wraptext("foobar"), wraptext("foobar")),
-            (Template(wraptext("spam")), wrap([Template(wraptext("spam"))])),
-            ("fóóbar", wraptext("fóóbar")),
-            (b"foob\xc3\xa1r", wraptext("foobár")),
-            (123, wraptext("123")),
-            (True, wraptext("True")),
-            (None, wrap([])),
-            ([Text("foo"), Text("bar"), Text("baz")],
-             wraptext("foo", "bar", "baz")),
-            ([wraptext("foo"), Text("bar"), "baz", 123, 456],
-             wraptext("foo", "bar", "baz", "123", "456")),
-            ([[[([[((("foo",),),)], "bar"],)]]], wraptext("foo", "bar"))
-        ]
-        for test, valid in tests:
-            self.assertWikicodeEqual(valid, parse_anything(test))
+        self.assertWikicodeEqual(valid, parse_anything(test))
 
-    def test_parse_anything_invalid(self):
+    @pytest.mark.parametrize("invalid", [
+        Ellipsis, object, object(), type,
+        ["foo", [object]]
+    ])
+    def test_parse_anything_invalid(self, invalid):
         """tests for invalid input to utils.parse_anything()"""
-        self.assertRaises(ValueError, parse_anything, Ellipsis)
-        self.assertRaises(ValueError, parse_anything, object)
-        self.assertRaises(ValueError, parse_anything, object())
-        self.assertRaises(ValueError, parse_anything, type)
-        self.assertRaises(ValueError, parse_anything, ["foo", [object]])
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        with pytest.raises(ValueError):
+            parse_anything(invalid)

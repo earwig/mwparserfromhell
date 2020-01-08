@@ -64,14 +64,14 @@ environment:
 
 install:
   - "%PIP% install --disable-pip-version-check --user --upgrade pip"
-  - "%PIP% install wheel twine"
+  - "%PIP% install wheel twine pytest"
 
 build_script:
   - "%SETUPPY% build"
   - "%SETUPPY% develop --user"
 
 test_script:
-  - "%PYEXE% -m unittest discover"
+  - "%PYEXE% -m pytest"
 
 after_test:
   - "%SETUPPY% bdist_wheel"

@@ -19,7 +19,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Comment
 
@@ -31,32 +31,30 @@ class TestComment(TreeEqualityTestCase):
     def test_unicode(self):
         """test Comment.__unicode__()"""
         node = Comment("foobar")
-        self.assertEqual("<!--foobar-->", str(node))
+        assert "<!--foobar-->" == str(node)
 
     def test_children(self):
         """test Comment.__children__()"""
         node = Comment("foobar")
         gen = node.__children__()
-        self.assertRaises(StopIteration, next, gen)
+        with pytest.raises(StopIteration):
+            next(gen)
 
     def test_strip(self):
         """test Comment.__strip__()"""
         node = Comment("foobar")
-        self.assertIs(None, node.__strip__())
+        assert node.__strip__() is None
 
     def test_showtree(self):
         """test Comment.__showtree__()"""
         output = []
         node = Comment("foobar")
         node.__showtree__(output.append, None, None)
-        self.assertEqual(["<!--foobar-->"], output)
+        assert ["<!--foobar-->"] == output
 
     def test_contents(self):
         """test getter/setter for the contents attribute"""
         node = Comment("foobar")
-        self.assertEqual("foobar", node.contents)
+        assert "foobar" == node.contents
         node.contents = "barfoo"
-        self.assertEqual("barfoo", node.contents)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert "barfoo" == node.contents

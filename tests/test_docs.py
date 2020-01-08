@@ -22,13 +22,13 @@
 import json
 from io import StringIO
 import os
-import unittest
+import pytest
 from urllib.parse import urlencode
 from urllib.request import urlopen
 
 import mwparserfromhell
 
-class TestDocs(unittest.TestCase):
+class TestDocs:
     """Integration test cases for mwparserfromhell's documentation."""
 
     def assertPrint(self, input, output):
@@ -36,7 +36,7 @@ class TestDocs(unittest.TestCase):
         buff = StringIO()
         print(input, end="", file=buff)
         buff.seek(0)
-        self.assertEqual(output, buff.read())
+        assert output == buff.read()
 
     def test_readme_1(self):
         """test a block of example code in the README"""
@@ -88,9 +88,9 @@ class TestDocs(unittest.TestCase):
         text = str(code)
         res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}"
         self.assertPrint(text, res)
-        self.assertEqual(text, code)
+        assert text == code
 
-    @unittest.skipIf("NOWEB" in os.environ, "web test disabled by environ var")
+    @pytest.mark.skipif("NOWEB" in os.environ, reason="web test disabled by environ var")
     def test_readme_5(self):
         """test a block of example code in the README; includes a web call"""
         url1 = "https://en.wikipedia.org/w/api.php"
@@ -109,16 +109,13 @@ class TestDocs(unittest.TestCase):
         try:
             raw = urlopen(url1, urlencode(data).encode("utf8")).read()
         except OSError:
-            self.skipTest("cannot continue because of unsuccessful web call")
+            pytest.skip("cannot continue because of unsuccessful web call")
         res = json.loads(raw.decode("utf8"))
         revision = res["query"]["pages"][0]["revisions"][0]
         text = revision["slots"]["main"]["content"]
         try:
             expected = urlopen(url2.format(title)).read().decode("utf8")
         except OSError:
-            self.skipTest("cannot continue because of unsuccessful web call")
+            pytest.skip("cannot continue because of unsuccessful web call")
         actual = mwparserfromhell.parse(text)
-        self.assertEqual(expected, actual)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert expected == actual
