@@ -21,13 +21,14 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
-from itertools import chain
+
 import re
+from itertools import chain
 
 from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
-from .smart_list import _ListProxy
+from .smart_list.ListProxy import _ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 

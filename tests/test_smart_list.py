@@ -21,10 +21,13 @@
 # SOFTWARE.
 
 from __future__ import unicode_literals
+
 import unittest
 
 from mwparserfromhell.compat import py3k, range
-from mwparserfromhell.smart_list import SmartList, _ListProxy
+from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.smart_list.ListProxy import _ListProxy
+
 
 class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
