@@ -11,7 +11,7 @@ mwparserfromhell
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
-wikicode. It supports Python 2 and Python 3.
+wikicode. It supports Python 3.4+.
 
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.
@@ -41,7 +41,7 @@ Normal usage is rather straightforward (where ``text`` is page text):
 >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
-ordinary ``str`` object (or ``unicode`` in Python 2) with some extra methods.
+ordinary ``str`` object with some extra methods.
 For example:
 
 >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
@@ -110,8 +110,6 @@ saving the page!) by calling ``str()`` on it:
 {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
 >>> text == code
 True
-
-Likewise, use ``unicode(code)`` in Python 2.
 
 Limitations
 -----------

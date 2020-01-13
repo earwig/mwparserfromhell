@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,12 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import html.entities as htmlentities
 from math import log
 import re
 
 from . import contexts, tokens, ParserError
-from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
 
@@ -35,11 +33,11 @@ class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
 
     def __init__(self, context=0):
-        super(BadRoute, self).__init__()
+        super().__init__()
         self.context = context
 
 
-class _TagOpenData(object):
+class _TagOpenData:
     """Stores data about an HTML open tag, like ``<ref name="foo">``."""
     CX_NAME =        1 << 0
     CX_ATTR_READY =  1 << 1
@@ -57,7 +55,7 @@ class _TagOpenData(object):
         self.reset = 0
 
 
-class Tokenizer(object):
+class Tokenizer:
     """Creates a list of tokens from a string of wikicode."""
     USES_C = False
     START = object()

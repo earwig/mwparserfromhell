@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -25,9 +24,7 @@ This module contains accessory functions for other parts of the library. Parser
 users generally won't need stuff from here.
 """
 
-from __future__ import unicode_literals
 
-from .compat import bytes, str
 from .nodes import Node
 from .smart_list import SmartList
 

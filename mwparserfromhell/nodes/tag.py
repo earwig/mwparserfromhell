@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,11 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
 from .extras import Attribute
-from ..compat import str
 from ..definitions import is_visible
 from ..utils import parse_anything
 
@@ -37,7 +34,7 @@ class Tag(Node):
                  self_closing=False, invalid=False, implicit=False, padding="",
                  closing_tag=None, wiki_style_separator=None,
                  closing_wiki_markup=None):
-        super(Tag, self).__init__()
+        super().__init__()
         self.tag = tag
         self.contents = contents
         self._attrs = attrs if attrs else []

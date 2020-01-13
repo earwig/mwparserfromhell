@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -36,7 +35,7 @@ class ParserError(Exception):
     """
     def __init__(self, extra):
         msg = "This is a bug and should be reported. Info: {}.".format(extra)
-        super(ParserError, self).__init__(msg)
+        super().__init__(msg)
 
 
 from .builder import Builder
@@ -50,7 +49,7 @@ except ImportError:
 
 __all__ = ["use_c", "Parser", "ParserError"]
 
-class Parser(object):
+class Parser:
     """Represents a parser for wikicode.
 
     Actual parsing is a two-step process: first, the text is split up into a

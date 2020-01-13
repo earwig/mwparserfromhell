@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import re
 
-from ...compat import str
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
 
@@ -39,7 +36,7 @@ class Parameter(StringMixIn):
     """
 
     def __init__(self, name, value, showkey=True):
-        super(Parameter, self).__init__()
+        super().__init__()
         self.name = name
         self.value = value
         self.showkey = showkey

@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,13 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import codecs
 from os import listdir, path
 import sys
 import warnings
 
-from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.parser import tokens
 from mwparserfromhell.parser.builder import Builder
 
@@ -35,7 +32,7 @@ class _TestParseError(Exception):
     pass
 
 
-class TokenizerTestCase(object):
+class TokenizerTestCase:
     """A base test case for tokenizers, whose tests are loaded dynamically.
 
     Subclassed along with unittest.TestCase to form TestPyTokenizer and
@@ -60,8 +57,6 @@ class TokenizerTestCase(object):
                 actual = self.tokenizer().tokenize(data["input"])
             self.assertEqual(expected, actual)
 
-        if not py3k:
-            inner.__name__ = funcname.encode("utf8")
         inner.__doc__ = data["label"]
         return inner
 

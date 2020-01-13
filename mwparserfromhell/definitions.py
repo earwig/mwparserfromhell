@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -28,7 +27,6 @@ When updating this file, please also update the the C tokenizer version:
 - mwparserfromhell/parser/ctokenizer/definitions.h
 """
 
-from __future__ import unicode_literals
 
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
            "is_single_only", "is_scheme"]

@@ -1,5 +1,3 @@
-# -*- coding: utf-8  -*-
-#
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
@@ -21,8 +19,6 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-
 from sys import maxsize
 
 __all__ = []
@@ -38,7 +34,7 @@ def inheritdoc(method):
     return method
 
 
-class _SliceNormalizerMixIn(object):
+class _SliceNormalizerMixIn:
     """MixIn that provides a private method to normalize slices."""
 
     def _normalize_slice(self, key, clamp=False):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -22,13 +21,10 @@
 
 """
 This module contains the :class:`.StringMixIn` type, which implements the
-interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
+interface for the ``str`` type in a dynamic manner.
 """
 
-from __future__ import unicode_literals
 from sys import getdefaultencoding
-
-from .compat import bytes, py3k, str
 
 __all__ = ["StringMixIn"]
 
@@ -41,24 +37,20 @@ def inheritdoc(method):
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
 
-class StringMixIn(object):
+class StringMixIn:
     """Implement the interface for ``unicode``/``str`` in a dynamic manner.
 
     To use this class, inherit from it and override the :meth:`__unicode__`
-    method (same on py3k) to return the string representation of the object.
+    method to return the string representation of the object.
     The various string methods will operate on the value of :meth:`__unicode__`
     instead of the immutable ``self`` like the regular ``str`` type.
     """
 
-    if py3k:
-        def __str__(self):
-            return self.__unicode__()
+    def __str__(self):
+        return self.__unicode__()
 
-        def __bytes__(self):
-            return bytes(self.__unicode__(), getdefaultencoding())
-    else:
-        def __str__(self):
-            return bytes(self.__unicode__())
+    def __bytes__(self):
+        return bytes(self.__unicode__(), getdefaultencoding())
 
     def __unicode__(self):
         raise NotImplementedError()
@@ -84,19 +76,14 @@ class StringMixIn(object):
     def __ge__(self, other):
         return self.__unicode__() >= other
 
-    if py3k:
-        def __bool__(self):
-            return bool(self.__unicode__())
-    else:
-        def __nonzero__(self):
-            return bool(self.__unicode__())
+    def __bool__(self):
+        return bool(self.__unicode__())
 
     def __len__(self):
         return len(self.__unicode__())
 
     def __iter__(self):
-        for char in self.__unicode__():
-            yield char
+        yield from self.__unicode__()
 
     def __getitem__(self, key):
         return self.__unicode__()[key]
@@ -113,8 +100,7 @@ class StringMixIn(object):
                 type(self).__name__, attr))
         return getattr(self.__unicode__(), attr)
 
-    if py3k:
-        maketrans = str.maketrans  # Static method can't rely on __getattr__
+    maketrans = str.maketrans  # Static method can't rely on __getattr__
 
 
 del inheritdoc

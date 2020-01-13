@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str
 from ..utils import parse_anything
 
 __all__ = ["Heading"]
@@ -32,7 +29,7 @@ class Heading(Node):
     """Represents a section heading in wikicode, like ``== Foo ==``."""
 
     def __init__(self, title, level):
-        super(Heading, self).__init__()
+        super().__init__()
         self.title = title
         self.level = level
 

@@ -1,5 +1,3 @@
-# -*- coding: utf-8  -*-
-#
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
@@ -25,7 +23,6 @@ from _weakref import ref
 
 from .ListProxy import _ListProxy
 from .utils import _SliceNormalizerMixIn, inheritdoc
-from ..compat import py3k
 
 
 class SmartList(_SliceNormalizerMixIn, list):
@@ -54,14 +51,14 @@ class SmartList(_SliceNormalizerMixIn, list):
 
     def __init__(self, iterable=None):
         if iterable:
-            super(SmartList, self).__init__(iterable)
+            super().__init__(iterable)
         else:
-            super(SmartList, self).__init__()
+            super().__init__()
         self._children = {}
 
     def __getitem__(self, key):
         if not isinstance(key, slice):
-            return super(SmartList, self).__getitem__(key)
+            return super().__getitem__(key)
         key = self._normalize_slice(key, clamp=False)
         sliceinfo = [key.start, key.stop, key.step]
         child = _ListProxy(self, sliceinfo)
@@ -71,43 +68,31 @@ class SmartList(_SliceNormalizerMixIn, list):
 
     def __setitem__(self, key, item):
         if not isinstance(key, slice):
-            return super(SmartList, self).__setitem__(key, item)
+            return super().__setitem__(key, item)
         item = list(item)
-        super(SmartList, self).__setitem__(key, item)
+        super().__setitem__(key, item)
         key = self._normalize_slice(key, clamp=True)
         diff = len(item) + (key.start - key.stop) // key.step
         if not diff:
             return
-        values = self._children.values if py3k else self._children.itervalues
-        for child, (start, stop, step) in values():
+        for child, (start, stop, step) in self._children.values():
             if start > key.stop:
                 self._children[id(child)][1][0] += diff
             if stop is not None and stop >= key.stop:
                 self._children[id(child)][1][1] += diff
 
     def __delitem__(self, key):
-        super(SmartList, self).__delitem__(key)
+        super().__delitem__(key)
         if isinstance(key, slice):
             key = self._normalize_slice(key, clamp=True)
         else:
             key = slice(key, key + 1, 1)
         diff = (key.stop - key.start) // key.step
-        values = self._children.values if py3k else self._children.itervalues
-        for child, (start, stop, step) in values():
+        for child, (start, stop, step) in self._children.values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
             if stop is not None and stop >= key.stop:
                 self._children[id(child)][1][1] -= diff
-
-    if not py3k:
-        def __getslice__(self, start, stop):
-            return self.__getitem__(slice(start, stop))
-
-        def __setslice__(self, start, stop, iterable):
-            self.__setitem__(slice(start, stop), iterable)
-
-        def __delslice__(self, start, stop):
-            self.__delitem__(slice(start, stop))
 
     def __add__(self, other):
         return SmartList(list(self) + other)
@@ -159,27 +144,14 @@ class SmartList(_SliceNormalizerMixIn, list):
     @inheritdoc
     def reverse(self):
         self._detach_children()
-        super(SmartList, self).reverse()
+        super().reverse()
 
-    if py3k:
-        @inheritdoc
-        def sort(self, key=None, reverse=None):
-            self._detach_children()
-            kwargs = {}
-            if key is not None:
-                kwargs["key"] = key
-            if reverse is not None:
-                kwargs["reverse"] = reverse
-            super(SmartList, self).sort(**kwargs)
-    else:
-        @inheritdoc
-        def sort(self, cmp=None, key=None, reverse=None):
-            self._detach_children()
-            kwargs = {}
-            if cmp is not None:
-                kwargs["cmp"] = cmp
-            if key is not None:
-                kwargs["key"] = key
-            if reverse is not None:
-                kwargs["reverse"] = reverse
-            super(SmartList, self).sort(**kwargs)
+    @inheritdoc
+    def sort(self, key=None, reverse=None):
+        self._detach_children()
+        kwargs = {}
+        if key is not None:
+            kwargs["key"] = key
+        if reverse is not None:
+            kwargs["reverse"] = reverse
+        super().sort(**kwargs)

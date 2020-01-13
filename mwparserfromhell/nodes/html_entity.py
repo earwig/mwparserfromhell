@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import html.entities as htmlentities
 
 from . import Node
-from ..compat import htmlentities, py3k, str
 
 __all__ = ["HTMLEntity"]
 
@@ -31,7 +29,7 @@ class HTMLEntity(Node):
     """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
 
     def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
-        super(HTMLEntity, self).__init__()
+        super().__init__()
         self._value = value
         if named is None:  # Try to guess whether or not the entity is named
             try:
@@ -62,32 +60,6 @@ class HTMLEntity(Node):
         if kwargs.get("normalize"):
             return self.normalize()
         return self
-
-    if not py3k:
-        @staticmethod
-        def _unichr(value):
-            """Implement builtin unichr() with support for non-BMP code points.
-
-            On wide Python builds, this functions like the normal unichr(). On
-            narrow builds, this returns the value's encoded surrogate pair.
-            """
-            try:
-                return unichr(value)
-            except ValueError:
-                # Test whether we're on the wide or narrow Python build. Check
-                # the length of a non-BMP code point
-                # (U+1F64A, SPEAK-NO-EVIL MONKEY):
-                if len("\U0001F64A") == 1:  # pragma: no cover
-                    raise
-                # Ensure this is within the range we can encode:
-                if value > 0x10FFFF:
-                    raise ValueError("unichr() arg not in range(0x110000)")
-                code = value - 0x10000
-                if value < 0:  # Invalid code point
-                    raise
-                lead = 0xD800 + (code >> 10)
-                trail = 0xDC00 + (code % (1 << 10))
-                return unichr(lead) + unichr(trail)
 
     @property
     def value(self):
@@ -173,9 +145,8 @@ class HTMLEntity(Node):
 
     def normalize(self):
         """Return the unicode character represented by the HTML entity."""
-        chrfunc = chr if py3k else HTMLEntity._unichr
         if self.named:
-            return chrfunc(htmlentities.name2codepoint[self.value])
+            return chr(htmlentities.name2codepoint[self.value])
         if self.hexadecimal:
-            return chrfunc(int(self.value, 16))
-        return chrfunc(int(self.value))
+            return chr(int(self.value, 16))
+        return chr(int(self.value))
