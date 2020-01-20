@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -29,13 +28,11 @@ the name of a :class:`.Template` is a :class:`.Wikicode` object that can
 contain text or more templates.
 """
 
-from __future__ import unicode_literals
 
-from ..compat import str
 from ..string_mixin import StringMixIn
 
-__all__ = ["Node", "Text", "Argument", "Heading", "HTMLEntity", "Tag",
-           "Template"]
+__all__ = ["Argument", "Comment", "ExternalLink", "HTMLEntity", "Heading",
+           "Node", "Tag", "Template", "Text", "Wikilink"]
 
 class Node(StringMixIn):
     """Represents the base Node type, demonstrating the methods to override.
@@ -56,6 +53,7 @@ class Node(StringMixIn):
 
     def __children__(self):
         return
+        # pylint: disable=unreachable
         yield  # pragma: no cover (this is a generator that yields nothing)
 
     def __strip__(self, **kwargs):

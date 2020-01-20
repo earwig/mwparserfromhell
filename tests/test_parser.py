@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,15 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+import unittest
 
 from mwparserfromhell import parser
-from mwparserfromhell.compat import range
 from mwparserfromhell.nodes import Tag, Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 

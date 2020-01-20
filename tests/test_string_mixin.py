@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,16 +19,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 from sys import getdefaultencoding
 from types import GeneratorType
+import unittest
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-from mwparserfromhell.compat import bytes, py3k, py32, range, str
 from mwparserfromhell.string_mixin import StringMixIn
 
 class _FakeString(StringMixIn):
@@ -46,20 +39,16 @@ class TestStringMixIn(unittest.TestCase):
     def test_docs(self):
         """make sure the various methods of StringMixIn have docstrings"""
         methods = [
-            "capitalize", "center", "count", "encode", "endswith",
-            "expandtabs", "find", "format", "index", "isalnum", "isalpha",
-            "isdecimal", "isdigit", "islower", "isnumeric", "isspace",
-            "istitle", "isupper", "join", "ljust", "lower", "lstrip",
-            "partition", "replace", "rfind", "rindex", "rjust", "rpartition",
-            "rsplit", "rstrip", "split", "splitlines", "startswith", "strip",
-            "swapcase", "title", "translate", "upper", "zfill"]
-        if py3k:
-            if not py32:
-                methods.append("casefold")
-            methods.extend(["format_map", "isidentifier", "isprintable",
-                            "maketrans"])
-        else:
-            methods.append("decode")
+            "capitalize", "casefold", "center", "count", "encode", "endswith",
+            "expandtabs", "find", "format", "format_map", "index", "isalnum",
+            "isalpha", "isdecimal", "isdigit", "isidentifier", "islower",
+            "isnumeric", "isprintable", "isspace", "istitle", "isupper",
+            "join", "ljust", "lower", "lstrip", "maketrans", "partition",
+            "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
+            "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
+            "title", "translate", "upper", "zfill"
+        ]
+
         for meth in methods:
             expected = getattr("foo", meth).__doc__
             actual = getattr(_FakeString("foo"), meth).__doc__
@@ -70,17 +59,11 @@ class TestStringMixIn(unittest.TestCase):
         fstr = _FakeString("fake string")
         self.assertEqual(str(fstr), "fake string")
         self.assertEqual(bytes(fstr), b"fake string")
-        if py3k:
-            self.assertEqual(repr(fstr), "'fake string'")
-        else:
-            self.assertEqual(repr(fstr), b"u'fake string'")
+        self.assertEqual(repr(fstr), "'fake string'")
 
         self.assertIsInstance(str(fstr), str)
         self.assertIsInstance(bytes(fstr), bytes)
-        if py3k:
-            self.assertIsInstance(repr(fstr), str)
-        else:
-            self.assertIsInstance(repr(fstr), bytes)
+        self.assertIsInstance(repr(fstr), str)
 
     def test_comparisons(self):
         """make sure comparison operators work"""
@@ -90,33 +73,33 @@ class TestStringMixIn(unittest.TestCase):
         str4 = "this is a fake string"
         str5 = "fake string, this is"
 
-        self.assertFalse(str1 > str2)
-        self.assertTrue(str1 >= str2)
-        self.assertTrue(str1 == str2)
-        self.assertFalse(str1 != str2)
-        self.assertFalse(str1 < str2)
-        self.assertTrue(str1 <= str2)
+        self.assertLessEqual(str1, str2)
+        self.assertGreaterEqual(str1, str2)
+        self.assertEqual(str1, str2)
+        self.assertEqual(str1, str2)
+        self.assertGreaterEqual(str1, str2)
+        self.assertLessEqual(str1, str2)
 
-        self.assertTrue(str1 > str3)
-        self.assertTrue(str1 >= str3)
-        self.assertFalse(str1 == str3)
-        self.assertTrue(str1 != str3)
-        self.assertFalse(str1 < str3)
-        self.assertFalse(str1 <= str3)
+        self.assertGreater(str1, str3)
+        self.assertGreaterEqual(str1, str3)
+        self.assertNotEqual(str1, str3)
+        self.assertNotEqual(str1, str3)
+        self.assertGreaterEqual(str1, str3)
+        self.assertGreater(str1, str3)
 
-        self.assertFalse(str1 > str4)
-        self.assertTrue(str1 >= str4)
-        self.assertTrue(str1 == str4)
-        self.assertFalse(str1 != str4)
-        self.assertFalse(str1 < str4)
-        self.assertTrue(str1 <= str4)
+        self.assertLessEqual(str1, str4)
+        self.assertGreaterEqual(str1, str4)
+        self.assertEqual(str1, str4)
+        self.assertEqual(str1, str4)
+        self.assertGreaterEqual(str1, str4)
+        self.assertLessEqual(str1, str4)
 
-        self.assertFalse(str5 > str1)
-        self.assertFalse(str5 >= str1)
-        self.assertFalse(str5 == str1)
-        self.assertTrue(str5 != str1)
-        self.assertTrue(str5 < str1)
-        self.assertTrue(str5 <= str1)
+        self.assertLessEqual(str5, str1)
+        self.assertLess(str5, str1)
+        self.assertNotEqual(str5, str1)
+        self.assertNotEqual(str5, str1)
+        self.assertLess(str5, str1)
+        self.assertLessEqual(str5, str1)
 
     def test_other_magics(self):
         """test other magically implemented features, like len() and iter()"""
@@ -161,13 +144,13 @@ class TestStringMixIn(unittest.TestCase):
         self.assertRaises(IndexError, lambda: str1[11])
         self.assertRaises(IndexError, lambda: str2[0])
 
-        self.assertTrue("k" in str1)
-        self.assertTrue("fake" in str1)
-        self.assertTrue("str" in str1)
-        self.assertTrue("" in str1)
-        self.assertTrue("" in str2)
-        self.assertFalse("real" in str1)
-        self.assertFalse("s" in str2)
+        self.assertIn("k", str1)
+        self.assertIn("fake", str1)
+        self.assertIn("str", str1)
+        self.assertIn("", str1)
+        self.assertIn("", str2)
+        self.assertNotIn("real", str1)
+        self.assertNotIn("s", str2)
 
     def test_other_methods(self):
         """test the remaining non-magic methods of StringMixIn"""
@@ -184,14 +167,6 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(0, str1.count("r", 8))
         self.assertEqual(1, str1.count("r", 5, 9))
         self.assertEqual(0, str1.count("r", 5, 7))
-
-        if not py3k:
-            str2 = _FakeString("fo")
-            self.assertEqual(str1, str1.decode())
-            actual = _FakeString("\\U00010332\\U0001033f\\U00010344")
-            self.assertEqual("𐌲𐌿𐍄", actual.decode("unicode_escape"))
-            self.assertRaises(UnicodeError, str2.decode, "punycode")
-            self.assertEqual("", str2.decode("punycode", "ignore"))
 
         str3 = _FakeString("𐌲𐌿𐍄")
         actual = b"\xF0\x90\x8C\xB2\xF0\x90\x8C\xBF\xF0\x90\x8D\x84"
@@ -239,10 +214,9 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("foobarbazbuzz", str7.format("bar", abc="baz"))
         self.assertRaises(IndexError, str8.format, "abc")
 
-        if py3k:
-            self.assertEqual("fake string", str1.format_map({}))
-            self.assertEqual("foobarbaz", str6.format_map({"abc": "bar"}))
-            self.assertRaises(ValueError, str5.format_map, {0: "abc"})
+        self.assertEqual("fake string", str1.format_map({}))
+        self.assertEqual("foobarbaz", str6.format_map({"abc": "bar"}))
+        self.assertRaises(ValueError, str5.format_map, {0: "abc"})
 
         self.assertEqual(3, str1.index("e"))
         self.assertRaises(ValueError, str1.index, "z")
@@ -275,11 +249,10 @@ class TestStringMixIn(unittest.TestCase):
         self.assertFalse(str13.isdigit())
         self.assertTrue(str14.isdigit())
 
-        if py3k:
-            self.assertTrue(str9.isidentifier())
-            self.assertTrue(str10.isidentifier())
-            self.assertFalse(str11.isidentifier())
-            self.assertFalse(str12.isidentifier())
+        self.assertTrue(str9.isidentifier())
+        self.assertTrue(str10.isidentifier())
+        self.assertFalse(str11.isidentifier())
+        self.assertFalse(str12.isidentifier())
 
         str15 = _FakeString("")
         str16 = _FakeString("FooBar")
@@ -292,13 +265,12 @@ class TestStringMixIn(unittest.TestCase):
         self.assertTrue(str13.isnumeric())
         self.assertTrue(str14.isnumeric())
 
-        if py3k:
-            str16B = _FakeString("\x01\x02")
-            self.assertTrue(str9.isprintable())
-            self.assertTrue(str13.isprintable())
-            self.assertTrue(str14.isprintable())
-            self.assertTrue(str15.isprintable())
-            self.assertFalse(str16B.isprintable())
+        str16B = _FakeString("\x01\x02")
+        self.assertTrue(str9.isprintable())
+        self.assertTrue(str13.isprintable())
+        self.assertTrue(str14.isprintable())
+        self.assertTrue(str15.isprintable())
+        self.assertFalse(str16B.isprintable())
 
         str17 = _FakeString(" ")
         str18 = _FakeString("\t     \t \r\n")
@@ -329,10 +301,9 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual("", str15.lower())
         self.assertEqual("foobar", str16.lower())
         self.assertEqual("ß", str22.lower())
-        if py3k and not py32:
-            self.assertEqual("", str15.casefold())
-            self.assertEqual("foobar", str16.casefold())
-            self.assertEqual("ss", str22.casefold())
+        self.assertEqual("", str15.casefold())
+        self.assertEqual("foobar", str16.casefold())
+        self.assertEqual("ss", str22.casefold())
 
         str23 = _FakeString("  fake string  ")
         self.assertEqual("fake string", str1.lstrip())
@@ -378,9 +349,8 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.rsplit(None, 3))
         actual = ["   this is a   sentence with", "", "whitespace", ""]
         self.assertEqual(actual, str25.rsplit(" ", 3))
-        if py3k and not py32:
-            actual = ["   this is a", "sentence", "with", "whitespace"]
-            self.assertEqual(actual, str25.rsplit(maxsplit=3))
+        actual = ["   this is a", "sentence", "with", "whitespace"]
+        self.assertEqual(actual, str25.rsplit(maxsplit=3))
 
         self.assertEqual("fake string", str1.rstrip())
         self.assertEqual("  fake string", str23.rstrip())
@@ -396,9 +366,8 @@ class TestStringMixIn(unittest.TestCase):
         self.assertEqual(actual, str25.split(None, 3))
         actual = ["", "", "", "this is a   sentence with  whitespace "]
         self.assertEqual(actual, str25.split(" ", 3))
-        if py3k and not py32:
-            actual = ["this", "is", "a", "sentence with  whitespace "]
-            self.assertEqual(actual, str25.split(maxsplit=3))
+        actual = ["this", "is", "a", "sentence with  whitespace "]
+        self.assertEqual(actual, str25.split(maxsplit=3))
 
         str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
         self.assertEqual(["lines", "of", "text", "are", "presented", "here"],
@@ -417,17 +386,13 @@ class TestStringMixIn(unittest.TestCase):
 
         self.assertEqual("Fake String", str1.title())
 
-        if py3k:
-            table1 = StringMixIn.maketrans({97: "1", 101: "2", 105: "3",
-                                            111: "4", 117: "5"})
-            table2 = StringMixIn.maketrans("aeiou", "12345")
-            table3 = StringMixIn.maketrans("aeiou", "12345", "rts")
-            self.assertEqual("f1k2 str3ng", str1.translate(table1))
-            self.assertEqual("f1k2 str3ng", str1.translate(table2))
-            self.assertEqual("f1k2 3ng", str1.translate(table3))
-        else:
-            table = {97: "1", 101: "2", 105: "3", 111: "4", 117: "5"}
-            self.assertEqual("f1k2 str3ng", str1.translate(table))
+        table1 = StringMixIn.maketrans({97: "1", 101: "2", 105: "3",
+                                        111: "4", 117: "5"})
+        table2 = StringMixIn.maketrans("aeiou", "12345")
+        table3 = StringMixIn.maketrans("aeiou", "12345", "rts")
+        self.assertEqual("f1k2 str3ng", str1.translate(table1))
+        self.assertEqual("f1k2 str3ng", str1.translate(table2))
+        self.assertEqual("f1k2 3ng", str1.translate(table3))
 
         self.assertEqual("", str15.upper())
         self.assertEqual("FOOBAR", str16.upper())

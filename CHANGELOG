@@ -1,6 +1,30 @@
 v0.6 (unreleased):
 
-- ...
+- Added support for Python 3.8.
+- Updated Wikicode.matches() to recognize underscores as being equivalent
+  to spaces. (#216)
+- Fixed a rare parsing bug involving deeply nested style tags. (#224)
+
+v0.5.4 (released May 15, 2019):
+
+- Fixed an unlikely crash in the C tokenizer when interrupted while parsing
+  a heading.
+
+v0.5.3 (released March 30, 2019):
+
+- Fixed manual construction of Node objects, previously unsupported. (#214)
+- Fixed Wikicode transformation methods (replace(), remove(), etc.) when passed
+  an empty section as an argument. (#212)
+- Fixed the parser getting stuck inside malformed tables. (#206)
+
+v0.5.2 (released November 1, 2018):
+
+- Dropped support for end-of-life Python versions 2.6, 3.2, 3.3. (#199, #204)
+- Fixed signals getting stuck inside the C tokenizer until parsing finishes,
+  in pathological cases. (#206)
+- Fixed <wbr> not being considered a single-only tag. (#200)
+- Fixed a C tokenizer crash on Python 3.7 when compiled with assertions. (#208)
+- Cleaned up some minor documentation issues. (#207)
 
 v0.5.1 (released March 3, 2018):
 

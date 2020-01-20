@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,15 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import unittest
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
+from mwparserfromhell.smart_list import SmartList
+from mwparserfromhell.smart_list.ListProxy import _ListProxy
 
-from mwparserfromhell.compat import py3k, range
-from mwparserfromhell.smart_list import SmartList, _ListProxy
 
 class TestSmartList(unittest.TestCase):
     """Test cases for the SmartList class and its child, _ListProxy."""
@@ -130,45 +125,40 @@ class TestSmartList(unittest.TestCase):
         list3 = builder([0, 2, 3, 4])
         list4 = builder([0, 1, 2])
 
-        if py3k:
-            self.assertEqual("[0, 1, 2, 3, 'one', 'two']", str(list1))
-            self.assertEqual(b"\x00\x01\x02", bytes(list4))
-            self.assertEqual("[0, 1, 2, 3, 'one', 'two']", repr(list1))
-        else:
-            self.assertEqual("[0, 1, 2, 3, u'one', u'two']", unicode(list1))
-            self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", str(list1))
-            self.assertEqual(b"[0, 1, 2, 3, u'one', u'two']", repr(list1))
+        self.assertEqual("[0, 1, 2, 3, 'one', 'two']", str(list1))
+        self.assertEqual(b"\x00\x01\x02", bytes(list4))
+        self.assertEqual("[0, 1, 2, 3, 'one', 'two']", repr(list1))
 
-        self.assertTrue(list1 < list3)
-        self.assertTrue(list1 <= list3)
-        self.assertFalse(list1 == list3)
-        self.assertTrue(list1 != list3)
-        self.assertFalse(list1 > list3)
-        self.assertFalse(list1 >= list3)
+        self.assertLess(list1, list3)
+        self.assertLessEqual(list1, list3)
+        self.assertNotEqual(list1, list3)
+        self.assertNotEqual(list1, list3)
+        self.assertLessEqual(list1, list3)
+        self.assertLess(list1, list3)
 
         other1 = [0, 2, 3, 4]
-        self.assertTrue(list1 < other1)
-        self.assertTrue(list1 <= other1)
-        self.assertFalse(list1 == other1)
-        self.assertTrue(list1 != other1)
-        self.assertFalse(list1 > other1)
-        self.assertFalse(list1 >= other1)
+        self.assertLess(list1, other1)
+        self.assertLessEqual(list1, other1)
+        self.assertNotEqual(list1, other1)
+        self.assertNotEqual(list1, other1)
+        self.assertLessEqual(list1, other1)
+        self.assertLess(list1, other1)
 
         other2 = [0, 0, 1, 2]
-        self.assertFalse(list1 < other2)
-        self.assertFalse(list1 <= other2)
-        self.assertFalse(list1 == other2)
-        self.assertTrue(list1 != other2)
-        self.assertTrue(list1 > other2)
-        self.assertTrue(list1 >= other2)
+        self.assertGreaterEqual(list1, other2)
+        self.assertGreater(list1, other2)
+        self.assertNotEqual(list1, other2)
+        self.assertNotEqual(list1, other2)
+        self.assertGreater(list1, other2)
+        self.assertGreaterEqual(list1, other2)
 
         other3 = [0, 1, 2, 3, "one", "two"]
-        self.assertFalse(list1 < other3)
-        self.assertTrue(list1 <= other3)
-        self.assertTrue(list1 == other3)
-        self.assertFalse(list1 != other3)
-        self.assertFalse(list1 > other3)
-        self.assertTrue(list1 >= other3)
+        self.assertGreaterEqual(list1, other3)
+        self.assertLessEqual(list1, other3)
+        self.assertEqual(list1, other3)
+        self.assertEqual(list1, other3)
+        self.assertLessEqual(list1, other3)
+        self.assertGreaterEqual(list1, other3)
 
         self.assertTrue(bool(list1))
         self.assertFalse(bool(list2))
@@ -198,10 +188,10 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual(["two", "one", 3, 2, 1, 0], list(reversed(list1)))
         self.assertEqual([], list(reversed(list2)))
 
-        self.assertTrue("one" in list1)
-        self.assertTrue(3 in list1)
-        self.assertFalse(10 in list1)
-        self.assertFalse(0 in list2)
+        self.assertIn("one", list1)
+        self.assertIn(3, list1)
+        self.assertNotIn(10, list1)
+        self.assertNotIn(0, list2)
 
         self.assertEqual([], list2 * 5)
         self.assertEqual([], 5 * list2)
@@ -265,12 +255,6 @@ class TestSmartList(unittest.TestCase):
         self.assertEqual([0, 2, 2, 3, 4, 5], list1)
         list1.sort(reverse=True)
         self.assertEqual([5, 4, 3, 2, 2, 0], list1)
-        if not py3k:
-            func = lambda x, y: abs(3 - x) - abs(3 - y)  # Distance from 3
-            list1.sort(cmp=func)
-            self.assertEqual([3, 4, 2, 2, 5, 0], list1)
-            list1.sort(cmp=func, reverse=True)
-            self.assertEqual([0, 5, 4, 2, 2, 3], list1)
         list3.sort(key=lambda i: i[1])
         self.assertEqual([("d", 2), ("c", 3), ("a", 5), ("b", 8)], list3)
         list3.sort(key=lambda i: i[1], reverse=True)

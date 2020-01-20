@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,17 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 from functools import partial
 import re
 from types import GeneratorType
+import unittest
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
-from mwparserfromhell.compat import py3k, str
 from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
                                     Node, Tag, Template, Text, Wikilink)
 from mwparserfromhell.smart_list import SmartList
@@ -192,8 +185,8 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertRaises(ValueError, func, fake, "q", recursive=True)
         func("{{b}}{{c}}", "w", recursive=False)
         func("{{d}}{{e}}", "x", recursive=True)
-        func(wrap(code4.nodes[-2:]), "y", recursive=False)
-        func(wrap(code4.nodes[-2:]), "z", recursive=True)
+        func(Wikicode(code4.nodes[-2:]), "y", recursive=False)
+        func(Wikicode(code4.nodes[-2:]), "z", recursive=True)
         self.assertEqual(expected[3], code4)
         self.assertRaises(ValueError, func, "{{c}}{{d}}", "q", recursive=False)
         self.assertRaises(ValueError, func, "{{c}}{{d}}", "q", recursive=True)
@@ -222,6 +215,20 @@ class TestWikicode(TreeEqualityTestCase):
         func("{{foo}}{{baz}}", "{{lol}}")
         self.assertEqual(expected[6], code7)
 
+        code8 = parse("== header ==")
+        func = partial(meth, code8)
+        sec1, sec2 = code8.get_sections(include_headings=False)
+        func(sec1, "lead\n")
+        func(sec2, "\nbody")
+        self.assertEqual(expected[7], code8)
+
+        code9 = parse("{{foo}}")
+        meth(code9.get_sections()[0], code9.get_sections()[0], "{{bar}}")
+        meth(code9.get_sections()[0], code9, "{{baz}}")
+        meth(code9, code9, "{{qux}}")
+        meth(code9, code9.get_sections()[0], "{{quz}}")
+        self.assertEqual(expected[8], code9)
+
     def test_insert_before(self):
         """test Wikicode.insert_before()"""
         meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -232,7 +239,10 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a}}w{{b}}{{c}}x{{d}}{{e}}{{f}}{{g}}{{h}}yz{{i}}{{j}}",
             "{{a|x{{b}}{{c}}|{{f|{{g}}=y{{h}}{{i}}}}}}",
             "here cdis {{some abtext and a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}"]
+            "{{foo}}{{bar}}{{baz}}{{lol}}{{foo}}{{baz}}",
+            "lead\n== header ==\nbody",
+            "{{quz}}{{qux}}{{baz}}{{bar}}{{foo}}",
+        ]
         self._test_search(meth, expected)
 
     def test_insert_after(self):
@@ -245,16 +255,26 @@ class TestWikicode(TreeEqualityTestCase):
             "{{a}}{{b}}{{c}}w{{d}}{{e}}x{{f}}{{g}}{{h}}{{i}}{{j}}yz",
             "{{a|{{b}}{{c}}x|{{f|{{g}}={{h}}{{i}}y}}}}",
             "here is {{somecd text andab a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}"]
+            "{{foo}}{{bar}}{{baz}}{{foo}}{{baz}}{{lol}}",
+            "lead\n== header ==\nbody",
+            "{{foo}}{{bar}}{{baz}}{{qux}}{{quz}}",
+        ]
         self._test_search(meth, expected)
 
     def test_replace(self):
         """test Wikicode.replace()"""
         meth = lambda code, *args, **kw: code.replace(*args, **kw)
         expected = [
-            "{{a}}xz[[y]]{{e}}", "dcdffe", "{{a|x|{{c|d=y}}}}",
-            "{{a}}wx{{f}}{{g}}z", "{{a|x|{{f|{{g}}=y}}}}",
-            "here cd ab a {{template}}}}", "{{foo}}{{bar}}{{baz}}{{lol}}"]
+            "{{a}}xz[[y]]{{e}}",
+            "dcdffe",
+            "{{a|x|{{c|d=y}}}}",
+            "{{a}}wx{{f}}{{g}}z",
+            "{{a|x|{{f|{{g}}=y}}}}",
+            "here cd ab a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}{{lol}}",
+            "lead\n== header ==\nbody",
+            "{{quz}}",
+        ]
         self._test_search(meth, expected)
 
     def test_append(self):
@@ -273,16 +293,25 @@ class TestWikicode(TreeEqualityTestCase):
         """test Wikicode.remove()"""
         meth = lambda code, obj, value, **kw: code.remove(obj, **kw)
         expected = [
-            "{{a}}{{c}}", "", "{{a||{{c|d=}}}}", "{{a}}{{f}}",
-            "{{a||{{f|{{g}}=}}}}", "here   a {{template}}}}",
-            "{{foo}}{{bar}}{{baz}}"]
+            "{{a}}{{c}}",
+            "",
+            "{{a||{{c|d=}}}}",
+            "{{a}}{{f}}",
+            "{{a||{{f|{{g}}=}}}}",
+            "here   a {{template}}}}",
+            "{{foo}}{{bar}}{{baz}}",
+            "== header ==",
+            "",
+        ]
         self._test_search(meth, expected)
 
     def test_matches(self):
         """test Wikicode.matches()"""
         code1 = parse("Cleanup")
         code2 = parse("\nstub<!-- TODO: make more specific -->")
-        code3 = parse("")
+        code3 = parse("Hello world!")
+        code4 = parse("World,_hello?")
+        code5 = parse("")
         self.assertTrue(code1.matches("Cleanup"))
         self.assertTrue(code1.matches("cleanup"))
         self.assertTrue(code1.matches("  cleanup\n"))
@@ -297,9 +326,15 @@ class TestWikicode(TreeEqualityTestCase):
         self.assertFalse(code2.matches(["StuB", "sTUb", "foobar"]))
         self.assertTrue(code2.matches(("StuB", "sTUb", "foo", "bar", "Stub")))
         self.assertTrue(code2.matches(["StuB", "sTUb", "foo", "bar", "Stub"]))
-        self.assertTrue(code3.matches(""))
-        self.assertTrue(code3.matches("<!-- nothing -->"))
-        self.assertTrue(code3.matches(("a", "b", "")))
+        self.assertTrue(code3.matches("hello world!"))
+        self.assertTrue(code3.matches("hello_world!"))
+        self.assertFalse(code3.matches("hello__world!"))
+        self.assertTrue(code4.matches("World,_hello?"))
+        self.assertTrue(code4.matches("World, hello?"))
+        self.assertFalse(code4.matches("World,  hello?"))
+        self.assertTrue(code5.matches(""))
+        self.assertTrue(code5.matches("<!-- nothing -->"))
+        self.assertTrue(code5.matches(("a", "b", "")))
 
     def test_filter_family(self):
         """test the Wikicode.i?filter() family of functions"""

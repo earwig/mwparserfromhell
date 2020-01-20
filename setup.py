@@ -1,5 +1,4 @@
 #! /usr/bin/env python
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -21,23 +20,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import print_function
 from distutils.errors import DistutilsError, CCompilerError
 from glob import glob
 from os import environ
 import sys
 
-if ((sys.version_info[0] == 2 and sys.version_info[1] < 6) or
-    (sys.version_info[1] == 3 and sys.version_info[1] < 2)):
-    raise RuntimeError("mwparserfromhell needs Python 2.6+ or 3.2+")
-
 from setuptools import setup, find_packages, Extension
 from setuptools.command.build_ext import build_ext
 
 from mwparserfromhell import __version__
-from mwparserfromhell.compat import py26, py3k
 
-with open("README.rst", **({'encoding':'utf-8'} if py3k else {})) as fp:
+with open("README.rst", encoding='utf-8') as fp:
     long_docs = fp.read()
 
 use_extension = True
@@ -76,21 +69,21 @@ if fallback:
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
                       sources=sorted(glob("mwparserfromhell/parser/ctokenizer/*.c")),
-                      depends=glob("mwparserfromhell/parser/ctokenizer/*.h"))
+                      depends=sorted(glob("mwparserfromhell/parser/ctokenizer/*.h")))
 
 setup(
     name = "mwparserfromhell",
     packages = find_packages(exclude=("tests",)),
     ext_modules = [tokenizer] if use_extension else [],
-    tests_require = ["unittest2"] if py26 else [],
-    test_suite = "tests.discover",
+    test_suite = "tests",
     version = __version__,
+    python_requires = ">= 3.4",
     author = "Ben Kurtovic",
     author_email = "ben.kurtovic@gmail.com",
     url = "https://github.com/earwig/mwparserfromhell",
     description = "MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description = long_docs,
-    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{0}".format(__version__),
+    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{}".format(__version__),
     keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license = "MIT License",
     classifiers = [
@@ -99,15 +92,12 @@ setup(
         "Intended Audience :: Developers",
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
-        "Programming Language :: Python :: 2.6",
-        "Programming Language :: Python :: 2.7",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.2",
-        "Programming Language :: Python :: 3.3",
         "Programming Language :: Python :: 3.4",
         "Programming Language :: Python :: 3.5",
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "Topic :: Text Processing :: Markup"
     ],
 )

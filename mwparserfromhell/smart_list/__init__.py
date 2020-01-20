@@ -1,5 +1,6 @@
 #
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,26 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+This module contains the :class:`.SmartList` type, as well as its
+:class:`._ListProxy` child, which together implement a list whose sublists
+reflect changes made to the main list, and vice-versa.
+"""
 
-from . import Node
-
-__all__ = ["Comment"]
-
-class Comment(Node):
-    """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
-
-    def __init__(self, contents):
-        super().__init__()
-        self.contents = contents
-
-    def __unicode__(self):
-        return "<!--" + self.contents + "-->"
-
-    @property
-    def contents(self):
-        """The hidden text contained between ``<!--`` and ``-->``."""
-        return self._contents
-
-    @contents.setter
-    def contents(self, value):
-        self._contents = str(value)
+from .SmartList import SmartList

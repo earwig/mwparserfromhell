@@ -408,3 +408,17 @@ name:   junk_after_table_row
 label:  ignore junk on the first line of a table row
 input:  "{|\n|- foo="bar" | baz\n|blerp\n|}"
 output: [TagOpenOpen(wiki_markup="{|"), Text(text="table"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|-"), Text(text="tr"), TagAttrStart(pad_first=" ", pad_before_eq="", pad_after_eq=""), Text(text="foo"), TagAttrEquals(), TagAttrQuote(char='"'), Text(text="bar"), TagAttrStart(pad_first=" ", pad_before_eq=" ", pad_after_eq=""), Text(text="|"), TagAttrStart(pad_first="", pad_before_eq="", pad_after_eq=""), Text(text="baz"), TagCloseOpen(padding="\n"), TagOpenOpen(wiki_markup="|"), Text(text="td"), TagCloseOpen(padding=""), Text(text="blerp\n"), TagOpenClose(wiki_markup=""), Text(text="td"), TagCloseClose(), TagOpenClose(wiki_markup=""), Text(text="tr"), TagCloseClose(), TagOpenClose(wiki_markup="|}"), Text(text="table"), TagCloseClose()]
+
+---
+
+name:   incomplete_nested_open_only
+label:  many nested incomplete tables: table open only
+input:  "{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|"
+output: [Text(text="{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|\n{|")]
+
+---
+
+name:   incomplete_nested_open_and_row
+label:  many nested incomplete tables: table open and row separator (see issue #206)
+input:  "{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-"
+output: [Text(text="{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-\n{|\n|-")]

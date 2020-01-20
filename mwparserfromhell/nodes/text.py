@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str
 
 __all__ = ["Text"]
 
@@ -31,8 +28,8 @@ class Text(Node):
     """Represents ordinary, unformatted text with no special properties."""
 
     def __init__(self, value):
-        super(Text, self).__init__()
-        self._value = value
+        super().__init__()
+        self.value = value
 
     def __unicode__(self):
         return self.value

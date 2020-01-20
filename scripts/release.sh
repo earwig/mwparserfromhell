@@ -1,7 +1,5 @@
 #! /usr/bin/env bash
 
-set -euo pipefail
-
 if [[ -z "$1" ]]; then
     echo "usage: $0 1.2.3"
     exit 1
@@ -77,7 +75,8 @@ do_git_stuff() {
 
 upload_to_pypi() {
     echo -n "PyPI: uploading source tarball..."
-    python setup.py -q register sdist upload -s
+    python setup.py -q sdist
+    twine upload -s dist/mwparserfromhell-$VERSION*
     echo " done."
 }
 
@@ -85,7 +84,7 @@ post_release() {
     echo
     echo "*** Release completed."
     echo "*** Update: https://github.com/earwig/mwparserfromhell/releases/tag/v$VERSION"
-    echo "*** Verify: https://pypi.python.org/pypi/mwparserfromhell"
+    echo "*** Verify: https://pypi.org/project/mwparserfromhell"
     echo "*** Verify: https://ci.appveyor.com/project/earwig/mwparserfromhell"
     echo "*** Verify: https://mwparserfromhell.readthedocs.io"
     echo "*** Press enter to sanity-check the release."
@@ -97,7 +96,7 @@ test_release() {
     echo "Checking mwparserfromhell v$VERSION..."
     echo -n "Creating a virtualenv..."
     virtdir="mwparser-test-env"
-    virtualenv -q $virtdir
+    python -m venv $virtdir
     cd $virtdir
     source bin/activate
     echo " done."
@@ -105,7 +104,7 @@ test_release() {
     pip -q install mwparserfromhell
     echo " done."
     echo -n "Checking version..."
-    reported_version=$(python -c 'print __import__("mwparserfromhell").__version__')
+    reported_version=$(python -c 'print(__import__("mwparserfromhell").__version__)')
     if [[ "$reported_version" != "$VERSION" ]]; then
         echo " error."
         echo "*** ERROR: mwparserfromhell is reporting its version as $reported_version, not $VERSION!"
@@ -134,7 +133,8 @@ test_release() {
     rm mwparserfromhell.tar.gz mwparserfromhell.tar.gz.asc
     cd mwparserfromhell-$VERSION
     echo "Running unit tests..."
-    python setup.py -q test
+    python setup.py -q install
+    python -m unittest discover
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: Unit tests failed!"
         deactivate

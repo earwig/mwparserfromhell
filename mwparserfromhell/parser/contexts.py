@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -193,3 +192,16 @@ UNSAFE = (TEMPLATE_NAME + WIKILINK_TITLE + EXT_LINK_TITLE +
 DOUBLE = TEMPLATE_PARAM_KEY + TAG_CLOSE + TABLE_ROW_OPEN
 NO_WIKILINKS = TEMPLATE_NAME + ARGUMENT_NAME + WIKILINK_TITLE + EXT_LINK_URI
 NO_EXT_LINKS = TEMPLATE_NAME + ARGUMENT_NAME + WIKILINK_TITLE + EXT_LINK
+
+def describe(context):
+    """Return a string describing the given context value, for debugging."""
+    flags = []
+    for name, value in globals().items():
+        if not isinstance(value, int) or name.startswith("GL_"):
+            continue
+        if bin(value).count("1") != 1:
+            continue  # Hacky way to skip aggregate contexts
+        if context & value:
+            flags.append((name, value))
+    flags.sort(key=lambda it: it[1])
+    return "|".join(it[0] for it in flags)

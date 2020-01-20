@@ -1,20 +1,16 @@
+dist: xenial
 language: python
 python:
-    - 2.6
-    - 2.7
-    - 3.2
-    - 3.3
     - 3.4
     - 3.5
     - 3.6
-    - nightly
-sudo: false
+    - 3.7
+    - 3.8
 install:
-    - if [[ $TRAVIS_PYTHON_VERSION == '3.2' ]]; then pip install coverage==3.7.1; fi
     - pip install coveralls
-    - python setup.py build
+    - python setup.py develop
 script:
-    - coverage run --source=mwparserfromhell setup.py -q test
+    - coverage run --source=mwparserfromhell -m unittest discover
 after_success:
     - coveralls
 env:

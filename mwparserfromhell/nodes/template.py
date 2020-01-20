@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 from collections import defaultdict
 import re
 
 from . import HTMLEntity, Node, Text
 from .extras import Parameter
-from ..compat import range, str
 from ..utils import parse_anything
 
 __all__ = ["Template"]
@@ -37,8 +34,8 @@ class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
     def __init__(self, name, params=None):
-        super(Template, self).__init__()
-        self._name = name
+        super().__init__()
+        self.name = name
         if params:
             self._params = params
         else:
@@ -108,7 +105,7 @@ class Template(Node):
     def _blank_param_value(value):
         """Remove the content from *value* while keeping its whitespace.
 
-        Replace *value*\ 's nodes with two text nodes, the first containing
+        Replace *value*\\ 's nodes with two text nodes, the first containing
         whitespace from before its content and the second containing whitespace
         from after its content.
         """

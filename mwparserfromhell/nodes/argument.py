@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import Node
-from ..compat import str
 from ..utils import parse_anything
 
 __all__ = ["Argument"]
@@ -32,9 +29,9 @@ class Argument(Node):
     """Represents a template argument substitution, like ``{{{foo}}}``."""
 
     def __init__(self, name, default=None):
-        super(Argument, self).__init__()
-        self._name = name
-        self._default = default
+        super().__init__()
+        self.name = name
+        self.default = default
 
     def __unicode__(self):
         start = "{{{" + str(self.name)

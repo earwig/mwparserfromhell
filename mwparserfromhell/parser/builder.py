@@ -1,4 +1,3 @@
-# -*- coding: utf-8  -*-
 #
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
@@ -20,10 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
 from . import tokens, ParserError
-from ..compat import str
 from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
                      Template, Text, Wikilink)
 from ..nodes.extras import Attribute, Parameter
@@ -45,10 +42,10 @@ def _add_handler(token_type):
     return decorator
 
 
-class Builder(object):
+class Builder:
     """Builds a tree of nodes out of a sequence of tokens.
 
-    To use, pass a list of :class:`.Token`\ s to the :meth:`build` method. The
+    To use, pass a list of :class:`.Token`\\ s to the :meth:`build` method. The
     list will be exhausted as it is parsed and a :class:`.Wikicode` object
     containing the node tree will be returned.
     """
@@ -237,8 +234,7 @@ class Builder(object):
                 else:
                     name, value = self._pop(), None
                 return Attribute(name, value, quotes, start.pad_first,
-                                 start.pad_before_eq, start.pad_after_eq,
-                                 check_quotes=False)
+                                 start.pad_before_eq, start.pad_after_eq)
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_attribute() missed a close token")

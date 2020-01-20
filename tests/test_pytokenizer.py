@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +19,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import unittest
 
-try:
-    import unittest2 as unittest
-except ImportError:
-    import unittest
-
+from mwparserfromhell.parser import contexts
 from mwparserfromhell.parser.tokenizer import Tokenizer
 
 from ._test_tokenizer import TokenizerTestCase
@@ -43,6 +38,11 @@ class TestPyTokenizer(TokenizerTestCase, unittest.TestCase):
             """make sure the Python tokenizer identifies as not using C"""
             self.assertFalse(Tokenizer.USES_C)
             self.assertFalse(Tokenizer().USES_C)
+
+    def test_describe_context(self):
+        self.assertEqual("", contexts.describe(0))
+        ctx = contexts.describe(contexts.TEMPLATE_PARAM_KEY|contexts.HAS_TEXT)
+        self.assertEqual("TEMPLATE_PARAM_KEY|HAS_TEXT", ctx)
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

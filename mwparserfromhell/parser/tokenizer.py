@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2018 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,12 +19,11 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import html.entities as htmlentities
 from math import log
 import re
 
 from . import contexts, tokens, ParserError
-from ..compat import htmlentities, range
 from ..definitions import (get_html_tag, is_parsable, is_single,
                            is_single_only, is_scheme)
 
@@ -35,11 +33,11 @@ class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
 
     def __init__(self, context=0):
-        super(BadRoute, self).__init__()
+        super().__init__()
         self.context = context
 
 
-class _TagOpenData(object):
+class _TagOpenData:
     """Stores data about an HTML open tag, like ``<ref name="foo">``."""
     CX_NAME =        1 << 0
     CX_ATTR_READY =  1 << 1
@@ -57,7 +55,7 @@ class _TagOpenData(object):
         self.reset = 0
 
 
-class Tokenizer(object):
+class Tokenizer:
     """Creates a list of tokens from a string of wikicode."""
     USES_C = False
     START = object()
@@ -455,7 +453,7 @@ class Tokenizer(object):
         else:
             self._parse_free_uri_scheme()
             invalid = ("\n", " ", "[", "]")
-            punct = tuple(",;\.:!?)")
+            punct = tuple(",;\\.:!?)")
         if self._read() is self.END or self._read()[0] in invalid:
             self._fail_route()
         tail = ""
@@ -931,7 +929,11 @@ class Tokenizer(object):
             self._head = reset
             if route.context & contexts.STYLE_PASS_AGAIN:
                 new_ctx = contexts.STYLE_ITALICS | contexts.STYLE_SECOND_PASS
-                stack = self._parse(new_ctx)
+                try:
+                    stack = self._parse(new_ctx)
+                except BadRoute:
+                    self._head = reset
+                    return self._emit_text("''")
             else:
                 return self._emit_text("''")
         self._emit_style_tag("i", "''", stack)
@@ -1133,6 +1135,7 @@ class Tokenizer(object):
             table = self._parse(contexts.TABLE_OPEN)
         except BadRoute:
             while self._stack_ident != restore_point:
+                self._memoize_bad_route()
                 self._pop()
             self._head = reset
             self._emit_text("{")

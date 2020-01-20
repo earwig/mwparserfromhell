@@ -23,7 +23,7 @@ SOFTWARE.
 #pragma once
 
 #ifndef PY_SSIZE_T_CLEAN
-#define PY_SSIZE_T_CLEAN  // See: https://docs.python.org/2/c-api/arg.html
+#define PY_SSIZE_T_CLEAN  // See: https://docs.python.org/3/c-api/arg.html
 #endif
 
 #include <Python.h>
@@ -33,10 +33,6 @@ SOFTWARE.
 #include "avl_tree.h"
 
 /* Compatibility macros */
-
-#if PY_MAJOR_VERSION >= 3
-#define IS_PY3K
-#endif
 
 #ifndef uint64_t
 #define uint64_t unsigned PY_LONG_LONG
@@ -48,20 +44,8 @@ SOFTWARE.
 
 /* Unicode support macros */
 
-#if defined(IS_PY3K) && PY_MINOR_VERSION >= 3
-#define PEP_393
-#endif
-
-#ifdef PEP_393
-#define Unicode Py_UCS4
 #define PyUnicode_FROM_SINGLE(chr)                                            \
     PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, &(chr), 1)
-#else
-#define Unicode Py_UNICODE
-#define PyUnicode_FROM_SINGLE(chr)                                            \
-    PyUnicode_FromUnicode(&(chr), 1)
-#define PyUnicode_GET_LENGTH PyUnicode_GET_SIZE
-#endif
 
 /* Error handling macros */
 
@@ -85,13 +69,9 @@ extern PyObject* definitions;
 typedef struct {
     Py_ssize_t capacity;
     Py_ssize_t length;
-#ifdef PEP_393
     PyObject* object;
     int kind;
     void* data;
-#else
-    Py_UNICODE* data;
-#endif
 } Textbuffer;
 
 typedef struct {
@@ -111,12 +91,8 @@ typedef struct Stack Stack;
 typedef struct {
     PyObject* object;        /* base PyUnicodeObject object */
     Py_ssize_t length;       /* length of object, in code points */
-#ifdef PEP_393
     int kind;                /* object's kind value */
     void* data;              /* object's raw unicode buffer */
-#else
-    Py_UNICODE* buf;         /* object's internal buffer */
-#endif
 } TokenizerInput;
 
 typedef struct avl_tree_node avl_tree;

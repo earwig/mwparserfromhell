@@ -1,6 +1,5 @@
-# -*- coding: utf-8  -*-
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,13 +19,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-from itertools import chain
 import re
+from itertools import chain
 
-from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
+from .smart_list.ListProxy import _ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -47,7 +45,7 @@ class Wikicode(StringMixIn):
     RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
-        super(Wikicode, self).__init__()
+        super().__init__()
         self._nodes = nodes
 
     def __unicode__(self):
@@ -55,15 +53,14 @@ class Wikicode(StringMixIn):
 
     @staticmethod
     def _get_children(node, contexts=False, restrict=None, parent=None):
-        """Iterate over all child :class:`.Node`\ s of a given *node*."""
+        """Iterate over all child :class:`.Node`\\ s of a given *node*."""
         yield (parent, node) if contexts else node
         if restrict and isinstance(node, restrict):
             return
         for code in node.__children__():
             for child in code.nodes:
                 sub = Wikicode._get_children(child, contexts, restrict, code)
-                for result in sub:
-                    yield result
+                yield from sub
 
     @staticmethod
     def _slice_replace(code, index, old, new):
@@ -108,6 +105,26 @@ class Wikicode(StringMixIn):
             if (not forcetype or isinstance(node, forcetype)) and match(node):
                 yield (i, node)
 
+    def _is_child_wikicode(self, obj, recursive=True):
+        """Return whether the given :class:`.Wikicode` is a descendant."""
+        def deref(nodes):
+            if isinstance(nodes, _ListProxy):
+                return nodes._parent  # pylint: disable=protected-access
+            return nodes
+
+        target = deref(obj.nodes)
+        if target is deref(self.nodes):
+            return True
+        if recursive:
+            todo = [self]
+            while todo:
+                code = todo.pop()
+                if target is deref(code.nodes):
+                    return True
+                for node in code.nodes:
+                    todo += list(node.__children__())
+        return False
+
     def _do_strong_search(self, obj, recursive=True):
         """Search for the specific element *obj* within the node list.
 
@@ -120,11 +137,16 @@ class Wikicode(StringMixIn):
         :class:`.Wikicode` contained by a node within ``self``. If *obj* is not
         found, :exc:`ValueError` is raised.
         """
+        if isinstance(obj, Wikicode):
+            if not self._is_child_wikicode(obj, recursive):
+                raise ValueError(obj)
+            return obj, slice(0, len(obj.nodes))
+
         if isinstance(obj, Node):
             mkslice = lambda i: slice(i, i + 1)
             if not recursive:
                 return self, mkslice(self.index(obj))
-            for i, node in enumerate(self.nodes):
+            for node in self.nodes:
                 for context, child in self._get_children(node, contexts=True):
                     if obj is child:
                         if not context:
@@ -132,11 +154,7 @@ class Wikicode(StringMixIn):
                         return context, mkslice(context.index(child))
             raise ValueError(obj)
 
-        context, ind = self._do_strong_search(obj.get(0), recursive)
-        for i in range(1, len(obj.nodes)):
-            if obj.get(i) is not context.get(ind.start + i):
-                raise ValueError(obj)
-        return context, slice(ind.start, ind.start + len(obj.nodes))
+        raise TypeError(obj)
 
     def _do_weak_search(self, obj, recursive):
         """Search for an element that looks like *obj* within the node list.
@@ -230,7 +248,7 @@ class Wikicode(StringMixIn):
                                       self.ifilter(forcetype=ftype, *a, **kw))
         make_filter = lambda ftype: (lambda self, *a, **kw:
                                      self.filter(forcetype=ftype, *a, **kw))
-        for name, ftype in (meths.items() if py3k else meths.iteritems()):
+        for name, ftype in meths.items():
             ifilter = make_ifilter(ftype)
             filter = make_filter(ftype)
             ifilter.__doc__ = doc.format(name, "ifilter", ftype)
@@ -254,7 +272,7 @@ class Wikicode(StringMixIn):
         self._nodes = value
 
     def get(self, index):
-        """Return the *index*\ th node within the list of nodes."""
+        """Return the *index*\\ th node within the list of nodes."""
         return self.nodes[index]
 
     def set(self, index, value):
@@ -479,16 +497,16 @@ class Wikicode(StringMixIn):
         letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
-        cmp = lambda a, b: (a[0].upper() + a[1:] == b[0].upper() + b[1:]
-                            if a and b else a == b)
-        this = self.strip_code().strip()
+        normalize = lambda s: (s[0].upper() + s[1:]).replace("_", " ") if s else s
+        this = normalize(self.strip_code().strip())
+
         if isinstance(other, (str, bytes, Wikicode, Node)):
             that = parse_anything(other).strip_code().strip()
-            return cmp(this, that)
+            return this == normalize(that)
 
         for obj in other:
             that = parse_anything(obj).strip_code().strip()
-            if cmp(this, that):
+            if this == normalize(that):
                 return True
         return False
 
