@@ -1,0 +1,25 @@
+name: Build manylinux1 wheels
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: Build manylinux1 Python wheels
+      uses: RalfG/python-wheels-manylinux-build@916aea1f70130a34995d0236ae5c67145bfd2c4f
+      with:
+        python-versions: 'cp34-cp34m cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38'
+    - name: Move to dist/
+      run: |
+        mkdir -p dist
+        cp -v wheelhouse/*-manylinux1_x86_64.whl dist/
+    - name: Publish package to PyPi
+      # Only actually publish if a new tag was pushed
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@master
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
+
