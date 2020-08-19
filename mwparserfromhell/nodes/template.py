@@ -210,9 +210,9 @@ class Template(Node):
                 return True
         return False
 
-    has_param = lambda self, name, ignore_empty=False: \
-                self.has(name, ignore_empty)
-    has_param.__doc__ = "Alias for :meth:`has`."
+    def has_param(self, name, ignore_empty=False):
+        """Alias for :meth:`has`."""
+        return self.has(name, ignore_empty)
 
     def get(self, name, default=_UNSET):
         """Get the parameter whose name is *name*.
