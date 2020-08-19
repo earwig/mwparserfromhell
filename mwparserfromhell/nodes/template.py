@@ -214,6 +214,9 @@ class Template(Node):
         """Alias for :meth:`has`."""
         return self.has(name, ignore_empty)
 
+    def __contains__(self, name):
+        return self.has(name)
+
     def get(self, name, default=_UNSET):
         """Get the parameter whose name is *name*.
 
