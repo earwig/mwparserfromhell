@@ -29,6 +29,8 @@ from ..utils import parse_anything
 __all__ = ["Template"]
 
 FLAGS = re.DOTALL | re.UNICODE
+# Used to allow None as a valid fallback value
+_UNSET = object()
 
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
@@ -212,19 +214,23 @@ class Template(Node):
                 self.has(name, ignore_empty)
     has_param.__doc__ = "Alias for :meth:`has`."
 
-    def get(self, name):
+    def get(self, name, default=_UNSET):
         """Get the parameter whose name is *name*.
 
         The returned object is a :class:`.Parameter` instance. Raises
-        :exc:`ValueError` if no parameter has this name. Since multiple
-        parameters can have the same name, we'll return the last match, since
-        the last parameter is the only one read by the MediaWiki parser.
+        :exc:`ValueError` if no parameter has this name. If *default* is set,
+        returns that instead. Since multiple parameters can have the same name,
+        we'll return the last match, since the last parameter is the only one
+        read by the MediaWiki parser.
         """
         name = str(name).strip()
         for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
-        raise ValueError(name)
+        if default is _UNSET:
+            raise ValueError(name)
+        else:
+            return default
 
     def add(self, name, value, showkey=None, before=None,
             preserve_spacing=True):
