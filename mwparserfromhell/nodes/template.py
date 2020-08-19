@@ -232,6 +232,9 @@ class Template(Node):
         else:
             return default
 
+    def __getitem__(self, name):
+        return self.get(name)
+
     def add(self, name, value, showkey=None, before=None,
             preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
@@ -312,6 +315,9 @@ class Template(Node):
             self.params.append(param)
         return param
 
+    def __setitem__(self, name, value):
+        return self.add(name, value)
+
     def remove(self, param, keep_field=False):
         """Remove a parameter from the template, identified by *param*.
 
@@ -357,3 +363,6 @@ class Template(Node):
             raise ValueError(name)
         for i in reversed(to_remove):
             self.params.pop(i)
+
+    def __delitem__(self, param):
+        return self.remove(param)
