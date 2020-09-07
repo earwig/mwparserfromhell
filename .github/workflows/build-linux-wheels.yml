@@ -10,7 +10,7 @@ jobs:
     - name: Build manylinux1 Python wheels
       uses: RalfG/python-wheels-manylinux-build@0c24cb31441c7a1e6ea90d6a6408d406b2fee279
       with:
-        python-versions: 'cp34-cp34m cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38'
+        python-versions: 'cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38'
     - name: Move to dist/
       run: |
         mkdir -p dist

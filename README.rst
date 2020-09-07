@@ -11,7 +11,7 @@ mwparserfromhell
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
-wikicode. It supports Python 3.4+.
+wikicode. It supports Python 3.5+.
 
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.

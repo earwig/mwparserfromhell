@@ -1,6 +1,7 @@
 v0.6 (unreleased):
 
 - Added support for Python 3.8.
+- Dropped support for end-of-life Python 3.4.
 - Updated Wikicode.matches() to recognize underscores as being equivalent
   to spaces. (#216)
 - Fixed a rare parsing bug involving deeply nested style tags. (#224)

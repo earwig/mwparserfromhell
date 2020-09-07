@@ -1,16 +1,13 @@
 name: Build macOS wheels
 
-on: [push]
+on: push
 
 jobs:
   build:
-
     runs-on: macos-latest
     strategy:
       matrix:
-        # macOS apparently doesn't support 3.4
         python-version: [3.5, 3.6, 3.7, 3.8]
-
     steps:
     - uses: actions/checkout@v2
     - name: Set up Python ${{ matrix.python-version }}
