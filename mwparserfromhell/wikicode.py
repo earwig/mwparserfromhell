@@ -51,6 +51,9 @@ class Wikicode(StringMixIn):
     def __unicode__(self):
         return "".join([str(node) for node in self.nodes])
 
+    def __str__(self):
+        return self.__unicode__()
+
     @staticmethod
     def _get_children(node, contexts=False, restrict=None, parent=None):
         """Iterate over all child :class:`.Node`\\ s of a given *node*."""
