@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,7 +29,7 @@ class _FakeString(StringMixIn):
     def __init__(self, data):
         self._data = data
 
-    def __unicode__(self):
+    def __str__(self):
         return self._data
 
 
@@ -128,7 +128,7 @@ class TestStringMixIn(unittest.TestCase):
         self.assertIsInstance(gen2, GeneratorType)
 
         out = []
-        for i in range(len(str1)):
+        for _ in range(len(str1)):
             out.append(next(gen1))
         self.assertRaises(StopIteration, next, gen1)
         self.assertEqual(expected, out)

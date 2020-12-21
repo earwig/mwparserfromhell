@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 class TestHeading(TreeEqualityTestCase):
     """Test cases for the Heading node."""
 
-    def test_unicode(self):
-        """test Heading.__unicode__()"""
+    def test_str(self):
+        """test Heading.__str__()"""
         node = Heading(wraptext("foobar"), 2)
         self.assertEqual("==foobar==", str(node))
         node2 = Heading(wraptext(" zzz "), 5)

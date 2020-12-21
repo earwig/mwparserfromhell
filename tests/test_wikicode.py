@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,8 +24,7 @@ import re
 from types import GeneratorType
 import unittest
 
-from mwparserfromhell.nodes import (Argument, Comment, Heading, HTMLEntity,
-                                    Node, Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes import Argument, Heading, Template, Text
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
@@ -35,8 +34,8 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 class TestWikicode(TreeEqualityTestCase):
     """Tests for the Wikicode class, which manages a list of nodes."""
 
-    def test_unicode(self):
-        """test Wikicode.__unicode__()"""
+    def test_str(self):
+        """test Wikicode.__str__()"""
         code1 = parse("foobar")
         code2 = parse("Have a {{template}} and a [[page|link]]")
         self.assertEqual("foobar", str(code1))

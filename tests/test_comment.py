@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@ from ._test_tree_equality import TreeEqualityTestCase
 class TestComment(TreeEqualityTestCase):
     """Test cases for the Comment node."""
 
-    def test_unicode(self):
-        """test Comment.__unicode__()"""
+    def test_str(self):
+        """test Comment.__str__()"""
         node = Comment("foobar")
         self.assertEqual("<!--foobar-->", str(node))
 

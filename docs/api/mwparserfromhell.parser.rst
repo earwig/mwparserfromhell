@@ -23,6 +23,13 @@ parser Package
     :members:
     :undoc-members:
 
+:mod:`errors` Module
+--------------------
+
+.. automodule:: mwparserfromhell.parser.errors
+    :members:
+    :undoc-members:
+
 :mod:`tokenizer` Module
 -----------------------
 

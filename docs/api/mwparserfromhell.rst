@@ -8,26 +8,11 @@ mwparserfromhell Package
     :members:
     :undoc-members:
 
-:mod:`compat` Module
---------------------
-
-.. automodule:: mwparserfromhell.compat
-    :members:
-    :undoc-members:
-
 :mod:`definitions` Module
 -------------------------
 
 .. automodule:: mwparserfromhell.definitions
     :members:
-
-:mod:`smart_list` Module
-------------------------
-
-.. automodule:: mwparserfromhell.smart_list
-    :members: SmartList, _ListProxy
-    :undoc-members:
-    :show-inheritance:
 
 :mod:`string_mixin` Module
 --------------------------
@@ -58,3 +43,4 @@ Subpackages
 
     mwparserfromhell.nodes
     mwparserfromhell.parser
+    mwparserfromhell.smart_list

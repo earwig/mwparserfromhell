@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,8 +28,8 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 class TestArgument(TreeEqualityTestCase):
     """Test cases for the Argument node."""
 
-    def test_unicode(self):
-        """test Argument.__unicode__()"""
+    def test_str(self):
+        """test Argument.__str__()"""
         node = Argument(wraptext("foobar"))
         self.assertEqual("{{{foobar}}}", str(node))
         node2 = Argument(wraptext("foo"), wraptext("bar"))

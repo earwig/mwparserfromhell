@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,7 +22,9 @@
 from collections import defaultdict
 import re
 
-from . import HTMLEntity, Node, Text
+from ._base import Node
+from .html_entity import HTMLEntity
+from .text import Text
 from .extras import Parameter
 from ..utils import parse_anything
 
@@ -43,12 +45,11 @@ class Template(Node):
         else:
             self._params = []
 
-    def __unicode__(self):
+    def __str__(self):
         if self.params:
             params = "|".join([str(param) for param in self.params])
             return "{{" + str(self.name) + "|" + params + "}}"
-        else:
-            return "{{" + str(self.name) + "}}"
+        return "{{" + str(self.name) + "}}"
 
     def __children__(self):
         yield self.name
@@ -102,6 +103,7 @@ class Template(Node):
             confidence = float(best) / sum(values)
             if confidence > 0.5:
                 return tuple(theories.keys())[values.index(best)]
+        return None
 
     @staticmethod
     def _blank_param_value(value):
@@ -229,8 +231,7 @@ class Template(Node):
                 return param
         if default is _UNSET:
             raise ValueError(name)
-        else:
-            return default
+        return default
 
     def __getitem__(self, name):
         return self.get(name)
@@ -339,19 +340,20 @@ class Template(Node):
         hidden name, if it exists, or the first instance).
         """
         if isinstance(param, Parameter):
-            return self._remove_exact(param, keep_field)
+            self._remove_exact(param, keep_field)
+            return
 
         name = str(param).strip()
         removed = False
         to_remove = []
 
-        for i, param in enumerate(self.params):
-            if param.name.strip() == name:
+        for i, par in enumerate(self.params):
+            if par.name.strip() == name:
                 if keep_field:
                     if self._should_remove(i, name):
                         to_remove.append(i)
                     else:
-                        self._blank_param_value(param.value)
+                        self._blank_param_value(par.value)
                         keep_field = False
                 else:
                     self._fix_dependendent_params(i)

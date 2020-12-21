@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,8 +29,8 @@ from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
 class TestAttribute(TreeEqualityTestCase):
     """Test cases for the Attribute node extra."""
 
-    def test_unicode(self):
-        """test Attribute.__unicode__()"""
+    def test_str(self):
+        """test Attribute.__str__()"""
         node = Attribute(wraptext("foo"))
         self.assertEqual(" foo", str(node))
         node2 = Attribute(wraptext("foo"), wraptext("bar"))

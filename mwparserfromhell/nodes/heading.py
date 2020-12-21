@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,7 @@
 # SOFTWARE.
 
 
-from . import Node
+from ._base import Node
 from ..utils import parse_anything
 
 __all__ = ["Heading"]
@@ -33,7 +33,7 @@ class Heading(Node):
         self.title = title
         self.level = level
 
-    def __unicode__(self):
+    def __str__(self):
         return ("=" * self.level) + str(self.title) + ("=" * self.level)
 
     def __children__(self):

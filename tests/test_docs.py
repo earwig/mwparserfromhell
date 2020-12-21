@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -31,10 +31,10 @@ import mwparserfromhell
 class TestDocs(unittest.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""
 
-    def assertPrint(self, input, output):
-        """Assertion check that *input*, when printed, produces *output*."""
+    def assertPrint(self, value, output):
+        """Assertion check that *value*, when printed, produces *output*."""
         buff = StringIO()
-        print(input, end="", file=buff)
+        print(value, end="", file=buff)
         buff.seek(0)
         self.assertEqual(output, buff.read())
 

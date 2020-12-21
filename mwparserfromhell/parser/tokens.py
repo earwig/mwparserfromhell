@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,7 +26,6 @@ identified by its type and optional attributes. The token list is generated in
 a syntactically valid form by the :class:`.Tokenizer`, and then converted into
 the :class`.Wikicode` tree by the :class:`.Builder`.
 """
-
 
 __all__ = ["Token"]
 

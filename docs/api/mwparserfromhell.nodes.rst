@@ -9,6 +9,14 @@ nodes Package
 .. autoclass:: mwparserfromhell.nodes.Node
     :special-members:
 
+:mod:`_base` Module
+----------------------
+
+.. automodule:: mwparserfromhell.nodes._base
+    :members:
+    :undoc-members:
+    :show-inheritance:
+
 :mod:`argument` Module
 ----------------------
 

@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2017 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -34,8 +34,8 @@ pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
 class TestTemplate(TreeEqualityTestCase):
     """Test cases for the Template node."""
 
-    def test_unicode(self):
-        """test Template.__unicode__()"""
+    def test_str(self):
+        """test Template.__str__()"""
         node = Template(wraptext("foobar"))
         self.assertEqual("{{foobar}}", str(node))
         node2 = Template(wraptext("foo"),

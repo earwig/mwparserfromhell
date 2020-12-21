@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,7 +21,7 @@
 
 import html.entities as htmlentities
 
-from . import Node
+from ._base import Node
 
 __all__ = ["HTMLEntity"]
 
@@ -49,7 +49,7 @@ class HTMLEntity(Node):
             self._hexadecimal = hexadecimal
         self._hex_char = hex_char
 
-    def __unicode__(self):
+    def __str__(self):
         if self.named:
             return "&{};".format(self.value)
         if self.hexadecimal:
@@ -98,21 +98,22 @@ class HTMLEntity(Node):
             int(newval)
         except ValueError:
             try:
-                int(newval, 16)
+                intval = int(newval, 16)
             except ValueError:
                 if newval not in htmlentities.entitydefs:
-                    raise ValueError("entity value is not a valid name")
+                    raise ValueError(f"entity value {newval!r} is not a valid name") from None
                 self._named = True
                 self._hexadecimal = False
             else:
-                if int(newval, 16) < 0 or int(newval, 16) > 0x10FFFF:
-                    raise ValueError("entity value is not in range(0x110000)")
+                if intval < 0 or intval > 0x10FFFF:
+                    raise ValueError(
+                        f"entity value 0x{intval:x} is not in range(0x110000)") from None
                 self._named = False
                 self._hexadecimal = True
         else:
             test = int(newval, 16 if self.hexadecimal else 10)
             if test < 0 or test > 0x10FFFF:
-                raise ValueError("entity value is not in range(0x110000)")
+                raise ValueError(f"entity value {test} is not in range(0x110000)")
             self._named = False
         self._value = newval
 
@@ -120,13 +121,13 @@ class HTMLEntity(Node):
     def named(self, newval):
         newval = bool(newval)
         if newval and self.value not in htmlentities.entitydefs:
-            raise ValueError("entity value is not a valid name")
+            raise ValueError(f"entity value {self.value!r} is not a valid name")
         if not newval:
             try:
                 int(self.value, 16)
-            except ValueError:
-                err = "current entity value is not a valid Unicode codepoint"
-                raise ValueError(err)
+            except ValueError as exc:
+                raise ValueError(f"current entity value {self.value!r} "
+                                 f"is not a valid Unicode codepoint") from exc
         self._named = newval
 
     @hexadecimal.setter

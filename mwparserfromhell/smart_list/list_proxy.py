@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -20,12 +20,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-# SmartList has to be a full import in order to avoid cyclical import errors
-import mwparserfromhell.smart_list.SmartList
 from .utils import _SliceNormalizerMixIn, inheritdoc
 
 
-class _ListProxy(_SliceNormalizerMixIn, list):
+class ListProxy(_SliceNormalizerMixIn, list):
     """Implement the ``list`` interface by getting elements from a parent.
 
     This is created by a :class:`.SmartList` object when slicing. It does not
@@ -42,32 +40,32 @@ class _ListProxy(_SliceNormalizerMixIn, list):
         return repr(self._render())
 
     def __lt__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() < list(other)
         return self._render() < other
 
     def __le__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() <= list(other)
         return self._render() <= other
 
     def __eq__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() == list(other)
         return self._render() == other
 
     def __ne__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() != list(other)
         return self._render() != other
 
     def __gt__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() > list(other)
         return self._render() > other
 
     def __ge__(self, other):
-        if isinstance(other, _ListProxy):
+        if isinstance(other, ListProxy):
             return self._render() >= list(other)
         return self._render() >= other
 
@@ -84,8 +82,7 @@ class _ListProxy(_SliceNormalizerMixIn, list):
             keystop = min(self._start + key.stop, self._stop)
             adjusted = slice(keystart, keystop, key.step)
             return self._parent[adjusted]
-        else:
-            return self._render()[key]
+        return self._render()[key]
 
     def __setitem__(self, key, item):
         if isinstance(key, slice):
@@ -133,20 +130,20 @@ class _ListProxy(_SliceNormalizerMixIn, list):
         return item in self._render()
 
     def __add__(self, other):
-        return mwparserfromhell.smart_list.SmartList(list(self) + other)
+        return type(self._parent)(list(self) + other)
 
     def __radd__(self, other):
-        return mwparserfromhell.smart_list.SmartList(other + list(self))
+        return type(self._parent)(other + list(self))
 
     def __iadd__(self, other):
         self.extend(other)
         return self
 
     def __mul__(self, other):
-        return mwparserfromhell.smart_list.SmartList(list(self) * other)
+        return type(self._parent)(list(self) * other)
 
     def __rmul__(self, other):
-        return mwparserfromhell.smart_list.SmartList(other * list(self))
+        return type(self._parent)(other * list(self))
 
     def __imul__(self, other):
         self.extend(list(self) * (other - 1))

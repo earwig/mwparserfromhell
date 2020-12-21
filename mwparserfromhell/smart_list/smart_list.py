@@ -1,4 +1,5 @@
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+#
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,9 +20,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from _weakref import ref
+from weakref import ref
 
-from .ListProxy import _ListProxy
+from .list_proxy import ListProxy
 from .utils import _SliceNormalizerMixIn, inheritdoc
 
 
@@ -32,7 +33,7 @@ class SmartList(_SliceNormalizerMixIn, list):
     list (such as the addition, removal, or replacement of elements) will be
     reflected in the sublist, or vice-versa, to the greatest degree possible.
     This is implemented by having sublists - instances of the
-    :class:`._ListProxy` type - dynamically determine their elements by storing
+    :class:`.ListProxy` type - dynamically determine their elements by storing
     their slice info and retrieving that slice from the parent. Methods that
     change the size of the list also change the slice info. For example::
 
@@ -61,21 +62,22 @@ class SmartList(_SliceNormalizerMixIn, list):
             return super().__getitem__(key)
         key = self._normalize_slice(key, clamp=False)
         sliceinfo = [key.start, key.stop, key.step]
-        child = _ListProxy(self, sliceinfo)
+        child = ListProxy(self, sliceinfo)
         child_ref = ref(child, self._delete_child)
         self._children[id(child_ref)] = (child_ref, sliceinfo)
         return child
 
     def __setitem__(self, key, item):
         if not isinstance(key, slice):
-            return super().__setitem__(key, item)
+            super().__setitem__(key, item)
+            return
         item = list(item)
         super().__setitem__(key, item)
         key = self._normalize_slice(key, clamp=True)
         diff = len(item) + (key.start - key.stop) // key.step
         if not diff:
             return
-        for child, (start, stop, step) in self._children.values():
+        for child, (start, stop, _step) in self._children.values():
             if start > key.stop:
                 self._children[id(child)][1][0] += diff
             if stop is not None and stop >= key.stop:
@@ -88,7 +90,7 @@ class SmartList(_SliceNormalizerMixIn, list):
         else:
             key = slice(key, key + 1, 1)
         diff = (key.stop - key.start) // key.step
-        for child, (start, stop, step) in self._children.values():
+        for child, (start, stop, _step) in self._children.values():
             if start > key.start:
                 self._children[id(child)][1][0] -= diff
             if stop is not None and stop >= key.stop:

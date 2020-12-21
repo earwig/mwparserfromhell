@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -61,12 +61,9 @@ class TestTokens(unittest.TestCase):
         hundredchars = ("earwig" * 100)[:97] + "..."
 
         self.assertEqual("Token()", repr(token1))
-        token2repr1 = "Token(foo='bar', baz=123)"
-        token2repr2 = "Token(baz=123, foo='bar')"
-        token3repr = "Text(text='" + hundredchars + "')"
-        token2repr = repr(token2)
-        self.assertTrue(token2repr == token2repr1 or token2repr == token2repr2)
-        self.assertEqual(token3repr, repr(token3))
+        self.assertTrue(repr(token2) in (
+            "Token(foo='bar', baz=123)", "Token(baz=123, foo='bar')"))
+        self.assertEqual("Text(text='" + hundredchars + "')", repr(token3))
 
     def test_equality(self):
         """check that equivalent tokens are considered equal"""

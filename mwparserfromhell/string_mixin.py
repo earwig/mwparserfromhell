@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -38,67 +38,64 @@ def inheritdoc(method):
     return method
 
 class StringMixIn:
-    """Implement the interface for ``unicode``/``str`` in a dynamic manner.
+    """Implement the interface for ``str`` in a dynamic manner.
 
-    To use this class, inherit from it and override the :meth:`__unicode__`
-    method to return the string representation of the object.
-    The various string methods will operate on the value of :meth:`__unicode__`
-    instead of the immutable ``self`` like the regular ``str`` type.
+    To use this class, inherit from it and override the :meth:`__str__` method
+    to return the string representation of the object. The various string
+    methods will operate on the value of :meth:`__str__` instead of the
+    immutable ``self`` like the regular ``str`` type.
     """
 
     def __str__(self):
-        return self.__unicode__()
-
-    def __bytes__(self):
-        return bytes(self.__unicode__(), getdefaultencoding())
-
-    def __unicode__(self):
         raise NotImplementedError()
 
+    def __bytes__(self):
+        return bytes(self.__str__(), getdefaultencoding())
+
     def __repr__(self):
-        return repr(self.__unicode__())
+        return repr(self.__str__())
 
     def __lt__(self, other):
-        return self.__unicode__() < other
+        return self.__str__() < other
 
     def __le__(self, other):
-        return self.__unicode__() <= other
+        return self.__str__() <= other
 
     def __eq__(self, other):
-        return self.__unicode__() == other
+        return self.__str__() == other
 
     def __ne__(self, other):
-        return self.__unicode__() != other
+        return self.__str__() != other
 
     def __gt__(self, other):
-        return self.__unicode__() > other
+        return self.__str__() > other
 
     def __ge__(self, other):
-        return self.__unicode__() >= other
+        return self.__str__() >= other
 
     def __bool__(self):
-        return bool(self.__unicode__())
+        return bool(self.__str__())
 
     def __len__(self):
-        return len(self.__unicode__())
+        return len(self.__str__())
 
     def __iter__(self):
-        yield from self.__unicode__()
+        yield from self.__str__()
 
     def __getitem__(self, key):
-        return self.__unicode__()[key]
+        return self.__str__()[key]
 
     def __reversed__(self):
-        return reversed(self.__unicode__())
+        return reversed(self.__str__())
 
     def __contains__(self, item):
-        return str(item) in self.__unicode__()
+        return str(item) in self.__str__()
 
     def __getattr__(self, attr):
         if not hasattr(str, attr):
             raise AttributeError("{!r} object has no attribute {!r}".format(
                 type(self).__name__, attr))
-        return getattr(self.__unicode__(), attr)
+        return getattr(self.__str__(), attr)
 
     maketrans = str.maketrans  # Static method can't rely on __getattr__
 

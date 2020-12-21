@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,8 +26,8 @@ from mwparserfromhell.nodes import Text
 class TestText(unittest.TestCase):
     """Test cases for the Text node."""
 
-    def test_unicode(self):
-        """test Text.__unicode__()"""
+    def test_str(self):
+        """test Text.__str__()"""
         node = Text("foobar")
         self.assertEqual("foobar", str(node))
         node2 = Text("fóóbar")

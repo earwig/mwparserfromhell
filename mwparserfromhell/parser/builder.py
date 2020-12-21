@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,7 +20,8 @@
 # SOFTWARE.
 
 
-from . import tokens, ParserError
+from . import tokens
+from .errors import ParserError
 from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
                      Template, Text, Wikilink)
 from ..nodes.extras import Attribute, Parameter
@@ -198,8 +199,7 @@ class Builder:
             if isinstance(token, tokens.HeadingEnd):
                 title = self._pop()
                 return Heading(title, level)
-            else:
-                self._write(self._handle_token(token))
+            self._write(self._handle_token(token))
         raise ParserError("_handle_heading() missed a close token")
 
     @_add_handler(tokens.CommentStart)
@@ -211,8 +211,7 @@ class Builder:
             if isinstance(token, tokens.CommentEnd):
                 contents = self._pop()
                 return Comment(contents)
-            else:
-                self._write(self._handle_token(token))
+            self._write(self._handle_token(token))
         raise ParserError("_handle_comment() missed a close token")
 
     def _handle_attribute(self, start):
@@ -283,7 +282,7 @@ class Builder:
             return _HANDLERS[type(token)](self, token)
         except KeyError:
             err = "_handle_token() got unexpected {0}"
-            raise ParserError(err.format(type(token).__name__))
+            raise ParserError(err.format(type(token).__name__)) from None
 
     def build(self, tokenlist):
         """Build a Wikicode object from a list tokens and return it."""

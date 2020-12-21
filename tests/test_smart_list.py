@@ -1,5 +1,5 @@
 #
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,11 +22,11 @@
 import unittest
 
 from mwparserfromhell.smart_list import SmartList
-from mwparserfromhell.smart_list.ListProxy import _ListProxy
+from mwparserfromhell.smart_list.list_proxy import ListProxy
 
 
 class TestSmartList(unittest.TestCase):
-    """Test cases for the SmartList class and its child, _ListProxy."""
+    """Test cases for the SmartList class and its child, ListProxy."""
 
     def _test_get_set_del_item(self, builder):
         """Run tests on __get/set/delitem__ of a list built with *builder*."""
@@ -178,7 +178,7 @@ class TestSmartList(unittest.TestCase):
 
         gen1 = iter(list1)
         out = []
-        for i in range(len(list1)):
+        for _ in range(len(list1)):
             out.append(next(gen1))
         self.assertRaises(StopIteration, next, gen1)
         self.assertEqual([0, 1, 2, 3, "one", "two"], out)
@@ -260,7 +260,8 @@ class TestSmartList(unittest.TestCase):
         list3.sort(key=lambda i: i[1], reverse=True)
         self.assertEqual([("b", 8), ("a", 5), ("c", 3), ("d", 2)], list3)
 
-    def _dispatch_test_for_children(self, meth):
+    @staticmethod
+    def _dispatch_test_for_children(meth):
         """Run a test method on various different types of children."""
         meth(lambda L: SmartList(list(L))[:])
         meth(lambda L: SmartList([999] + list(L))[1:])
@@ -268,13 +269,13 @@ class TestSmartList(unittest.TestCase):
         meth(lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2])
 
     def test_docs(self):
-        """make sure the methods of SmartList/_ListProxy have docstrings"""
+        """make sure the methods of SmartList/ListProxy have docstrings"""
         methods = ["append", "count", "extend", "index", "insert", "pop",
                    "remove", "reverse", "sort"]
         for meth in methods:
             expected = getattr(list, meth).__doc__
             smartlist_doc = getattr(SmartList, meth).__doc__
-            listproxy_doc = getattr(_ListProxy, meth).__doc__
+            listproxy_doc = getattr(ListProxy, meth).__doc__
             self.assertEqual(expected, smartlist_doc)
             self.assertEqual(expected, listproxy_doc)
 
@@ -305,19 +306,19 @@ class TestSmartList(unittest.TestCase):
         self._test_list_methods(SmartList)
 
     def test_child_get_set_del(self):
-        """make sure _ListProxy's getitem/setitem/delitem work"""
+        """make sure ListProxy's getitem/setitem/delitem work"""
         self._dispatch_test_for_children(self._test_get_set_del_item)
 
     def test_child_add(self):
-        """make sure _ListProxy's add/radd/iadd work"""
+        """make sure ListProxy's add/radd/iadd work"""
         self._dispatch_test_for_children(self._test_add_radd_iadd)
 
     def test_child_other_magics(self):
-        """make sure _ListProxy's other magically implemented features work"""
+        """make sure ListProxy's other magically implemented features work"""
         self._dispatch_test_for_children(self._test_other_magic_methods)
 
     def test_child_methods(self):
-        """make sure _ListProxy's non-magic methods work, like append()"""
+        """make sure ListProxy's non-magic methods work, like append()"""
         self._dispatch_test_for_children(self._test_list_methods)
 
     def test_influence(self):
