@@ -27,7 +27,7 @@ outrageously powerful parser for `MediaWiki <https://www.mediawiki.org>`_ wikico
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012-2020 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.6.dev0"
+__version__ = "0.6"
 __email__ = "ben.kurtovic@gmail.com"
 
 from . import (definitions, nodes, parser, smart_list, string_mixin,

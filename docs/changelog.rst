@@ -4,8 +4,8 @@ Changelog
 v0.6
 ----
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.4...develop>`__):
+`Released December 21, 2020 <https://github.com/earwig/mwparserfromhell/tree/v0.6>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.5.4...v0.6>`__):
 
 Thanks to everyone for their patience with this release!
 
