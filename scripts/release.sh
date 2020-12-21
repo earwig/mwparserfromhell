@@ -101,6 +101,7 @@ test_release() {
     source bin/activate
     echo " done."
     echo -n "Installing mwparserfromhell with pip..."
+    pip -q install --upgrade pip
     pip -q install mwparserfromhell
     echo " done."
     echo -n "Checking version..."
