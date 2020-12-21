@@ -101,19 +101,20 @@ class HTMLEntity(Node):
                 intval = int(newval, 16)
             except ValueError:
                 if newval not in htmlentities.entitydefs:
-                    raise ValueError(f"entity value {newval!r} is not a valid name") from None
+                    raise ValueError(
+                        "entity value {!r} is not a valid name".format(newval)) from None
                 self._named = True
                 self._hexadecimal = False
             else:
                 if intval < 0 or intval > 0x10FFFF:
                     raise ValueError(
-                        f"entity value 0x{intval:x} is not in range(0x110000)") from None
+                        "entity value 0x{:x} is not in range(0x110000)".format(intval)) from None
                 self._named = False
                 self._hexadecimal = True
         else:
             test = int(newval, 16 if self.hexadecimal else 10)
             if test < 0 or test > 0x10FFFF:
-                raise ValueError(f"entity value {test} is not in range(0x110000)")
+                raise ValueError("entity value {} is not in range(0x110000)".format(test))
             self._named = False
         self._value = newval
 
@@ -121,13 +122,13 @@ class HTMLEntity(Node):
     def named(self, newval):
         newval = bool(newval)
         if newval and self.value not in htmlentities.entitydefs:
-            raise ValueError(f"entity value {self.value!r} is not a valid name")
+            raise ValueError("entity value {!r} is not a valid name".format(self.value))
         if not newval:
             try:
                 int(self.value, 16)
             except ValueError as exc:
-                raise ValueError(f"current entity value {self.value!r} "
-                                 f"is not a valid Unicode codepoint") from exc
+                raise ValueError("current entity value {!r} is not a valid "
+                                 "Unicode codepoint".format(self.value)) from exc
         self._named = newval
 
     @hexadecimal.setter
