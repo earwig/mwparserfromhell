@@ -24,14 +24,6 @@ environment:
       secure: gOIcvPxSC2ujuhwOzwj3v8xjq3CCYd8keFWVnguLM+gcL0e02qshDHy7gwZZwj0+
 
   matrix:
-    - PYTHON:         "C:\\Python35"
-      PYTHON_VERSION: "3.5"
-      PYTHON_ARCH:    "32"
-
-    - PYTHON:         "C:\\Python35-x64"
-      PYTHON_VERSION: "3.5"
-      PYTHON_ARCH:    "64"
-
     - PYTHON:         "C:\\Python36"
       PYTHON_VERSION: "3.6"
       PYTHON_ARCH:    "32"
