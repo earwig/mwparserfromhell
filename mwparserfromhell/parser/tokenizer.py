@@ -1326,7 +1326,10 @@ class Tokenizer:
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
-                self._handle_template_param_value()
+                if not self._global & contexts.GL_HEADING and self._read(-1) in ("\n", self.START) and nxt == "=":
+                    self._parse_heading()
+                else:
+                    self._handle_template_param_value()
             elif this == nxt == "}" and self._context & contexts.TEMPLATE:
                 return self._handle_template_end()
             elif this == "|" and self._context & contexts.ARGUMENT_NAME:
@@ -1350,7 +1353,7 @@ class Tokenizer:
                 self._parse_external_link(False)
             elif this == "]" and self._context & contexts.EXT_LINK_TITLE:
                 return self._pop()
-            elif this == "=" and not self._global & contexts.GL_HEADING:
+            elif this == "=" and not self._global & contexts.GL_HEADING and not self._context & contexts.TEMPLATE:
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
                 else:
