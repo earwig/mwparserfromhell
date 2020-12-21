@@ -1,0 +1,30 @@
+name: Build macOS wheels
+
+on: push
+
+jobs:
+  build:
+    runs-on: macos-latest
+    strategy:
+      matrix:
+        python-version: [3.5, 3.6, 3.7, 3.8, 3.9]
+    steps:
+    - uses: actions/checkout@v2
+    - name: Set up Python ${{ matrix.python-version }}
+      uses: actions/setup-python@v1
+      with:
+        python-version: ${{ matrix.python-version }}
+    - name: Build wheels
+      run: |
+        python -m pip install --upgrade pip wheel setuptools
+        pip wheel . -w dist/
+        ls dist/
+    - name: Publish package to PyPI
+      # Only actually publish if a new tag was pushed
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      # We can't use the pypa action because of https://github.com/pypa/gh-action-pypi-publish/issues/15
+      run: |
+        pip install twine
+        TWINE_USERNAME="__token__" \
+        TWINE_PASSWORD="${{ secrets.pypi_password }}" \
+        twine upload dist/*

@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,36 +18,37 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 from collections import defaultdict
 import re
 
-from . import HTMLEntity, Node, Text
+from ._base import Node
+from .html_entity import HTMLEntity
+from .text import Text
 from .extras import Parameter
-from ..compat import range, str
 from ..utils import parse_anything
 
 __all__ = ["Template"]
 
 FLAGS = re.DOTALL | re.UNICODE
+# Used to allow None as a valid fallback value
+_UNSET = object()
 
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
     def __init__(self, name, params=None):
-        super(Template, self).__init__()
+        super().__init__()
         self.name = name
         if params:
             self._params = params
         else:
             self._params = []
 
-    def __unicode__(self):
+    def __str__(self):
         if self.params:
             params = "|".join([str(param) for param in self.params])
             return "{{" + str(self.name) + "|" + params + "}}"
-        else:
-            return "{{" + str(self.name) + "}}"
+        return "{{" + str(self.name) + "}}"
 
     def __children__(self):
         yield self.name
@@ -103,6 +102,7 @@ class Template(Node):
             confidence = float(best) / sum(values)
             if confidence > 0.5:
                 return tuple(theories.keys())[values.index(best)]
+        return None
 
     @staticmethod
     def _blank_param_value(value):
@@ -211,23 +211,29 @@ class Template(Node):
                 return True
         return False
 
-    has_param = lambda self, name, ignore_empty=False: \
-                self.has(name, ignore_empty)
-    has_param.__doc__ = "Alias for :meth:`has`."
+    def has_param(self, name, ignore_empty=False):
+        """Alias for :meth:`has`."""
+        return self.has(name, ignore_empty)
 
-    def get(self, name):
+    def get(self, name, default=_UNSET):
         """Get the parameter whose name is *name*.
 
         The returned object is a :class:`.Parameter` instance. Raises
-        :exc:`ValueError` if no parameter has this name. Since multiple
-        parameters can have the same name, we'll return the last match, since
-        the last parameter is the only one read by the MediaWiki parser.
+        :exc:`ValueError` if no parameter has this name. If *default* is set,
+        returns that instead. Since multiple parameters can have the same name,
+        we'll return the last match, since the last parameter is the only one
+        read by the MediaWiki parser.
         """
         name = str(name).strip()
         for param in reversed(self.params):
             if param.name.strip() == name:
                 return param
-        raise ValueError(name)
+        if default is _UNSET:
+            raise ValueError(name)
+        return default
+
+    def __getitem__(self, name):
+        return self.get(name)
 
     def add(self, name, value, showkey=None, before=None,
             preserve_spacing=True):
@@ -309,6 +315,9 @@ class Template(Node):
             self.params.append(param)
         return param
 
+    def __setitem__(self, name, value):
+        return self.add(name, value)
+
     def remove(self, param, keep_field=False):
         """Remove a parameter from the template, identified by *param*.
 
@@ -330,19 +339,20 @@ class Template(Node):
         hidden name, if it exists, or the first instance).
         """
         if isinstance(param, Parameter):
-            return self._remove_exact(param, keep_field)
+            self._remove_exact(param, keep_field)
+            return
 
         name = str(param).strip()
         removed = False
         to_remove = []
 
-        for i, param in enumerate(self.params):
-            if param.name.strip() == name:
+        for i, par in enumerate(self.params):
+            if par.name.strip() == name:
                 if keep_field:
                     if self._should_remove(i, name):
                         to_remove.append(i)
                     else:
-                        self._blank_param_value(param.value)
+                        self._blank_param_value(par.value)
                         keep_field = False
                 else:
                     self._fix_dependendent_params(i)
@@ -354,3 +364,6 @@ class Template(Node):
             raise ValueError(name)
         for i in reversed(to_remove):
             self.params.pop(i)
+
+    def __delitem__(self, param):
+        return self.remove(param)

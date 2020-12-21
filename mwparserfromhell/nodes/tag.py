@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
-from . import Node
+from ._base import Node
 from .extras import Attribute
-from ..compat import str
 from ..definitions import is_visible
 from ..utils import parse_anything
 
@@ -37,7 +33,7 @@ class Tag(Node):
                  self_closing=False, invalid=False, implicit=False, padding="",
                  closing_tag=None, wiki_style_separator=None,
                  closing_wiki_markup=None):
-        super(Tag, self).__init__()
+        super().__init__()
         self.tag = tag
         self.contents = contents
         self._attrs = attrs if attrs else []
@@ -53,7 +49,7 @@ class Tag(Node):
         if closing_wiki_markup is not None:
             self.closing_wiki_markup = closing_wiki_markup
 
-    def __unicode__(self):
+    def __str__(self):
         if self.wiki_markup:
             if self.attributes:
                 attrs = "".join([str(attr) for attr in self.attributes])
@@ -63,10 +59,9 @@ class Tag(Node):
             separator = self.wiki_style_separator or ""
             if self.self_closing:
                 return self.wiki_markup + attrs + padding + separator
-            else:
-                close = self.closing_wiki_markup or ""
-                return self.wiki_markup + attrs + padding + separator + \
-                       str(self.contents) + close
+            close = self.closing_wiki_markup or ""
+            return self.wiki_markup + attrs + padding + separator + \
+                   str(self.contents) + close
 
         result = ("</" if self.invalid else "<") + str(self.tag)
         if self.attributes:

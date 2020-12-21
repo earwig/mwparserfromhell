@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,10 +19,10 @@
 # SOFTWARE.
 
 """
-Tests for memory leaks in the CTokenizer. Python 2 and 3 compatible.
+Tests for memory leaks in the CTokenizer.
 
 This appears to work mostly fine under Linux, but gives an absurd number of
-false positives on OS X. I'm not sure why. Running the tests multiple times
+false positives on macOS. I'm not sure why. Running the tests multiple times
 yields different results (tests don't always leak, and the amount they leak by
 varies). Increasing the number of loops results in a smaller bytes/loop value,
 too, indicating the increase in memory usage might be due to something else.
@@ -32,7 +30,6 @@ Actual memory leaks typically leak very large amounts of memory (megabytes)
 and scale with the number of loops.
 """
 
-from __future__ import unicode_literals, print_function
 from locale import LC_ALL, setlocale
 from multiprocessing import Process, Pipe
 from os import listdir, path
@@ -40,22 +37,18 @@ import sys
 
 import psutil
 
-from mwparserfromhell.compat import py3k
 from mwparserfromhell.parser._tokenizer import CTokenizer
-
-if sys.version_info[0] == 2:
-    range = xrange
 
 LOOPS = 10000
 
-class Color(object):
+class Color:
     GRAY = "\x1b[30;1m"
     GREEN = "\x1b[92m"
     YELLOW = "\x1b[93m"
     RESET = "\x1b[0m"
 
 
-class MemoryTest(object):
+class MemoryTest:
     """Manages a memory test."""
 
     def __init__(self):
@@ -88,8 +81,6 @@ class MemoryTest(object):
         def load_file(filename):
             with open(filename, "rU") as fp:
                 text = fp.read()
-                if not py3k:
-                    text = text.decode("utf8")
                 name = path.split(filename)[1][:0-len(extension)]
                 self._parse_file(name, text)
 
@@ -154,13 +145,13 @@ class MemoryTest(object):
 
 def _runner(text, child):
     r1, r2 = range(250), range(LOOPS)
-    for i in r1:
+    for _ in r1:
         CTokenizer().tokenize(text)
     child.send("OK")
     child.recv()
     child.send("OK")
     child.recv()
-    for i in r2:
+    for _ in r2:
         CTokenizer().tokenize(text)
     child.send("OK")
     child.recv()

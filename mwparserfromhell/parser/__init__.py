@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -26,20 +24,8 @@ modules: the :mod:`.tokenizer` and the :mod:`.builder`. This module joins them
 together into one interface.
 """
 
-class ParserError(Exception):
-    """Exception raised when an internal error occurs while parsing.
-
-    This does not mean that the wikicode was invalid, because invalid markup
-    should still be parsed correctly. This means that the parser caught itself
-    with an impossible internal state and is bailing out before other problems
-    can happen. Its appearance indicates a bug.
-    """
-    def __init__(self, extra):
-        msg = "This is a bug and should be reported. Info: {}.".format(extra)
-        super(ParserError, self).__init__(msg)
-
-
 from .builder import Builder
+from .errors import ParserError
 try:
     from ._tokenizer import CTokenizer
     use_c = True
@@ -50,7 +36,7 @@ except ImportError:
 
 __all__ = ["use_c", "Parser", "ParserError"]
 
-class Parser(object):
+class Parser:
     """Represents a parser for wikicode.
 
     Actual parsing is a two-step process: first, the text is split up into a

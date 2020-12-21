@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
+import html.entities as htmlentities
 
-from . import Node
-from ..compat import htmlentities, py3k, str
+from ._base import Node
 
 __all__ = ["HTMLEntity"]
 
@@ -31,7 +28,7 @@ class HTMLEntity(Node):
     """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
 
     def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
-        super(HTMLEntity, self).__init__()
+        super().__init__()
         self._value = value
         if named is None:  # Try to guess whether or not the entity is named
             try:
@@ -51,7 +48,7 @@ class HTMLEntity(Node):
             self._hexadecimal = hexadecimal
         self._hex_char = hex_char
 
-    def __unicode__(self):
+    def __str__(self):
         if self.named:
             return "&{};".format(self.value)
         if self.hexadecimal:
@@ -62,32 +59,6 @@ class HTMLEntity(Node):
         if kwargs.get("normalize"):
             return self.normalize()
         return self
-
-    if not py3k:
-        @staticmethod
-        def _unichr(value):
-            """Implement builtin unichr() with support for non-BMP code points.
-
-            On wide Python builds, this functions like the normal unichr(). On
-            narrow builds, this returns the value's encoded surrogate pair.
-            """
-            try:
-                return unichr(value)
-            except ValueError:
-                # Test whether we're on the wide or narrow Python build. Check
-                # the length of a non-BMP code point
-                # (U+1F64A, SPEAK-NO-EVIL MONKEY):
-                if len("\U0001F64A") == 1:  # pragma: no cover
-                    raise
-                # Ensure this is within the range we can encode:
-                if value > 0x10FFFF:
-                    raise ValueError("unichr() arg not in range(0x110000)")
-                code = value - 0x10000
-                if value < 0:  # Invalid code point
-                    raise
-                lead = 0xD800 + (code >> 10)
-                trail = 0xDC00 + (code % (1 << 10))
-                return unichr(lead) + unichr(trail)
 
     @property
     def value(self):
@@ -126,21 +97,23 @@ class HTMLEntity(Node):
             int(newval)
         except ValueError:
             try:
-                int(newval, 16)
+                intval = int(newval, 16)
             except ValueError:
                 if newval not in htmlentities.entitydefs:
-                    raise ValueError("entity value is not a valid name")
+                    raise ValueError(
+                        "entity value {!r} is not a valid name".format(newval)) from None
                 self._named = True
                 self._hexadecimal = False
             else:
-                if int(newval, 16) < 0 or int(newval, 16) > 0x10FFFF:
-                    raise ValueError("entity value is not in range(0x110000)")
+                if intval < 0 or intval > 0x10FFFF:
+                    raise ValueError(
+                        "entity value 0x{:x} is not in range(0x110000)".format(intval)) from None
                 self._named = False
                 self._hexadecimal = True
         else:
             test = int(newval, 16 if self.hexadecimal else 10)
             if test < 0 or test > 0x10FFFF:
-                raise ValueError("entity value is not in range(0x110000)")
+                raise ValueError("entity value {} is not in range(0x110000)".format(test))
             self._named = False
         self._value = newval
 
@@ -148,13 +121,13 @@ class HTMLEntity(Node):
     def named(self, newval):
         newval = bool(newval)
         if newval and self.value not in htmlentities.entitydefs:
-            raise ValueError("entity value is not a valid name")
+            raise ValueError("entity value {!r} is not a valid name".format(self.value))
         if not newval:
             try:
                 int(self.value, 16)
-            except ValueError:
-                err = "current entity value is not a valid Unicode codepoint"
-                raise ValueError(err)
+            except ValueError as exc:
+                raise ValueError("current entity value {!r} is not a valid "
+                                 "Unicode codepoint".format(self.value)) from exc
         self._named = newval
 
     @hexadecimal.setter
@@ -173,9 +146,8 @@ class HTMLEntity(Node):
 
     def normalize(self):
         """Return the unicode character represented by the HTML entity."""
-        chrfunc = chr if py3k else HTMLEntity._unichr
         if self.named:
-            return chrfunc(htmlentities.name2codepoint[self.value])
+            return chr(htmlentities.name2codepoint[self.value])
         if self.hexadecimal:
-            return chrfunc(int(self.value, 16))
-        return chrfunc(int(self.value))
+            return chr(int(self.value, 16))
+        return chr(int(self.value))

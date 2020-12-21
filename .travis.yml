@@ -1,12 +1,14 @@
 dist: xenial
 language: python
 python:
-    - 2.7
-    - 3.4
     - 3.5
     - 3.6
     - 3.7
     - 3.8
+    - 3.9
+arch:
+  - amd64
+  - ppc64le
 install:
     - pip install coveralls
     - python setup.py develop

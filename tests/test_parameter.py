@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,20 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import str
-from mwparserfromhell.nodes import Text
 from mwparserfromhell.nodes.extras import Parameter
 
-from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
+from ._test_tree_equality import TreeEqualityTestCase, wraptext
 
 class TestParameter(TreeEqualityTestCase):
     """Test cases for the Parameter node extra."""
 
-    def test_unicode(self):
-        """test Parameter.__unicode__()"""
+    def test_str(self):
+        """test Parameter.__str__()"""
         node = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
         self.assertEqual("foo", str(node))
         node2 = Parameter(wraptext("foo"), wraptext("bar"))

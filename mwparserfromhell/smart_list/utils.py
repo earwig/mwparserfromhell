@@ -1,4 +1,5 @@
 # Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,28 +19,32 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+from sys import maxsize
 
-try:
-    from mwparserfromhell.parser._tokenizer import CTokenizer
-except ImportError:
-    CTokenizer = None
+__all__ = []
 
-from ._test_tokenizer import TokenizerTestCase
 
-@unittest.skipUnless(CTokenizer, "C tokenizer not available")
-class TestCTokenizer(TokenizerTestCase, unittest.TestCase):
-    """Test cases for the C tokenizer."""
+def inheritdoc(method):
+    """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
-    @classmethod
-    def setUpClass(cls):
-        cls.tokenizer = CTokenizer
+    Since this is used on :class:`.SmartList`, the "parent class" used is
+    ``list``. This function can be used as a decorator.
+    """
+    method.__doc__ = getattr(list, method.__name__).__doc__
+    return method
 
-    if not TokenizerTestCase.skip_others:
-        def test_uses_c(self):
-            """make sure the C tokenizer identifies as using a C extension"""
-            self.assertTrue(CTokenizer.USES_C)
-            self.assertTrue(CTokenizer().USES_C)
 
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+class _SliceNormalizerMixIn:
+    """MixIn that provides a private method to normalize slices."""
+
+    def _normalize_slice(self, key, clamp=False):
+        """Return a slice equivalent to the input *key*, standardized."""
+        if key.start is None:
+            start = 0
+        else:
+            start = (len(self) + key.start) if key.start < 0 else key.start
+        if key.stop is None or key.stop == maxsize:
+            stop = len(self) if clamp else None
+        else:
+            stop = (len(self) + key.stop) if key.stop < 0 else key.stop
+        return slice(start, stop, key.step or 1)

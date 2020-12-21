@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,14 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
-from itertools import chain
 import re
+from itertools import chain
 
-from .compat import bytes, py3k, range, str
 from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
                     Node, Tag, Template, Text, Wikilink)
-from .smart_list import _ListProxy
+from .smart_list.list_proxy import ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
 
@@ -48,10 +44,10 @@ class Wikicode(StringMixIn):
     RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
-        super(Wikicode, self).__init__()
+        super().__init__()
         self._nodes = nodes
 
-    def __unicode__(self):
+    def __str__(self):
         return "".join([str(node) for node in self.nodes])
 
     @staticmethod
@@ -63,8 +59,7 @@ class Wikicode(StringMixIn):
         for code in node.__children__():
             for child in code.nodes:
                 sub = Wikicode._get_children(child, contexts, restrict, code)
-                for result in sub:
-                    yield result
+                yield from sub
 
     @staticmethod
     def _slice_replace(code, index, old, new):
@@ -112,7 +107,7 @@ class Wikicode(StringMixIn):
     def _is_child_wikicode(self, obj, recursive=True):
         """Return whether the given :class:`.Wikicode` is a descendant."""
         def deref(nodes):
-            if isinstance(nodes, _ListProxy):
+            if isinstance(nodes, ListProxy):
                 return nodes._parent  # pylint: disable=protected-access
             return nodes
 
@@ -252,13 +247,13 @@ class Wikicode(StringMixIn):
                                       self.ifilter(forcetype=ftype, *a, **kw))
         make_filter = lambda ftype: (lambda self, *a, **kw:
                                      self.filter(forcetype=ftype, *a, **kw))
-        for name, ftype in (meths.items() if py3k else meths.iteritems()):
-            ifilter = make_ifilter(ftype)
-            filter = make_filter(ftype)
-            ifilter.__doc__ = doc.format(name, "ifilter", ftype)
-            filter.__doc__ = doc.format(name, "filter", ftype)
-            setattr(cls, "ifilter_" + name, ifilter)
-            setattr(cls, "filter_" + name, filter)
+        for name, ftype in meths.items():
+            ifilt = make_ifilter(ftype)
+            filt = make_filter(ftype)
+            ifilt.__doc__ = doc.format(name, "ifilter", ftype)
+            filt.__doc__ = doc.format(name, "filter", ftype)
+            setattr(cls, "ifilter_" + name, ifilt)
+            setattr(cls, "filter_" + name, filt)
 
     @property
     def nodes(self):
@@ -355,6 +350,7 @@ class Wikicode(StringMixIn):
                     ancestors = _get_ancestors(code, needle)
                     if ancestors is not None:
                         return [node] + ancestors
+            return None
 
         if isinstance(obj, Wikicode):
             obj = obj.get(0)
@@ -447,13 +443,13 @@ class Wikicode(StringMixIn):
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
-            for i in range(index.start, index.stop):
+            for _ in range(index.start, index.stop):
                 context.nodes.pop(index.start)
             context.insert(index.start, value)
         else:
             for exact, context, index in self._do_weak_search(obj, recursive):
                 if exact:
-                    for i in range(index.start, index.stop):
+                    for _ in range(index.start, index.stop):
                         context.nodes.pop(index.start)
                     context.insert(index.start, value)
                 else:
@@ -482,12 +478,12 @@ class Wikicode(StringMixIn):
         """
         if isinstance(obj, (Node, Wikicode)):
             context, index = self._do_strong_search(obj, recursive)
-            for i in range(index.start, index.stop):
+            for _ in range(index.start, index.stop):
                 context.nodes.pop(index.start)
         else:
             for exact, context, index in self._do_weak_search(obj, recursive):
                 if exact:
-                    for i in range(index.start, index.stop):
+                    for _ in range(index.start, index.stop):
                         context.nodes.pop(index.start)
                 else:
                     self._slice_replace(context, index, str(obj), "")
@@ -649,8 +645,7 @@ class Wikicode(StringMixIn):
             while "\n\n\n" in stripped:
                 stripped = stripped.replace("\n\n\n", "\n\n")
             return stripped
-        else:
-            return "".join(nodes)
+        return "".join(nodes)
 
     def get_tree(self):
         """Return a hierarchical tree representation of the object.

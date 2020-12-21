@@ -1,4 +1,5 @@
 # Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -19,25 +20,10 @@
 # SOFTWARE.
 
 """
-This package contains :class:`.Wikicode` "nodes", which represent a single unit
-of wikitext, such as a Template, an HTML tag, a Heading, or plain text. The
-node "tree" is far from flat, as most types can contain additional
-:class:`.Wikicode` types within them - and with that, more nodes. For example,
-the name of a :class:`.Template` is a :class:`.Wikicode` object that can
-contain text or more templates.
+This module contains the :class:`.SmartList` type, as well as its
+:class:`.ListProxy` child, which together implement a list whose sublists
+reflect changes made to the main list, and vice-versa.
 """
 
-from . import extras
-from ._base import Node
-from .text import Text
-from .argument import Argument
-from .comment import Comment
-from .external_link import ExternalLink
-from .heading import Heading
-from .html_entity import HTMLEntity
-from .tag import Tag
-from .template import Template
-from .wikilink import Wikilink
-
-__all__ = ["Argument", "Comment", "ExternalLink", "HTMLEntity", "Heading",
-           "Node", "Tag", "Template", "Text", "Wikilink"]
+from .list_proxy import ListProxy as _ListProxy
+from .smart_list import SmartList

@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,9 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
-from ...compat import str
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
 
@@ -38,7 +34,7 @@ class Attribute(StringMixIn):
 
     def __init__(self, name, value=None, quotes='"', pad_first=" ",
                  pad_before_eq="", pad_after_eq=""):
-        super(Attribute, self).__init__()
+        super().__init__()
         self.name = name
         self._quotes = None
         self.value = value
@@ -47,7 +43,7 @@ class Attribute(StringMixIn):
         self.pad_before_eq = pad_before_eq
         self.pad_after_eq = pad_after_eq
 
-    def __unicode__(self):
+    def __str__(self):
         result = self.pad_first + str(self.name) + self.pad_before_eq
         if self.value is not None:
             result += "=" + self.pad_after_eq

@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,10 +25,6 @@ identified by its type and optional attributes. The token list is generated in
 a syntactically valid form by the :class:`.Tokenizer`, and then converted into
 the :class`.Wikicode` tree by the :class:`.Builder`.
 """
-
-from __future__ import unicode_literals
-
-from ..compat import py3k, str
 
 __all__ = ["Token"]
 
@@ -65,7 +59,7 @@ class Token(dict):
 def make(name):
     """Create a new Token class using ``type()`` and add it to ``__all__``."""
     __all__.append(name)
-    return type(name if py3k else name.encode("utf8"), (Token,), {})
+    return type(name, (Token,), {})
 
 Text = make("Text")
 

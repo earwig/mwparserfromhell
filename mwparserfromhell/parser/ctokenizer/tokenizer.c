@@ -85,12 +85,8 @@ static void init_tokenizer_text(TokenizerInput* text)
     text->object = Py_None;
     Py_INCREF(Py_None);
     text->length = 0;
-#ifdef PEP_393
     text->kind = PyUnicode_WCHAR_KIND;
     text->data = NULL;
-#else
-    text->buf = NULL;
-#endif
 }
 
 /*
@@ -119,14 +115,10 @@ static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
     dealloc_tokenizer_text(text);
     text->object = input;
 
-#ifdef PEP_393
     if (PyUnicode_READY(input) < 0)
         return -1;
     text->kind = PyUnicode_KIND(input);
     text->data = PyUnicode_DATA(input);
-#else
-    text->buf = PyUnicode_AS_UNICODE(input);
-#endif
     text->length = PyUnicode_GET_LENGTH(input);
     return 0;
 }
@@ -192,11 +184,9 @@ static int load_entities(void)
 {
     PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
-#ifdef IS_PY3K
     PyObject *string;
-#endif
 
-    tempmod = PyImport_ImportModule(ENTITYDEFS_MODULE);
+    tempmod = PyImport_ImportModule("html.entities");
     if (!tempmod)
         return -1;
     defmap = PyObject_GetAttrString(tempmod, "entitydefs");
@@ -212,14 +202,10 @@ static int load_entities(void)
     if (!entitydefs)
         return -1;
     for (i = 0; i < numdefs; i++) {
-#ifdef IS_PY3K
         string = PyUnicode_AsASCIIString(PyList_GET_ITEM(deflist, i));
         if (!string)
             return -1;
         entitydefs[i] = PyBytes_AsString(string);
-#else
-        entitydefs[i] = PyBytes_AsString(PyList_GET_ITEM(deflist, i));
-#endif
         if (!entitydefs[i])
             return -1;
     }
@@ -233,7 +219,7 @@ static int load_tokens(void)
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("tokens");
+             *modname = PyUnicode_FromString("tokens");
     char *name = "mwparserfromhell.parser";
 
     if (!fromlist || !modname)
@@ -256,7 +242,7 @@ static int load_defs(void)
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("definitions");
+             *modname = PyUnicode_FromString("definitions");
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
@@ -277,7 +263,7 @@ static int load_exceptions(void)
              *globals = PyEval_GetGlobals(),
              *locals = PyEval_GetLocals(),
              *fromlist = PyList_New(1),
-             *modname = IMPORT_NAME_FUNC("parser");
+             *modname = PyUnicode_FromString("parser");
     char *name = "mwparserfromhell";
 
     if (!fromlist || !modname)
@@ -294,24 +280,22 @@ static int load_exceptions(void)
     return 0;
 }
 
-PyMODINIT_FUNC INIT_FUNC_NAME(void)
+PyMODINIT_FUNC PyInit__tokenizer(void)
 {
     PyObject *module;
 
     TokenizerType.tp_new = PyType_GenericNew;
     if (PyType_Ready(&TokenizerType) < 0)
-        INIT_ERROR;
-    module = CREATE_MODULE;
+        return NULL;
+    module = PyModule_Create(&module_def);
     if (!module)
-        INIT_ERROR;
+        return NULL;
     Py_INCREF(&TokenizerType);
     PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
     Py_INCREF(Py_True);
     PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
     NOARGS = PyTuple_New(0);
     if (!NOARGS || load_entities() || load_tokens() || load_defs())
-        INIT_ERROR;
-#ifdef IS_PY3K
+        return NULL;
     return module;
-#endif
 }

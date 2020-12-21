@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import Tag, Template, Text
 from mwparserfromhell.nodes.extras import Attribute
 from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
@@ -37,8 +33,8 @@ agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, '"', a, b, c)
 class TestTag(TreeEqualityTestCase):
     """Test cases for the Tag node."""
 
-    def test_unicode(self):
-        """test Tag.__unicode__()"""
+    def test_str(self):
+        """test Tag.__str__()"""
         node1 = Tag(wraptext("ref"))
         node2 = Tag(wraptext("span"), wraptext("foo"),
                     [agen("style", "color: red;")])
@@ -230,7 +226,7 @@ class TestTag(TreeEqualityTestCase):
         node.wiki_markup = "{"
         self.assertEqual("{|\n{", node)
         node2 = Tag(wraptext("table"), wraptext("\n"), wiki_style_separator="|")
-        self.assertEqual("|", node.wiki_style_separator)
+        self.assertEqual("|", node2.wiki_style_separator)
 
     def test_closing_wiki_markup(self):
         """test getter/setter for closing_wiki_markup attribute"""

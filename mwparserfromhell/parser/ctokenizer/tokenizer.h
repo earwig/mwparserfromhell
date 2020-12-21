@@ -32,22 +32,6 @@ static void Tokenizer_dealloc(Tokenizer*);
 static int Tokenizer_init(Tokenizer*, PyObject*, PyObject*);
 static PyObject* Tokenizer_tokenize(Tokenizer*, PyObject*);
 
-/* Compatibility macros */
-
-#ifdef IS_PY3K
-    #define IMPORT_NAME_FUNC  PyUnicode_FromString
-    #define CREATE_MODULE     PyModule_Create(&module_def);
-    #define ENTITYDEFS_MODULE "html.entities"
-    #define INIT_FUNC_NAME    PyInit__tokenizer
-    #define INIT_ERROR        return NULL
-#else
-    #define IMPORT_NAME_FUNC  PyBytes_FromString
-    #define CREATE_MODULE     Py_InitModule("_tokenizer", NULL);
-    #define ENTITYDEFS_MODULE "htmlentitydefs"
-    #define INIT_FUNC_NAME    init_tokenizer
-    #define INIT_ERROR        return
-#endif
-
 /* Structs */
 
 static PyMethodDef Tokenizer_methods[] = {
@@ -101,11 +85,9 @@ static PyTypeObject TokenizerType = {
     Tokenizer_new,                                          /* tp_new */
 };
 
-#ifdef IS_PY3K
 static PyModuleDef module_def = {
     PyModuleDef_HEAD_INIT,
     "_tokenizer",
     "Creates a list of tokens from a string of wikicode.",
     -1, NULL, NULL, NULL, NULL, NULL
 };
-#endif

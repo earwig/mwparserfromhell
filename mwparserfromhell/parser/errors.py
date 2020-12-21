@@ -18,26 +18,16 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-"""
-This package contains :class:`.Wikicode` "nodes", which represent a single unit
-of wikitext, such as a Template, an HTML tag, a Heading, or plain text. The
-node "tree" is far from flat, as most types can contain additional
-:class:`.Wikicode` types within them - and with that, more nodes. For example,
-the name of a :class:`.Template` is a :class:`.Wikicode` object that can
-contain text or more templates.
-"""
+__all__ = ["ParserError"]
 
-from . import extras
-from ._base import Node
-from .text import Text
-from .argument import Argument
-from .comment import Comment
-from .external_link import ExternalLink
-from .heading import Heading
-from .html_entity import HTMLEntity
-from .tag import Tag
-from .template import Template
-from .wikilink import Wikilink
+class ParserError(Exception):
+    """Exception raised when an internal error occurs while parsing.
 
-__all__ = ["Argument", "Comment", "ExternalLink", "HTMLEntity", "Heading",
-           "Node", "Tag", "Template", "Text", "Wikilink"]
+    This does not mean that the wikicode was invalid, because invalid markup
+    should still be parsed correctly. This means that the parser caught itself
+    with an impossible internal state and is bailing out before other problems
+    can happen. Its appearance indicates a bug.
+    """
+    def __init__(self, extra):
+        msg = "This is a bug and should be reported. Info: {}.".format(extra)
+        super().__init__(msg)

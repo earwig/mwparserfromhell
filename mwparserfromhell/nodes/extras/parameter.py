@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import re
 
-from ...compat import str
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
 
@@ -39,12 +35,12 @@ class Parameter(StringMixIn):
     """
 
     def __init__(self, name, value, showkey=True):
-        super(Parameter, self).__init__()
+        super().__init__()
         self.name = name
         self.value = value
         self.showkey = showkey
 
-    def __unicode__(self):
+    def __str__(self):
         if self.showkey:
             return str(self.name) + "=" + str(self.value)
         return str(self.value)

@@ -18,32 +18,33 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from ..string_mixin import StringMixIn
 
-from ._base import Node
+__all__ = ["Node"]
 
-__all__ = ["Text"]
+class Node(StringMixIn):
+    """Represents the base Node type, demonstrating the methods to override.
 
-class Text(Node):
-    """Represents ordinary, unformatted text with no special properties."""
-
-    def __init__(self, value):
-        super().__init__()
-        self.value = value
-
+    :meth:`__str__` must be overridden. It should return a ``str``
+    representation of the node. If the node contains :class:`.Wikicode`
+    objects inside of it, :meth:`__children__` should be a generator that
+    iterates over them. If the node is printable (shown when the page is
+    rendered), :meth:`__strip__` should return its printable version,
+    stripping out any formatting marks. It does not have to return a string,
+    but something that can be converted to a string with ``str()``. Finally,
+    :meth:`__showtree__` can be overridden to build a nice tree representation
+    of the node, if desired, for :meth:`~.Wikicode.get_tree`.
+    """
     def __str__(self):
-        return self.value
+        raise NotImplementedError()
+
+    def __children__(self):
+        return
+        # pylint: disable=unreachable
+        yield  # pragma: no cover (this is a generator that yields nothing)
 
     def __strip__(self, **kwargs):
-        return self
+        return None
 
     def __showtree__(self, write, get, mark):
-        write(str(self).encode("unicode_escape").decode("utf8"))
-
-    @property
-    def value(self):
-        """The actual text itself."""
-        return self._value
-
-    @value.setter
-    def value(self, newval):
-        self._value = str(newval)
+        write(str(self))

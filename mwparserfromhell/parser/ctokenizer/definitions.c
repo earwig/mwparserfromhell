@@ -1,5 +1,5 @@
 /*
-Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 
 Permission is hereby granted, free of charge, to any person obtaining a copy of
 this software and associated documentation files (the "Software"), to deal in
@@ -28,29 +28,79 @@ SOFTWARE.
 */
 
 static const char* URI_SCHEMES[] = {
-    "http", "https", "ftp", "ftps", "ssh", "sftp", "irc", "ircs", "xmpp",
-    "sip", "sips", "gopher", "telnet", "nntp", "worldwind", "mailto", "tel",
-    "sms", "news", "svn", "git", "mms", "bitcoin", "magnet", "urn", "geo", NULL
+    "bitcoin",
+    "ftp",
+    "ftps",
+    "geo",
+    "git",
+    "gopher",
+    "http",
+    "https",
+    "irc",
+    "ircs",
+    "magnet",
+    "mailto",
+    "mms",
+    "news",
+    "nntp",
+    "redis",
+    "sftp",
+    "sip",
+    "sips",
+    "sms",
+    "ssh",
+    "svn",
+    "tel",
+    "telnet",
+    "urn",
+    "worldwind",
+    "xmpp",
+     NULL,
 };
 
 static const char* URI_SCHEMES_AUTHORITY_OPTIONAL[] = {
-    "xmpp", "sip", "sips", "mailto", "tel", "sms", "news", "bitcoin", "magnet",
-    "urn", "geo", NULL
+    "bitcoin",
+    "geo",
+    "magnet",
+    "mailto",
+    "news",
+    "sip",
+    "sips",
+    "sms",
+    "tel",
+    "urn",
+    "xmpp",
+    NULL,
 };
 
 static const char* PARSER_BLACKLIST[] = {
-    "categorytree", "gallery", "hiero", "imagemap", "inputbox", "math",
-    "nowiki", "pre", "score", "section", "source", "syntaxhighlight",
-    "templatedata", "timeline", NULL
+    "categorytree",
+    "ce",
+    "chem",
+    "gallery",
+    "graph",
+    "hiero",
+    "imagemap",
+    "inputbox",
+    "math",
+    "nowiki",
+    "pre",
+    "score",
+    "section",
+    "source",
+    "syntaxhighlight",
+    "templatedata",
+    "timeline",
+    NULL,
 };
 
 static const char* SINGLE[] = {
-    "br", "hr", "meta", "link", "img", "li", "dt", "dd", "th", "td", "tr",
-    "wbr", NULL
+    "br", "wbr", "hr", "meta", "link", "img", "li", "dt", "dd", "th", "td",
+    "tr", NULL
 };
 
 static const char* SINGLE_ONLY[] = {
-    "br", "hr", "meta", "link", "img", "wbr", NULL
+    "br", "wbr", "hr", "meta", "link", "img", NULL
 };
 
 /*

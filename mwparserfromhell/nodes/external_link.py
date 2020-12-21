@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
-from . import Node
-from ..compat import str
+from ._base import Node
 from ..utils import parse_anything
 
 __all__ = ["ExternalLink"]
@@ -32,12 +28,12 @@ class ExternalLink(Node):
     """Represents an external link, like ``[http://example.com/ Example]``."""
 
     def __init__(self, url, title=None, brackets=True):
-        super(ExternalLink, self).__init__()
+        super().__init__()
         self.url = url
         self.title = title
         self.brackets = brackets
 
-    def __unicode__(self):
+    def __str__(self):
         if self.brackets:
             if self.title is not None:
                 return "[" + str(self.url) + " " + str(self.title) + "]"
@@ -82,6 +78,7 @@ class ExternalLink(Node):
 
     @url.setter
     def url(self, value):
+        # pylint: disable=import-outside-toplevel
         from ..parser import contexts
         self._url = parse_anything(value, contexts.EXT_LINK_URI)
 

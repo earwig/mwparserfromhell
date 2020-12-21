@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,23 +18,22 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import print_function, unicode_literals
 import json
+from io import StringIO
 import os
 import unittest
+from urllib.parse import urlencode
+from urllib.request import urlopen
 
 import mwparserfromhell
-from mwparserfromhell.compat import py3k, str
-
-from .compat import StringIO, urlencode, urlopen
 
 class TestDocs(unittest.TestCase):
     """Integration test cases for mwparserfromhell's documentation."""
 
-    def assertPrint(self, input, output):
-        """Assertion check that *input*, when printed, produces *output*."""
+    def assertPrint(self, value, output):
+        """Assertion check that *value*, when printed, produces *output*."""
         buff = StringIO()
-        print(input, end="", file=buff)
+        print(value, end="", file=buff)
         buff.seek(0)
         self.assertEqual(output, buff.read())
 
@@ -47,16 +44,10 @@ class TestDocs(unittest.TestCase):
         self.assertPrint(wikicode,
                          "I has a template! {{foo|bar|baz|eggs=spam}} See it?")
         templates = wikicode.filter_templates()
-        if py3k:
-            self.assertPrint(templates, "['{{foo|bar|baz|eggs=spam}}']")
-        else:
-            self.assertPrint(templates, "[u'{{foo|bar|baz|eggs=spam}}']")
+        self.assertPrint(templates, "['{{foo|bar|baz|eggs=spam}}']")
         template = templates[0]
         self.assertPrint(template.name, "foo")
-        if py3k:
-            self.assertPrint(template.params, "['bar', 'baz', 'eggs=spam']")
-        else:
-            self.assertPrint(template.params, "[u'bar', u'baz', u'eggs=spam']")
+        self.assertPrint(template.params, "['bar', 'baz', 'eggs=spam']")
         self.assertPrint(template.get(1).value, "bar")
         self.assertPrint(template.get("eggs").value, "spam")
 
@@ -64,21 +55,14 @@ class TestDocs(unittest.TestCase):
         """test a block of example code in the README"""
         text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
         temps = mwparserfromhell.parse(text).filter_templates()
-        if py3k:
-            res = "['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']"
-        else:
-            res = "[u'{{foo|{{bar}}={{baz|{{spam}}}}}}', u'{{bar}}', u'{{baz|{{spam}}}}', u'{{spam}}']"
+        res = "['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']"
         self.assertPrint(temps, res)
 
     def test_readme_3(self):
         """test a block of example code in the README"""
         code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-        if py3k:
-            self.assertPrint(code.filter_templates(recursive=False),
-                             "['{{foo|this {{includes a|template}}}}']")
-        else:
-            self.assertPrint(code.filter_templates(recursive=False),
-                             "[u'{{foo|this {{includes a|template}}}}']")
+        self.assertPrint(code.filter_templates(recursive=False),
+                         "['{{foo|this {{includes a|template}}}}']")
         foo = code.filter_templates(recursive=False)[0]
         self.assertPrint(foo.get(1).value, "this {{includes a|template}}")
         self.assertPrint(foo.get(1).value.filter_templates()[0],
@@ -98,10 +82,7 @@ class TestDocs(unittest.TestCase):
         code.replace("{{uncategorized}}", "{{bar-stub}}")
         res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}"
         self.assertPrint(code, res)
-        if py3k:
-            res = "['{{cleanup|date=July 2012}}', '{{bar-stub}}']"
-        else:
-            res = "[u'{{cleanup|date=July 2012}}', u'{{bar-stub}}']"
+        res = "['{{cleanup|date=July 2012}}', '{{bar-stub}}']"
         self.assertPrint(code.filter_templates(), res)
         text = str(code)
         res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}"
@@ -126,14 +107,14 @@ class TestDocs(unittest.TestCase):
         }
         try:
             raw = urlopen(url1, urlencode(data).encode("utf8")).read()
-        except IOError:
+        except OSError:
             self.skipTest("cannot continue because of unsuccessful web call")
         res = json.loads(raw.decode("utf8"))
         revision = res["query"]["pages"][0]["revisions"][0]
         text = revision["slots"]["main"]["content"]
         try:
             expected = urlopen(url2.format(title)).read().decode("utf8")
-        except IOError:
+        except OSError:
             self.skipTest("cannot continue because of unsuccessful web call")
         actual = mwparserfromhell.parse(text)
         self.assertEqual(expected, actual)

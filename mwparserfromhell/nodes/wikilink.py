@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,10 +18,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 
-from . import Node
-from ..compat import str
+from ._base import Node
 from ..utils import parse_anything
 
 __all__ = ["Wikilink"]
@@ -32,11 +28,11 @@ class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
 
     def __init__(self, title, text=None):
-        super(Wikilink, self).__init__()
+        super().__init__()
         self.title = title
         self.text = text
 
-    def __unicode__(self):
+    def __str__(self):
         if self.text is not None:
             return "[[" + str(self.title) + "|" + str(self.text) + "]]"
         return "[[" + str(self.title) + "]]"

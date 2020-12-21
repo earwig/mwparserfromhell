@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,19 +18,17 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from __future__ import unicode_literals
 import unittest
 
-from mwparserfromhell.compat import str
 from mwparserfromhell.nodes import HTMLEntity
 
-from ._test_tree_equality import TreeEqualityTestCase, wrap
+from ._test_tree_equality import TreeEqualityTestCase
 
 class TestHTMLEntity(TreeEqualityTestCase):
     """Test cases for the HTMLEntity node."""
 
-    def test_unicode(self):
-        """test HTMLEntity.__unicode__()"""
+    def test_str(self):
+        """test HTMLEntity.__str__()"""
         node1 = HTMLEntity("nbsp", named=True, hexadecimal=False)
         node2 = HTMLEntity("107", named=False, hexadecimal=False)
         node3 = HTMLEntity("6b", named=False, hexadecimal=True)

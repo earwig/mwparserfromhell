@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -28,36 +26,77 @@ When updating this file, please also update the the C tokenizer version:
 - mwparserfromhell/parser/ctokenizer/definitions.h
 """
 
-from __future__ import unicode_literals
-
 __all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
            "is_single_only", "is_scheme"]
 
 URI_SCHEMES = {
-    # [mediawiki/core.git]/includes/DefaultSettings.php @ 374a0ad943
-    "http": True, "https": True, "ftp": True, "ftps": True, "ssh": True,
-    "sftp": True, "irc": True, "ircs": True, "xmpp": False, "sip": False,
-    "sips": False, "gopher": True, "telnet": True, "nntp": True,
-    "worldwind": True, "mailto": False, "tel": False, "sms": False,
-    "news": False, "svn": True, "git": True, "mms": True, "bitcoin": False,
-    "magnet": False, "urn": False, "geo": False
+    # [wikimedia/mediawiki.git]/includes/DefaultSettings.php @ 5c660de5d0
+    "bitcoin": False,
+    "ftp": True,
+    "ftps": True,
+    "geo": False,
+    "git": True,
+    "gopher": True,
+    "http": True,
+    "https": True,
+    "irc": True,
+    "ircs": True,
+    "magnet": False,
+    "mailto": False,
+    "mms": True,
+    "news": False,
+    "nntp": True,
+    "redis": True,
+    "sftp": True,
+    "sip": False,
+    "sips": False,
+    "sms": False,
+    "ssh": True,
+    "svn": True,
+    "tel": False,
+    "telnet": True,
+    "urn": False,
+    "worldwind": True,
+    "xmpp": False,
 }
 
 PARSER_BLACKLIST = [
-    # enwiki extensions @ 2013-06-28
-    "categorytree", "gallery", "hiero", "imagemap", "inputbox", "math",
-    "nowiki", "pre", "score", "section", "source", "syntaxhighlight",
-    "templatedata", "timeline"
+    # https://www.mediawiki.org/wiki/Parser_extension_tags @ 2020-12-21
+    "categorytree",
+    "ce",
+    "chem",
+    "gallery",
+    "graph",
+    "hiero",
+    "imagemap",
+    "inputbox",
+    "math",
+    "nowiki",
+    "pre",
+    "score",
+    "section",
+    "source",
+    "syntaxhighlight",
+    "templatedata",
+    "timeline",
 ]
 
 INVISIBLE_TAGS = [
-    # enwiki extensions @ 2013-06-28
-    "categorytree", "gallery", "imagemap", "inputbox", "math", "score",
-    "section", "templatedata", "timeline"
+    # https://www.mediawiki.org/wiki/Parser_extension_tags @ 2020-12-21
+    "categorytree",
+    "gallery",
+    "graph",
+    "imagemap",
+    "inputbox",
+    "math",
+    "score",
+    "section",
+    "templatedata",
+    "timeline"
 ]
 
-# [mediawiki/core.git]/includes/Sanitizer.php @ 065bec63ea
-SINGLE_ONLY = ["br", "hr", "meta", "link", "img", "wbr"]
+# [wikimedia/mediawiki.git]/includes/parser/Sanitizer.php @ 95e17ee645
+SINGLE_ONLY = ["br", "wbr", "hr", "meta", "link", "img"]
 SINGLE = SINGLE_ONLY + ["li", "dt", "dd", "th", "td", "tr"]
 
 MARKUP_TO_HTML = {

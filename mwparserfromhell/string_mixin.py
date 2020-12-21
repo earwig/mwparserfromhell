@@ -1,6 +1,4 @@
-# -*- coding: utf-8  -*-
-#
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,13 +20,10 @@
 
 """
 This module contains the :class:`.StringMixIn` type, which implements the
-interface for the ``unicode`` type (``str`` on py3k) in a dynamic manner.
+interface for the ``str`` type in a dynamic manner.
 """
 
-from __future__ import unicode_literals
 from sys import getdefaultencoding
-
-from .compat import bytes, py3k, str
 
 __all__ = ["StringMixIn"]
 
@@ -41,80 +36,67 @@ def inheritdoc(method):
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
 
-class StringMixIn(object):
-    """Implement the interface for ``unicode``/``str`` in a dynamic manner.
+class StringMixIn:
+    """Implement the interface for ``str`` in a dynamic manner.
 
-    To use this class, inherit from it and override the :meth:`__unicode__`
-    method (same on py3k) to return the string representation of the object.
-    The various string methods will operate on the value of :meth:`__unicode__`
-    instead of the immutable ``self`` like the regular ``str`` type.
+    To use this class, inherit from it and override the :meth:`__str__` method
+    to return the string representation of the object. The various string
+    methods will operate on the value of :meth:`__str__` instead of the
+    immutable ``self`` like the regular ``str`` type.
     """
 
-    if py3k:
-        def __str__(self):
-            return self.__unicode__()
-
-        def __bytes__(self):
-            return bytes(self.__unicode__(), getdefaultencoding())
-    else:
-        def __str__(self):
-            return bytes(self.__unicode__())
-
-    def __unicode__(self):
+    def __str__(self):
         raise NotImplementedError()
 
+    def __bytes__(self):
+        return bytes(self.__str__(), getdefaultencoding())
+
     def __repr__(self):
-        return repr(self.__unicode__())
+        return repr(self.__str__())
 
     def __lt__(self, other):
-        return self.__unicode__() < other
+        return self.__str__() < other
 
     def __le__(self, other):
-        return self.__unicode__() <= other
+        return self.__str__() <= other
 
     def __eq__(self, other):
-        return self.__unicode__() == other
+        return self.__str__() == other
 
     def __ne__(self, other):
-        return self.__unicode__() != other
+        return self.__str__() != other
 
     def __gt__(self, other):
-        return self.__unicode__() > other
+        return self.__str__() > other
 
     def __ge__(self, other):
-        return self.__unicode__() >= other
+        return self.__str__() >= other
 
-    if py3k:
-        def __bool__(self):
-            return bool(self.__unicode__())
-    else:
-        def __nonzero__(self):
-            return bool(self.__unicode__())
+    def __bool__(self):
+        return bool(self.__str__())
 
     def __len__(self):
-        return len(self.__unicode__())
+        return len(self.__str__())
 
     def __iter__(self):
-        for char in self.__unicode__():
-            yield char
+        yield from self.__str__()
 
     def __getitem__(self, key):
-        return self.__unicode__()[key]
+        return self.__str__()[key]
 
     def __reversed__(self):
-        return reversed(self.__unicode__())
+        return reversed(self.__str__())
 
     def __contains__(self, item):
-        return str(item) in self.__unicode__()
+        return str(item) in self.__str__()
 
     def __getattr__(self, attr):
         if not hasattr(str, attr):
             raise AttributeError("{!r} object has no attribute {!r}".format(
                 type(self).__name__, attr))
-        return getattr(self.__unicode__(), attr)
+        return getattr(self.__str__(), attr)
 
-    if py3k:
-        maketrans = str.maketrans  # Static method can't rely on __getattr__
+    maketrans = str.maketrans  # Static method can't rely on __getattr__
 
 
 del inheritdoc
