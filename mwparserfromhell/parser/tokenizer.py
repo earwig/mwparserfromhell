@@ -366,7 +366,7 @@ class Tokenizer:
             self._emit_text("//")
             self._head += 2
         else:
-            valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+            valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
             all_valid = lambda: all(char in valid for char in self._read())
             scheme = ""
             while self._read() is not self.END and all_valid():
@@ -386,14 +386,15 @@ class Tokenizer:
 
     def _parse_free_uri_scheme(self):
         """Parse the URI scheme of a free (no brackets) external link."""
-        valid = "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+        valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
         scheme = []
         try:
             # We have to backtrack through the textbuffer looking for our
             # scheme since it was just parsed as text:
             for chunk in reversed(self._textbuffer):
                 for char in reversed(chunk):
-                    if char.isspace() or char in self.MARKERS:
+                    # stop at the first non-word character
+                    if re.fullmatch(r"\W", char):
                         raise StopIteration()
                     if char not in valid:
                         raise BadRoute()
@@ -438,7 +439,7 @@ class Tokenizer:
         # Built from _parse()'s end sentinels:
         after, ctx = self._read(2), self._context
         equal_sign_contexts = contexts.TEMPLATE_PARAM_KEY | contexts.HEADING
-        return (this in (self.END, "\n", "[", "]", "<", ">") or
+        return (this in (self.END, "\n", "[", "]", "<", ">", "\"") or
                 this == nxt == "'" or
                 (this == "|" and ctx & contexts.TEMPLATE) or
                 (this == "=" and ctx & equal_sign_contexts) or
@@ -481,16 +482,29 @@ class Tokenizer:
                 self._parse_template_or_argument()
             elif this == "]":
                 return self._pop(), tail, 0
-            elif " " in this:
-                before, after = this.split(" ", 1)
+            elif this == "'" and nxt == "'":
+                separator = tokens.ExternalLinkSeparator()
+                separator.suppress_space = True
+                self._emit(separator)
+                self._context ^= contexts.EXT_LINK_URI
+                self._context |= contexts.EXT_LINK_TITLE
+                return self._parse(push=False), None, 0
+            elif any(ch in this for ch in (" ", "\n", "[", "]", "<", ">",
+                                           "\"")):
+                before, after = re.split("[ \n\[\]<>\"]", this, maxsplit=1)
+                delimiter = this[len(before)]
                 if brackets:
                     self._emit_text(before)
-                    self._emit(tokens.ExternalLinkSeparator())
+                    separator = tokens.ExternalLinkSeparator()
+                    if delimiter != " ":
+                        separator.suppress_space = True
+                    self._emit(separator)
                     if after:
                         self._emit_text(after)
                     self._context ^= contexts.EXT_LINK_URI
                     self._context |= contexts.EXT_LINK_TITLE
-                    self._head += 1
+                    if delimiter == " ":
+                        self._head += 1
                     return self._parse(push=False), None, 0
                 punct, tail = self._handle_free_link_text(punct, tail, before)
                 return self._pop(), tail + " " + after, 0

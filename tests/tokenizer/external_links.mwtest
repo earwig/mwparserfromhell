@@ -153,9 +153,9 @@ output: [ExternalLinkOpen(brackets=True), Text(text="http://example.(com)"), Ext
 ---
 
 name:   brackets_open_bracket_inside
-label:  an open bracket inside a bracket-enclosed link that is also included
+label:  an open bracket inside a bracket-enclosed link that is not included
 input:  "[http://foobar[baz.com Example]"
-output: [ExternalLinkOpen(brackets=True), Text(text="http://foobar[baz.com"), ExternalLinkSeparator(), Text(text="Example"), ExternalLinkClose()]
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foobar"), ExternalLinkSeparator(suppress_space=True), Text(text="[baz.com Example"), ExternalLinkClose()]
 
 ---
 
@@ -478,3 +478,101 @@ name:   brackets_scheme_title_but_no_url
 label:  brackets around a scheme, colon, and slashes, with a title
 input:  "[http:// Example]"
 output: [Text(text="[http:// Example]")]
+
+---
+
+name:   url_preceded_by_non_word_character
+label:  non-word character immediately before a valid URL
+input:  "svn+ssh://server.domain.com:/reponame"
+output: [Text(text="svn+"), ExternalLinkOpen(brackets=False), Text(text="ssh://server.domain.com:/reponame"), ExternalLinkClose()]
+
+---
+
+name:   url_preceded_by_underscore
+label:  underscore immediately before a valid URL
+input:  "svn_ssh://server.domain.com:/reponame"
+output: [Text(text="svn_ssh://server.domain.com:/reponame")]
+
+---
+
+name:   url_terminated_by_double_quote
+label:  a free link terminated by a double quote
+input:  "http://foo\"bar"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foo"), ExternalLinkClose(), Text(text="\"bar")]
+
+---
+
+name:   url_not_terminated_by_single_quote
+label:  a free link not terminated by a single quote
+input:  "http://foo'bar"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foo'bar"), ExternalLinkClose()]
+
+---
+
+name:   url_terminated_by_two_single_quotes
+label:  a free link terminated by two single quotes
+input:  "http://foo''bar''"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foo"), ExternalLinkClose(), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose()]
+
+---
+
+name:   url_terminated_by_left_angle
+label:  a free link terminated by a left angle
+input:  "http://foo<bar"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foo"), ExternalLinkClose(), Text(text="<bar")]
+
+---
+
+name:   url_terminated_by_right_angle
+label:  a free link terminated by a right angle
+input:  "http://foo>bar"
+output: [ExternalLinkOpen(brackets=False), Text(text="http://foo"), ExternalLinkClose(), Text(text=">bar")]
+
+---
+
+name:   brackets_terminated_by_double_quote
+label:  an external link terminated by a double quote
+input:  "[http://foo\"bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo"), ExternalLinkSeparator(suppress_space=True), Text(text="\"bar"), ExternalLinkClose()]
+
+---
+
+name:   brackets_not_terminated_by_single_quote
+label:  an external link not terminated by a single quote
+input:  "[http://foo'bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo'bar"), ExternalLinkClose()]
+
+---
+
+name:   brackets_terminated_by_two_single_quotes
+label:  an external link terminated by two single quotes
+input:  "[http://foo''bar'']"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo"), ExternalLinkSeparator(suppress_space=True), TagOpenOpen(wiki_markup="''"), Text(text="i"), TagCloseOpen(), Text(text="bar"), TagOpenClose(), Text(text="i"), TagCloseClose(), ExternalLinkClose()]
+
+---
+
+name:   brackets_terminated_by_left_angle
+label:  an external link terminated by a left angle
+input:  "[http://foo<bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo"), ExternalLinkSeparator(suppress_space=True), Text(text="<bar"), ExternalLinkClose()]
+
+---
+
+name:   brackets_terminated_by_right_angle
+label:  an external link terminated by a right angle
+input:  "[http://foo>bar]"
+output: [ExternalLinkOpen(brackets=True), Text(text="http://foo"), ExternalLinkSeparator(suppress_space=True), Text(text=">bar"), ExternalLinkClose()]
+
+---
+
+name:   scheme_case
+label:  a free link with uppercase letters in the URL scheme
+input:  "HtTp://example.com/"
+output: [ExternalLinkOpen(brackets=False), Text(text="HtTp://example.com/"), ExternalLinkClose()]
+
+---
+
+name:   bracket_scheme_case
+label:  an external link with uppercase letters in the URL scheme
+input:  "[HtTp://example.com/]"
+output: [ExternalLinkOpen(brackets=True), Text(text="HtTp://example.com/"), ExternalLinkClose()]

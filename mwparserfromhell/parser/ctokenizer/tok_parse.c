@@ -30,7 +30,7 @@ SOFTWARE.
 #define DIGITS    "0123456789"
 #define HEXDIGITS "0123456789abcdefABCDEF"
 #define ALPHANUM  "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define URISCHEME "abcdefghijklmnopqrstuvwxyz0123456789+.-"
+#define URISCHEME "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
 
 #define MAX_BRACES 255
 #define MAX_ENTITY_SIZE 8
@@ -97,6 +97,66 @@ static PyObject* strip_tag_name(PyObject* token, int take_attr)
     lowered = PyObject_CallMethod(rstripped, "lower", NULL);
     Py_DECREF(rstripped);
     return lowered;
+}
+
+/*
+    Check if the given character is a non-word character.
+
+    Equivalent to this Python code:
+
+    def is_non_word_character(ch):
+        if re.fullmatch(r"\W", chunk):
+            return True
+        return False
+*/
+static int is_non_word_character(Py_UCS4 ch)
+{
+    int ret = 0;
+    PyObject* modname = NULL;
+    PyObject* module = NULL;
+    PyObject* fmatch = NULL;
+    PyObject* pattern = NULL;
+    PyObject* str = NULL;
+    PyObject* posArgs = NULL;
+    PyObject* match = NULL;
+
+    modname = PyUnicode_FromString("re");
+    if (modname == NULL)
+        goto error;
+    module = PyImport_Import(modname);
+    if (module == NULL)
+        goto error;
+    fmatch = PyObject_GetAttrString(module, "fullmatch");
+    if (fmatch == NULL)
+        goto error;
+    pattern = PyUnicode_FromString("\\W");
+    if (pattern == NULL)
+        goto error;
+    str = PyUnicode_FROM_SINGLE(ch);
+    if (str == NULL)
+        goto error;
+    posArgs = PyTuple_Pack(2, pattern, str);
+    if (posArgs == NULL)
+        goto error;
+    match = PyObject_Call(fmatch, posArgs, NULL);
+    if (match == NULL)
+        goto error;
+
+    if (match != Py_None)
+        ret = 1;
+    goto end;
+
+    error:
+    ret = -1;
+    end:
+    Py_XDECREF(match);
+    Py_XDECREF(posArgs);
+    Py_XDECREF(str);
+    Py_XDECREF(pattern);
+    Py_XDECREF(fmatch);
+    Py_XDECREF(module);
+    Py_XDECREF(modname);
+    return ret;
 }
 
 /*
@@ -527,7 +587,13 @@ static int Tokenizer_parse_free_uri_scheme(Tokenizer* self)
     // it was just parsed as text:
     for (i = self->topstack->textbuffer->length - 1; i >= 0; i--) {
         chunk = Textbuffer_read(self->topstack->textbuffer, i);
-        if (Py_UNICODE_ISSPACE(chunk) || is_marker(chunk))
+        // stop at the first non-word character
+        int is_non_word = is_non_word_character(chunk);
+        if (is_non_word < 0) {
+            Textbuffer_dealloc(scheme_buffer);
+            return -1;
+        }
+        else if (is_non_word == 1)
             goto end_of_loop;
         j = 0;
         do {
@@ -607,14 +673,15 @@ static int Tokenizer_handle_free_link_text(
     Return whether the current head is the end of a free link.
 */
 static int
-Tokenizer_is_free_link(Tokenizer* self, Py_UCS4 this, Py_UCS4 next)
+Tokenizer_is_free_link_end(Tokenizer* self, Py_UCS4 this, Py_UCS4 next)
 {
     // Built from Tokenizer_parse()'s end sentinels:
     Py_UCS4 after = Tokenizer_read(self, 2);
     uint64_t ctx = self->topstack->context;
 
     return (!this || this == '\n' || this == '[' || this == ']' ||
-        this == '<' || this == '>'  || (this == '\'' && next == '\'') ||
+        this == '<' || this == '>' || this == '"' ||
+        (this == '\'' && next == '\'') ||
         (this == '|' && ctx & LC_TEMPLATE) ||
         (this == '=' && ctx & (LC_TEMPLATE_PARAM_KEY | LC_HEADING)) ||
         (this == '}' && next == '}' &&
@@ -656,7 +723,7 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
             if (Tokenizer_parse_comment(self))
                 return NULL;
         }
-        else if (!brackets && Tokenizer_is_free_link(self, this, next)) {
+        else if (!brackets && Tokenizer_is_free_link_end(self, this, next)) {
             self->head--;
             return Tokenizer_pop(self);
         }
@@ -669,16 +736,28 @@ Tokenizer_really_parse_external_link(Tokenizer* self, int brackets,
         }
         else if (this == ']')
             return Tokenizer_pop(self);
-        else if (this == ' ') {
+        else if (this == ' ' || Tokenizer_is_free_link_end(self, this, next)) {
             if (brackets) {
-                if (Tokenizer_emit(self, ExternalLinkSeparator))
-                    return NULL;
+                if (this == ' ') {
+                    if (Tokenizer_emit(self, ExternalLinkSeparator))
+                        return NULL;
+                }
+                else {
+                    PyObject* kwargs = PyDict_New();
+                    if (!kwargs)
+                        return NULL;
+                    if (this != ' ')
+                        PyDict_SetItemString(kwargs, "suppress_space", Py_True);
+                    if (Tokenizer_emit_kwargs(self, ExternalLinkSeparator, kwargs))
+                        return NULL;
+                }
                 self->topstack->context ^= LC_EXT_LINK_URI;
                 self->topstack->context |= LC_EXT_LINK_TITLE;
-                self->head++;
+                if (this == ' ')
+                    self->head++;
                 return Tokenizer_parse(self, 0, 0);
             }
-            if (Textbuffer_write(extra, ' '))
+            if (Textbuffer_write(extra, this))
                 return NULL;
             return Tokenizer_pop(self);
         }
