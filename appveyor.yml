@@ -9,6 +9,8 @@ branches:
 
 skip_tags: true
 
+image: Visual Studio 2019
+
 environment:
   global:
     # See: http://stackoverflow.com/a/13751649/163740

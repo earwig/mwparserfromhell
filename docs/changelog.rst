@@ -15,11 +15,13 @@ Thanks to everyone for their patience with this release!
 - Updated :meth:`.Wikicode.matches` to recognize underscores as being
   equivalent to spaces.
   (`#216 <https://github.com/earwig/mwparserfromhell/issues/216>`_)
-- Add a `default` parameter to :meth:`.Template.get`, and implement dict-style
+- Added a `default` parameter to :meth:`.Template.get`, and implement dict-style
   item access for template parameters.
   (`#252 <https://github.com/earwig/mwparserfromhell/issues/252>`_)
 - Fixed a rare parsing bug involving deeply nested style tags.
   (`#224 <https://github.com/earwig/mwparserfromhell/issues/224>`_)
+- Fixed parsing of section headings inside templates.
+  (`#233 <https://github.com/earwig/mwparserfromhell/issues/233>`_)
 - Updated HTML tag definitions.
 - Internal refactoring and cleanup.
 

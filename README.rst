@@ -1,7 +1,7 @@
 mwparserfromhell
 ================
 
-.. image:: https://img.shields.io/travis/earwig/mwparserfromhell/develop.svg
+.. image:: https://api.travis-ci.com/earwig/mwparserfromhell.svg?branch=develop
   :alt: Build Status
   :target: https://travis-ci.org/earwig/mwparserfromhell
 

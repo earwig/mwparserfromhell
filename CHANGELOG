@@ -7,9 +7,10 @@ Thanks to everyone for their patience with this release!
 - Added binary wheels for Linux and macOS.
 - Updated Wikicode.matches() to recognize underscores as being equivalent
   to spaces. (#216)
-- Add a 'default' parameter to Template.get, and implement dict-style item
+- Added a 'default' parameter to Template.get, and implement dict-style item
   access for template parameters. (#252)
 - Fixed a rare parsing bug involving deeply nested style tags. (#224)
+- Fixed parsing of section headings inside templates. (#233)
 - Updated HTML tag definitions.
 - Internal refactoring and cleanup.
 
