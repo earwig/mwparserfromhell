@@ -41,8 +41,7 @@ Normal usage is rather straightforward (where ``text`` is page text):
 >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
-ordinary ``str`` object with some extra methods.
-For example:
+ordinary ``str`` object with some extra methods. For example:
 
 >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
 >>> wikicode = mwparserfromhell.parse(text)

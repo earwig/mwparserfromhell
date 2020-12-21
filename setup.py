@@ -30,7 +30,7 @@ from setuptools.command.build_ext import build_ext
 
 from mwparserfromhell import __version__
 
-with open("README.rst", encoding='utf-8') as fp:
+with open("README.rst") as fp:
     long_docs = fp.read()
 
 use_extension = True
@@ -97,6 +97,7 @@ setup(
         "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
         "Topic :: Text Processing :: Markup"
     ],
 )
