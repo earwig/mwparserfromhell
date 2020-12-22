@@ -27,6 +27,25 @@ __all__ = ["Wikilink"]
 class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
 
+    # a list of links to strip:
+    strip_links = ['File',  'Image', 'Media',  # English
+        'Файл', 'Изображение',  # Russian
+        'Detei',  # German
+        'Fichier',  # French
+        'Archivo',  # Spanish
+        'Immagine',  # Italiano
+        'Imagem',  # Portuguese
+        'Plik',  # Polish
+        'Berkas',  # Indonesian
+        'Bestand',  # Netherlands
+        'चित्र',  # Hindi
+        'Payl',  # Cebuano
+        'Paypay',  # Waray
+        'Tập_tin',  # Vietnamese
+        'ファイル',  # Japanese
+        # -- add here other start words of image wikilinks  --
+    ]
+
     def __init__(self, title, text=None):
         super().__init__()
         self.title = title
@@ -43,6 +62,10 @@ class Wikilink(Node):
             yield self.text
 
     def __strip__(self, **kwargs):
+        _title = self.title.lstrip(':')
+        for word in self.strip_links:
+            if _title.startswith(word):
+                return ''
         if self.text is not None:
             return self.text.strip_code(**kwargs)
         return self.title.strip_code(**kwargs)
