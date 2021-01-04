@@ -491,7 +491,7 @@ class Tokenizer:
                 return self._parse(push=False), None, 0
             elif any(ch in this for ch in (" ", "\n", "[", "]", "<", ">",
                                            "\"")):
-                before, after = re.split("[ \n\[\]<>\"]", this, maxsplit=1)
+                before, after = re.split(r"[ \n[\]<>\"]", this, maxsplit=1)
                 delimiter = this[len(before)]
                 if brackets:
                     self._emit_text(before)

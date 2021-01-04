@@ -102,7 +102,7 @@ test_release() {
     echo " done."
     echo -n "Installing mwparserfromhell with pip..."
     pip -q install --upgrade pip
-    pip -q install mwparserfromhell
+    pip -q install mwparserfromhell pytest
     echo " done."
     echo -n "Checking version..."
     reported_version=$(python -c 'print(__import__("mwparserfromhell").__version__)')
@@ -135,7 +135,7 @@ test_release() {
     cd mwparserfromhell-$VERSION
     echo "Running unit tests..."
     python setup.py -q install
-    python -m unittest discover
+    python -m pytest
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: Unit tests failed!"
         deactivate

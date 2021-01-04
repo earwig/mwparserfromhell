@@ -20,8 +20,9 @@
 
 import codecs
 from os import listdir, path
-import pytest
 import warnings
+
+import pytest
 
 from mwparserfromhell.parser import contexts, tokens
 from mwparserfromhell.parser.builder import Builder
@@ -32,11 +33,8 @@ try:
 except ImportError:
     CTokenizer = None
 
-
 class _TestParseError(Exception):
     """Raised internally when a test could not be parsed."""
-    pass
-
 
 def _parse_test(test, data):
     """Parse an individual *test*, storing its info in *data*."""
@@ -56,8 +54,7 @@ def _parse_test(test, data):
             try:
                 data["output"] = eval(raw, vars(tokens))
             except Exception as err:
-                raise _TestParseError(err)
-
+                raise _TestParseError(err) from err
 
 def _load_tests(filename, name, text):
     """Load all tests in *text* from the file *filename*."""
@@ -89,7 +86,6 @@ def _load_tests(filename, name, text):
 
         yield data
 
-
 def build():
     """Load and install all tests from the 'tokenizer' directory."""
     directory = path.join(path.dirname(__file__), "tokenizer")
@@ -103,7 +99,6 @@ def build():
             name = path.split(fullname)[1][:-len(extension)]
             yield from _load_tests(fullname, name, text)
 
-
 @pytest.mark.parametrize("tokenizer", filter(None, (
     CTokenizer, PyTokenizer
 )), ids=lambda t: 'CTokenizer' if t.USES_C else 'PyTokenizer')
@@ -113,20 +108,17 @@ def test_tokenizer(tokenizer, data):
     actual = tokenizer().tokenize(data["input"])
     assert expected == actual
 
-
 @pytest.mark.parametrize("data", build(), ids=lambda data: data['name'])
 def test_roundtrip(data):
     expected = data["input"]
     actual = str(Builder().build(data["output"][:]))
     assert expected == actual
 
-
 @pytest.mark.skipif(CTokenizer is None, reason='CTokenizer not available')
 def test_c_tokenizer_uses_c():
     """make sure the C tokenizer identifies as using a C extension"""
     assert CTokenizer.USES_C is True
     assert CTokenizer().USES_C is True
-
 
 def test_describe_context():
     assert "" == contexts.describe(0)

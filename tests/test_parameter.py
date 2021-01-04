@@ -18,52 +18,52 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Test cases for the Parameter node extra.
+"""
+
 import pytest
 
 from mwparserfromhell.nodes.extras import Parameter
+from .conftest import assert_wikicode_equal, wraptext
 
-from ._test_tree_equality import TreeEqualityTestCase, wraptext
+def test_str():
+    """test Parameter.__str__()"""
+    node = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
+    assert "foo" == str(node)
+    node2 = Parameter(wraptext("foo"), wraptext("bar"))
+    assert "foo=bar" == str(node2)
 
-class TestParameter(TreeEqualityTestCase):
-    """Test cases for the Parameter node extra."""
+def test_name():
+    """test getter/setter for the name attribute"""
+    name1 = wraptext("1")
+    name2 = wraptext("foobar")
+    node1 = Parameter(name1, wraptext("foobar"), showkey=False)
+    node2 = Parameter(name2, wraptext("baz"))
+    assert name1 is node1.name
+    assert name2 is node2.name
+    node1.name = "héhehé"
+    node2.name = "héhehé"
+    assert_wikicode_equal(wraptext("héhehé"), node1.name)
+    assert_wikicode_equal(wraptext("héhehé"), node2.name)
 
-    def test_str(self):
-        """test Parameter.__str__()"""
-        node = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
-        assert "foo" == str(node)
-        node2 = Parameter(wraptext("foo"), wraptext("bar"))
-        assert "foo=bar" == str(node2)
+def test_value():
+    """test getter/setter for the value attribute"""
+    value = wraptext("bar")
+    node = Parameter(wraptext("foo"), value)
+    assert value is node.value
+    node.value = "héhehé"
+    assert_wikicode_equal(wraptext("héhehé"), node.value)
 
-    def test_name(self):
-        """test getter/setter for the name attribute"""
-        name1 = wraptext("1")
-        name2 = wraptext("foobar")
-        node1 = Parameter(name1, wraptext("foobar"), showkey=False)
-        node2 = Parameter(name2, wraptext("baz"))
-        assert name1 is node1.name
-        assert name2 is node2.name
-        node1.name = "héhehé"
-        node2.name = "héhehé"
-        self.assertWikicodeEqual(wraptext("héhehé"), node1.name)
-        self.assertWikicodeEqual(wraptext("héhehé"), node2.name)
-
-    def test_value(self):
-        """test getter/setter for the value attribute"""
-        value = wraptext("bar")
-        node = Parameter(wraptext("foo"), value)
-        assert value is node.value
-        node.value = "héhehé"
-        self.assertWikicodeEqual(wraptext("héhehé"), node.value)
-
-    def test_showkey(self):
-        """test getter/setter for the showkey attribute"""
-        node1 = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
-        node2 = Parameter(wraptext("foo"), wraptext("bar"))
-        assert node1.showkey is False
-        assert node2.showkey is True
-        node1.showkey = True
-        assert node1.showkey is True
-        node1.showkey = ""
-        assert node1.showkey is False
-        with pytest.raises(ValueError):
-            node2.__setattr__("showkey", False)
+def test_showkey():
+    """test getter/setter for the showkey attribute"""
+    node1 = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
+    node2 = Parameter(wraptext("foo"), wraptext("bar"))
+    assert node1.showkey is False
+    assert node2.showkey is True
+    node1.showkey = True
+    assert node1.showkey is True
+    node1.showkey = ""
+    assert node1.showkey is False
+    with pytest.raises(ValueError):
+        node2.__setattr__("showkey", False)

@@ -18,60 +18,60 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Tests for the Parser class itself, which tokenizes and builds nodes.
+"""
+
 import pytest
 
 from mwparserfromhell import parser
 from mwparserfromhell.nodes import Tag, Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
+from .conftest import assert_wikicode_equal, wrap, wraptext
 
-from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
+@pytest.fixture()
+def pyparser():
+    """make sure the correct tokenizer is used"""
+    restore = parser.use_c
+    if parser.use_c:
+        parser.use_c = False
+    yield
+    parser.use_c = restore
 
-class TestParser(TreeEqualityTestCase):
-    """Tests for the Parser class itself, which tokenizes and builds nodes."""
+def test_use_c(pyparser):
+    assert parser.Parser()._tokenizer.USES_C is False
 
-    @pytest.fixture()
-    def pyparser(self):
-        """make sure the correct tokenizer is used"""
-        restore = parser.use_c
-        if parser.use_c:
-            parser.use_c = False
-        yield
-        parser.use_c = restore
-
-    def test_use_c(self, pyparser):
-        assert parser.Parser()._tokenizer.USES_C is False
-
-    def test_parsing(self, pyparser):
-        """integration test for parsing overall"""
-        text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
-        expected = wrap([
-            Text("this is text; "),
-            Template(wraptext("this"), [
-                Parameter(wraptext("is"), wraptext("a")),
-                Parameter(wraptext("template"), wrap([
-                    Template(wraptext("with"), [
-                        Parameter(wraptext("1"),
-                                  wrap([Wikilink(wraptext("links"))]),
-                                  showkey=False),
-                        Parameter(wraptext("2"),
-                                  wraptext("in"), showkey=False)
-                    ]),
-                    Text("it")
-                ]))
-            ])
+def test_parsing(pyparser):
+    """integration test for parsing overall"""
+    text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
+    expected = wrap([
+        Text("this is text; "),
+        Template(wraptext("this"), [
+            Parameter(wraptext("is"), wraptext("a")),
+            Parameter(wraptext("template"), wrap([
+                Template(wraptext("with"), [
+                    Parameter(wraptext("1"),
+                              wrap([Wikilink(wraptext("links"))]),
+                              showkey=False),
+                    Parameter(wraptext("2"),
+                              wraptext("in"), showkey=False)
+                ]),
+                Text("it")
+            ]))
         ])
-        actual = parser.Parser().parse(text)
-        self.assertWikicodeEqual(expected, actual)
+    ])
+    actual = parser.Parser().parse(text)
+    assert_wikicode_equal(expected, actual)
 
-    def test_skip_style_tags(self, pyparser):
-        """test Parser.parse(skip_style_tags=True)"""
-        text = "This is an example with ''italics''!"
-        a = wrap([Text("This is an example with "),
-                  Tag(wraptext("i"), wraptext("italics"), wiki_markup="''"),
-                  Text("!")])
-        b = wraptext("This is an example with ''italics''!")
+def test_skip_style_tags(pyparser):
+    """test Parser.parse(skip_style_tags=True)"""
+    text = "This is an example with ''italics''!"
+    a = wrap([Text("This is an example with "),
+              Tag(wraptext("i"), wraptext("italics"), wiki_markup="''"),
+              Text("!")])
+    b = wraptext("This is an example with ''italics''!")
 
-        with_style = parser.Parser().parse(text, skip_style_tags=False)
-        without_style = parser.Parser().parse(text, skip_style_tags=True)
-        self.assertWikicodeEqual(a, with_style)
-        self.assertWikicodeEqual(b, without_style)
+    with_style = parser.Parser().parse(text, skip_style_tags=False)
+    without_style = parser.Parser().parse(text, skip_style_tags=True)
+    assert_wikicode_equal(a, with_style)
+    assert_wikicode_equal(b, without_style)

@@ -27,11 +27,12 @@ Alternatively, get the latest development version::
     cd mwparserfromhell
     python setup.py install
 
-You can run the comprehensive unit testing suite with
-``python -m unittest discover``.
+The comprehensive unit testing suite requires `pytest`_ (``pip install pytest``)
+and can be run with ``python -m pytest``.
 
 .. _Python Package Index:   https://pypi.org/
 .. _get pip:                https://pypi.org/project/pip/
+.. _pytest:                 https://docs.pytest.org/
 
 Contents
 --------

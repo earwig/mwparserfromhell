@@ -29,8 +29,8 @@ Alternatively, get the latest development version::
     cd mwparserfromhell
     python setup.py install
 
-You can run the comprehensive unit testing suite with
-``python -m unittest discover``.
+The comprehensive unit testing suite requires `pytest`_ (``pip install pytest``)
+and can be run with ``python -m pytest``.
 
 Usage
 -----
@@ -210,6 +210,7 @@ Python 3 code (using the API_ and the requests_ library):
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _Python Package Index:   https://pypi.org/
 .. _get pip:                https://pypi.org/project/pip/
+.. _pytest:                 https://docs.pytest.org/
 .. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot

@@ -18,75 +18,76 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Test cases for the Token class and its subclasses.
+"""
+
 import pytest
 
 from mwparserfromhell.parser import tokens
 
-class TestTokens:
-    """Test cases for the Token class and its subclasses."""
+@pytest.mark.parametrize("name", tokens.__all__)
+def test_issubclass(name):
+    """check that all classes within the tokens module are really Tokens"""
+    klass = getattr(tokens, name)
+    assert issubclass(klass, tokens.Token) is True
+    assert isinstance(klass(), klass)
+    assert isinstance(klass(), tokens.Token)
 
-    @pytest.mark.parametrize("name", tokens.__all__)
-    def test_issubclass(self, name):
-        """check that all classes within the tokens module are really Tokens"""
-        klass = getattr(tokens, name)
-        assert issubclass(klass, tokens.Token) is True
-        assert isinstance(klass(), klass)
-        assert isinstance(klass(), tokens.Token)
+def test_attributes():
+    """check that Token attributes can be managed properly"""
+    token1 = tokens.Token()
+    token2 = tokens.Token(foo="bar", baz=123)
 
-    def test_attributes(self):
-        """check that Token attributes can be managed properly"""
-        token1 = tokens.Token()
-        token2 = tokens.Token(foo="bar", baz=123)
+    assert "bar" == token2.foo
+    assert 123 == token2.baz
+    assert token1.foo is None
+    assert token2.bar is None
 
-        assert "bar" == token2.foo
-        assert 123 == token2.baz
-        assert token1.foo is None
-        assert token2.bar is None
+    token1.spam = "eggs"
+    token2.foo = "ham"
+    del token2.baz
 
-        token1.spam = "eggs"
-        token2.foo = "ham"
-        del token2.baz
+    assert "eggs" == token1.spam
+    assert "ham" == token2.foo
+    assert token2.baz is None
+    with pytest.raises(KeyError):
+        token2.__delattr__("baz")
 
-        assert "eggs" == token1.spam
-        assert "ham" == token2.foo
-        assert token2.baz is None
-        with pytest.raises(KeyError):
-            token2.__delattr__("baz")
+def test_repr():
+    """check that repr() on a Token works as expected"""
+    token1 = tokens.Token()
+    token2 = tokens.Token(foo="bar", baz=123)
+    token3 = tokens.Text(text="earwig" * 100)
+    hundredchars = ("earwig" * 100)[:97] + "..."
 
-    def test_repr(self):
-        """check that repr() on a Token works as expected"""
-        token1 = tokens.Token()
-        token2 = tokens.Token(foo="bar", baz=123)
-        token3 = tokens.Text(text="earwig" * 100)
-        hundredchars = ("earwig" * 100)[:97] + "..."
+    assert "Token()" == repr(token1)
+    assert repr(token2) in ("Token(foo='bar', baz=123)", "Token(baz=123, foo='bar')")
+    assert "Text(text='" + hundredchars + "')" == repr(token3)
 
-        assert "Token()" == repr(token1)
-        assert repr(token2) in ("Token(foo='bar', baz=123)", "Token(baz=123, foo='bar')")
-        assert "Text(text='" + hundredchars + "')" == repr(token3)
+def test_equality():
+    """check that equivalent tokens are considered equal"""
+    token1 = tokens.Token()
+    token2 = tokens.Token()
+    token3 = tokens.Token(foo="bar", baz=123)
+    token4 = tokens.Text(text="asdf")
+    token5 = tokens.Text(text="asdf")
+    token6 = tokens.TemplateOpen(text="asdf")
 
-    def test_equality(self):
-        """check that equivalent tokens are considered equal"""
-        token1 = tokens.Token()
-        token2 = tokens.Token()
-        token3 = tokens.Token(foo="bar", baz=123)
-        token4 = tokens.Text(text="asdf")
-        token5 = tokens.Text(text="asdf")
-        token6 = tokens.TemplateOpen(text="asdf")
+    assert token1 == token2
+    assert token2 == token1
+    assert token4 == token5
+    assert token5 == token4
+    assert token1 != token3
+    assert token2 != token3
+    assert token4 != token6
+    assert token5 != token6
 
-        assert token1 == token2
-        assert token2 == token1
-        assert token4 == token5
-        assert token5 == token4
-        assert token1 != token3
-        assert token2 != token3
-        assert token4 != token6
-        assert token5 != token6
-
-    @pytest.mark.parametrize("token", [
-        tokens.Token(),
-        tokens.Token(foo="bar", baz=123),
-        tokens.Text(text="earwig")
-    ])
-    def test_repr_equality(self, token):
-        """check that eval(repr(token)) == token"""
-        assert token == eval(repr(token), vars(tokens))
+@pytest.mark.parametrize("token", [
+    tokens.Token(),
+    tokens.Token(foo="bar", baz=123),
+    tokens.Text(text="earwig")
+])
+def test_repr_equality(token):
+    """check that eval(repr(token)) == token"""
+    assert token == eval(repr(token), vars(tokens))

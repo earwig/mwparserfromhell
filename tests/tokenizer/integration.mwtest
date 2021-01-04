@@ -143,7 +143,6 @@ label:  a bracketed external link nested inside a template, before the end
 input:  "{{URL|[http://example.com}}]"
 output: [Text(text="{{URL|"), ExternalLinkOpen(brackets=True), Text(text="http://example.com}}"), ExternalLinkClose()]
 
-
 ---
 
 name:   comment_inside_bracketed_link

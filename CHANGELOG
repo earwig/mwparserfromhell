@@ -1,5 +1,6 @@
 v0.7 (unreleased):
 
+- Port tests to pytest. (#237)
 - Improve parsing of external links. (#232)
 
 v0.6 (released December 21, 2020):

@@ -18,78 +18,78 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+"""
+Test cases for the Argument node.
+"""
+
 import pytest
 
 from mwparserfromhell.nodes import Argument, Text
+from .conftest import assert_wikicode_equal, wrap, wraptext
 
-from ._test_tree_equality import TreeEqualityTestCase, wrap, wraptext
+def test_str():
+    """test Argument.__str__()"""
+    node = Argument(wraptext("foobar"))
+    assert "{{{foobar}}}" == str(node)
+    node2 = Argument(wraptext("foo"), wraptext("bar"))
+    assert "{{{foo|bar}}}" == str(node2)
 
-class TestArgument(TreeEqualityTestCase):
-    """Test cases for the Argument node."""
+def test_children():
+    """test Argument.__children__()"""
+    node1 = Argument(wraptext("foobar"))
+    node2 = Argument(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
+    gen1 = node1.__children__()
+    gen2 = node2.__children__()
+    assert node1.name is next(gen1)
+    assert node2.name is next(gen2)
+    assert node2.default is next(gen2)
+    with pytest.raises(StopIteration):
+        next(gen1)
+    with pytest.raises(StopIteration):
+        next(gen2)
 
-    def test_str(self):
-        """test Argument.__str__()"""
-        node = Argument(wraptext("foobar"))
-        assert "{{{foobar}}}" == str(node)
-        node2 = Argument(wraptext("foo"), wraptext("bar"))
-        assert "{{{foo|bar}}}" == str(node2)
+def test_strip():
+    """test Argument.__strip__()"""
+    node1 = Argument(wraptext("foobar"))
+    node2 = Argument(wraptext("foo"), wraptext("bar"))
+    assert node1.__strip__() is None
+    assert "bar" == node2.__strip__()
 
-    def test_children(self):
-        """test Argument.__children__()"""
-        node1 = Argument(wraptext("foobar"))
-        node2 = Argument(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
-        gen1 = node1.__children__()
-        gen2 = node2.__children__()
-        assert node1.name is next(gen1)
-        assert node2.name is next(gen2)
-        assert node2.default is next(gen2)
-        with pytest.raises(StopIteration):
-            next(gen1)
-        with pytest.raises(StopIteration):
-            next(gen2)
+def test_showtree():
+    """test Argument.__showtree__()"""
+    output = []
+    getter, marker = object(), object()
+    get = lambda code: output.append((getter, code))
+    mark = lambda: output.append(marker)
+    node1 = Argument(wraptext("foobar"))
+    node2 = Argument(wraptext("foo"), wraptext("bar"))
+    node1.__showtree__(output.append, get, mark)
+    node2.__showtree__(output.append, get, mark)
+    valid = [
+        "{{{", (getter, node1.name), "}}}", "{{{", (getter, node2.name),
+        "    | ", marker, (getter, node2.default), "}}}"]
+    assert valid == output
 
-    def test_strip(self):
-        """test Argument.__strip__()"""
-        node1 = Argument(wraptext("foobar"))
-        node2 = Argument(wraptext("foo"), wraptext("bar"))
-        assert node1.__strip__() is None
-        assert "bar" == node2.__strip__()
+def test_name():
+    """test getter/setter for the name attribute"""
+    name = wraptext("foobar")
+    node1 = Argument(name)
+    node2 = Argument(name, wraptext("baz"))
+    assert name is node1.name
+    assert name is node2.name
+    node1.name = "héhehé"
+    node2.name = "héhehé"
+    assert_wikicode_equal(wraptext("héhehé"), node1.name)
+    assert_wikicode_equal(wraptext("héhehé"), node2.name)
 
-    def test_showtree(self):
-        """test Argument.__showtree__()"""
-        output = []
-        getter, marker = object(), object()
-        get = lambda code: output.append((getter, code))
-        mark = lambda: output.append(marker)
-        node1 = Argument(wraptext("foobar"))
-        node2 = Argument(wraptext("foo"), wraptext("bar"))
-        node1.__showtree__(output.append, get, mark)
-        node2.__showtree__(output.append, get, mark)
-        valid = [
-            "{{{", (getter, node1.name), "}}}", "{{{", (getter, node2.name),
-            "    | ", marker, (getter, node2.default), "}}}"]
-        assert valid == output
-
-    def test_name(self):
-        """test getter/setter for the name attribute"""
-        name = wraptext("foobar")
-        node1 = Argument(name)
-        node2 = Argument(name, wraptext("baz"))
-        assert name is node1.name
-        assert name is node2.name
-        node1.name = "héhehé"
-        node2.name = "héhehé"
-        self.assertWikicodeEqual(wraptext("héhehé"), node1.name)
-        self.assertWikicodeEqual(wraptext("héhehé"), node2.name)
-
-    def test_default(self):
-        """test getter/setter for the default attribute"""
-        default = wraptext("baz")
-        node1 = Argument(wraptext("foobar"))
-        node2 = Argument(wraptext("foobar"), default)
-        assert None is node1.default
-        assert default is node2.default
-        node1.default = "buzz"
-        node2.default = None
-        self.assertWikicodeEqual(wraptext("buzz"), node1.default)
-        assert None is node2.default
+def test_default():
+    """test getter/setter for the default attribute"""
+    default = wraptext("baz")
+    node1 = Argument(wraptext("foobar"))
+    node2 = Argument(wraptext("foobar"), default)
+    assert None is node1.default
+    assert default is node2.default
+    node1.default = "buzz"
+    node2.default = None
+    assert_wikicode_equal(wraptext("buzz"), node1.default)
+    assert None is node2.default
