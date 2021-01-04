@@ -1,3 +1,3 @@
 include LICENSE CHANGELOG
-recursive-include mwparserfromhell *.h
+recursive-include src *.h
 recursive-include tests *.py *.mwtest

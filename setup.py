@@ -20,13 +20,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from distutils.errors import DistutilsError, CCompilerError
 from glob import glob
-from os import environ
+import os
 import sys
 
-from setuptools import setup, find_packages, Extension
+from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
+
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
 
 from mwparserfromhell import __version__
 
@@ -38,7 +39,7 @@ fallback = True
 
 # Allow env var WITHOUT_EXTENSION and args --with[out]-extension:
 
-env_var = environ.get("WITHOUT_EXTENSION")
+env_var = os.environ.get("WITHOUT_EXTENSION")
 if "--without-extension" in sys.argv:
     use_extension = False
 elif "--with-extension" in sys.argv:
@@ -52,12 +53,12 @@ elif env_var is not None:
 # Remove the command line argument as it isn't understood by setuptools:
 
 sys.argv = [arg for arg in sys.argv
-            if arg != "--without-extension" and arg != "--with-extension"]
+            if arg not in ("--without-extension", "--with-extension")]
 
 def build_ext_patched(self):
     try:
         build_ext_original(self)
-    except (DistutilsError, CCompilerError) as exc:
+    except Exception as exc:
         print("error: " + str(exc))
         print("Falling back to pure Python mode.")
         del self.extensions[:]
@@ -68,14 +69,15 @@ if fallback:
 # Project-specific part begins here:
 
 tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=sorted(glob("mwparserfromhell/parser/ctokenizer/*.c")),
-                      depends=sorted(glob("mwparserfromhell/parser/ctokenizer/*.h")))
+                      sources=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.c")),
+                      depends=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.h")))
 
 setup(
     name = "mwparserfromhell",
-    packages = find_packages(exclude=("tests",)),
+    packages = ["mwparserfromhell"],
+    package_dir = {"": "src"},
     ext_modules = [tokenizer] if use_extension else [],
-    test_requires = ["pytest"],
+    tests_require = ["pytest"],
     version = __version__,
     python_requires = ">= 3.5",
     author = "Ben Kurtovic",

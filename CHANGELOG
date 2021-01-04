@@ -1,7 +1,8 @@
 v0.7 (unreleased):
 
-- Port tests to pytest. (#237)
-- Improve parsing of external links. (#232)
+- Improved parsing of external links. (#232)
+- Ported tests to pytest. (#237)
+- Moved mwparserfromhell package to src/ dir.
 
 v0.6 (released December 21, 2020):
 

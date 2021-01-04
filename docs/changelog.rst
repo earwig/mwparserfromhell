@@ -7,10 +7,11 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...develop>`__):
 
-- Port tests to pytest.
-  (`#237 <https://github.com/earwig/mwparserfromhell/issues/237>`_)
-- Improve parsing of external links.
+- Improved parsing of external links.
   (`#232 <https://github.com/earwig/mwparserfromhell/issues/232>`_)
+- Ported tests to pytest.
+  (`#237 <https://github.com/earwig/mwparserfromhell/issues/237>`_)
+- Moved mwparserfromhell package to src/ dir.
 
 v0.6
 ----
