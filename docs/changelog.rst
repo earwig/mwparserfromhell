@@ -7,7 +7,8 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...develop>`__):
 
-- ...
+- Improve parsing of external links.
+  (`#232 <https://github.com/earwig/mwparserfromhell/issues/232>`_)
 
 v0.6
 ----
