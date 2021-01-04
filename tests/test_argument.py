@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Argument, Text
 
@@ -30,9 +30,9 @@ class TestArgument(TreeEqualityTestCase):
     def test_str(self):
         """test Argument.__str__()"""
         node = Argument(wraptext("foobar"))
-        self.assertEqual("{{{foobar}}}", str(node))
+        assert "{{{foobar}}}" == str(node)
         node2 = Argument(wraptext("foo"), wraptext("bar"))
-        self.assertEqual("{{{foo|bar}}}", str(node2))
+        assert "{{{foo|bar}}}" == str(node2)
 
     def test_children(self):
         """test Argument.__children__()"""
@@ -40,18 +40,20 @@ class TestArgument(TreeEqualityTestCase):
         node2 = Argument(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
         gen1 = node1.__children__()
         gen2 = node2.__children__()
-        self.assertIs(node1.name, next(gen1))
-        self.assertIs(node2.name, next(gen2))
-        self.assertIs(node2.default, next(gen2))
-        self.assertRaises(StopIteration, next, gen1)
-        self.assertRaises(StopIteration, next, gen2)
+        assert node1.name is next(gen1)
+        assert node2.name is next(gen2)
+        assert node2.default is next(gen2)
+        with pytest.raises(StopIteration):
+            next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen2)
 
     def test_strip(self):
         """test Argument.__strip__()"""
         node1 = Argument(wraptext("foobar"))
         node2 = Argument(wraptext("foo"), wraptext("bar"))
-        self.assertIs(None, node1.__strip__())
-        self.assertEqual("bar", node2.__strip__())
+        assert node1.__strip__() is None
+        assert "bar" == node2.__strip__()
 
     def test_showtree(self):
         """test Argument.__showtree__()"""
@@ -66,15 +68,15 @@ class TestArgument(TreeEqualityTestCase):
         valid = [
             "{{{", (getter, node1.name), "}}}", "{{{", (getter, node2.name),
             "    | ", marker, (getter, node2.default), "}}}"]
-        self.assertEqual(valid, output)
+        assert valid == output
 
     def test_name(self):
         """test getter/setter for the name attribute"""
         name = wraptext("foobar")
         node1 = Argument(name)
         node2 = Argument(name, wraptext("baz"))
-        self.assertIs(name, node1.name)
-        self.assertIs(name, node2.name)
+        assert name is node1.name
+        assert name is node2.name
         node1.name = "héhehé"
         node2.name = "héhehé"
         self.assertWikicodeEqual(wraptext("héhehé"), node1.name)
@@ -85,12 +87,9 @@ class TestArgument(TreeEqualityTestCase):
         default = wraptext("baz")
         node1 = Argument(wraptext("foobar"))
         node2 = Argument(wraptext("foobar"), default)
-        self.assertIs(None, node1.default)
-        self.assertIs(default, node2.default)
+        assert None is node1.default
+        assert default is node2.default
         node1.default = "buzz"
         node2.default = None
         self.assertWikicodeEqual(wraptext("buzz"), node1.default)
-        self.assertIs(None, node2.default)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert None is node2.default

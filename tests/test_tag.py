@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Tag, Template, Text
 from mwparserfromhell.nodes.extras import Attribute
@@ -51,15 +51,15 @@ class TestTag(TreeEqualityTestCase):
         node8 = Tag(wraptext("hr"), wiki_markup="----", self_closing=True)
         node9 = Tag(wraptext("i"), wraptext("italics!"), wiki_markup="''")
 
-        self.assertEqual("<ref></ref>", str(node1))
-        self.assertEqual('<span style="color: red;">foo</span>', str(node2))
-        self.assertEqual("<ref name=foo   some_attr/>", str(node3))
-        self.assertEqual("<br />", str(node4))
-        self.assertEqual("<br>", str(node5))
-        self.assertEqual("</br>", str(node6))
-        self.assertEqual("</br />", str(node7))
-        self.assertEqual("----", str(node8))
-        self.assertEqual("''italics!''", str(node9))
+        assert "<ref></ref>" == str(node1)
+        assert '<span style="color: red;">foo</span>' == str(node2)
+        assert "<ref name=foo   some_attr/>" == str(node3)
+        assert "<br />" == str(node4)
+        assert "<br>" == str(node5)
+        assert "</br>" == str(node6)
+        assert "</br />" == str(node7)
+        assert "----" == str(node8)
+        assert "''italics!''" == str(node9)
 
     def test_children(self):
         """test Tag.__children__()"""
@@ -76,19 +76,22 @@ class TestTag(TreeEqualityTestCase):
         gen1 = node1.__children__()
         gen2 = node2.__children__()
         gen3 = node3.__children__()
-        self.assertEqual(node1.tag, next(gen1))
-        self.assertEqual(node3.tag, next(gen3))
-        self.assertEqual(node3.attributes[0].name, next(gen3))
-        self.assertEqual(node3.attributes[0].value, next(gen3))
-        self.assertEqual(node3.attributes[1].name, next(gen3))
-        self.assertEqual(node3.attributes[1].value, next(gen3))
-        self.assertEqual(node3.attributes[2].name, next(gen3))
-        self.assertEqual(node1.contents, next(gen1))
-        self.assertEqual(node2.contents, next(gen2))
-        self.assertEqual(node1.closing_tag, next(gen1))
-        self.assertRaises(StopIteration, next, gen1)
-        self.assertRaises(StopIteration, next, gen2)
-        self.assertRaises(StopIteration, next, gen3)
+        assert node1.tag == next(gen1)
+        assert node3.tag == next(gen3)
+        assert node3.attributes[0].name == next(gen3)
+        assert node3.attributes[0].value == next(gen3)
+        assert node3.attributes[1].name == next(gen3)
+        assert node3.attributes[1].value == next(gen3)
+        assert node3.attributes[2].name == next(gen3)
+        assert node1.contents == next(gen1)
+        assert node2.contents == next(gen2)
+        assert node1.closing_tag == next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen2)
+        with pytest.raises(StopIteration):
+            next(gen3)
 
     def test_strip(self):
         """test Tag.__strip__()"""
@@ -96,9 +99,9 @@ class TestTag(TreeEqualityTestCase):
         node2 = Tag(wraptext("math"), wraptext("foobar"))
         node3 = Tag(wraptext("br"), self_closing=True)
 
-        self.assertEqual("foobar", node1.__strip__())
-        self.assertEqual(None, node2.__strip__())
-        self.assertEqual(None, node3.__strip__())
+        assert "foobar" == node1.__strip__()
+        assert None == node2.__strip__()
+        assert None == node3.__strip__()
 
     def test_showtree(self):
         """test Tag.__showtree__()"""
@@ -120,180 +123,186 @@ class TestTag(TreeEqualityTestCase):
             (getter, node1.attributes[1].name), ">", (getter, node1.contents),
             "</", (getter, node1.closing_tag), ">", "<", (getter, node2.tag),
             "/>", "</", (getter, node3.tag), ">"]
-        self.assertEqual(valid, output)
+        assert valid == output
 
     def test_tag(self):
         """test getter/setter for the tag attribute"""
         tag = wraptext("ref")
         node = Tag(tag, wraptext("text"))
-        self.assertIs(tag, node.tag)
-        self.assertIs(tag, node.closing_tag)
+        assert tag is node.tag
+        assert tag is node.closing_tag
         node.tag = "span"
         self.assertWikicodeEqual(wraptext("span"), node.tag)
         self.assertWikicodeEqual(wraptext("span"), node.closing_tag)
-        self.assertEqual("<span>text</span>", node)
+        assert "<span>text</span>" == node
 
     def test_contents(self):
         """test getter/setter for the contents attribute"""
         contents = wraptext("text")
         node = Tag(wraptext("ref"), contents)
-        self.assertIs(contents, node.contents)
+        assert contents is node.contents
         node.contents = "text and a {{template}}"
         parsed = wrap([Text("text and a "), Template(wraptext("template"))])
         self.assertWikicodeEqual(parsed, node.contents)
-        self.assertEqual("<ref>text and a {{template}}</ref>", node)
+        assert "<ref>text and a {{template}}</ref>" == node
 
     def test_attributes(self):
         """test getter for the attributes attribute"""
         attrs = [agen("name", "bar")]
         node1 = Tag(wraptext("ref"), wraptext("foo"))
         node2 = Tag(wraptext("ref"), wraptext("foo"), attrs)
-        self.assertEqual([], node1.attributes)
-        self.assertIs(attrs, node2.attributes)
+        assert [] == node1.attributes
+        assert attrs is node2.attributes
 
     def test_wiki_markup(self):
         """test getter/setter for the wiki_markup attribute"""
         node = Tag(wraptext("i"), wraptext("italic text"))
-        self.assertIs(None, node.wiki_markup)
+        assert None is node.wiki_markup
         node.wiki_markup = "''"
-        self.assertEqual("''", node.wiki_markup)
-        self.assertEqual("''italic text''", node)
+        assert "''" == node.wiki_markup
+        assert "''italic text''" == node
         node.wiki_markup = False
-        self.assertFalse(node.wiki_markup)
-        self.assertEqual("<i>italic text</i>", node)
+        assert node.wiki_markup is None
+        assert "<i>italic text</i>" == node
 
     def test_self_closing(self):
         """test getter/setter for the self_closing attribute"""
         node = Tag(wraptext("ref"), wraptext("foobar"))
-        self.assertFalse(node.self_closing)
+        assert node.self_closing is False
         node.self_closing = True
-        self.assertTrue(node.self_closing)
-        self.assertEqual("<ref/>", node)
+        assert node.self_closing is True
+        assert "<ref/>" == node
         node.self_closing = 0
-        self.assertFalse(node.self_closing)
-        self.assertEqual("<ref>foobar</ref>", node)
+        assert node.self_closing is False
+        assert "<ref>foobar</ref>" == node
 
     def test_invalid(self):
         """test getter/setter for the invalid attribute"""
         node = Tag(wraptext("br"), self_closing=True, implicit=True)
-        self.assertFalse(node.invalid)
+        assert node.invalid is False
         node.invalid = True
-        self.assertTrue(node.invalid)
-        self.assertEqual("</br>", node)
+        assert node.invalid is True
+        assert "</br>" == node
         node.invalid = 0
-        self.assertFalse(node.invalid)
-        self.assertEqual("<br>", node)
+        assert node.invalid is False
+        assert "<br>" == node
 
     def test_implicit(self):
         """test getter/setter for the implicit attribute"""
         node = Tag(wraptext("br"), self_closing=True)
-        self.assertFalse(node.implicit)
+        assert node.implicit is False
         node.implicit = True
-        self.assertTrue(node.implicit)
-        self.assertEqual("<br>", node)
+        assert node.implicit is True
+        assert "<br>" == node
         node.implicit = 0
-        self.assertFalse(node.implicit)
-        self.assertEqual("<br/>", node)
+        assert node.implicit is False
+        assert "<br/>" == node
 
     def test_padding(self):
         """test getter/setter for the padding attribute"""
         node = Tag(wraptext("ref"), wraptext("foobar"))
-        self.assertEqual("", node.padding)
+        assert "" == node.padding
         node.padding = "  "
-        self.assertEqual("  ", node.padding)
-        self.assertEqual("<ref  >foobar</ref>", node)
+        assert "  " == node.padding
+        assert "<ref  >foobar</ref>" == node
         node.padding = None
-        self.assertEqual("", node.padding)
-        self.assertEqual("<ref>foobar</ref>", node)
-        self.assertRaises(ValueError, setattr, node, "padding", True)
+        assert "" == node.padding
+        assert "<ref>foobar</ref>" == node
+        with pytest.raises(ValueError):
+            node.__setattr__("padding", True)
 
     def test_closing_tag(self):
         """test getter/setter for the closing_tag attribute"""
         tag = wraptext("ref")
         node = Tag(tag, wraptext("foobar"))
-        self.assertIs(tag, node.closing_tag)
+        assert tag is node.closing_tag
         node.closing_tag = "ref {{ignore me}}"
         parsed = wrap([Text("ref "), Template(wraptext("ignore me"))])
         self.assertWikicodeEqual(parsed, node.closing_tag)
-        self.assertEqual("<ref>foobar</ref {{ignore me}}>", node)
+        assert "<ref>foobar</ref {{ignore me}}>" == node
 
     def test_wiki_style_separator(self):
         """test getter/setter for wiki_style_separator attribute"""
         node = Tag(wraptext("table"), wraptext("\n"))
-        self.assertIs(None, node.wiki_style_separator)
+        assert None is node.wiki_style_separator
         node.wiki_style_separator = "|"
-        self.assertEqual("|", node.wiki_style_separator)
+        assert "|" == node.wiki_style_separator
         node.wiki_markup = "{"
-        self.assertEqual("{|\n{", node)
+        assert "{|\n{" == node
         node2 = Tag(wraptext("table"), wraptext("\n"), wiki_style_separator="|")
-        self.assertEqual("|", node2.wiki_style_separator)
+        assert "|" == node2.wiki_style_separator
 
     def test_closing_wiki_markup(self):
         """test getter/setter for closing_wiki_markup attribute"""
         node = Tag(wraptext("table"), wraptext("\n"))
-        self.assertIs(None, node.closing_wiki_markup)
+        assert None is node.closing_wiki_markup
         node.wiki_markup = "{|"
-        self.assertEqual("{|", node.closing_wiki_markup)
+        assert "{|" == node.closing_wiki_markup
         node.closing_wiki_markup = "|}"
-        self.assertEqual("|}", node.closing_wiki_markup)
-        self.assertEqual("{|\n|}", node)
+        assert "|}" == node.closing_wiki_markup
+        assert "{|\n|}" == node
         node.wiki_markup = "!!"
-        self.assertEqual("|}", node.closing_wiki_markup)
-        self.assertEqual("!!\n|}", node)
+        assert "|}" == node.closing_wiki_markup
+        assert "!!\n|}" == node
         node.wiki_markup = False
-        self.assertFalse(node.closing_wiki_markup)
-        self.assertEqual("<table>\n</table>", node)
+        assert node.closing_wiki_markup is None
+        assert "<table>\n</table>" == node
         node2 = Tag(wraptext("table"), wraptext("\n"),
                     attrs=[agen("id", "foo")], wiki_markup="{|",
                     closing_wiki_markup="|}")
-        self.assertEqual("|}", node2.closing_wiki_markup)
-        self.assertEqual('{| id="foo"\n|}', node2)
+        assert "|}" == node2.closing_wiki_markup
+        assert '{| id="foo"\n|}' == node2
 
     def test_has(self):
         """test Tag.has()"""
         node = Tag(wraptext("ref"), wraptext("cite"), [agen("name", "foo")])
-        self.assertTrue(node.has("name"))
-        self.assertTrue(node.has("  name  "))
-        self.assertTrue(node.has(wraptext("name")))
-        self.assertFalse(node.has("Name"))
-        self.assertFalse(node.has("foo"))
+        assert node.has("name") is True
+        assert node.has("  name  ") is True
+        assert node.has(wraptext("name")) is True
+        assert node.has("Name") is False
+        assert node.has("foo") is False
 
         attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
                  agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
         node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
-        self.assertTrue(node2.has("id"))
-        self.assertTrue(node2.has("class"))
-        self.assertTrue(node2.has(attrs[1].pad_first + str(attrs[1].name) +
-                                  attrs[1].pad_before_eq))
-        self.assertTrue(node2.has(attrs[3]))
-        self.assertTrue(node2.has(str(attrs[3])))
-        self.assertFalse(node2.has("idclass"))
-        self.assertFalse(node2.has("id class"))
-        self.assertFalse(node2.has("id=foo"))
+        assert node2.has("id") is True
+        assert node2.has("class") is True
+        assert node2.has(attrs[1].pad_first + str(attrs[1].name) +
+                         attrs[1].pad_before_eq) is True
+        assert node2.has(attrs[3]) is True
+        assert node2.has(str(attrs[3])) is True
+        assert node2.has("idclass") is False
+        assert node2.has("id class") is False
+        assert node2.has("id=foo") is False
 
     def test_get(self):
         """test Tag.get()"""
         attrs = [agen("name", "foo")]
         node = Tag(wraptext("ref"), wraptext("cite"), attrs)
-        self.assertIs(attrs[0], node.get("name"))
-        self.assertIs(attrs[0], node.get("  name  "))
-        self.assertIs(attrs[0], node.get(wraptext("name")))
-        self.assertRaises(ValueError, node.get, "Name")
-        self.assertRaises(ValueError, node.get, "foo")
+        assert attrs[0] is node.get("name")
+        assert attrs[0] is node.get("  name  ")
+        assert attrs[0] is node.get(wraptext("name"))
+        with pytest.raises(ValueError):
+            node.get("Name")
+        with pytest.raises(ValueError):
+            node.get("foo")
 
         attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
                  agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
         node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
-        self.assertIs(attrs[0], node2.get("id"))
-        self.assertIs(attrs[1], node2.get("class"))
-        self.assertIs(attrs[1], node2.get(
-            attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq))
-        self.assertIs(attrs[3], node2.get(attrs[3]))
-        self.assertIs(attrs[3], node2.get(str(attrs[3])))
-        self.assertIs(attrs[3], node2.get(" foo"))
-        self.assertRaises(ValueError, node2.get, "idclass")
-        self.assertRaises(ValueError, node2.get, "id class")
-        self.assertRaises(ValueError, node2.get, "id=foo")
+        assert attrs[0] is node2.get("id")
+        assert attrs[1] is node2.get("class")
+        assert attrs[1] is node2.get(
+            attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq)
+        assert attrs[3] is node2.get(attrs[3])
+        assert attrs[3] is node2.get(str(attrs[3]))
+        assert attrs[3] is node2.get(" foo")
+        with pytest.raises(ValueError):
+            node2.get("idclass")
+        with pytest.raises(ValueError):
+            node2.get("id class")
+        with pytest.raises(ValueError):
+            node2.get("id=foo")
 
     def test_add(self):
         """test Tag.add()"""
@@ -312,20 +321,22 @@ class TestTag(TreeEqualityTestCase):
         attr5 = ' 1="False"'
         attr6 = ' style="{{foobar}}"'
         attr7 = '\nname =   "value"'
-        self.assertEqual(attr1, node.attributes[0])
-        self.assertEqual(attr2, node.attributes[1])
-        self.assertEqual(attr3, node.attributes[2])
-        self.assertEqual(attr4, node.attributes[3])
-        self.assertEqual(attr5, node.attributes[4])
-        self.assertEqual(attr6, node.attributes[5])
-        self.assertEqual(attr7, node.attributes[6])
-        self.assertEqual(attr7, node.get("name"))
+        assert attr1 == node.attributes[0]
+        assert attr2 == node.attributes[1]
+        assert attr3 == node.attributes[2]
+        assert attr4 == node.attributes[3]
+        assert attr5 == node.attributes[4]
+        assert attr6 == node.attributes[5]
+        assert attr7 == node.attributes[6]
+        assert attr7 == node.get("name")
         self.assertWikicodeEqual(wrap([Template(wraptext("foobar"))]),
                                  node.attributes[5].value)
-        self.assertEqual("".join(("<ref", attr1, attr2, attr3, attr4, attr5,
-                                  attr6, attr7, ">cite</ref>")), node)
-        self.assertRaises(ValueError, node.add, "name", "foo", quotes="bar")
-        self.assertRaises(ValueError, node.add, "name", "a bc d", quotes=None)
+        assert "".join(("<ref", attr1, attr2, attr3, attr4, attr5,
+                        attr6, attr7, ">cite</ref>")) == node
+        with pytest.raises(ValueError):
+            node.add("name", "foo", quotes="bar")
+        with pytest.raises(ValueError):
+            node.add("name", "a bc d", quotes=None)
 
     def test_remove(self):
         """test Tag.remove()"""
@@ -333,12 +344,10 @@ class TestTag(TreeEqualityTestCase):
                  agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
         node = Tag(wraptext("div"), attrs=attrs, self_closing=True)
         node.remove("class")
-        self.assertEqual('<div id="foo" foo="bar" foo  \n />', node)
+        assert '<div id="foo" foo="bar" foo  \n />' == node
         node.remove("foo")
-        self.assertEqual('<div id="foo"/>', node)
-        self.assertRaises(ValueError, node.remove, "foo")
+        assert '<div id="foo"/>' == node
+        with pytest.raises(ValueError):
+            node.remove("foo")
         node.remove("id")
-        self.assertEqual('<div/>', node)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert '<div/>' == node

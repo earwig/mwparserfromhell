@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import HTMLEntity
 
@@ -33,16 +33,17 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node2 = HTMLEntity("107", named=False, hexadecimal=False)
         node3 = HTMLEntity("6b", named=False, hexadecimal=True)
         node4 = HTMLEntity("6C", named=False, hexadecimal=True, hex_char="X")
-        self.assertEqual("&nbsp;", str(node1))
-        self.assertEqual("&#107;", str(node2))
-        self.assertEqual("&#x6b;", str(node3))
-        self.assertEqual("&#X6C;", str(node4))
+        assert "&nbsp;" == str(node1)
+        assert "&#107;" == str(node2)
+        assert "&#x6b;" == str(node3)
+        assert "&#X6C;" == str(node4)
 
     def test_children(self):
         """test HTMLEntity.__children__()"""
         node = HTMLEntity("nbsp", named=True, hexadecimal=False)
         gen = node.__children__()
-        self.assertRaises(StopIteration, next, gen)
+        with pytest.raises(StopIteration):
+            next(gen)
 
     def test_strip(self):
         """test HTMLEntity.__strip__()"""
@@ -50,12 +51,12 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node2 = HTMLEntity("107", named=False, hexadecimal=False)
         node3 = HTMLEntity("e9", named=False, hexadecimal=True)
 
-        self.assertEqual("\xa0", node1.__strip__(normalize=True))
-        self.assertEqual("&nbsp;", node1.__strip__(normalize=False))
-        self.assertEqual("k", node2.__strip__(normalize=True))
-        self.assertEqual("&#107;", node2.__strip__(normalize=False))
-        self.assertEqual("é", node3.__strip__(normalize=True))
-        self.assertEqual("&#xe9;", node3.__strip__(normalize=False))
+        assert "\xa0" == node1.__strip__(normalize=True)
+        assert "&nbsp;" == node1.__strip__(normalize=False)
+        assert "k" == node2.__strip__(normalize=True)
+        assert "&#107;" == node2.__strip__(normalize=False)
+        assert "é" == node3.__strip__(normalize=True)
+        assert "&#xe9;" == node3.__strip__(normalize=False)
 
     def test_showtree(self):
         """test HTMLEntity.__showtree__()"""
@@ -67,88 +68,102 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node2.__showtree__(output.append, None, None)
         node3.__showtree__(output.append, None, None)
         res = ["&nbsp;", "&#107;", "&#xe9;"]
-        self.assertEqual(res, output)
+        assert res == output
 
     def test_value(self):
         """test getter/setter for the value attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
-        self.assertEqual("nbsp", node1.value)
-        self.assertEqual("107", node2.value)
-        self.assertEqual("e9", node3.value)
+        assert "nbsp" == node1.value
+        assert "107" == node2.value
+        assert "e9" == node3.value
 
         node1.value = "ffa4"
         node2.value = 72
         node3.value = "Sigma"
-        self.assertEqual("ffa4", node1.value)
-        self.assertFalse(node1.named)
-        self.assertTrue(node1.hexadecimal)
-        self.assertEqual("72", node2.value)
-        self.assertFalse(node2.named)
-        self.assertFalse(node2.hexadecimal)
-        self.assertEqual("Sigma", node3.value)
-        self.assertTrue(node3.named)
-        self.assertFalse(node3.hexadecimal)
+        assert "ffa4" == node1.value
+        assert node1.named is False
+        assert node1.hexadecimal is True
+        assert "72" == node2.value
+        assert node2.named is False
+        assert node2.hexadecimal is False
+        assert "Sigma" == node3.value
+        assert node3.named is True
+        assert node3.hexadecimal is False
 
         node1.value = "10FFFF"
         node2.value = 110000
         node2.value = 1114111
-        self.assertRaises(ValueError, setattr, node3, "value", "")
-        self.assertRaises(ValueError, setattr, node3, "value", "foobar")
-        self.assertRaises(ValueError, setattr, node3, "value", True)
-        self.assertRaises(ValueError, setattr, node3, "value", -1)
-        self.assertRaises(ValueError, setattr, node1, "value", 110000)
-        self.assertRaises(ValueError, setattr, node1, "value", "1114112")
-        self.assertRaises(ValueError, setattr, node1, "value", "12FFFF")
+        with pytest.raises(ValueError):
+            node3.__setattr__("value", "")
+        with pytest.raises(ValueError):
+            node3.__setattr__("value", "foobar")
+        with pytest.raises(ValueError):
+            node3.__setattr__("value", True)
+        with pytest.raises(ValueError):
+            node3.__setattr__("value", -1)
+        with pytest.raises(ValueError):
+            node1.__setattr__("value", 110000)
+        with pytest.raises(ValueError):
+            node1.__setattr__("value", "1114112")
+        with pytest.raises(ValueError):
+            node1.__setattr__("value", "12FFFF")
 
     def test_named(self):
         """test getter/setter for the named attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
-        self.assertTrue(node1.named)
-        self.assertFalse(node2.named)
-        self.assertFalse(node3.named)
+        assert node1.named is True
+        assert node2.named is False
+        assert node3.named is False
         node1.named = 1
         node2.named = 0
         node3.named = 0
-        self.assertTrue(node1.named)
-        self.assertFalse(node2.named)
-        self.assertFalse(node3.named)
-        self.assertRaises(ValueError, setattr, node1, "named", False)
-        self.assertRaises(ValueError, setattr, node2, "named", True)
-        self.assertRaises(ValueError, setattr, node3, "named", True)
+        assert node1.named is True
+        assert node2.named is False
+        assert node3.named is False
+        with pytest.raises(ValueError):
+            node1.__setattr__("named", False)
+        with pytest.raises(ValueError):
+            node2.__setattr__("named", True)
+        with pytest.raises(ValueError):
+            node3.__setattr__("named", True)
 
     def test_hexadecimal(self):
         """test getter/setter for the hexadecimal attribute"""
         node1 = HTMLEntity("nbsp")
         node2 = HTMLEntity("107")
         node3 = HTMLEntity("e9")
-        self.assertFalse(node1.hexadecimal)
-        self.assertFalse(node2.hexadecimal)
-        self.assertTrue(node3.hexadecimal)
+        assert node1.hexadecimal is False
+        assert node2.hexadecimal is False
+        assert node3.hexadecimal is True
         node1.hexadecimal = False
         node2.hexadecimal = True
         node3.hexadecimal = False
-        self.assertFalse(node1.hexadecimal)
-        self.assertTrue(node2.hexadecimal)
-        self.assertFalse(node3.hexadecimal)
-        self.assertRaises(ValueError, setattr, node1, "hexadecimal", True)
+        assert node1.hexadecimal is False
+        assert node2.hexadecimal is True
+        assert node3.hexadecimal is False
+        with pytest.raises(ValueError):
+            node1.__setattr__("hexadecimal", True)
 
     def test_hex_char(self):
         """test getter/setter for the hex_char attribute"""
         node1 = HTMLEntity("e9")
         node2 = HTMLEntity("e9", hex_char="X")
-        self.assertEqual("x", node1.hex_char)
-        self.assertEqual("X", node2.hex_char)
+        assert "x" == node1.hex_char
+        assert "X" == node2.hex_char
         node1.hex_char = "X"
         node2.hex_char = "x"
-        self.assertEqual("X", node1.hex_char)
-        self.assertEqual("x", node2.hex_char)
-        self.assertRaises(ValueError, setattr, node1, "hex_char", 123)
-        self.assertRaises(ValueError, setattr, node1, "hex_char", "foobar")
-        self.assertRaises(ValueError, setattr, node1, "hex_char", True)
+        assert "X" == node1.hex_char
+        assert "x" == node2.hex_char
+        with pytest.raises(ValueError):
+            node1.__setattr__("hex_char", 123)
+        with pytest.raises(ValueError):
+            node1.__setattr__("hex_char", "foobar")
+        with pytest.raises(ValueError):
+            node1.__setattr__("hex_char", True)
 
     def test_normalize(self):
         """test getter/setter for the normalize attribute"""
@@ -158,12 +173,11 @@ class TestHTMLEntity(TreeEqualityTestCase):
         node4 = HTMLEntity("1f648")
         node5 = HTMLEntity("-2")
         node6 = HTMLEntity("110000", named=False, hexadecimal=True)
-        self.assertEqual("\xa0", node1.normalize())
-        self.assertEqual("k", node2.normalize())
-        self.assertEqual("é", node3.normalize())
-        self.assertEqual("\U0001F648", node4.normalize())
-        self.assertRaises(ValueError, node5.normalize)
-        self.assertRaises(ValueError, node6.normalize)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert "\xa0" == node1.normalize()
+        assert "k" == node2.normalize()
+        assert "é" == node3.normalize()
+        assert "\U0001F648" == node4.normalize()
+        with pytest.raises(ValueError):
+            node5.normalize()
+        with pytest.raises(ValueError):
+            node6.normalize()

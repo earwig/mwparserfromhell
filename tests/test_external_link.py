@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import ExternalLink, Text
 
@@ -30,14 +30,14 @@ class TestExternalLink(TreeEqualityTestCase):
     def test_str(self):
         """test ExternalLink.__str__()"""
         node = ExternalLink(wraptext("http://example.com/"), brackets=False)
-        self.assertEqual("http://example.com/", str(node))
+        assert "http://example.com/" == str(node)
         node2 = ExternalLink(wraptext("http://example.com/"))
-        self.assertEqual("[http://example.com/]", str(node2))
+        assert "[http://example.com/]" == str(node2)
         node3 = ExternalLink(wraptext("http://example.com/"), wrap([]))
-        self.assertEqual("[http://example.com/ ]", str(node3))
+        assert "[http://example.com/ ]" == str(node3)
         node4 = ExternalLink(wraptext("http://example.com/"),
                              wraptext("Example Web Page"))
-        self.assertEqual("[http://example.com/ Example Web Page]", str(node4))
+        assert "[http://example.com/ Example Web Page]" == str(node4)
 
     def test_children(self):
         """test ExternalLink.__children__()"""
@@ -46,11 +46,13 @@ class TestExternalLink(TreeEqualityTestCase):
                              wrap([Text("Example"), Text("Page")]))
         gen1 = node1.__children__()
         gen2 = node2.__children__()
-        self.assertEqual(node1.url, next(gen1))
-        self.assertEqual(node2.url, next(gen2))
-        self.assertEqual(node2.title, next(gen2))
-        self.assertRaises(StopIteration, next, gen1)
-        self.assertRaises(StopIteration, next, gen2)
+        assert node1.url == next(gen1)
+        assert node2.url == next(gen2)
+        assert node2.title == next(gen2)
+        with pytest.raises(StopIteration):
+            next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen2)
 
     def test_strip(self):
         """test ExternalLink.__strip__()"""
@@ -59,10 +61,10 @@ class TestExternalLink(TreeEqualityTestCase):
         node3 = ExternalLink(wraptext("http://example.com"), wrap([]))
         node4 = ExternalLink(wraptext("http://example.com"), wraptext("Link"))
 
-        self.assertEqual("http://example.com", node1.__strip__())
-        self.assertEqual(None, node2.__strip__())
-        self.assertEqual(None, node3.__strip__())
-        self.assertEqual("Link", node4.__strip__())
+        assert "http://example.com" == node1.__strip__()
+        assert node2.__strip__() is None
+        assert node3.__strip__() is None
+        assert "Link" == node4.__strip__()
 
     def test_showtree(self):
         """test ExternalLink.__showtree__()"""
@@ -77,15 +79,15 @@ class TestExternalLink(TreeEqualityTestCase):
         valid = [
             (getter, node1.url), "[", (getter, node2.url),
             (getter, node2.title), "]"]
-        self.assertEqual(valid, output)
+        assert valid == output
 
     def test_url(self):
         """test getter/setter for the url attribute"""
         url = wraptext("http://example.com/")
         node1 = ExternalLink(url, brackets=False)
         node2 = ExternalLink(url, wraptext("Example"))
-        self.assertIs(url, node1.url)
-        self.assertIs(url, node2.url)
+        assert url is node1.url
+        assert url is node2.url
         node1.url = "mailto:héhehé@spam.com"
         node2.url = "mailto:héhehé@spam.com"
         self.assertWikicodeEqual(wraptext("mailto:héhehé@spam.com"), node1.url)
@@ -96,10 +98,10 @@ class TestExternalLink(TreeEqualityTestCase):
         title = wraptext("Example!")
         node1 = ExternalLink(wraptext("http://example.com/"), brackets=False)
         node2 = ExternalLink(wraptext("http://example.com/"), title)
-        self.assertIs(None, node1.title)
-        self.assertIs(title, node2.title)
+        assert None is node1.title
+        assert title is node2.title
         node2.title = None
-        self.assertIs(None, node2.title)
+        assert None is node2.title
         node2.title = "My Website"
         self.assertWikicodeEqual(wraptext("My Website"), node2.title)
 
@@ -107,14 +109,11 @@ class TestExternalLink(TreeEqualityTestCase):
         """test getter/setter for the brackets attribute"""
         node1 = ExternalLink(wraptext("http://example.com/"), brackets=False)
         node2 = ExternalLink(wraptext("http://example.com/"), wraptext("Link"))
-        self.assertFalse(node1.brackets)
-        self.assertTrue(node2.brackets)
+        assert node1.brackets is False
+        assert node2.brackets is True
         node1.brackets = True
         node2.brackets = False
-        self.assertTrue(node1.brackets)
-        self.assertFalse(node2.brackets)
-        self.assertEqual("[http://example.com/]", str(node1))
-        self.assertEqual("http://example.com/", str(node2))
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert node1.brackets is True
+        assert node2.brackets is False
+        assert "[http://example.com/]" == str(node1)
+        assert "http://example.com/" == str(node2)

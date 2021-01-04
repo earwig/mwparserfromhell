@@ -18,7 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import unittest
+import pytest
 
 from mwparserfromhell.nodes import Text, Wikilink
 
@@ -30,9 +30,9 @@ class TestWikilink(TreeEqualityTestCase):
     def test_str(self):
         """test Wikilink.__str__()"""
         node = Wikilink(wraptext("foobar"))
-        self.assertEqual("[[foobar]]", str(node))
+        assert "[[foobar]]" == str(node)
         node2 = Wikilink(wraptext("foo"), wraptext("bar"))
-        self.assertEqual("[[foo|bar]]", str(node2))
+        assert "[[foo|bar]]" == str(node2)
 
     def test_children(self):
         """test Wikilink.__children__()"""
@@ -40,18 +40,20 @@ class TestWikilink(TreeEqualityTestCase):
         node2 = Wikilink(wraptext("foo"), wrap([Text("bar"), Text("baz")]))
         gen1 = node1.__children__()
         gen2 = node2.__children__()
-        self.assertEqual(node1.title, next(gen1))
-        self.assertEqual(node2.title, next(gen2))
-        self.assertEqual(node2.text, next(gen2))
-        self.assertRaises(StopIteration, next, gen1)
-        self.assertRaises(StopIteration, next, gen2)
+        assert node1.title == next(gen1)
+        assert node2.title == next(gen2)
+        assert node2.text == next(gen2)
+        with pytest.raises(StopIteration):
+            next(gen1)
+        with pytest.raises(StopIteration):
+            next(gen2)
 
     def test_strip(self):
         """test Wikilink.__strip__()"""
         node = Wikilink(wraptext("foobar"))
         node2 = Wikilink(wraptext("foo"), wraptext("bar"))
-        self.assertEqual("foobar", node.__strip__())
-        self.assertEqual("bar", node2.__strip__())
+        assert "foobar" == node.__strip__()
+        assert "bar" == node2.__strip__()
 
     def test_showtree(self):
         """test Wikilink.__showtree__()"""
@@ -66,15 +68,15 @@ class TestWikilink(TreeEqualityTestCase):
         valid = [
             "[[", (getter, node1.title), "]]", "[[", (getter, node2.title),
             "    | ", marker, (getter, node2.text), "]]"]
-        self.assertEqual(valid, output)
+        assert valid == output
 
     def test_title(self):
         """test getter/setter for the title attribute"""
         title = wraptext("foobar")
         node1 = Wikilink(title)
         node2 = Wikilink(title, wraptext("baz"))
-        self.assertIs(title, node1.title)
-        self.assertIs(title, node2.title)
+        assert title is node1.title
+        assert title is node2.title
         node1.title = "héhehé"
         node2.title = "héhehé"
         self.assertWikicodeEqual(wraptext("héhehé"), node1.title)
@@ -85,12 +87,9 @@ class TestWikilink(TreeEqualityTestCase):
         text = wraptext("baz")
         node1 = Wikilink(wraptext("foobar"))
         node2 = Wikilink(wraptext("foobar"), text)
-        self.assertIs(None, node1.text)
-        self.assertIs(text, node2.text)
+        assert None is node1.text
+        assert text is node2.text
         node1.text = "buzz"
         node2.text = None
         self.assertWikicodeEqual(wraptext("buzz"), node1.text)
-        self.assertIs(None, node2.text)
-
-if __name__ == "__main__":
-    unittest.main(verbosity=2)
+        assert None is node2.text

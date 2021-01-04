@@ -10,10 +10,10 @@ arch:
   - amd64
   - ppc64le
 install:
-    - pip install coveralls
+    - pip install coveralls pytest
     - python setup.py develop
 script:
-    - coverage run --source=mwparserfromhell -m unittest discover
+    - coverage run --source=mwparserfromhell -m pytest
 after_success:
     - coveralls
 env:
