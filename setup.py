@@ -24,7 +24,7 @@ from glob import glob
 import os
 import sys
 
-from setuptools import setup, Extension
+from setuptools import find_packages, setup, Extension
 from setuptools.command.build_ext import build_ext
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -74,7 +74,7 @@ tokenizer = Extension("mwparserfromhell.parser._tokenizer",
 
 setup(
     name = "mwparserfromhell",
-    packages = ["mwparserfromhell"],
+    packages = find_packages("src"),
     package_dir = {"": "src"},
     ext_modules = [tokenizer] if use_extension else [],
     tests_require = ["pytest"],
