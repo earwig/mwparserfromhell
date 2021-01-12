@@ -77,6 +77,7 @@ setup(
     packages = find_packages("src"),
     package_dir = {"": "src"},
     ext_modules = [tokenizer] if use_extension else [],
+    setup_requires = ["pytest-runner"] if "test" in sys.argv or "pytest" in sys.argv else [],
     tests_require = ["pytest"],
     version = __version__,
     python_requires = ">= 3.5",
