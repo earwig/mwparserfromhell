@@ -2728,6 +2728,9 @@ PyObject* Tokenizer_parse(Tokenizer* self, uint64_t context, int push)
                 return NULL;
         }
         else if (this == next && next == '[' && Tokenizer_CAN_RECURSE(self)) {
+            if (this_context & LC_WIKILINK_TEXT) {
+                return Tokenizer_fail_route(self);
+            }
             if (!(this_context & AGG_NO_WIKILINKS)) {
                 if (Tokenizer_parse_wikilink(self))
                     return NULL;

@@ -1353,6 +1353,8 @@ class Tokenizer:
                     return self._handle_argument_end()
                 self._emit_text("}")
             elif this == nxt == "[" and self._can_recurse():
+                if self._context & contexts.WIKILINK_TEXT:
+                    self._fail_route()
                 if not self._context & contexts.NO_WIKILINKS:
                     self._parse_wikilink()
                 else:

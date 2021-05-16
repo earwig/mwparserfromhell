@@ -54,20 +54,6 @@ output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="bar[b
 
 ---
 
-name:   nested
-label:  a wikilink nested within another
-input:  "[[foo|[[bar]]]]"
-output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), WikilinkOpen(), Text(text="bar"), WikilinkClose(), WikilinkClose()]
-
----
-
-name:   nested_padding
-label:  a wikilink nested within another, separated by other data
-input:  "[[foo|a[[b]]c]]"
-output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="a"), WikilinkOpen(), Text(text="b"), WikilinkClose(), Text(text="c"), WikilinkClose()]
-
----
-
 name:   invalid_newline
 label:  invalid wikilink: newline as only content
 input:  "[[\n]]"
@@ -103,15 +89,29 @@ output: [Text(text="[[foo[bar]]")]
 
 ---
 
-name:   invalid_nested
-label:  invalid wikilink: trying to nest in the wrong context
+name:   invalid_nested_text
+label:  invalid wikilink: nested within the text of another
+input:  "[[foo|[[bar]]]]"
+output: [Text(text="[[foo|"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="]]")]
+
+---
+
+name:   invalid_nested_text_2
+label:  invalid wikilink: a wikilink nested within the text of another, with additional content
+input:  "[[foo|a[[b]]c]]"
+output: [Text(text="[[foo|a"), WikilinkOpen(), Text(text="b"), WikilinkClose(), Text(text="c]]")]
+
+---
+
+name:   invalid_nested_title
+label:  invalid wikilink: nested within the title of another
 input:  "[[foo[[bar]]]]"
 output: [Text(text="[[foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="]]")]
 
 ---
 
-name:   invalid_nested_padding
-label:  invalid wikilink: trying to nest in the wrong context, with a text param
+name:   invalid_nested_title_and_text
+label:  invalid wikilink: nested within the title of another, with a text param
 input:  "[[foo[[bar]]|baz]]"
 output: [Text(text="[[foo"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="|baz]]")]
 

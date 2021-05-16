@@ -9,6 +9,7 @@ Unreleased
 
 - Improved parsing of external links.
   (`#232 <https://github.com/earwig/mwparserfromhell/issues/232>`_)
+- Fixed parsing of nested wikilinks.
 - Ported tests to pytest.
   (`#237 <https://github.com/earwig/mwparserfromhell/issues/237>`_)
 - Moved mwparserfromhell package to src/ dir.

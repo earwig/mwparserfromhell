@@ -1,6 +1,7 @@
 v0.7 (unreleased):
 
 - Improved parsing of external links. (#232)
+- Fixed parsing of nested wikilinks.
 - Ported tests to pytest. (#237)
 - Moved mwparserfromhell package to src/ dir.
 
