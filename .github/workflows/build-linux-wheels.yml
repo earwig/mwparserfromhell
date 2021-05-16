@@ -11,6 +11,7 @@ jobs:
       uses: RalfG/python-wheels-manylinux-build@e645ea95dae94f606ab25f95f44d3a2caf55764c
       with:
         python-versions: 'cp35-cp35m cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+        pip-wheel-args: '-w ./wheelhouse --no-deps'
     - name: Move to dist/
       run: |
         mkdir -p dist
