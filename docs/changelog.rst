@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.6.1
-------
+v0.7
+----
 
-`Released May 16, 2021 <https://github.com/earwig/mwparserfromhell/tree/v0.6.1>`_
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...v0.6.1>`__):
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...develop>`__):
 
 - Improved parsing of external links.
   (`#232 <https://github.com/earwig/mwparserfromhell/issues/232>`_)
@@ -13,6 +13,7 @@ v0.6.1
 - Ported tests to pytest.
   (`#237 <https://github.com/earwig/mwparserfromhell/issues/237>`_)
 - Moved mwparserfromhell package to src/ dir.
+- There was no 0.6.1 release due to a packaging error.
 
 v0.6
 ----

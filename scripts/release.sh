@@ -5,6 +5,8 @@ if [[ -z "$1" ]]; then
     exit 1
 fi
 
+set -euo pipefail
+
 VERSION=$1
 SCRIPT_DIR=$(dirname "$0")
 RELEASE_DATE=$(date +"%B %-d, %Y")
@@ -27,7 +29,7 @@ check_git() {
 
 update_version() {
     echo -n "Updating mwparserfromhell.__version__..."
-    sed -e 's/__version__ = .*/__version__ = "'$VERSION'"/' -i "" mwparserfromhell/__init__.py
+    sed -e 's/__version__ = .*/__version__ = "'$VERSION'"/' -i "" src/mwparserfromhell/__init__.py
     echo " done."
 }
 
