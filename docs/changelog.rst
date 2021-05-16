@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.7
-----
+v0.6.1
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...develop>`__):
+`Released May 16, 2021 <https://github.com/earwig/mwparserfromhell/tree/v0.6.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6...v0.6.1>`__):
 
 - Improved parsing of external links.
   (`#232 <https://github.com/earwig/mwparserfromhell/issues/232>`_)
