@@ -23,3 +23,25 @@ jobs:
       with:
         user: __token__
         password: ${{ secrets.pypi_password }}
+  build_aarch64:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - uses: docker/setup-qemu-action@v1
+      name: Set up QEMU
+    - name: Build manylinux aarch64 Python wheels
+      uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2014_aarch64
+      with:
+        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
+        pip-wheel-args: '-w ./wheelhouse --no-deps'
+    - name: Move to dist/
+      run: |
+        mkdir -p dist
+        cp -v wheelhouse/*-manylinux*.whl dist/
+    - name: Publish package to PyPI
+      # Only actually publish if a new tag was pushed
+      if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      uses: pypa/gh-action-pypi-publish@37e305e7413032d8422456179fee28fac7d25187
+      with:
+        user: __token__
+        password: ${{ secrets.pypi_password }}
