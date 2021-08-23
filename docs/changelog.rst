@@ -7,7 +7,8 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.2...develop>`__):
 
-- ...
+- Added Linux AArch64 wheels.
+  (`#276 <https://github.com/earwig/mwparserfromhell/issues/276>`_)
 
 v0.6.2
 ------

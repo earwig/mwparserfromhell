@@ -1,6 +1,6 @@
 v0.7 (unreleased):
 
-- ...
+- Added Linux AArch64 wheels. (#276)
 
 v0.6.2 (released May 16, 2021):
 
