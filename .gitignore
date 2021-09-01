@@ -14,3 +14,4 @@ docs/_build
 scripts/*.log
 htmlcov/
 .idea/
+.pytest_cache/

@@ -129,10 +129,10 @@ static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
 static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 {
     PyObject *input, *tokens;
-    uint64_t context = 0;
+    unsigned long long context = 0;
     int skip_style_tags = 0;
 
-    if (PyArg_ParseTuple(args, "U|ii", &input, &context, &skip_style_tags)) {
+    if (PyArg_ParseTuple(args, "U|Kp", &input, &context, &skip_style_tags)) {
         Py_INCREF(input);
         if (load_tokenizer_text(&self->text, input))
             return NULL;
@@ -143,7 +143,7 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 
         /* Failed to parse a Unicode object; try a string instead. */
         PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "s#|ii", &encoded, &size, &context,
+        if (!PyArg_ParseTuple(args, "s#|Kp", &encoded, &size, &context,
                               &skip_style_tags))
             return NULL;
         if (!(input = PyUnicode_FromStringAndSize(encoded, size)))

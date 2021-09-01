@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2021 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -60,8 +60,9 @@ class Tokenizer:
     USES_C = False
     START = object()
     END = object()
-    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", "#", "*", ";",
+    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", '"', "#", "*", ";",
                ":", "/", "-", "!", "\n", START, END]
+    URISCHEME = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
     MAX_DEPTH = 40
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\'\\]+)")
@@ -323,7 +324,7 @@ class Tokenizer:
         self._head += 2
         try:
             # If the wikilink looks like an external link, parse it as such:
-            link, _extra, _delta = self._really_parse_external_link(True)
+            link, _extra = self._really_parse_external_link(True)
         except BadRoute:
             self._head = reset + 1
             try:
@@ -366,8 +367,7 @@ class Tokenizer:
             self._emit_text("//")
             self._head += 2
         else:
-            valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
-            all_valid = lambda: all(char in valid for char in self._read())
+            all_valid = lambda: all(char in self.URISCHEME for char in self._read())
             scheme = ""
             while self._read() is not self.END and all_valid():
                 scheme += self._read()
@@ -386,17 +386,16 @@ class Tokenizer:
 
     def _parse_free_uri_scheme(self):
         """Parse the URI scheme of a free (no brackets) external link."""
-        valid = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
         scheme = []
         try:
             # We have to backtrack through the textbuffer looking for our
             # scheme since it was just parsed as text:
             for chunk in reversed(self._textbuffer):
                 for char in reversed(chunk):
-                    # stop at the first non-word character
+                    # Stop at the first non-word character
                     if re.fullmatch(r"\W", char):
                         raise StopIteration()
-                    if char not in valid:
+                    if char not in self.URISCHEME:
                         raise BadRoute()
                     scheme.append(char)
         except StopIteration:
@@ -434,15 +433,15 @@ class Tokenizer:
         self._emit_text(this)
         return punct, tail
 
-    def _is_free_link_end(self, this, nxt):
-        """Return whether the current head is the end of a free link."""
+    def _is_uri_end(self, this, nxt):
+        """Return whether the current head is the end of a URI."""
         # Built from _parse()'s end sentinels:
         after, ctx = self._read(2), self._context
-        equal_sign_contexts = contexts.TEMPLATE_PARAM_KEY | contexts.HEADING
-        return (this in (self.END, "\n", "[", "]", "<", ">", "\"") or
+        return (this in (self.END, "\n", "[", "]", "<", ">", '"') or
+                " " in this or
                 this == nxt == "'" or
                 (this == "|" and ctx & contexts.TEMPLATE) or
-                (this == "=" and ctx & equal_sign_contexts) or
+                (this == "=" and ctx & (contexts.TEMPLATE_PARAM_KEY | contexts.HEADING)) or
                 (this == nxt == "}" and ctx & contexts.TEMPLATE) or
                 (this == nxt == after == "}" and ctx & contexts.ARGUMENT))
 
@@ -451,6 +450,7 @@ class Tokenizer:
         if brackets:
             self._parse_bracketed_uri_scheme()
             invalid = ("\n", " ", "]")
+            punct = ()
         else:
             self._parse_free_uri_scheme()
             invalid = ("\n", " ", "[", "]")
@@ -465,53 +465,47 @@ class Tokenizer:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_entity()
-            elif (this == "<" and nxt == "!" and self._read(2) ==
-                  self._read(3) == "-"):
+            elif this == "<" and nxt == "!" and self._read(2) == self._read(3) == "-":
                 if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_comment()
-            elif not brackets and self._is_free_link_end(this, nxt):
-                return self._pop(), tail, -1
-            elif this is self.END or this == "\n":
-                self._fail_route()
             elif this == nxt == "{" and self._can_recurse():
                 if tail:
                     self._emit_text(tail)
                     tail = ""
                 self._parse_template_or_argument()
-            elif this == "]":
-                return self._pop(), tail, 0
-            elif this == "'" and nxt == "'":
-                separator = tokens.ExternalLinkSeparator()
-                separator.suppress_space = True
-                self._emit(separator)
-                self._context ^= contexts.EXT_LINK_URI
-                self._context |= contexts.EXT_LINK_TITLE
-                return self._parse(push=False), None, 0
-            elif any(ch in this for ch in (" ", "\n", "[", "]", "<", ">",
-                                           "\"")):
-                before, after = re.split(r"[ \n[\]<>\"]", this, maxsplit=1)
-                delimiter = this[len(before)]
-                if brackets:
-                    self._emit_text(before)
-                    separator = tokens.ExternalLinkSeparator()
-                    if delimiter != " ":
+            elif brackets:
+                if this is self.END or this == "\n":
+                    self._fail_route()
+                if this == "]":
+                    return self._pop(), None
+                if self._is_uri_end(this, nxt):
+                    if " " in this:
+                        before, after = this.split(" ", 1)
+                        self._emit_text(before)
+                        self._emit(tokens.ExternalLinkSeparator())
+                        if after:
+                            self._emit_text(after)
+                        self._head += 1
+                    else:
+                        separator = tokens.ExternalLinkSeparator()
                         separator.suppress_space = True
-                    self._emit(separator)
-                    if after:
-                        self._emit_text(after)
+                        self._emit(separator)
                     self._context ^= contexts.EXT_LINK_URI
                     self._context |= contexts.EXT_LINK_TITLE
-                    if delimiter == " ":
-                        self._head += 1
-                    return self._parse(push=False), None, 0
-                punct, tail = self._handle_free_link_text(punct, tail, before)
-                return self._pop(), tail + " " + after, 0
-            elif not brackets:
-                punct, tail = self._handle_free_link_text(punct, tail, this)
-            else:
+                    return self._parse(push=False), None
                 self._emit_text(this)
+            else:
+                if self._is_uri_end(this, nxt):
+                    if this is not self.END and " " in this:
+                        before, after = this.split(" ", 1)
+                        punct, tail = self._handle_free_link_text(punct, tail, before)
+                        tail += " " + after
+                    else:
+                        self._head -= 1
+                    return self._pop(), tail
+                punct, tail = self._handle_free_link_text(punct, tail, this)
             self._head += 1
 
     def _remove_uri_scheme_from_textbuffer(self, scheme):
@@ -536,7 +530,7 @@ class Tokenizer:
         reset = self._head
         self._head += 1
         try:
-            link, extra, delta = self._really_parse_external_link(brackets)
+            link, extra = self._really_parse_external_link(brackets)
         except BadRoute:
             self._head = reset
             if not brackets and self._context & contexts.DL_TERM:
@@ -550,7 +544,6 @@ class Tokenizer:
             self._emit(tokens.ExternalLinkOpen(brackets=brackets))
             self._emit_all(link)
             self._emit(tokens.ExternalLinkClose())
-            self._head += delta
             if extra:
                 self._emit_text(extra)
 
@@ -854,8 +847,8 @@ class Tokenizer:
                 depth -= 1
                 if depth == 0:  # pragma: no cover (untestable/exceptional)
                     raise ParserError(
-                        "_handle_single_tag_end() got an unexpected "
-                        "TagCloseSelfclose")
+                        "_handle_single_tag_end() got an unexpected TagCloseSelfclose"
+                    )
         else:  # pragma: no cover (untestable/exceptional case)
             raise ParserError("_handle_single_tag_end() missed a TagCloseOpen")
         padding = stack[index].padding

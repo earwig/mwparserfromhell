@@ -9,6 +9,9 @@ Unreleased
 
 - Added Linux AArch64 wheels.
   (`#276 <https://github.com/earwig/mwparserfromhell/issues/276>`_)
+- Fixed C integer conversion, manifesting as parsing errors on big-endian
+  platforms.
+  (`#277 <https://github.com/earwig/mwparserfromhell/issues/277>`_)
 
 v0.6.2
 ------
