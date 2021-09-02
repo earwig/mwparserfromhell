@@ -1,4 +1,4 @@
-v0.7 (unreleased):
+v0.6.3 (released September 2, 2021):
 
 - Added Linux AArch64 wheels. (#276)
 - Fixed C integer conversion, manifesting as parsing errors on big-endian

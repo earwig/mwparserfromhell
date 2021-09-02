@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.7
-----
+v0.6.3
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.2...develop>`__):
+`Released September 2, 2021 <https://github.com/earwig/mwparserfromhell/tree/v0.6.3>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.2...v0.6.3>`__):
 
 - Added Linux AArch64 wheels.
   (`#276 <https://github.com/earwig/mwparserfromhell/issues/276>`_)
