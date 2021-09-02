@@ -32,12 +32,14 @@ import pytest
 
 import mwparserfromhell
 
+
 def assert_print(value, output):
     """Assertion check that *value*, when printed, produces *output*."""
     buff = StringIO()
     print(value, end="", file=buff)
     buff.seek(0)
     assert output == buff.read()
+
 
 def test_readme_1():
     """test a block of example code in the README"""
@@ -52,6 +54,7 @@ def test_readme_1():
     assert_print(template.get(1).value, "bar")
     assert_print(template.get("eggs").value, "spam")
 
+
 def test_readme_2():
     """test a block of example code in the README"""
     text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
@@ -59,17 +62,19 @@ def test_readme_2():
     res = "['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']"
     assert_print(temps, res)
 
+
 def test_readme_3():
     """test a block of example code in the README"""
     code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
-    assert_print(code.filter_templates(recursive=False),
-                 "['{{foo|this {{includes a|template}}}}']")
+    assert_print(
+        code.filter_templates(recursive=False),
+        "['{{foo|this {{includes a|template}}}}']",
+    )
     foo = code.filter_templates(recursive=False)[0]
     assert_print(foo.get(1).value, "this {{includes a|template}}")
-    assert_print(foo.get(1).value.filter_templates()[0],
-                 "{{includes a|template}}")
-    assert_print(foo.get(1).value.filter_templates()[0].get(1).value,
-                 "template")
+    assert_print(foo.get(1).value.filter_templates()[0], "{{includes a|template}}")
+    assert_print(foo.get(1).value.filter_templates()[0].get(1).value, "template")
+
 
 def test_readme_4():
     """test a block of example code in the README"""
@@ -89,6 +94,7 @@ def test_readme_4():
     res = "{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}"
     assert_print(text, res)
     assert text == code
+
 
 @pytest.mark.skipif("NOWEB" in os.environ, reason="web test disabled by environ var")
 def test_readme_5():

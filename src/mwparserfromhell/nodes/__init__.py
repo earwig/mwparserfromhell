@@ -39,5 +39,15 @@ from .tag import Tag
 from .template import Template
 from .wikilink import Wikilink
 
-__all__ = ["Argument", "Comment", "ExternalLink", "HTMLEntity", "Heading",
-           "Node", "Tag", "Template", "Text", "Wikilink"]
+__all__ = [
+    "Argument",
+    "Comment",
+    "ExternalLink",
+    "HTMLEntity",
+    "Heading",
+    "Node",
+    "Tag",
+    "Template",
+    "Text",
+    "Wikilink",
+]

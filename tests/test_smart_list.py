@@ -27,6 +27,7 @@ import pytest
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.smart_list.list_proxy import ListProxy
 
+
 def _test_get_set_del_item(builder):
     """Run tests on __get/set/delitem__ of a list built with *builder*."""
     list1 = builder([0, 1, 2, 3, "one", "two"])
@@ -104,6 +105,7 @@ def _test_get_set_del_item(builder):
     del list2[2:8:2]
     assert [0, 1, 3, 5, 7, 8, 9] == list2
 
+
 def _test_add_radd_iadd(builder):
     """Run tests on __r/i/add__ of a list built with *builder*."""
     list1 = builder(range(5))
@@ -115,6 +117,7 @@ def _test_add_radd_iadd(builder):
     assert [0, 1, 2, 3, 4] == list1
     list1 += ["foo", "bar", "baz"]
     assert [0, 1, 2, 3, 4, "foo", "bar", "baz"] == list1
+
 
 def _test_other_magic_methods(builder):
     """Run tests on other magic methods of a list built with *builder*."""
@@ -200,6 +203,7 @@ def _test_other_magic_methods(builder):
     list4 *= 2
     assert [0, 1, 2, 0, 1, 2] == list4
 
+
 def _test_list_methods(builder):
     """Run tests on the public methods of a list built with *builder*."""
     list1 = builder(range(5))
@@ -263,6 +267,7 @@ def _test_list_methods(builder):
     list3.sort(key=lambda i: i[1], reverse=True)
     assert [("b", 8), ("a", 5), ("c", 3), ("d", 2)] == list3
 
+
 def _dispatch_test_for_children(meth):
     """Run a test method on various different types of children."""
     meth(lambda L: SmartList(list(L))[:])
@@ -270,16 +275,27 @@ def _dispatch_test_for_children(meth):
     meth(lambda L: SmartList(list(L) + [999])[:-1])
     meth(lambda L: SmartList([101, 102] + list(L) + [201, 202])[2:-2])
 
+
 def test_docs():
     """make sure the methods of SmartList/ListProxy have docstrings"""
-    methods = ["append", "count", "extend", "index", "insert", "pop",
-               "remove", "reverse", "sort"]
+    methods = [
+        "append",
+        "count",
+        "extend",
+        "index",
+        "insert",
+        "pop",
+        "remove",
+        "reverse",
+        "sort",
+    ]
     for meth in methods:
         expected = getattr(list, meth).__doc__
         smartlist_doc = getattr(SmartList, meth).__doc__
         listproxy_doc = getattr(ListProxy, meth).__doc__
         assert expected == smartlist_doc
         assert expected == listproxy_doc
+
 
 def test_doctest():
     """make sure the test embedded in SmartList's docstring passes"""
@@ -291,37 +307,46 @@ def test_doctest():
     assert [2, 3, 4] == child
     assert [0, 1, 2, 3, 4] == parent
 
+
 def test_parent_get_set_del():
     """make sure SmartList's getitem/setitem/delitem work"""
     _test_get_set_del_item(SmartList)
+
 
 def test_parent_add():
     """make sure SmartList's add/radd/iadd work"""
     _test_add_radd_iadd(SmartList)
 
+
 def test_parent_other_magics():
     """make sure SmartList's other magically implemented features work"""
     _test_other_magic_methods(SmartList)
+
 
 def test_parent_methods():
     """make sure SmartList's non-magic methods work, like append()"""
     _test_list_methods(SmartList)
 
+
 def test_child_get_set_del():
     """make sure ListProxy's getitem/setitem/delitem work"""
     _dispatch_test_for_children(_test_get_set_del_item)
+
 
 def test_child_add():
     """make sure ListProxy's add/radd/iadd work"""
     _dispatch_test_for_children(_test_add_radd_iadd)
 
+
 def test_child_other_magics():
     """make sure ListProxy's other magically implemented features work"""
     _dispatch_test_for_children(_test_other_magic_methods)
 
+
 def test_child_methods():
     """make sure ListProxy's non-magic methods work, like append()"""
     _dispatch_test_for_children(_test_list_methods)
+
 
 def test_influence():
     """make sure changes are propagated from parents to children"""

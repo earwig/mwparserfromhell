@@ -52,8 +52,10 @@ elif env_var is not None:
 
 # Remove the command line argument as it isn't understood by setuptools:
 
-sys.argv = [arg for arg in sys.argv
-            if arg not in ("--without-extension", "--with-extension")]
+sys.argv = [
+    arg for arg in sys.argv if arg not in ("--without-extension", "--with-extension")
+]
+
 
 def build_ext_patched(self):
     try:
@@ -63,33 +65,40 @@ def build_ext_patched(self):
         print("Falling back to pure Python mode.")
         del self.extensions[:]
 
+
 if fallback:
     build_ext.run, build_ext_original = build_ext_patched, build_ext.run
 
 # Project-specific part begins here:
 
-tokenizer = Extension("mwparserfromhell.parser._tokenizer",
-                      sources=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.c")),
-                      depends=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.h")))
+tokenizer = Extension(
+    "mwparserfromhell.parser._tokenizer",
+    sources=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.c")),
+    depends=sorted(glob("src/mwparserfromhell/parser/ctokenizer/*.h")),
+)
 
 setup(
-    name = "mwparserfromhell",
-    packages = find_packages("src"),
-    package_dir = {"": "src"},
-    ext_modules = [tokenizer] if use_extension else [],
-    setup_requires = ["pytest-runner"] if "test" in sys.argv or "pytest" in sys.argv else [],
-    tests_require = ["pytest"],
-    version = __version__,
-    python_requires = ">= 3.5",
-    author = "Ben Kurtovic",
-    author_email = "ben.kurtovic@gmail.com",
-    url = "https://github.com/earwig/mwparserfromhell",
-    description = "MWParserFromHell is a parser for MediaWiki wikicode.",
-    long_description = long_docs,
-    download_url = "https://github.com/earwig/mwparserfromhell/tarball/v{}".format(__version__),
-    keywords = "earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
-    license = "MIT License",
-    classifiers = [
+    name="mwparserfromhell",
+    packages=find_packages("src"),
+    package_dir={"": "src"},
+    ext_modules=[tokenizer] if use_extension else [],
+    setup_requires=["pytest-runner"]
+    if "test" in sys.argv or "pytest" in sys.argv
+    else [],
+    tests_require=["pytest"],
+    version=__version__,
+    python_requires=">= 3.5",
+    author="Ben Kurtovic",
+    author_email="ben.kurtovic@gmail.com",
+    url="https://github.com/earwig/mwparserfromhell",
+    description="MWParserFromHell is a parser for MediaWiki wikicode.",
+    long_description=long_docs,
+    download_url="https://github.com/earwig/mwparserfromhell/tarball/v{}".format(
+        __version__
+    ),
+    keywords="earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
+    license="MIT License",
+    classifiers=[
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Intended Audience :: Developers",
@@ -101,6 +110,6 @@ setup(
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
-        "Topic :: Text Processing :: Markup"
+        "Topic :: Text Processing :: Markup",
     ],
 )

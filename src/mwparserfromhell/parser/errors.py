@@ -20,6 +20,7 @@
 
 __all__ = ["ParserError"]
 
+
 class ParserError(Exception):
     """Exception raised when an internal error occurs while parsing.
 
@@ -28,6 +29,7 @@ class ParserError(Exception):
     with an impossible internal state and is bailing out before other problems
     can happen. Its appearance indicates a bug.
     """
+
     def __init__(self, extra):
         msg = "This is a bug and should be reported. Info: {}.".format(extra)
         super().__init__(msg)

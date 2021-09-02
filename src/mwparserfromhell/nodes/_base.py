@@ -22,6 +22,7 @@ from ..string_mixin import StringMixIn
 
 __all__ = ["Node"]
 
+
 class Node(StringMixIn):
     """Represents the base Node type, demonstrating the methods to override.
 
@@ -35,6 +36,7 @@ class Node(StringMixIn):
     :meth:`__showtree__` can be overridden to build a nice tree representation
     of the node, if desired, for :meth:`~.Wikicode.get_tree`.
     """
+
     def __str__(self):
         raise NotImplementedError()
 

@@ -27,12 +27,14 @@ import pytest
 from mwparserfromhell.nodes.extras import Parameter
 from .conftest import assert_wikicode_equal, wraptext
 
+
 def test_str():
     """test Parameter.__str__()"""
     node = Parameter(wraptext("1"), wraptext("foo"), showkey=False)
     assert "foo" == str(node)
     node2 = Parameter(wraptext("foo"), wraptext("bar"))
     assert "foo=bar" == str(node2)
+
 
 def test_name():
     """test getter/setter for the name attribute"""
@@ -47,6 +49,7 @@ def test_name():
     assert_wikicode_equal(wraptext("héhehé"), node1.name)
     assert_wikicode_equal(wraptext("héhehé"), node2.name)
 
+
 def test_value():
     """test getter/setter for the value attribute"""
     value = wraptext("bar")
@@ -54,6 +57,7 @@ def test_value():
     assert value is node.value
     node.value = "héhehé"
     assert_wikicode_equal(wraptext("héhehé"), node.value)
+
 
 def test_showkey():
     """test getter/setter for the showkey attribute"""

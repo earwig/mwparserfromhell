@@ -29,15 +29,15 @@ SOFTWARE.
 
 typedef struct {
     uint64_t context;
-    Textbuffer* pad_first;
-    Textbuffer* pad_before_eq;
-    Textbuffer* pad_after_eq;
+    Textbuffer *pad_first;
+    Textbuffer *pad_before_eq;
+    Textbuffer *pad_after_eq;
     Py_UCS4 quoter;
     Py_ssize_t reset;
 } TagData;
 
 /* Functions */
 
-TagData* TagData_new(TokenizerInput*);
-void TagData_dealloc(TagData*);
-int TagData_reset_buffers(TagData*);
+TagData *TagData_new(TokenizerInput *);
+void TagData_dealloc(TagData *);
+int TagData_reset_buffers(TagData *);

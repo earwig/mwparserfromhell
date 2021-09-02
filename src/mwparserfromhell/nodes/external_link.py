@@ -24,6 +24,7 @@ from ..utils import parse_anything
 
 __all__ = ["ExternalLink"]
 
+
 class ExternalLink(Node):
     """Represents an external link, like ``[http://example.com/ Example]``."""
 
@@ -83,6 +84,7 @@ class ExternalLink(Node):
     def url(self, value):
         # pylint: disable=import-outside-toplevel
         from ..parser import contexts
+
         self._url = parse_anything(value, contexts.EXT_LINK_URI)
 
     @title.setter

@@ -1,0 +1,13 @@
+BasedOnStyle: LLVM
+AlignConsecutiveMacros: AcrossEmptyLines
+AllowShortFunctionsOnASingleLine: Inline
+AlwaysBreakAfterReturnType: TopLevelDefinitions
+BinPackArguments: false
+BinPackParameters: false
+BreakBeforeBraces: Linux
+ColumnLimit: 88
+IndentPPDirectives: AfterHash
+IndentWidth: 4
+SpaceAfterCStyleCast: true
+StatementMacros:
+  - PyObject_HEAD

@@ -26,6 +26,7 @@ import pytest
 
 from mwparserfromhell.nodes import HTMLEntity
 
+
 def test_str():
     """test HTMLEntity.__str__()"""
     node1 = HTMLEntity("nbsp", named=True, hexadecimal=False)
@@ -37,12 +38,14 @@ def test_str():
     assert "&#x6b;" == str(node3)
     assert "&#X6C;" == str(node4)
 
+
 def test_children():
     """test HTMLEntity.__children__()"""
     node = HTMLEntity("nbsp", named=True, hexadecimal=False)
     gen = node.__children__()
     with pytest.raises(StopIteration):
         next(gen)
+
 
 def test_strip():
     """test HTMLEntity.__strip__()"""
@@ -57,6 +60,7 @@ def test_strip():
     assert "é" == node3.__strip__(normalize=True)
     assert "&#xe9;" == node3.__strip__(normalize=False)
 
+
 def test_showtree():
     """test HTMLEntity.__showtree__()"""
     output = []
@@ -68,6 +72,7 @@ def test_showtree():
     node3.__showtree__(output.append, None, None)
     res = ["&nbsp;", "&#107;", "&#xe9;"]
     assert res == output
+
 
 def test_value():
     """test getter/setter for the value attribute"""
@@ -109,6 +114,7 @@ def test_value():
     with pytest.raises(ValueError):
         node1.__setattr__("value", "12FFFF")
 
+
 def test_named():
     """test getter/setter for the named attribute"""
     node1 = HTMLEntity("nbsp")
@@ -130,6 +136,7 @@ def test_named():
     with pytest.raises(ValueError):
         node3.__setattr__("named", True)
 
+
 def test_hexadecimal():
     """test getter/setter for the hexadecimal attribute"""
     node1 = HTMLEntity("nbsp")
@@ -147,6 +154,7 @@ def test_hexadecimal():
     with pytest.raises(ValueError):
         node1.__setattr__("hexadecimal", True)
 
+
 def test_hex_char():
     """test getter/setter for the hex_char attribute"""
     node1 = HTMLEntity("e9")
@@ -163,6 +171,7 @@ def test_hex_char():
         node1.__setattr__("hex_char", "foobar")
     with pytest.raises(ValueError):
         node1.__setattr__("hex_char", True)
+
 
 def test_normalize():
     """test getter/setter for the normalize attribute"""

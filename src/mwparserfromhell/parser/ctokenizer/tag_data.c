@@ -26,13 +26,14 @@ SOFTWARE.
 /*
     Initialize a new TagData object.
 */
-TagData* TagData_new(TokenizerInput* text)
+TagData *
+TagData_new(TokenizerInput *text)
 {
-#define ALLOC_BUFFER(name)       \
-    name = Textbuffer_new(text); \
-    if (!name) {                 \
-        TagData_dealloc(self);   \
-        return NULL;             \
+#define ALLOC_BUFFER(name)                                                             \
+    name = Textbuffer_new(text);                                                       \
+    if (!name) {                                                                       \
+        TagData_dealloc(self);                                                         \
+        return NULL;                                                                   \
     }
 
     TagData *self = malloc(sizeof(TagData));
@@ -54,25 +55,30 @@ TagData* TagData_new(TokenizerInput* text)
 /*
     Deallocate the given TagData object.
 */
-void TagData_dealloc(TagData* self)
+void
+TagData_dealloc(TagData *self)
 {
-    if (self->pad_first)
+    if (self->pad_first) {
         Textbuffer_dealloc(self->pad_first);
-    if (self->pad_before_eq)
+    }
+    if (self->pad_before_eq) {
         Textbuffer_dealloc(self->pad_before_eq);
-    if (self->pad_after_eq)
+    }
+    if (self->pad_after_eq) {
         Textbuffer_dealloc(self->pad_after_eq);
+    }
     free(self);
 }
 
 /*
     Clear the internal buffers of the given TagData object.
 */
-int TagData_reset_buffers(TagData* self)
+int
+TagData_reset_buffers(TagData *self)
 {
-    if (Textbuffer_reset(self->pad_first) ||
-        Textbuffer_reset(self->pad_before_eq) ||
-        Textbuffer_reset(self->pad_after_eq))
+    if (Textbuffer_reset(self->pad_first) || Textbuffer_reset(self->pad_before_eq) ||
+        Textbuffer_reset(self->pad_after_eq)) {
         return -1;
+    }
     return 0;
 }

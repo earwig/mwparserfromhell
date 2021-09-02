@@ -26,10 +26,12 @@ import pytest
 
 from mwparserfromhell.nodes import Comment
 
+
 def test_str():
     """test Comment.__str__()"""
     node = Comment("foobar")
     assert "<!--foobar-->" == str(node)
+
 
 def test_children():
     """test Comment.__children__()"""
@@ -38,10 +40,12 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen)
 
+
 def test_strip():
     """test Comment.__strip__()"""
     node = Comment("foobar")
     assert node.__strip__() is None
+
 
 def test_showtree():
     """test Comment.__showtree__()"""
@@ -49,6 +53,7 @@ def test_showtree():
     node = Comment("foobar")
     node.__showtree__(output.append, None, None)
     assert ["<!--foobar-->"] == output
+
 
 def test_contents():
     """test getter/setter for the contents attribute"""

@@ -27,12 +27,14 @@ import pytest
 from mwparserfromhell.nodes import Argument, Text
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
+
 def test_str():
     """test Argument.__str__()"""
     node = Argument(wraptext("foobar"))
     assert "{{{foobar}}}" == str(node)
     node2 = Argument(wraptext("foo"), wraptext("bar"))
     assert "{{{foo|bar}}}" == str(node2)
+
 
 def test_children():
     """test Argument.__children__()"""
@@ -48,12 +50,14 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen2)
 
+
 def test_strip():
     """test Argument.__strip__()"""
     node1 = Argument(wraptext("foobar"))
     node2 = Argument(wraptext("foo"), wraptext("bar"))
     assert node1.__strip__() is None
     assert "bar" == node2.__strip__()
+
 
 def test_showtree():
     """test Argument.__showtree__()"""
@@ -66,9 +70,18 @@ def test_showtree():
     node1.__showtree__(output.append, get, mark)
     node2.__showtree__(output.append, get, mark)
     valid = [
-        "{{{", (getter, node1.name), "}}}", "{{{", (getter, node2.name),
-        "    | ", marker, (getter, node2.default), "}}}"]
+        "{{{",
+        (getter, node1.name),
+        "}}}",
+        "{{{",
+        (getter, node2.name),
+        "    | ",
+        marker,
+        (getter, node2.default),
+        "}}}",
+    ]
     assert valid == output
+
 
 def test_name():
     """test getter/setter for the name attribute"""
@@ -81,6 +94,7 @@ def test_name():
     node2.name = "héhehé"
     assert_wikicode_equal(wraptext("héhehé"), node1.name)
     assert_wikicode_equal(wraptext("héhehé"), node2.name)
+
 
 def test_default():
     """test getter/setter for the default attribute"""

@@ -33,28 +33,31 @@ try:
 except ImportError:
     CTokenizer = None
 
+
 class _TestParseError(Exception):
     """Raised internally when a test could not be parsed."""
+
 
 def _parse_test(test, data):
     """Parse an individual *test*, storing its info in *data*."""
     for line in test.strip().splitlines():
         if line.startswith("name:"):
-            data["name"] = line[len("name:"):].strip()
+            data["name"] = line[len("name:") :].strip()
         elif line.startswith("label:"):
-            data["label"] = line[len("label:"):].strip()
+            data["label"] = line[len("label:") :].strip()
         elif line.startswith("input:"):
-            raw = line[len("input:"):].strip()
+            raw = line[len("input:") :].strip()
             if raw[0] == '"' and raw[-1] == '"':
                 raw = raw[1:-1]
             raw = raw.encode("raw_unicode_escape")
             data["input"] = raw.decode("unicode_escape")
         elif line.startswith("output:"):
-            raw = line[len("output:"):].strip()
+            raw = line[len("output:") :].strip()
             try:
                 data["output"] = eval(raw, vars(tokens))
             except Exception as err:
                 raise _TestParseError(err) from err
+
 
 def _load_tests(filename, name, text):
     """Load all tests in *text* from the file *filename*."""
@@ -77,14 +80,17 @@ def _load_tests(filename, name, text):
             warnings.warn(error.format(filename))
             continue
         if data["input"] is None or data["output"] is None:
-            error = "Test '{}' in '{}' was ignored because it lacked an input or an output"
+            error = (
+                "Test '{}' in '{}' was ignored because it lacked an input or an output"
+            )
             warnings.warn(error.format(data["name"], filename))
             continue
 
         # Include test filename in name
-        data['name'] = '{}:{}'.format(name, data['name'])
+        data["name"] = "{}:{}".format(name, data["name"])
 
         yield data
+
 
 def build():
     """Load and install all tests from the 'tokenizer' directory."""
@@ -96,31 +102,37 @@ def build():
         fullname = path.join(directory, filename)
         with codecs.open(fullname, "r", encoding="utf8") as fp:
             text = fp.read()
-            name = path.split(fullname)[1][:-len(extension)]
+            name = path.split(fullname)[1][: -len(extension)]
             yield from _load_tests(fullname, name, text)
 
-@pytest.mark.parametrize("tokenizer", filter(None, (
-    CTokenizer, PyTokenizer
-)), ids=lambda t: 'CTokenizer' if t.USES_C else 'PyTokenizer')
-@pytest.mark.parametrize("data", build(), ids=lambda data: data['name'])
+
+@pytest.mark.parametrize(
+    "tokenizer",
+    filter(None, (CTokenizer, PyTokenizer)),
+    ids=lambda t: "CTokenizer" if t.USES_C else "PyTokenizer",
+)
+@pytest.mark.parametrize("data", build(), ids=lambda data: data["name"])
 def test_tokenizer(tokenizer, data):
     expected = data["output"]
     actual = tokenizer().tokenize(data["input"])
     assert expected == actual
 
-@pytest.mark.parametrize("data", build(), ids=lambda data: data['name'])
+
+@pytest.mark.parametrize("data", build(), ids=lambda data: data["name"])
 def test_roundtrip(data):
     expected = data["input"]
     actual = str(Builder().build(data["output"][:]))
     assert expected == actual
 
-@pytest.mark.skipif(CTokenizer is None, reason='CTokenizer not available')
+
+@pytest.mark.skipif(CTokenizer is None, reason="CTokenizer not available")
 def test_c_tokenizer_uses_c():
     """make sure the C tokenizer identifies as using a C extension"""
     assert CTokenizer.USES_C is True
     assert CTokenizer().USES_C is True
 
+
 def test_describe_context():
     assert "" == contexts.describe(0)
-    ctx = contexts.describe(contexts.TEMPLATE_PARAM_KEY|contexts.HAS_TEXT)
+    ctx = contexts.describe(contexts.TEMPLATE_PARAM_KEY | contexts.HAS_TEXT)
     assert "TEMPLATE_PARAM_KEY|HAS_TEXT" == ctx

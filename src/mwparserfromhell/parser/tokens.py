@@ -28,6 +28,7 @@ the :class`.Wikicode` tree by the :class:`.Builder`.
 
 __all__ = ["Token"]
 
+
 class Token(dict):
     """A token stores the semantic meaning of a unit of wikicode."""
 
@@ -61,43 +62,44 @@ def make(name):
     __all__.append(name)
     return type(name, (Token,), {})
 
+
 Text = make("Text")
 
-TemplateOpen = make("TemplateOpen")                                 # {{
-TemplateParamSeparator = make("TemplateParamSeparator")             # |
-TemplateParamEquals = make("TemplateParamEquals")                   # =
-TemplateClose = make("TemplateClose")                               # }}
+TemplateOpen = make("TemplateOpen")  # {{
+TemplateParamSeparator = make("TemplateParamSeparator")  # |
+TemplateParamEquals = make("TemplateParamEquals")  # =
+TemplateClose = make("TemplateClose")  # }}
 
-ArgumentOpen = make("ArgumentOpen")                                 # {{{
-ArgumentSeparator = make("ArgumentSeparator")                       # |
-ArgumentClose = make("ArgumentClose")                               # }}}
+ArgumentOpen = make("ArgumentOpen")  # {{{
+ArgumentSeparator = make("ArgumentSeparator")  # |
+ArgumentClose = make("ArgumentClose")  # }}}
 
-WikilinkOpen = make("WikilinkOpen")                                 # [[
-WikilinkSeparator = make("WikilinkSeparator")                       # |
-WikilinkClose = make("WikilinkClose")                               # ]]
+WikilinkOpen = make("WikilinkOpen")  # [[
+WikilinkSeparator = make("WikilinkSeparator")  # |
+WikilinkClose = make("WikilinkClose")  # ]]
 
-ExternalLinkOpen = make("ExternalLinkOpen")                         # [
-ExternalLinkSeparator = make("ExternalLinkSeparator")               #
-ExternalLinkClose = make("ExternalLinkClose")                       # ]
+ExternalLinkOpen = make("ExternalLinkOpen")  # [
+ExternalLinkSeparator = make("ExternalLinkSeparator")  #
+ExternalLinkClose = make("ExternalLinkClose")  # ]
 
-HTMLEntityStart = make("HTMLEntityStart")                           # &
-HTMLEntityNumeric = make("HTMLEntityNumeric")                       # #
-HTMLEntityHex = make("HTMLEntityHex")                               # x
-HTMLEntityEnd = make("HTMLEntityEnd")                               # ;
+HTMLEntityStart = make("HTMLEntityStart")  # &
+HTMLEntityNumeric = make("HTMLEntityNumeric")  # #
+HTMLEntityHex = make("HTMLEntityHex")  # x
+HTMLEntityEnd = make("HTMLEntityEnd")  # ;
 
-HeadingStart = make("HeadingStart")                                 # =...
-HeadingEnd = make("HeadingEnd")                                     # =...
+HeadingStart = make("HeadingStart")  # =...
+HeadingEnd = make("HeadingEnd")  # =...
 
-CommentStart = make("CommentStart")                                 # <!--
-CommentEnd = make("CommentEnd")                                     # -->
+CommentStart = make("CommentStart")  # <!--
+CommentEnd = make("CommentEnd")  # -->
 
-TagOpenOpen = make("TagOpenOpen")                                   # <
+TagOpenOpen = make("TagOpenOpen")  # <
 TagAttrStart = make("TagAttrStart")
-TagAttrEquals = make("TagAttrEquals")                               # =
-TagAttrQuote = make("TagAttrQuote")                                 # ", '
-TagCloseOpen = make("TagCloseOpen")                                 # >
-TagCloseSelfclose = make("TagCloseSelfclose")                       # />
-TagOpenClose = make("TagOpenClose")                                 # </
-TagCloseClose = make("TagCloseClose")                               # >
+TagAttrEquals = make("TagAttrEquals")  # =
+TagAttrQuote = make("TagAttrQuote")  # ", '
+TagCloseOpen = make("TagCloseOpen")  # >
+TagCloseSelfclose = make("TagCloseSelfclose")  # />
+TagOpenClose = make("TagOpenClose")  # </
+TagCloseClose = make("TagCloseClose")  # >
 
 del make

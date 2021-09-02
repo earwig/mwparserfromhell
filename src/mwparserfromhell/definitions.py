@@ -26,8 +26,14 @@ When updating this file, please also update the the C tokenizer version:
 - mwparserfromhell/parser/ctokenizer/definitions.h
 """
 
-__all__ = ["get_html_tag", "is_parsable", "is_visible", "is_single",
-           "is_single_only", "is_scheme"]
+__all__ = [
+    "get_html_tag",
+    "is_parsable",
+    "is_visible",
+    "is_single",
+    "is_single_only",
+    "is_scheme",
+]
 
 URI_SCHEMES = {
     # [wikimedia/mediawiki.git]/includes/DefaultSettings.php @ 5c660de5d0
@@ -92,7 +98,7 @@ INVISIBLE_TAGS = [
     "score",
     "section",
     "templatedata",
-    "timeline"
+    "timeline",
 ]
 
 # [wikimedia/mediawiki.git]/includes/parser/Sanitizer.php @ 95e17ee645
@@ -103,28 +109,34 @@ MARKUP_TO_HTML = {
     "#": "li",
     "*": "li",
     ";": "dt",
-    ":": "dd"
+    ":": "dd",
 }
+
 
 def get_html_tag(markup):
     """Return the HTML tag associated with the given wiki-markup."""
     return MARKUP_TO_HTML[markup]
 
+
 def is_parsable(tag):
     """Return if the given *tag*'s contents should be passed to the parser."""
     return tag.lower() not in PARSER_BLACKLIST
+
 
 def is_visible(tag):
     """Return whether or not the given *tag* contains visible text."""
     return tag.lower() not in INVISIBLE_TAGS
 
+
 def is_single(tag):
     """Return whether or not the given *tag* can exist without a close tag."""
     return tag.lower() in SINGLE
 
+
 def is_single_only(tag):
     """Return whether or not the given *tag* must exist without a close tag."""
     return tag.lower() in SINGLE_ONLY
+
 
 def is_scheme(scheme, slashes=True):
     """Return whether *scheme* is valid for external links."""

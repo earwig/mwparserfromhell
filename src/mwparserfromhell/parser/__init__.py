@@ -26,15 +26,19 @@ together into one interface.
 
 from .builder import Builder
 from .errors import ParserError
+
 try:
     from ._tokenizer import CTokenizer
+
     use_c = True
 except ImportError:
     from .tokenizer import Tokenizer
+
     CTokenizer = None
     use_c = False
 
 __all__ = ["use_c", "Parser", "ParserError"]
+
 
 class Parser:
     """Represents a parser for wikicode.
@@ -57,6 +61,7 @@ class Parser:
             self._tokenizer = CTokenizer()
         else:
             from .tokenizer import Tokenizer
+
             self._tokenizer = Tokenizer()
         self._builder = Builder()
 

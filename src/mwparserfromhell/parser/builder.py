@@ -21,24 +21,34 @@
 
 from . import tokens
 from .errors import ParserError
-from ..nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity, Tag,
-                     Template, Text, Wikilink)
+from ..nodes import (
+    Argument,
+    Comment,
+    ExternalLink,
+    Heading,
+    HTMLEntity,
+    Tag,
+    Template,
+    Text,
+    Wikilink,
+)
 from ..nodes.extras import Attribute, Parameter
 from ..smart_list import SmartList
 from ..wikicode import Wikicode
 
 __all__ = ["Builder"]
 
-_HANDLERS = {
-    tokens.Text: lambda self, token: Text(token.text)
-}
+_HANDLERS = {tokens.Text: lambda self, token: Text(token.text)}
+
 
 def _add_handler(token_type):
     """Create a decorator that adds a handler function to the lookup table."""
+
     def decorator(func):
         """Add a handler function to the lookup table."""
         _HANDLERS[token_type] = func
         return func
+
     return decorator
 
 
@@ -84,8 +94,9 @@ class Builder:
                 key = self._pop()
                 showkey = True
                 self._push()
-            elif isinstance(token, (tokens.TemplateParamSeparator,
-                                    tokens.TemplateClose)):
+            elif isinstance(
+                token, (tokens.TemplateParamSeparator, tokens.TemplateClose)
+            ):
                 self._tokens.append(token)
                 value = self._pop()
                 if key is None:
@@ -167,10 +178,17 @@ class Builder:
                 self._push()
             elif isinstance(token, tokens.ExternalLinkClose):
                 if url is not None:
-                    return ExternalLink(url, self._pop(), brackets=brackets,
-                                        suppress_space=suppress_space is True)
-                return ExternalLink(self._pop(), brackets=brackets,
-                                    suppress_space=suppress_space is True)
+                    return ExternalLink(
+                        url,
+                        self._pop(),
+                        brackets=brackets,
+                        suppress_space=suppress_space is True,
+                    )
+                return ExternalLink(
+                    self._pop(),
+                    brackets=brackets,
+                    suppress_space=suppress_space is True,
+                )
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_external_link() missed a close token")
@@ -184,8 +202,9 @@ class Builder:
             if isinstance(token, tokens.HTMLEntityHex):
                 text = self._tokens.pop()
                 self._tokens.pop()  # Remove HTMLEntityEnd
-                return HTMLEntity(text.text, named=False, hexadecimal=True,
-                                  hex_char=token.char)
+                return HTMLEntity(
+                    text.text, named=False, hexadecimal=True, hex_char=token.char
+                )
             self._tokens.pop()  # Remove HTMLEntityEnd
             return HTMLEntity(token.text, named=False, hexadecimal=False)
         self._tokens.pop()  # Remove HTMLEntityEnd
@@ -227,15 +246,23 @@ class Builder:
                 self._push()
             elif isinstance(token, tokens.TagAttrQuote):
                 quotes = token.char
-            elif isinstance(token, (tokens.TagAttrStart, tokens.TagCloseOpen,
-                                    tokens.TagCloseSelfclose)):
+            elif isinstance(
+                token,
+                (tokens.TagAttrStart, tokens.TagCloseOpen, tokens.TagCloseSelfclose),
+            ):
                 self._tokens.append(token)
                 if name:
                     value = self._pop()
                 else:
                     name, value = self._pop(), None
-                return Attribute(name, value, quotes, start.pad_first,
-                                 start.pad_before_eq, start.pad_after_eq)
+                return Attribute(
+                    name,
+                    value,
+                    quotes,
+                    start.pad_first,
+                    start.pad_before_eq,
+                    start.pad_after_eq,
+                )
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_attribute() missed a close token")
@@ -271,9 +298,19 @@ class Builder:
                 else:
                     self_closing = False
                     closing_tag = self._pop()
-                return Tag(tag, contents, attrs, wiki_markup, self_closing,
-                           invalid, implicit, padding, closing_tag,
-                           wiki_style_separator, closing_wiki_markup)
+                return Tag(
+                    tag,
+                    contents,
+                    attrs,
+                    wiki_markup,
+                    self_closing,
+                    invalid,
+                    implicit,
+                    padding,
+                    closing_tag,
+                    wiki_style_separator,
+                    closing_wiki_markup,
+                )
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_tag() missed a close token")

@@ -25,6 +25,7 @@ users generally won't need stuff from here.
 
 __all__ = ["parse_anything"]
 
+
 def parse_anything(value, context=0, skip_style_tags=False):
     """Return a :class:`.Wikicode` for *value*, allowing multiple types.
 
@@ -64,6 +65,8 @@ def parse_anything(value, context=0, skip_style_tags=False):
             nodelist += parse_anything(item, context, skip_style_tags).nodes
         return Wikicode(nodelist)
     except TypeError as exc:
-        error = ("Needs string, Node, Wikicode, file, int, None, or "
-                 "iterable of these, but got {0}: {1}")
+        error = (
+            "Needs string, Node, Wikicode, file, int, None, or "
+            "iterable of these, but got {0}: {1}"
+        )
         raise ValueError(error.format(type(value).__name__, value)) from exc

@@ -24,6 +24,7 @@ from ..utils import parse_anything
 
 __all__ = ["Argument"]
 
+
 class Argument(Node):
     """Represents a template argument substitution, like ``{{{foo}}}``."""
 

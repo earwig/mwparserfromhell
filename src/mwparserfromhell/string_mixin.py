@@ -27,6 +27,7 @@ from sys import getdefaultencoding
 
 __all__ = ["StringMixIn"]
 
+
 def inheritdoc(method):
     """Set __doc__ of *method* to __doc__ of *method* in its parent class.
 
@@ -35,6 +36,7 @@ def inheritdoc(method):
     """
     method.__doc__ = getattr(str, method.__name__).__doc__
     return method
+
 
 class StringMixIn:
     """Implement the interface for ``str`` in a dynamic manner.
@@ -92,8 +94,9 @@ class StringMixIn:
 
     def __getattr__(self, attr):
         if not hasattr(str, attr):
-            raise AttributeError("{!r} object has no attribute {!r}".format(
-                type(self).__name__, attr))
+            raise AttributeError(
+                "{!r} object has no attribute {!r}".format(type(self).__name__, attr)
+            )
         return getattr(self.__str__(), attr)
 
     maketrans = str.maketrans  # Static method can't rely on __getattr__

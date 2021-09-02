@@ -34,12 +34,14 @@ from mwparserfromhell.wikicode import Wikicode
 from mwparserfromhell import parse
 from .conftest import wrap, wraptext
 
+
 def test_str():
     """test Wikicode.__str__()"""
     code1 = parse("foobar")
     code2 = parse("Have a {{template}} and a [[page|link]]")
     assert "foobar" == str(code1)
     assert "Have a {{template}} and a [[page|link]]" == str(code2)
+
 
 def test_nodes():
     """test getter/setter for the nodes attribute"""
@@ -57,6 +59,7 @@ def test_nodes():
     with pytest.raises(ValueError):
         code.__setattr__("nodes", object)
 
+
 def test_get():
     """test Wikicode.get()"""
     code = parse("Have a {{template}} and a [[page|link]]")
@@ -64,6 +67,7 @@ def test_get():
     assert code.nodes[2] is code.get(2)
     with pytest.raises(IndexError):
         code.get(4)
+
 
 def test_set():
     """test Wikicode.set()"""
@@ -82,6 +86,7 @@ def test_set():
     with pytest.raises(IndexError):
         code.set(-4, "{{baz}}")
 
+
 def test_contains():
     """test Wikicode.contains()"""
     code = parse("Here is {{aaa|{{bbb|xyz{{ccc}}}}}} and a [[page|link]]")
@@ -92,6 +97,7 @@ def test_contains():
     assert code.contains(tmpl4) is False
     assert code.contains(str(tmpl4)) is True
     assert code.contains(tmpl2.params[0].value) is True
+
 
 def test_index():
     """test Wikicode.index()"""
@@ -105,12 +111,12 @@ def test_index():
     code = parse("{{foo}}{{bar|{{baz}}}}")
     assert 1 == code.index("{{bar|{{baz}}}}")
     assert 1 == code.index("{{baz}}", recursive=True)
-    assert 1 == code.index(code.get(1).get(1).value,
-                           recursive=True)
+    assert 1 == code.index(code.get(1).get(1).value, recursive=True)
     with pytest.raises(ValueError):
         code.index("{{baz}}", recursive=False)
     with pytest.raises(ValueError):
         code.index(code.get(1).get(1).value, recursive=False)
+
 
 def test_get_ancestors_parent():
     """test Wikicode.get_ancestors() and Wikicode.get_parent()"""
@@ -130,6 +136,7 @@ def test_get_ancestors_parent():
     with pytest.raises(ValueError):
         code.get_parent(fake)
 
+
 def test_insert():
     """test Wikicode.insert()"""
     code = parse("Have a {{template}} and a [[page|link]]")
@@ -144,13 +151,21 @@ def test_insert():
     code2 = parse("{{foo}}{{bar}}{{baz}}")
     code2.insert(1, "abc{{def}}ghi[[jk]]")
     assert "{{foo}}abc{{def}}ghi[[jk]]{{bar}}{{baz}}" == code2
-    assert ["{{foo}}", "abc", "{{def}}", "ghi", "[[jk]]",
-                      "{{bar}}", "{{baz}}"] == code2.nodes
+    assert [
+        "{{foo}}",
+        "abc",
+        "{{def}}",
+        "ghi",
+        "[[jk]]",
+        "{{bar}}",
+        "{{baz}}",
+    ] == code2.nodes
 
     code3 = parse("{{foo}}bar")
     code3.insert(1000, "[[baz]]")
     code3.insert(-1000, "derp")
     assert "derp{{foo}}bar[[baz]]" == code3
+
 
 def _test_search(meth, expected):
     """Base test for insert_before(), insert_after(), and replace()."""
@@ -249,6 +264,7 @@ def _test_search(meth, expected):
     meth(code9, code9.get_sections()[0], "{{quz}}")
     assert expected[8] == code9
 
+
 def test_insert_before():
     """test Wikicode.insert_before()"""
     meth = lambda code, *args, **kw: code.insert_before(*args, **kw)
@@ -264,6 +280,7 @@ def test_insert_before():
         "{{quz}}{{qux}}{{baz}}{{bar}}{{foo}}",
     ]
     _test_search(meth, expected)
+
 
 def test_insert_after():
     """test Wikicode.insert_after()"""
@@ -281,6 +298,7 @@ def test_insert_after():
     ]
     _test_search(meth, expected)
 
+
 def test_replace():
     """test Wikicode.replace()"""
     meth = lambda code, *args, **kw: code.replace(*args, **kw)
@@ -297,6 +315,7 @@ def test_replace():
     ]
     _test_search(meth, expected)
 
+
 def test_append():
     """test Wikicode.append()"""
     code = parse("Have a {{template}}")
@@ -309,6 +328,7 @@ def test_append():
     assert "Have a {{template}}{{{argument}}} foo" == code
     with pytest.raises(ValueError):
         code.append(slice(0, 1))
+
 
 def test_remove():
     """test Wikicode.remove()"""
@@ -325,6 +345,7 @@ def test_remove():
         "",
     ]
     _test_search(meth, expected)
+
 
 def test_matches():
     """test Wikicode.matches()"""
@@ -357,17 +378,32 @@ def test_matches():
     assert code5.matches("<!-- nothing -->") is True
     assert code5.matches(("a", "b", "")) is True
 
+
 def test_filter_family():
     """test the Wikicode.i?filter() family of functions"""
+
     def genlist(gen):
         assert isinstance(gen, GeneratorType)
         return list(gen)
+
     ifilter = lambda code: (lambda *a, **k: genlist(code.ifilter(*a, **k)))
 
     code = parse("a{{b}}c[[d]]{{{e}}}{{f}}[[g]]")
     for func in (code.filter, ifilter(code)):
-        assert ["a", "{{b}}", "b", "c", "[[d]]", "d", "{{{e}}}",
-                "e", "{{f}}", "f", "[[g]]", "g"] == func()
+        assert [
+            "a",
+            "{{b}}",
+            "b",
+            "c",
+            "[[d]]",
+            "d",
+            "{{{e}}}",
+            "e",
+            "{{f}}",
+            "f",
+            "[[g]]",
+            "g",
+        ] == func()
         assert ["{{{e}}}"] == func(forcetype=Argument)
         assert code.get(4) is func(forcetype=Argument)[0]
         assert list("abcdefg") == func(forcetype=Text)
@@ -377,7 +413,7 @@ def test_filter_family():
 
     funcs = [
         lambda name, **kw: getattr(code, "filter_" + name)(**kw),
-        lambda name, **kw: genlist(getattr(code, "ifilter_" + name)(**kw))
+        lambda name, **kw: genlist(getattr(code, "ifilter_" + name)(**kw)),
     ]
     for get_filter in funcs:
         assert ["{{{e}}}"] == get_filter("arguments")
@@ -393,27 +429,35 @@ def test_filter_family():
 
     code2 = parse("{{a|{{b}}|{{c|d={{f}}{{h}}}}}}")
     for func in (code2.filter, ifilter(code2)):
-        assert ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"] \
-               == func(recursive=False, forcetype=Template)
-        assert ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
-                "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"] \
-               == func(recursive=True, forcetype=Template)
+        assert ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"] == func(
+            recursive=False, forcetype=Template
+        )
+        assert [
+            "{{a|{{b}}|{{c|d={{f}}{{h}}}}}}",
+            "{{b}}",
+            "{{c|d={{f}}{{h}}}}",
+            "{{f}}",
+            "{{h}}",
+        ] == func(recursive=True, forcetype=Template)
 
     code3 = parse("{{foobar}}{{FOO}}{{baz}}{{bz}}{{barfoo}}")
     for func in (code3.filter, ifilter(code3)):
-        assert ["{{foobar}}", "{{barfoo}}"] \
-            == func(False, matches=lambda node: "foo" in node)
-        assert ["{{foobar}}", "{{FOO}}", "{{barfoo}}"] \
-            == func(False, matches=r"foo")
-        assert ["{{foobar}}", "{{FOO}}"] \
-            == func(matches=r"^{{foo.*?}}")
-        assert ["{{foobar}}"] \
-            == func(matches=r"^{{foo.*?}}", flags=re.UNICODE)
+        assert ["{{foobar}}", "{{barfoo}}"] == func(
+            False, matches=lambda node: "foo" in node
+        )
+        assert ["{{foobar}}", "{{FOO}}", "{{barfoo}}"] == func(False, matches=r"foo")
+        assert ["{{foobar}}", "{{FOO}}"] == func(matches=r"^{{foo.*?}}")
+        assert ["{{foobar}}"] == func(matches=r"^{{foo.*?}}", flags=re.UNICODE)
         assert ["{{baz}}", "{{bz}}"] == func(matches=r"^{{b.*?z")
         assert ["{{baz}}"] == func(matches=r"^{{b.+?z}}")
 
-    exp_rec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}", "{{b}}",
-               "{{c|d={{f}}{{h}}}}", "{{f}}", "{{h}}"]
+    exp_rec = [
+        "{{a|{{b}}|{{c|d={{f}}{{h}}}}}}",
+        "{{b}}",
+        "{{c|d={{f}}{{h}}}}",
+        "{{f}}",
+        "{{h}}",
+    ]
     exp_unrec = ["{{a|{{b}}|{{c|d={{f}}{{h}}}}}}"]
     assert exp_rec == code2.filter_templates()
     assert exp_unrec == code2.filter_templates(recursive=False)
@@ -422,9 +466,9 @@ def test_filter_family():
     assert exp_unrec == code2.filter_templates(False)
 
     assert ["{{foobar}}"] == code3.filter_templates(
-        matches=lambda node: node.name.matches("Foobar"))
-    assert ["{{baz}}", "{{bz}}"] \
-        == code3.filter_templates(matches=r"^{{b.*?z")
+        matches=lambda node: node.name.matches("Foobar")
+    )
+    assert ["{{baz}}", "{{bz}}"] == code3.filter_templates(matches=r"^{{b.*?z")
     assert [] == code3.filter_tags(matches=r"^{{b.*?z")
     assert [] == code3.filter_tags(matches=r"^{{b.*?z", flags=0)
     with pytest.raises(TypeError):
@@ -439,6 +483,7 @@ def test_filter_family():
     actual2 = code4.filter_templates(code4.RECURSE_OTHERS)
     assert ["{{foo}}", "{{foo|{{bar}}}}"] == actual1
     assert ["{{foo}}", "{{foo|{{bar}}}}"] == actual2
+
 
 def test_get_sections():
     """test Wikicode.get_sections()"""
@@ -461,44 +506,70 @@ def test_get_sections():
 
     assert [""] == page1.get_sections()
     assert ["", "==Heading=="] == page2.get_sections()
-    assert ["", "===Heading===\nFoo bar baz\n====Gnidaeh====\n", "====Gnidaeh====\n"] \
-        == page3.get_sections()
-    assert [p4_lead, p4_I, p4_IA, p4_IB, p4_IB1, p4_II,
-            p4_III, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1] \
-        == page4.get_sections()
+    assert [
+        "",
+        "===Heading===\nFoo bar baz\n====Gnidaeh====\n",
+        "====Gnidaeh====\n",
+    ] == page3.get_sections()
+    assert [
+        p4_lead,
+        p4_I,
+        p4_IA,
+        p4_IB,
+        p4_IB1,
+        p4_II,
+        p4_III,
+        p4_IIIA,
+        p4_IIIA1a,
+        p4_IIIA2,
+        p4_IIIA2ai1,
+    ] == page4.get_sections()
 
     assert ["====Gnidaeh====\n"] == page3.get_sections(levels=[4])
-    assert ["===Heading===\nFoo bar baz\n====Gnidaeh====\n"] \
-        == page3.get_sections(levels=(2, 3))
-    assert ["===Heading===\nFoo bar baz\n"] \
-        == page3.get_sections(levels=(2, 3), flat=True)
+    assert ["===Heading===\nFoo bar baz\n====Gnidaeh====\n"] == page3.get_sections(
+        levels=(2, 3)
+    )
+    assert ["===Heading===\nFoo bar baz\n"] == page3.get_sections(
+        levels=(2, 3), flat=True
+    )
     assert [] == page3.get_sections(levels=[0])
-    assert ["", "====Gnidaeh====\n"] == page3.get_sections(levels=[4], include_lead=True)
-    assert ["===Heading===\nFoo bar baz\n====Gnidaeh====\n",
-            "====Gnidaeh====\n"] == page3.get_sections(include_lead=False)
-    assert ["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"] \
-        == page3.get_sections(flat=True, include_lead=False)
+    assert ["", "====Gnidaeh====\n"] == page3.get_sections(
+        levels=[4], include_lead=True
+    )
+    assert [
+        "===Heading===\nFoo bar baz\n====Gnidaeh====\n",
+        "====Gnidaeh====\n",
+    ] == page3.get_sections(include_lead=False)
+    assert ["===Heading===\nFoo bar baz\n", "====Gnidaeh====\n"] == page3.get_sections(
+        flat=True, include_lead=False
+    )
 
     assert [p4_IB1, p4_IIIA2] == page4.get_sections(levels=[4])
     assert [p4_IA, p4_IB, p4_IIIA] == page4.get_sections(levels=[3])
-    assert [p4_IA, "=== Section I.B ===\n",
-            "=== Section III.A ===\nText.\n"] \
-        == page4.get_sections(levels=[3], flat=True)
+    assert [
+        p4_IA,
+        "=== Section I.B ===\n",
+        "=== Section III.A ===\nText.\n",
+    ] == page4.get_sections(levels=[3], flat=True)
     assert ["", ""] == page2.get_sections(include_headings=False)
-    assert ["\nSection I.B.1 body.\n\n&bull;Some content.\n\n",
-            "\nEven more text.\n" + p4_IIIA2ai1] \
-        == page4.get_sections(levels=[4], include_headings=False)
+    assert [
+        "\nSection I.B.1 body.\n\n&bull;Some content.\n\n",
+        "\nEven more text.\n" + p4_IIIA2ai1,
+    ] == page4.get_sections(levels=[4], include_headings=False)
 
     assert [] == page4.get_sections(matches=r"body")
-    assert [p4_I, p4_IA, p4_IB, p4_IB1] \
-        == page4.get_sections(matches=r"Section\sI[.\s].*?")
-    assert [p4_IA, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1] \
-        == page4.get_sections(matches=r".*?a.*?")
-    assert [p4_IIIA1a, p4_IIIA2ai1] \
-        == page4.get_sections(matches=r".*?a.*?", flags=re.U)
-    assert ["\nMore text.\n", "\nAn invalid section!"] \
-        == page4.get_sections(matches=r".*?a.*?", flags=re.U,
-                              include_headings=False)
+    assert [p4_I, p4_IA, p4_IB, p4_IB1] == page4.get_sections(
+        matches=r"Section\sI[.\s].*?"
+    )
+    assert [p4_IA, p4_IIIA, p4_IIIA1a, p4_IIIA2, p4_IIIA2ai1] == page4.get_sections(
+        matches=r".*?a.*?"
+    )
+    assert [p4_IIIA1a, p4_IIIA2ai1] == page4.get_sections(
+        matches=r".*?a.*?", flags=re.U
+    )
+    assert ["\nMore text.\n", "\nAn invalid section!"] == page4.get_sections(
+        matches=r".*?a.*?", flags=re.U, include_headings=False
+    )
 
     sections = page2.get_sections(include_headings=False)
     sections[0].append("Lead!\n")
@@ -512,22 +583,22 @@ def test_get_sections():
     assert "== Foo ==\nBarf {{Haha}}\n" == section
     assert "X\n== Foo ==\nBarf {{Haha}}\n== Baz ==\nBuzz" == page5
 
+
 def test_strip_code():
     """test Wikicode.strip_code()"""
     # Since individual nodes have test cases for their __strip__ methods,
     # we're only going to do an integration test:
     code = parse("Foo [[bar]]\n\n{{baz|hello}}\n\n[[a|b]] &Sigma;")
-    assert "Foo bar\n\nb Σ" \
-           == code.strip_code(normalize=True, collapse=True)
-    assert "Foo bar\n\n\n\nb Σ" \
-           == code.strip_code(normalize=True, collapse=False)
-    assert "Foo bar\n\nb &Sigma;" \
-           == code.strip_code(normalize=False, collapse=True)
-    assert "Foo bar\n\n\n\nb &Sigma;" \
-           == code.strip_code(normalize=False, collapse=False)
-    assert "Foo bar\n\nhello\n\nb Σ" \
-           == code.strip_code(normalize=True, collapse=True,
-                              keep_template_params=True)
+    assert "Foo bar\n\nb Σ" == code.strip_code(normalize=True, collapse=True)
+    assert "Foo bar\n\n\n\nb Σ" == code.strip_code(normalize=True, collapse=False)
+    assert "Foo bar\n\nb &Sigma;" == code.strip_code(normalize=False, collapse=True)
+    assert "Foo bar\n\n\n\nb &Sigma;" == code.strip_code(
+        normalize=False, collapse=False
+    )
+    assert "Foo bar\n\nhello\n\nb Σ" == code.strip_code(
+        normalize=True, collapse=True, keep_template_params=True
+    )
+
 
 def test_get_tree():
     """test Wikicode.get_tree()"""
@@ -535,6 +606,8 @@ def test_get_tree():
     # methods, and the docstring covers all possibilities for the output of
     # __showtree__, we'll test it only:
     code = parse("Lorem ipsum {{foo|bar|{{baz}}|spam=eggs}}")
-    expected = "Lorem ipsum \n{{\n\t  foo\n\t| 1\n\t= bar\n\t| 2\n\t= " + \
-               "{{\n\t\t\tbaz\n\t  }}\n\t| spam\n\t= eggs\n}}"
+    expected = (
+        "Lorem ipsum \n{{\n\t  foo\n\t| 1\n\t= bar\n\t| 2\n\t= "
+        + "{{\n\t\t\tbaz\n\t  }}\n\t| spam\n\t= eggs\n}}"
+    )
     assert expected.expandtabs(4) == code.get_tree()

@@ -24,6 +24,7 @@ from ..utils import parse_anything
 
 __all__ = ["Wikilink"]
 
+
 class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
 

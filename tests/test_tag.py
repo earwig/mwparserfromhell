@@ -34,21 +34,20 @@ agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), None)
 agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, '"', a, b, c)
 agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, '"', a, b, c)
 
+
 def test_str():
     """test Tag.__str__()"""
     node1 = Tag(wraptext("ref"))
-    node2 = Tag(wraptext("span"), wraptext("foo"),
-                [agen("style", "color: red;")])
-    node3 = Tag(wraptext("ref"),
-                attrs=[agennq("name", "foo"),
-                       agenpnv("some_attr", "   ", "", "")],
-                self_closing=True)
+    node2 = Tag(wraptext("span"), wraptext("foo"), [agen("style", "color: red;")])
+    node3 = Tag(
+        wraptext("ref"),
+        attrs=[agennq("name", "foo"), agenpnv("some_attr", "   ", "", "")],
+        self_closing=True,
+    )
     node4 = Tag(wraptext("br"), self_closing=True, padding=" ")
     node5 = Tag(wraptext("br"), self_closing=True, implicit=True)
-    node6 = Tag(wraptext("br"), self_closing=True, invalid=True,
-                implicit=True)
-    node7 = Tag(wraptext("br"), self_closing=True, invalid=True,
-                padding=" ")
+    node6 = Tag(wraptext("br"), self_closing=True, invalid=True, implicit=True)
+    node7 = Tag(wraptext("br"), self_closing=True, invalid=True, padding=" ")
     node8 = Tag(wraptext("hr"), wiki_markup="----", self_closing=True)
     node9 = Tag(wraptext("i"), wraptext("italics!"), wiki_markup="''")
 
@@ -62,6 +61,7 @@ def test_str():
     assert "----" == str(node8)
     assert "''italics!''" == str(node9)
 
+
 def test_children():
     """test Tag.__children__()"""
     # <ref>foobar</ref>
@@ -69,10 +69,12 @@ def test_children():
     # '''bold text'''
     node2 = Tag(wraptext("b"), wraptext("bold text"), wiki_markup="'''")
     # <img id="foo" class="bar" selected />
-    node3 = Tag(wraptext("img"),
-                attrs=[agen("id", "foo"), agen("class", "bar"),
-                       agennv("selected")],
-                self_closing=True, padding=" ")
+    node3 = Tag(
+        wraptext("img"),
+        attrs=[agen("id", "foo"), agen("class", "bar"), agennv("selected")],
+        self_closing=True,
+        padding=" ",
+    )
 
     gen1 = node1.__children__()
     gen2 = node2.__children__()
@@ -94,6 +96,7 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen3)
 
+
 def test_strip():
     """test Tag.__strip__()"""
     node1 = Tag(wraptext("i"), wraptext("foobar"))
@@ -104,27 +107,45 @@ def test_strip():
     assert node2.__strip__() is None
     assert node3.__strip__() is None
 
+
 def test_showtree():
     """test Tag.__showtree__()"""
     output = []
     getter, marker = object(), object()
     get = lambda code: output.append((getter, code))
     mark = lambda: output.append(marker)
-    node1 = Tag(wraptext("ref"), wraptext("text"),
-                [agen("name", "foo"), agennv("selected")])
+    node1 = Tag(
+        wraptext("ref"), wraptext("text"), [agen("name", "foo"), agennv("selected")]
+    )
     node2 = Tag(wraptext("br"), self_closing=True, padding=" ")
-    node3 = Tag(wraptext("br"), self_closing=True, invalid=True,
-                implicit=True, padding=" ")
+    node3 = Tag(
+        wraptext("br"), self_closing=True, invalid=True, implicit=True, padding=" "
+    )
     node1.__showtree__(output.append, get, mark)
     node2.__showtree__(output.append, get, mark)
     node3.__showtree__(output.append, get, mark)
     valid = [
-        "<", (getter, node1.tag), (getter, node1.attributes[0].name),
-        "    = ", marker, (getter, node1.attributes[0].value),
-        (getter, node1.attributes[1].name), ">", (getter, node1.contents),
-        "</", (getter, node1.closing_tag), ">", "<", (getter, node2.tag),
-        "/>", "</", (getter, node3.tag), ">"]
+        "<",
+        (getter, node1.tag),
+        (getter, node1.attributes[0].name),
+        "    = ",
+        marker,
+        (getter, node1.attributes[0].value),
+        (getter, node1.attributes[1].name),
+        ">",
+        (getter, node1.contents),
+        "</",
+        (getter, node1.closing_tag),
+        ">",
+        "<",
+        (getter, node2.tag),
+        "/>",
+        "</",
+        (getter, node3.tag),
+        ">",
+    ]
     assert valid == output
+
 
 def test_tag():
     """test getter/setter for the tag attribute"""
@@ -137,6 +158,7 @@ def test_tag():
     assert_wikicode_equal(wraptext("span"), node.closing_tag)
     assert "<span>text</span>" == node
 
+
 def test_contents():
     """test getter/setter for the contents attribute"""
     contents = wraptext("text")
@@ -147,6 +169,7 @@ def test_contents():
     assert_wikicode_equal(parsed, node.contents)
     assert "<ref>text and a {{template}}</ref>" == node
 
+
 def test_attributes():
     """test getter for the attributes attribute"""
     attrs = [agen("name", "bar")]
@@ -154,6 +177,7 @@ def test_attributes():
     node2 = Tag(wraptext("ref"), wraptext("foo"), attrs)
     assert [] == node1.attributes
     assert attrs is node2.attributes
+
 
 def test_wiki_markup():
     """test getter/setter for the wiki_markup attribute"""
@@ -166,6 +190,7 @@ def test_wiki_markup():
     assert node.wiki_markup is None
     assert "<i>italic text</i>" == node
 
+
 def test_self_closing():
     """test getter/setter for the self_closing attribute"""
     node = Tag(wraptext("ref"), wraptext("foobar"))
@@ -176,6 +201,7 @@ def test_self_closing():
     node.self_closing = 0
     assert node.self_closing is False
     assert "<ref>foobar</ref>" == node
+
 
 def test_invalid():
     """test getter/setter for the invalid attribute"""
@@ -188,6 +214,7 @@ def test_invalid():
     assert node.invalid is False
     assert "<br>" == node
 
+
 def test_implicit():
     """test getter/setter for the implicit attribute"""
     node = Tag(wraptext("br"), self_closing=True)
@@ -198,6 +225,7 @@ def test_implicit():
     node.implicit = 0
     assert node.implicit is False
     assert "<br/>" == node
+
 
 def test_padding():
     """test getter/setter for the padding attribute"""
@@ -212,6 +240,7 @@ def test_padding():
     with pytest.raises(ValueError):
         node.__setattr__("padding", True)
 
+
 def test_closing_tag():
     """test getter/setter for the closing_tag attribute"""
     tag = wraptext("ref")
@@ -221,6 +250,7 @@ def test_closing_tag():
     parsed = wrap([Text("ref "), Template(wraptext("ignore me"))])
     assert_wikicode_equal(parsed, node.closing_tag)
     assert "<ref>foobar</ref {{ignore me}}>" == node
+
 
 def test_wiki_style_separator():
     """test getter/setter for wiki_style_separator attribute"""
@@ -232,6 +262,7 @@ def test_wiki_style_separator():
     assert "{|\n{" == node
     node2 = Tag(wraptext("table"), wraptext("\n"), wiki_style_separator="|")
     assert "|" == node2.wiki_style_separator
+
 
 def test_closing_wiki_markup():
     """test getter/setter for closing_wiki_markup attribute"""
@@ -248,11 +279,16 @@ def test_closing_wiki_markup():
     node.wiki_markup = False
     assert node.closing_wiki_markup is None
     assert "<table>\n</table>" == node
-    node2 = Tag(wraptext("table"), wraptext("\n"),
-                attrs=[agen("id", "foo")], wiki_markup="{|",
-                closing_wiki_markup="|}")
+    node2 = Tag(
+        wraptext("table"),
+        wraptext("\n"),
+        attrs=[agen("id", "foo")],
+        wiki_markup="{|",
+        closing_wiki_markup="|}",
+    )
     assert "|}" == node2.closing_wiki_markup
     assert '{| id="foo"\n|}' == node2
+
 
 def test_has():
     """test Tag.has()"""
@@ -263,18 +299,25 @@ def test_has():
     assert node.has("Name") is False
     assert node.has("foo") is False
 
-    attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
-             agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+    attrs = [
+        agen("id", "foo"),
+        agenp("class", "bar", "  ", "\n", "\n"),
+        agen("foo", "bar"),
+        agenpnv("foo", " ", "  \n ", " \t"),
+    ]
     node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
     assert node2.has("id") is True
     assert node2.has("class") is True
-    assert node2.has(attrs[1].pad_first + str(attrs[1].name) +
-                     attrs[1].pad_before_eq) is True
+    assert (
+        node2.has(attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq)
+        is True
+    )
     assert node2.has(attrs[3]) is True
     assert node2.has(str(attrs[3])) is True
     assert node2.has("idclass") is False
     assert node2.has("id class") is False
     assert node2.has("id=foo") is False
+
 
 def test_get():
     """test Tag.get()"""
@@ -288,13 +331,18 @@ def test_get():
     with pytest.raises(ValueError):
         node.get("foo")
 
-    attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
-             agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+    attrs = [
+        agen("id", "foo"),
+        agenp("class", "bar", "  ", "\n", "\n"),
+        agen("foo", "bar"),
+        agenpnv("foo", " ", "  \n ", " \t"),
+    ]
     node2 = Tag(wraptext("div"), attrs=attrs, self_closing=True)
     assert attrs[0] is node2.get("id")
     assert attrs[1] is node2.get("class")
     assert attrs[1] is node2.get(
-        attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq)
+        attrs[1].pad_first + str(attrs[1].name) + attrs[1].pad_before_eq
+    )
     assert attrs[3] is node2.get(attrs[3])
     assert attrs[3] is node2.get(str(attrs[3]))
     assert attrs[3] is node2.get(" foo")
@@ -304,6 +352,7 @@ def test_get():
         node2.get("id class")
     with pytest.raises(ValueError):
         node2.get("id=foo")
+
 
 def test_add():
     """test Tag.add()"""
@@ -330,19 +379,29 @@ def test_add():
     assert attr6 == node.attributes[5]
     assert attr7 == node.attributes[6]
     assert attr7 == node.get("name")
-    assert_wikicode_equal(wrap([Template(wraptext("foobar"))]),
-                             node.attributes[5].value)
-    assert "".join(("<ref", attr1, attr2, attr3, attr4, attr5,
-                    attr6, attr7, ">cite</ref>")) == node
+    assert_wikicode_equal(
+        wrap([Template(wraptext("foobar"))]), node.attributes[5].value
+    )
+    assert (
+        "".join(
+            ("<ref", attr1, attr2, attr3, attr4, attr5, attr6, attr7, ">cite</ref>")
+        )
+        == node
+    )
     with pytest.raises(ValueError):
         node.add("name", "foo", quotes="bar")
     with pytest.raises(ValueError):
         node.add("name", "a bc d", quotes=None)
 
+
 def test_remove():
     """test Tag.remove()"""
-    attrs = [agen("id", "foo"), agenp("class", "bar", "  ", "\n", "\n"),
-             agen("foo", "bar"), agenpnv("foo", " ", "  \n ", " \t")]
+    attrs = [
+        agen("id", "foo"),
+        agenp("class", "bar", "  ", "\n", "\n"),
+        agen("foo", "bar"),
+        agenpnv("foo", " ", "  \n ", " \t"),
+    ]
     node = Tag(wraptext("div"), attrs=attrs, self_closing=True)
     node.remove("class")
     assert '<div id="foo" foo="bar" foo  \n />' == node
@@ -351,4 +410,4 @@ def test_remove():
     with pytest.raises(ValueError):
         node.remove("foo")
     node.remove("id")
-    assert '<div/>' == node
+    assert "<div/>" == node

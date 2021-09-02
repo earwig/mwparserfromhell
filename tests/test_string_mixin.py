@@ -29,6 +29,7 @@ import pytest
 
 from mwparserfromhell.string_mixin import StringMixIn
 
+
 class _FakeString(StringMixIn):
     def __init__(self, data):
         self._data = data
@@ -36,21 +37,62 @@ class _FakeString(StringMixIn):
     def __str__(self):
         return self._data
 
-@pytest.mark.parametrize('method', [
-    "capitalize", "casefold", "center", "count", "encode", "endswith",
-    "expandtabs", "find", "format", "format_map", "index", "isalnum",
-    "isalpha", "isdecimal", "isdigit", "isidentifier", "islower",
-    "isnumeric", "isprintable", "isspace", "istitle", "isupper",
-    "join", "ljust", "lower", "lstrip", "maketrans", "partition",
-    "replace", "rfind", "rindex", "rjust", "rpartition", "rsplit",
-    "rstrip", "split", "splitlines", "startswith", "strip", "swapcase",
-    "title", "translate", "upper", "zfill"
-])
+
+@pytest.mark.parametrize(
+    "method",
+    [
+        "capitalize",
+        "casefold",
+        "center",
+        "count",
+        "encode",
+        "endswith",
+        "expandtabs",
+        "find",
+        "format",
+        "format_map",
+        "index",
+        "isalnum",
+        "isalpha",
+        "isdecimal",
+        "isdigit",
+        "isidentifier",
+        "islower",
+        "isnumeric",
+        "isprintable",
+        "isspace",
+        "istitle",
+        "isupper",
+        "join",
+        "ljust",
+        "lower",
+        "lstrip",
+        "maketrans",
+        "partition",
+        "replace",
+        "rfind",
+        "rindex",
+        "rjust",
+        "rpartition",
+        "rsplit",
+        "rstrip",
+        "split",
+        "splitlines",
+        "startswith",
+        "strip",
+        "swapcase",
+        "title",
+        "translate",
+        "upper",
+        "zfill",
+    ],
+)
 def test_docs(method):
     """make sure the various methods of StringMixIn have docstrings"""
     expected = getattr("foo", method).__doc__
     actual = getattr(_FakeString("foo"), method).__doc__
     assert expected == actual
+
 
 def test_types():
     """make sure StringMixIns convert to different types correctly"""
@@ -62,6 +104,7 @@ def test_types():
     assert isinstance(str(fstr), str)
     assert isinstance(bytes(fstr), bytes)
     assert isinstance(repr(fstr), str)
+
 
 def test_comparisons():
     """make sure comparison operators work"""
@@ -98,6 +141,7 @@ def test_comparisons():
     assert str5 != str1
     assert str5 < str1
     assert str5 <= str1
+
 
 def test_other_magics():
     """test other magically implemented features, like len() and iter()"""
@@ -153,6 +197,7 @@ def test_other_magics():
     assert "" in str2
     assert "real" not in str1
     assert "s" not in str2
+
 
 def test_other_methods():
     """test the remaining non-magic methods of StringMixIn"""
@@ -354,8 +399,21 @@ def test_other_methods():
     actual = ["this", "is", "a", "sentence", "with", "whitespace"]
     assert actual == str25.rsplit()
     assert actual == str25.rsplit(None)
-    actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
-              "", "whitespace", ""]
+    actual = [
+        "",
+        "",
+        "",
+        "this",
+        "is",
+        "a",
+        "",
+        "",
+        "sentence",
+        "with",
+        "",
+        "whitespace",
+        "",
+    ]
     assert actual == str25.rsplit(" ")
     actual = ["   this is a", "sentence", "with", "whitespace"]
     assert actual == str25.rsplit(None, 3)
@@ -371,8 +429,21 @@ def test_other_methods():
     actual = ["this", "is", "a", "sentence", "with", "whitespace"]
     assert actual == str25.split()
     assert actual == str25.split(None)
-    actual = ["", "", "", "this", "is", "a", "", "", "sentence", "with",
-              "", "whitespace", ""]
+    actual = [
+        "",
+        "",
+        "",
+        "this",
+        "is",
+        "a",
+        "",
+        "",
+        "sentence",
+        "with",
+        "",
+        "whitespace",
+        "",
+    ]
     assert actual == str25.split(" ")
     actual = ["this", "is", "a", "sentence with  whitespace "]
     assert actual == str25.split(None, 3)
@@ -382,10 +453,15 @@ def test_other_methods():
     assert actual == str25.split(maxsplit=3)
 
     str26 = _FakeString("lines\nof\ntext\r\nare\r\npresented\nhere")
-    assert ["lines", "of", "text", "are", "presented", "here"] \
-           == str26.splitlines()
-    assert ["lines\n", "of\n", "text\r\n", "are\r\n", "presented\n", "here"] \
-           == str26.splitlines(True)
+    assert ["lines", "of", "text", "are", "presented", "here"] == str26.splitlines()
+    assert [
+        "lines\n",
+        "of\n",
+        "text\r\n",
+        "are\r\n",
+        "presented\n",
+        "here",
+    ] == str26.splitlines(True)
 
     assert str1.startswith("fake") is True
     assert str1.startswith("faker") is False
@@ -398,8 +474,7 @@ def test_other_methods():
 
     assert "Fake String" == str1.title()
 
-    table1 = StringMixIn.maketrans({97: "1", 101: "2", 105: "3",
-                                    111: "4", 117: "5"})
+    table1 = StringMixIn.maketrans({97: "1", 101: "2", 105: "3", 111: "4", 117: "5"})
     table2 = StringMixIn.maketrans("aeiou", "12345")
     table3 = StringMixIn.maketrans("aeiou", "12345", "rts")
     assert "f1k2 str3ng" == str1.translate(table1)

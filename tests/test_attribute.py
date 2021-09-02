@@ -28,6 +28,7 @@ from mwparserfromhell.nodes import Template
 from mwparserfromhell.nodes.extras import Attribute
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
+
 def test_str():
     """test Attribute.__str__()"""
     node = Attribute(wraptext("foo"))
@@ -43,6 +44,7 @@ def test_str():
     node6 = Attribute(wraptext("a"), wrap([]), None, " ", "", " ")
     assert " a= " == str(node6)
 
+
 def test_name():
     """test getter/setter for the name attribute"""
     name = wraptext("id")
@@ -50,6 +52,7 @@ def test_name():
     assert name is node.name
     node.name = "{{id}}"
     assert_wikicode_equal(wrap([Template(wraptext("id"))]), node.name)
+
 
 def test_value():
     """test getter/setter for the value attribute"""
@@ -74,6 +77,7 @@ def test_value():
     assert_wikicode_equal(wraptext("fo\"o 'bar' b\"az"), node2.value)
     assert '"' == node2.quotes
 
+
 def test_quotes():
     """test getter/setter for the quotes attribute"""
     node1 = Attribute(wraptext("id"), wraptext("foo"), None)
@@ -91,6 +95,7 @@ def test_quotes():
         node3.__setattr__("quotes", None)
     with pytest.raises(ValueError):
         Attribute(wraptext("id"), wraptext("foo bar baz"), None)
+
 
 def test_padding():
     """test getter/setter for the padding attributes"""

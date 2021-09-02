@@ -24,6 +24,7 @@ from ...utils import parse_anything
 
 __all__ = ["Attribute"]
 
+
 class Attribute(StringMixIn):
     """Represents an attribute of an HTML tag.
 
@@ -32,8 +33,15 @@ class Attribute(StringMixIn):
     whose value is ``"foo"``.
     """
 
-    def __init__(self, name, value=None, quotes='"', pad_first=" ",
-                 pad_before_eq="", pad_after_eq=""):
+    def __init__(
+        self,
+        name,
+        value=None,
+        quotes='"',
+        pad_first=" ",
+        pad_before_eq="",
+        pad_after_eq="",
+    ):
         super().__init__()
         self.name = name
         self._quotes = None

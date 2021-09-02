@@ -26,6 +26,7 @@ import pytest
 
 from mwparserfromhell.parser import tokens
 
+
 @pytest.mark.parametrize("name", tokens.__all__)
 def test_issubclass(name):
     """check that all classes within the tokens module are really Tokens"""
@@ -33,6 +34,7 @@ def test_issubclass(name):
     assert issubclass(klass, tokens.Token) is True
     assert isinstance(klass(), klass)
     assert isinstance(klass(), tokens.Token)
+
 
 def test_attributes():
     """check that Token attributes can be managed properly"""
@@ -54,6 +56,7 @@ def test_attributes():
     with pytest.raises(KeyError):
         token2.__delattr__("baz")
 
+
 def test_repr():
     """check that repr() on a Token works as expected"""
     token1 = tokens.Token()
@@ -64,6 +67,7 @@ def test_repr():
     assert "Token()" == repr(token1)
     assert repr(token2) in ("Token(foo='bar', baz=123)", "Token(baz=123, foo='bar')")
     assert "Text(text='" + hundredchars + "')" == repr(token3)
+
 
 def test_equality():
     """check that equivalent tokens are considered equal"""
@@ -83,11 +87,11 @@ def test_equality():
     assert token4 != token6
     assert token5 != token6
 
-@pytest.mark.parametrize("token", [
-    tokens.Token(),
-    tokens.Token(foo="bar", baz=123),
-    tokens.Text(text="earwig")
-])
+
+@pytest.mark.parametrize(
+    "token",
+    [tokens.Token(), tokens.Token(foo="bar", baz=123), tokens.Text(text="earwig")],
+)
 def test_repr_equality(token):
     """check that eval(repr(token)) == token"""
     assert token == eval(repr(token), vars(tokens))

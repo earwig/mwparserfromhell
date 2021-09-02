@@ -23,6 +23,7 @@ from ._base import Node
 
 __all__ = ["Text"]
 
+
 class Text(Node):
     """Represents ordinary, unformatted text with no special properties."""
 

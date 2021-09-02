@@ -30,7 +30,6 @@ __license__ = "MIT License"
 __version__ = "0.7.dev0"
 __email__ = "ben.kurtovic@gmail.com"
 
-from . import (definitions, nodes, parser, smart_list, string_mixin,
-               utils, wikicode)
+from . import definitions, nodes, parser, smart_list, string_mixin, utils, wikicode
 
 parse = utils.parse_anything

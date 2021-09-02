@@ -30,12 +30,12 @@ SOFTWARE.
 int route_state;
 uint64_t route_context;
 
-char** entitydefs;
+char **entitydefs;
 
-PyObject* NOARGS;
-PyObject* definitions;
+PyObject *NOARGS;
+PyObject *definitions;
 
-static PyObject* ParserError;
+static PyObject *ParserError;
 
 /* Forward declarations */
 
@@ -44,17 +44,18 @@ static int load_exceptions(void);
 /*
     Create a new tokenizer object.
 */
-static PyObject*
-Tokenizer_new(PyTypeObject* type, PyObject* args, PyObject* kwds)
+static PyObject *
+Tokenizer_new(PyTypeObject *type, PyObject *args, PyObject *kwds)
 {
-    Tokenizer* self = (Tokenizer*) type->tp_alloc(type, 0);
-    return (PyObject*) self;
+    Tokenizer *self = (Tokenizer *) type->tp_alloc(type, 0);
+    return (PyObject *) self;
 }
 
 /*
     Deallocate the given tokenizer's text field.
 */
-static void dealloc_tokenizer_text(TokenizerInput* text)
+static void
+dealloc_tokenizer_text(TokenizerInput *text)
 {
     Py_XDECREF(text->object);
 }
@@ -62,7 +63,8 @@ static void dealloc_tokenizer_text(TokenizerInput* text)
 /*
     Deallocate the given tokenizer object.
 */
-static void Tokenizer_dealloc(Tokenizer* self)
+static void
+Tokenizer_dealloc(Tokenizer *self)
 {
     Stack *this = self->topstack, *next;
     dealloc_tokenizer_text(&self->text);
@@ -74,13 +76,14 @@ static void Tokenizer_dealloc(Tokenizer* self)
         free(this);
         this = next;
     }
-    Py_TYPE(self)->tp_free((PyObject*) self);
+    Py_TYPE(self)->tp_free((PyObject *) self);
 }
 
 /*
     Initialize a new tokenizer instance's text field.
 */
-static void init_tokenizer_text(TokenizerInput* text)
+static void
+init_tokenizer_text(TokenizerInput *text)
 {
     text->object = Py_None;
     Py_INCREF(Py_None);
@@ -92,12 +95,14 @@ static void init_tokenizer_text(TokenizerInput* text)
 /*
     Initialize a new tokenizer instance by setting instance attributes.
 */
-static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
+static int
+Tokenizer_init(Tokenizer *self, PyObject *args, PyObject *kwds)
 {
-    static char* kwlist[] = {NULL};
+    static char *kwlist[] = {NULL};
 
-    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist))
+    if (!PyArg_ParseTupleAndKeywords(args, kwds, "", kwlist)) {
         return -1;
+    }
     init_tokenizer_text(&self->text);
     self->topstack = NULL;
     self->head = self->global = self->depth = 0;
@@ -110,13 +115,15 @@ static int Tokenizer_init(Tokenizer* self, PyObject* args, PyObject* kwds)
 /*
     Load input text into the tokenizer.
 */
-static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
+static int
+load_tokenizer_text(TokenizerInput *text, PyObject *input)
 {
     dealloc_tokenizer_text(text);
     text->object = input;
 
-    if (PyUnicode_READY(input) < 0)
+    if (PyUnicode_READY(input) < 0) {
         return -1;
+    }
     text->kind = PyUnicode_KIND(input);
     text->data = PyUnicode_DATA(input);
     text->length = PyUnicode_GET_LENGTH(input);
@@ -126,7 +133,8 @@ static int load_tokenizer_text(TokenizerInput* text, PyObject *input)
 /*
     Build a list of tokens from a string of wikicode and return it.
 */
-static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
+static PyObject *
+Tokenizer_tokenize(Tokenizer *self, PyObject *args)
 {
     PyObject *input, *tokens;
     unsigned long long context = 0;
@@ -134,22 +142,25 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 
     if (PyArg_ParseTuple(args, "U|Kp", &input, &context, &skip_style_tags)) {
         Py_INCREF(input);
-        if (load_tokenizer_text(&self->text, input))
+        if (load_tokenizer_text(&self->text, input)) {
             return NULL;
-    }
-    else {
+        }
+    } else {
         const char *encoded;
         Py_ssize_t size;
 
         /* Failed to parse a Unicode object; try a string instead. */
         PyErr_Clear();
-        if (!PyArg_ParseTuple(args, "s#|Kp", &encoded, &size, &context,
-                              &skip_style_tags))
+        if (!PyArg_ParseTuple(
+                args, "s#|Kp", &encoded, &size, &context, &skip_style_tags)) {
             return NULL;
-        if (!(input = PyUnicode_FromStringAndSize(encoded, size)))
+        }
+        if (!(input = PyUnicode_FromStringAndSize(encoded, size))) {
             return NULL;
-        if (load_tokenizer_text(&self->text, input))
+        }
+        if (load_tokenizer_text(&self->text, input)) {
             return NULL;
+        }
     }
 
     self->head = self->global = self->depth = 0;
@@ -162,73 +173,83 @@ static PyObject* Tokenizer_tokenize(Tokenizer* self, PyObject* args)
 
     if (!tokens || self->topstack) {
         Py_XDECREF(tokens);
-        if (PyErr_Occurred())
+        if (PyErr_Occurred()) {
             return NULL;
-        if (!ParserError && load_exceptions() < 0)
+        }
+        if (!ParserError && load_exceptions() < 0) {
             return NULL;
+        }
         if (BAD_ROUTE) {
             RESET_ROUTE();
             PyErr_SetString(ParserError, "C tokenizer exited with BAD_ROUTE");
-        }
-        else if (self->topstack)
+        } else if (self->topstack) {
             PyErr_SetString(ParserError,
                             "C tokenizer exited with non-empty token stack");
-        else
+        } else {
             PyErr_SetString(ParserError, "C tokenizer exited unexpectedly");
+        }
         return NULL;
     }
     return tokens;
 }
 
-static int load_entities(void)
+static int
+load_entities(void)
 {
     PyObject *tempmod, *defmap, *deflist;
     unsigned numdefs, i;
     PyObject *string;
 
     tempmod = PyImport_ImportModule("html.entities");
-    if (!tempmod)
+    if (!tempmod) {
         return -1;
+    }
     defmap = PyObject_GetAttrString(tempmod, "entitydefs");
-    if (!defmap)
+    if (!defmap) {
         return -1;
+    }
     Py_DECREF(tempmod);
     deflist = PyDict_Keys(defmap);
-    if (!deflist)
+    if (!deflist) {
         return -1;
+    }
     Py_DECREF(defmap);
     numdefs = (unsigned) PyList_GET_SIZE(deflist);
-    entitydefs = calloc(numdefs + 1, sizeof(char*));
-    if (!entitydefs)
+    entitydefs = calloc(numdefs + 1, sizeof(char *));
+    if (!entitydefs) {
         return -1;
+    }
     for (i = 0; i < numdefs; i++) {
         string = PyUnicode_AsASCIIString(PyList_GET_ITEM(deflist, i));
-        if (!string)
+        if (!string) {
             return -1;
+        }
         entitydefs[i] = PyBytes_AsString(string);
-        if (!entitydefs[i])
+        if (!entitydefs[i]) {
             return -1;
+        }
     }
     Py_DECREF(deflist);
     return 0;
 }
 
-static int load_tokens(void)
+static int
+load_tokens(void)
 {
-    PyObject *tempmod, *tokens,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = PyUnicode_FromString("tokens");
+    PyObject *tempmod, *tokens;
+    PyObject *globals = PyEval_GetGlobals(), *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1), *modname = PyUnicode_FromString("tokens");
     char *name = "mwparserfromhell.parser";
 
-    if (!fromlist || !modname)
+    if (!fromlist || !modname) {
         return -1;
+    }
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tempmod)
+    if (!tempmod) {
         return -1;
+    }
     tokens = PyObject_GetAttrString(tempmod, "tokens");
     Py_DECREF(tempmod);
     load_tokens_from_module(tokens);
@@ -236,43 +257,45 @@ static int load_tokens(void)
     return 0;
 }
 
-static int load_defs(void)
+static int
+load_defs(void)
 {
-    PyObject *tempmod,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = PyUnicode_FromString("definitions");
+    PyObject *tempmod;
+    PyObject *globals = PyEval_GetGlobals(), *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1), *modname = PyUnicode_FromString("definitions");
     char *name = "mwparserfromhell";
 
-    if (!fromlist || !modname)
+    if (!fromlist || !modname) {
         return -1;
+    }
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tempmod)
+    if (!tempmod) {
         return -1;
+    }
     definitions = PyObject_GetAttrString(tempmod, "definitions");
     Py_DECREF(tempmod);
     return 0;
 }
 
-static int load_exceptions(void)
+static int
+load_exceptions(void)
 {
-    PyObject *tempmod, *parsermod,
-             *globals = PyEval_GetGlobals(),
-             *locals = PyEval_GetLocals(),
-             *fromlist = PyList_New(1),
-             *modname = PyUnicode_FromString("parser");
+    PyObject *tempmod, *parsermod;
+    PyObject *globals = PyEval_GetGlobals(), *locals = PyEval_GetLocals(),
+             *fromlist = PyList_New(1), *modname = PyUnicode_FromString("parser");
     char *name = "mwparserfromhell";
 
-    if (!fromlist || !modname)
+    if (!fromlist || !modname) {
         return -1;
+    }
     PyList_SET_ITEM(fromlist, 0, modname);
     tempmod = PyImport_ImportModuleLevel(name, globals, locals, fromlist, 0);
     Py_DECREF(fromlist);
-    if (!tempmod)
+    if (!tempmod) {
         return -1;
+    }
     parsermod = PyObject_GetAttrString(tempmod, "parser");
     Py_DECREF(tempmod);
     ParserError = PyObject_GetAttrString(parsermod, "ParserError");
@@ -280,22 +303,26 @@ static int load_exceptions(void)
     return 0;
 }
 
-PyMODINIT_FUNC PyInit__tokenizer(void)
+PyMODINIT_FUNC
+PyInit__tokenizer(void)
 {
     PyObject *module;
 
     TokenizerType.tp_new = PyType_GenericNew;
-    if (PyType_Ready(&TokenizerType) < 0)
+    if (PyType_Ready(&TokenizerType) < 0) {
         return NULL;
+    }
     module = PyModule_Create(&module_def);
-    if (!module)
+    if (!module) {
         return NULL;
+    }
     Py_INCREF(&TokenizerType);
-    PyModule_AddObject(module, "CTokenizer", (PyObject*) &TokenizerType);
+    PyModule_AddObject(module, "CTokenizer", (PyObject *) &TokenizerType);
     Py_INCREF(Py_True);
     PyDict_SetItemString(TokenizerType.tp_dict, "USES_C", Py_True);
     NOARGS = PyTuple_New(0);
-    if (!NOARGS || load_entities() || load_tokens() || load_defs())
+    if (!NOARGS || load_entities() || load_tokens() || load_defs()) {
         return NULL;
+    }
     return module;
 }

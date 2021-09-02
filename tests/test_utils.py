@@ -28,28 +28,33 @@ from mwparserfromhell.nodes import Template, Text
 from mwparserfromhell.utils import parse_anything
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
-@pytest.mark.parametrize("test,valid", [
-    (wraptext("foobar"), wraptext("foobar")),
-    (Template(wraptext("spam")), wrap([Template(wraptext("spam"))])),
-    ("fóóbar", wraptext("fóóbar")),
-    (b"foob\xc3\xa1r", wraptext("foobár")),
-    (123, wraptext("123")),
-    (True, wraptext("True")),
-    (None, wrap([])),
-    ([Text("foo"), Text("bar"), Text("baz")],
-     wraptext("foo", "bar", "baz")),
-    ([wraptext("foo"), Text("bar"), "baz", 123, 456],
-     wraptext("foo", "bar", "baz", "123", "456")),
-    ([[[([[((("foo",),),)], "bar"],)]]], wraptext("foo", "bar"))
-])
+
+@pytest.mark.parametrize(
+    "test,valid",
+    [
+        (wraptext("foobar"), wraptext("foobar")),
+        (Template(wraptext("spam")), wrap([Template(wraptext("spam"))])),
+        ("fóóbar", wraptext("fóóbar")),
+        (b"foob\xc3\xa1r", wraptext("foobár")),
+        (123, wraptext("123")),
+        (True, wraptext("True")),
+        (None, wrap([])),
+        ([Text("foo"), Text("bar"), Text("baz")], wraptext("foo", "bar", "baz")),
+        (
+            [wraptext("foo"), Text("bar"), "baz", 123, 456],
+            wraptext("foo", "bar", "baz", "123", "456"),
+        ),
+        ([[[([[((("foo",),),)], "bar"],)]]], wraptext("foo", "bar")),
+    ],
+)
 def test_parse_anything_valid(test, valid):
     """tests for valid input to utils.parse_anything()"""
     assert_wikicode_equal(valid, parse_anything(test))
 
-@pytest.mark.parametrize("invalid", [
-    Ellipsis, object, object(), type,
-    ["foo", [object]]
-])
+
+@pytest.mark.parametrize(
+    "invalid", [Ellipsis, object, object(), type, ["foo", [object]]]
+)
 def test_parse_anything_invalid(invalid):
     """tests for invalid input to utils.parse_anything()"""
     with pytest.raises(ValueError):

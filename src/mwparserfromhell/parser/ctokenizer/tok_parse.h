@@ -25,11 +25,12 @@ SOFTWARE.
 #include "common.h"
 
 static const Py_UCS4 MARKERS[] = {
-    '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'', '#', '*', ';', ':', '/',
-    '-', '!', '\n', '\0'};
+    '{', '}', '[', ']', '<', '>', '|', '=',  '&',  '\'',
+    '#', '*', ';', ':', '/', '-', '!', '\n', '\0',
+};
 
 #define NUM_MARKERS 19
 
 /* Functions */
 
-PyObject* Tokenizer_parse(Tokenizer*, uint64_t, int);
+PyObject *Tokenizer_parse(Tokenizer *, uint64_t, int);

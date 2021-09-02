@@ -24,6 +24,7 @@ from ..utils import parse_anything
 
 __all__ = ["Heading"]
 
+
 class Heading(Node):
     """Represents a section heading in wikicode, like ``== Foo ==``."""
 

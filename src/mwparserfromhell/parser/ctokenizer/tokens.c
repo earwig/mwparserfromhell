@@ -24,56 +24,55 @@ SOFTWARE.
 
 /* Globals */
 
-PyObject* Text;
+PyObject *Text;
 
-PyObject* TemplateOpen;
-PyObject* TemplateParamSeparator;
-PyObject* TemplateParamEquals;
-PyObject* TemplateClose;
+PyObject *TemplateOpen;
+PyObject *TemplateParamSeparator;
+PyObject *TemplateParamEquals;
+PyObject *TemplateClose;
 
-PyObject* ArgumentOpen;
-PyObject* ArgumentSeparator;
-PyObject* ArgumentClose;
+PyObject *ArgumentOpen;
+PyObject *ArgumentSeparator;
+PyObject *ArgumentClose;
 
-PyObject* WikilinkOpen;
-PyObject* WikilinkSeparator;
-PyObject* WikilinkClose;
+PyObject *WikilinkOpen;
+PyObject *WikilinkSeparator;
+PyObject *WikilinkClose;
 
-PyObject* ExternalLinkOpen;
-PyObject* ExternalLinkSeparator;
-PyObject* ExternalLinkClose;
+PyObject *ExternalLinkOpen;
+PyObject *ExternalLinkSeparator;
+PyObject *ExternalLinkClose;
 
-PyObject* HTMLEntityStart;
-PyObject* HTMLEntityNumeric;
-PyObject* HTMLEntityHex;
-PyObject* HTMLEntityEnd;
-PyObject* HeadingStart;
-PyObject* HeadingEnd;
+PyObject *HTMLEntityStart;
+PyObject *HTMLEntityNumeric;
+PyObject *HTMLEntityHex;
+PyObject *HTMLEntityEnd;
+PyObject *HeadingStart;
+PyObject *HeadingEnd;
 
-PyObject* CommentStart;
-PyObject* CommentEnd;
+PyObject *CommentStart;
+PyObject *CommentEnd;
 
-PyObject* TagOpenOpen;
-PyObject* TagAttrStart;
-PyObject* TagAttrEquals;
-PyObject* TagAttrQuote;
-PyObject* TagCloseOpen;
-PyObject* TagCloseSelfclose;
-PyObject* TagOpenClose;
-PyObject* TagCloseClose;
+PyObject *TagOpenOpen;
+PyObject *TagAttrStart;
+PyObject *TagAttrEquals;
+PyObject *TagAttrQuote;
+PyObject *TagCloseOpen;
+PyObject *TagCloseSelfclose;
+PyObject *TagOpenClose;
+PyObject *TagCloseClose;
 
 /*
     Load individual tokens into globals from the given Python module object.
 */
-void load_tokens_from_module(PyObject* module)
+void
+load_tokens_from_module(PyObject *module)
 {
     Text = PyObject_GetAttrString(module, "Text");
 
     TemplateOpen = PyObject_GetAttrString(module, "TemplateOpen");
-    TemplateParamSeparator = PyObject_GetAttrString(module,
-                                                    "TemplateParamSeparator");
-    TemplateParamEquals = PyObject_GetAttrString(module,
-                                                 "TemplateParamEquals");
+    TemplateParamSeparator = PyObject_GetAttrString(module, "TemplateParamSeparator");
+    TemplateParamEquals = PyObject_GetAttrString(module, "TemplateParamEquals");
     TemplateClose = PyObject_GetAttrString(module, "TemplateClose");
 
     ArgumentOpen = PyObject_GetAttrString(module, "ArgumentOpen");
@@ -85,8 +84,7 @@ void load_tokens_from_module(PyObject* module)
     WikilinkClose = PyObject_GetAttrString(module, "WikilinkClose");
 
     ExternalLinkOpen = PyObject_GetAttrString(module, "ExternalLinkOpen");
-    ExternalLinkSeparator = PyObject_GetAttrString(module,
-                                                   "ExternalLinkSeparator");
+    ExternalLinkSeparator = PyObject_GetAttrString(module, "ExternalLinkSeparator");
     ExternalLinkClose = PyObject_GetAttrString(module, "ExternalLinkClose");
 
     HTMLEntityStart = PyObject_GetAttrString(module, "HTMLEntityStart");

@@ -34,19 +34,19 @@ from .conftest import assert_wikicode_equal, wrap, wraptext
 pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
 pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
 
+
 def test_str():
     """test Template.__str__()"""
     node = Template(wraptext("foobar"))
     assert "{{foobar}}" == str(node)
-    node2 = Template(wraptext("foo"),
-                     [pgenh("1", "bar"), pgens("abc", "def")])
+    node2 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("abc", "def")])
     assert "{{foo|bar|abc=def}}" == str(node2)
+
 
 def test_children():
     """test Template.__children__()"""
     node2p1 = Parameter(wraptext("1"), wraptext("bar"), showkey=False)
-    node2p2 = Parameter(wraptext("abc"), wrap([Text("def"), Text("ghi")]),
-                        showkey=True)
+    node2p2 = Parameter(wraptext("abc"), wrap([Text("def"), Text("ghi")]), showkey=True)
     node1 = Template(wraptext("foobar"))
     node2 = Template(wraptext("foo"), [node2p1, node2p2])
 
@@ -62,22 +62,30 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen2)
 
+
 def test_strip():
     """test Template.__strip__()"""
     node1 = Template(wraptext("foobar"))
-    node2 = Template(wraptext("foo"), [
-        pgenh("1", "bar"), pgens("foo", ""), pgens("abc", "def")])
-    node3 = Template(wraptext("foo"), [
-        pgenh("1", "foo"),
-        Parameter(wraptext("2"), wrap([Template(wraptext("hello"))]),
-                  showkey=False),
-        pgenh("3", "bar")])
+    node2 = Template(
+        wraptext("foo"), [pgenh("1", "bar"), pgens("foo", ""), pgens("abc", "def")]
+    )
+    node3 = Template(
+        wraptext("foo"),
+        [
+            pgenh("1", "foo"),
+            Parameter(
+                wraptext("2"), wrap([Template(wraptext("hello"))]), showkey=False
+            ),
+            pgenh("3", "bar"),
+        ],
+    )
 
     assert node1.__strip__(keep_template_params=False) is None
     assert node2.__strip__(keep_template_params=False) is None
     assert "" == node1.__strip__(keep_template_params=True)
     assert "bar def" == node2.__strip__(keep_template_params=True)
     assert "foo bar" == node3.__strip__(keep_template_params=True)
+
 
 def test_showtree():
     """test Template.__showtree__()"""
@@ -86,17 +94,31 @@ def test_showtree():
     get = lambda code: output.append((getter, code))
     mark = lambda: output.append(marker)
     node1 = Template(wraptext("foobar"))
-    node2 = Template(wraptext("foo"),
-                     [pgenh("1", "bar"), pgens("abc", "def")])
+    node2 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("abc", "def")])
     node1.__showtree__(output.append, get, mark)
     node2.__showtree__(output.append, get, mark)
     valid = [
-        "{{", (getter, node1.name), "}}", "{{", (getter, node2.name),
-        "    | ", marker, (getter, node2.params[0].name), "    = ", marker,
-        (getter, node2.params[0].value), "    | ", marker,
-        (getter, node2.params[1].name), "    = ", marker,
-        (getter, node2.params[1].value), "}}"]
+        "{{",
+        (getter, node1.name),
+        "}}",
+        "{{",
+        (getter, node2.name),
+        "    | ",
+        marker,
+        (getter, node2.params[0].name),
+        "    = ",
+        marker,
+        (getter, node2.params[0].value),
+        "    | ",
+        marker,
+        (getter, node2.params[1].name),
+        "    = ",
+        marker,
+        (getter, node2.params[1].value),
+        "}}",
+    ]
     assert valid == output
+
 
 def test_name():
     """test getter/setter for the name attribute"""
@@ -110,6 +132,7 @@ def test_name():
     assert_wikicode_equal(wraptext("asdf"), node1.name)
     assert_wikicode_equal(wraptext("téstïng"), node2.name)
 
+
 def test_params():
     """test getter for the params attribute"""
     node1 = Template(wraptext("foobar"))
@@ -118,13 +141,14 @@ def test_params():
     assert [] == node1.params
     assert plist is node2.params
 
+
 def test_has():
     """test Template.has()"""
     node1 = Template(wraptext("foobar"))
-    node2 = Template(wraptext("foo"),
-                     [pgenh("1", "bar"), pgens("\nabc ", "def")])
-    node3 = Template(wraptext("foo"),
-                     [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")])
+    node2 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("\nabc ", "def")])
+    node3 = Template(
+        wraptext("foo"), [pgenh("1", "a"), pgens("b", "c"), pgens("1", "d")]
+    )
     node4 = Template(wraptext("foo"), [pgenh("1", "a"), pgens("b", " ")])
     assert node1.has("foobar", False) is False
     assert node2.has(1, False) is True
@@ -137,6 +161,7 @@ def test_has():
     assert node4.has("b", True) is False
     assert node1.has_param("foobar", False) is False
     assert node2.has_param(1, False) is True
+
 
 def test_get():
     """test Template.get()"""
@@ -159,16 +184,15 @@ def test_get():
     assert node3p2 is node3.get("1")
     assert node4p1 is node4.get("b ")
 
+
 def test_add():
     """test Template.add()"""
     node1 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
     node2 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
     node3 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
     node4 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
-    node5 = Template(wraptext("a"), [pgens("b", "c"),
-                                     pgens("    d ", "e")])
-    node6 = Template(wraptext("a"), [pgens("b", "c"), pgens("b", "d"),
-                                     pgens("b", "e")])
+    node5 = Template(wraptext("a"), [pgens("b", "c"), pgens("    d ", "e")])
+    node6 = Template(wraptext("a"), [pgens("b", "c"), pgens("b", "d"), pgens("b", "e")])
     node7 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "d")])
     node8p = pgenh("1", "d")
     node8 = Template(wraptext("a"), [pgens("b", "c"), node8p])
@@ -176,48 +200,87 @@ def test_add():
     node10 = Template(wraptext("a"), [pgens("b", "c"), pgenh("1", "e")])
     node11 = Template(wraptext("a"), [pgens("b", "c")])
     node12 = Template(wraptext("a"), [pgens("b", "c")])
-    node13 = Template(wraptext("a"), [
-        pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-    node14 = Template(wraptext("a\n"), [
-        pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
-        pgens("h ", " i\n")])
-    node15 = Template(wraptext("a"), [
-        pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
-    node16 = Template(wraptext("a"), [
-        pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
+    node13 = Template(
+        wraptext("a"), [pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")]
+    )
+    node14 = Template(
+        wraptext("a\n"),
+        [
+            pgens("b ", "c\n"),
+            pgens("d ", " e"),
+            pgens("f ", "g\n"),
+            pgens("h ", " i\n"),
+        ],
+    )
+    node15 = Template(
+        wraptext("a"),
+        [pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")],
+    )
+    node16 = Template(
+        wraptext("a"), [pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")]
+    )
     node17 = Template(wraptext("a"), [pgenh("1", "b")])
     node18 = Template(wraptext("a"), [pgenh("1", "b")])
     node19 = Template(wraptext("a"), [pgenh("1", "b")])
-    node20 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
-                                      pgenh("3", "d"), pgenh("4", "e")])
-    node21 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
-                                      pgens("4", "d"), pgens("5", "e")])
-    node22 = Template(wraptext("a"), [pgenh("1", "b"), pgenh("2", "c"),
-                                      pgens("4", "d"), pgens("5", "e")])
+    node20 = Template(
+        wraptext("a"),
+        [pgenh("1", "b"), pgenh("2", "c"), pgenh("3", "d"), pgenh("4", "e")],
+    )
+    node21 = Template(
+        wraptext("a"),
+        [pgenh("1", "b"), pgenh("2", "c"), pgens("4", "d"), pgens("5", "e")],
+    )
+    node22 = Template(
+        wraptext("a"),
+        [pgenh("1", "b"), pgenh("2", "c"), pgens("4", "d"), pgens("5", "e")],
+    )
     node23 = Template(wraptext("a"), [pgenh("1", "b")])
     node24 = Template(wraptext("a"), [pgenh("1", "b")])
     node25 = Template(wraptext("a"), [pgens("b", "c")])
     node26 = Template(wraptext("a"), [pgenh("1", "b")])
     node27 = Template(wraptext("a"), [pgenh("1", "b")])
     node28 = Template(wraptext("a"), [pgens("1", "b")])
-    node29 = Template(wraptext("a"), [
-        pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")])
-    node30 = Template(wraptext("a\n"), [
-        pgens("b ", "c\n"), pgens("d ", " e"), pgens("f ", "g\n"),
-        pgens("h ", " i\n")])
-    node31 = Template(wraptext("a"), [
-        pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")])
-    node32 = Template(wraptext("a"), [
-        pgens("\nb ", " c "), pgens("\nd ", " e "), pgens("\nf ", " g ")])
-    node33 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
-                                      pgens("b", "f"), pgens("b", "h"),
-                                      pgens("i", "j")])
-    node34 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
-                                      pgens("1", "c"), pgens("2", "d")])
-    node35 = Template(wraptext("a"), [pgens("1", "b"), pgens("x", "y"),
-                                      pgenh("1", "c"), pgenh("2", "d")])
-    node36 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"),
-                                      pgens("f", "g")])
+    node29 = Template(
+        wraptext("a"), [pgens("\nb ", " c"), pgens("\nd ", " e"), pgens("\nf ", " g")]
+    )
+    node30 = Template(
+        wraptext("a\n"),
+        [
+            pgens("b ", "c\n"),
+            pgens("d ", " e"),
+            pgens("f ", "g\n"),
+            pgens("h ", " i\n"),
+        ],
+    )
+    node31 = Template(
+        wraptext("a"),
+        [pgens("b  ", " c\n"), pgens("\nd  ", " e"), pgens("\nf  ", "g ")],
+    )
+    node32 = Template(
+        wraptext("a"),
+        [pgens("\nb ", " c "), pgens("\nd ", " e "), pgens("\nf ", " g ")],
+    )
+    node33 = Template(
+        wraptext("a"),
+        [
+            pgens("b", "c"),
+            pgens("d", "e"),
+            pgens("b", "f"),
+            pgens("b", "h"),
+            pgens("i", "j"),
+        ],
+    )
+    node34 = Template(
+        wraptext("a"),
+        [pgens("1", "b"), pgens("x", "y"), pgens("1", "c"), pgens("2", "d")],
+    )
+    node35 = Template(
+        wraptext("a"),
+        [pgens("1", "b"), pgens("x", "y"), pgenh("1", "c"), pgenh("2", "d")],
+    )
+    node36 = Template(
+        wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")]
+    )
     node37 = Template(wraptext("a"), [pgenh("1", "")])
     node38 = Template(wraptext("abc"))
     node39 = Template(wraptext("a"), [pgenh("1", " b ")])
@@ -320,65 +383,121 @@ def test_add():
     assert "{{a|1= b|2= c|3= d}}" == node41
     assert "{{a|b=hello  \n}}" == node42
 
+
 def test_remove():
     """test Template.remove()"""
     node1 = Template(wraptext("foobar"))
-    node2 = Template(wraptext("foo"),
-        [pgenh("1", "bar"), pgens("abc", "def")])
-    node3 = Template(wraptext("foo"),
-        [pgenh("1", "bar"), pgens("abc", "def")])
-    node4 = Template(wraptext("foo"),
-        [pgenh("1", "bar"), pgenh("2", "baz")])
-    node5 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node6 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node7 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
-    node8 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")])
-    node9 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node10 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node11 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node12 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node13 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node14 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node15 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node16 = Template(wraptext("foo"), [
-        pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")])
-    node17 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node18 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node19 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node20 = Template(wraptext("foo"), [
-        pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")])
-    node21 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
-    node22 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
-    node23 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
-    node24 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
-    node25 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
-    node26 = Template(wraptext("foo"), [
-        pgens("a", "b"), pgens("c", "d"), pgens("e", "f"), pgens("a", "b"),
-        pgens("a", "b")])
+    node2 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("abc", "def")])
+    node3 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("abc", "def")])
+    node4 = Template(wraptext("foo"), [pgenh("1", "bar"), pgenh("2", "baz")])
+    node5 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node6 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node7 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")]
+    )
+    node8 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgens("  1", "b"), pgens("2", "c")]
+    )
+    node9 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node10 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node11 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node12 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node13 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node14 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node15 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node16 = Template(
+        wraptext("foo"), [pgens(" a", "b"), pgens("b", "c"), pgens("a ", "d")]
+    )
+    node17 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node18 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node19 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node20 = Template(
+        wraptext("foo"), [pgens("1  ", "a"), pgenh("1", "b"), pgenh("2", "c")]
+    )
+    node21 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
+    node22 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
+    node23 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
+    node24 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
+    node25 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
+    node26 = Template(
+        wraptext("foo"),
+        [
+            pgens("a", "b"),
+            pgens("c", "d"),
+            pgens("e", "f"),
+            pgens("a", "b"),
+            pgens("a", "b"),
+        ],
+    )
     node27 = Template(wraptext("foo"), [pgenh("1", "bar")])
     node28 = Template(wraptext("foo"), [pgenh("1", "bar")])
 
@@ -444,12 +563,14 @@ def test_remove():
     with pytest.raises(ValueError):
         node27.remove(node28.get(1))
 
+
 def test_formatting():
     """test realistic param manipulation with complex whitespace formatting
     (assumes that parsing works correctly)"""
     tests = [
-    # https://en.wikipedia.org/w/index.php?title=Lamar_County,_Georgia&oldid=792356004
-    ("""{{Infobox U.S. county
+        # https://en.wikipedia.org/w/index.php?title=Lamar_County,_Georgia&oldid=792356004
+        (
+            """{{Infobox U.S. county
 | county = Lamar County
 | state = Georgia
 | seal =
@@ -471,16 +592,17 @@ def test_formatting():
 | district = 3rd
 | named for = [[Lucius Quintus Cincinnatus Lamar II]]
 }}""",
-    """@@ -11,4 +11,4 @@
+            """@@ -11,4 +11,4 @@
  | area percentage = 1.3%
 -| census yr = 2010
 -| pop = 18317
 +| census estimate yr = 2016
 +| pop = 12345<ref>example ref</ref>
- | density_sq_mi = 100"""),
-
-    # https://en.wikipedia.org/w/index.php?title=Rockdale_County,_Georgia&oldid=792359760
-    ("""{{Infobox U.S. County|
+ | density_sq_mi = 100""",
+        ),
+        # https://en.wikipedia.org/w/index.php?title=Rockdale_County,_Georgia&oldid=792359760
+        (
+            """{{Infobox U.S. County|
  county = Rockdale County |
  state = Georgia |
  seal =  |
@@ -500,16 +622,17 @@ def test_formatting():
 | district = 4th
 | time zone= Eastern
 }}""",
-    """@@ -11,4 +11,4 @@
+            """@@ -11,4 +11,4 @@
   area percentage = 1.7% |
 - census yr = 2010|
 - pop = 85215 |
 + census estimate yr = 2016 |
 + pop = 12345<ref>example ref</ref> |
-  density_sq_mi = 657 |"""),
-
-    # https://en.wikipedia.org/w/index.php?title=Spalding_County,_Georgia&oldid=792360413
-    ("""{{Infobox U.S. County|
+  density_sq_mi = 657 |""",
+        ),
+        # https://en.wikipedia.org/w/index.php?title=Spalding_County,_Georgia&oldid=792360413
+        (
+            """{{Infobox U.S. County|
 | county = Spalding County |
 | state = Georgia |
 | seal =  |
@@ -530,16 +653,17 @@ def test_formatting():
 | district = 3rd
 | time zone = Eastern
 }}""",
-    """@@ -11,4 +11,4 @@
+            """@@ -11,4 +11,4 @@
  | area percentage = 1.6% |
 -| census yr = 2010|
 -| pop = 64073 |
 +|
 +| census estimate yr = 2016 | pop = 12345<ref>example ref</ref> |
- | density_sq_mi = 326 |"""),
-
-    # https://en.wikipedia.org/w/index.php?title=Clinton_County,_Illinois&oldid=794694648
-    ("""{{Infobox U.S. county
+ | density_sq_mi = 326 |""",
+        ),
+        # https://en.wikipedia.org/w/index.php?title=Clinton_County,_Illinois&oldid=794694648
+        (
+            """{{Infobox U.S. county
  |county  = Clinton County
  |state = Illinois
 | ex image           = File:Clinton County Courthouse, Carlyle.jpg
@@ -560,16 +684,17 @@ def test_formatting():
  |web = www.clintonco.illinois.gov
 | district = 15th
 }}""",
-    """@@ -15,4 +15,4 @@
+            """@@ -15,4 +15,4 @@
   |area percentage = 5.8%
 - |census yr = 2010
 - |pop = 37762
 + |census estimate yr = 2016
 + |pop = 12345<ref>example ref</ref>
-  |density_sq_mi = 80"""),
-
-    # https://en.wikipedia.org/w/index.php?title=Winnebago_County,_Illinois&oldid=789193800
-    ("""{{Infobox U.S. county |
+  |density_sq_mi = 80""",
+        ),
+        # https://en.wikipedia.org/w/index.php?title=Winnebago_County,_Illinois&oldid=789193800
+        (
+            """{{Infobox U.S. county |
  county  = Winnebago County |
  state = Illinois |
  seal = Winnebago County il seal.png |
@@ -590,19 +715,21 @@ def test_formatting():
 | district = 16th
 | district2 = 17th
 }}""",
-    """@@ -11,4 +11,4 @@
+            """@@ -11,4 +11,4 @@
   area percentage = 1.1% |
 - census yr = 2010|
 - pop = 295266 |
 + census estimate yr = 2016|
 + pop = 12345<ref>example ref</ref> |
-  density_sq_mi = 575""")]
+  density_sq_mi = 575""",
+        ),
+    ]
 
     for (original, expected) in tests:
         code = parse(original)
         template = code.filter_templates()[0]
         template.add("pop", "12345<ref>example ref</ref>")
-        template.add('census estimate yr', "2016", before="pop")
+        template.add("census estimate yr", "2016", before="pop")
         template.remove("census yr")
 
         oldlines = original.splitlines(True)

@@ -33,6 +33,7 @@ FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
 
+
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
@@ -153,7 +154,7 @@ class Template(Node):
     def _fix_dependendent_params(self, i):
         """Unhide keys if necessary after removing the param at index *i*."""
         if not self.params[i].showkey:
-            for param in self.params[i + 1:]:
+            for param in self.params[i + 1 :]:
                 if not param.showkey:
                     param.showkey = True
 
@@ -175,9 +176,10 @@ class Template(Node):
         If one exists, we should remove the given one rather than blanking it.
         """
         if self.params[i].showkey:
-            following = self.params[i + 1:]
-            better_matches = [after.name.strip() == name and not after.showkey
-                              for after in following]
+            following = self.params[i + 1 :]
+            better_matches = [
+                after.name.strip() == name and not after.showkey for after in following
+            ]
             return any(better_matches)
         return False
 
@@ -235,8 +237,7 @@ class Template(Node):
     def __getitem__(self, name):
         return self.get(name)
 
-    def add(self, name, value, showkey=None, before=None,
-            preserve_spacing=True):
+    def add(self, name, value, showkey=None, before=None, preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parsable by

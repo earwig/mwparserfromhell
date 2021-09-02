@@ -26,41 +26,38 @@ SOFTWARE.
 
 /* Functions */
 
-int Tokenizer_push(Tokenizer*, uint64_t);
-int Tokenizer_push_textbuffer(Tokenizer*);
-void Tokenizer_delete_top_of_stack(Tokenizer*);
-PyObject* Tokenizer_pop(Tokenizer*);
-PyObject* Tokenizer_pop_keeping_context(Tokenizer*);
-void Tokenizer_memoize_bad_route(Tokenizer*);
-void* Tokenizer_fail_route(Tokenizer*);
-int Tokenizer_check_route(Tokenizer*, uint64_t);
-void Tokenizer_free_bad_route_tree(Tokenizer*);
+int Tokenizer_push(Tokenizer *, uint64_t);
+int Tokenizer_push_textbuffer(Tokenizer *);
+void Tokenizer_delete_top_of_stack(Tokenizer *);
+PyObject *Tokenizer_pop(Tokenizer *);
+PyObject *Tokenizer_pop_keeping_context(Tokenizer *);
+void Tokenizer_memoize_bad_route(Tokenizer *);
+void *Tokenizer_fail_route(Tokenizer *);
+int Tokenizer_check_route(Tokenizer *, uint64_t);
+void Tokenizer_free_bad_route_tree(Tokenizer *);
 
-int Tokenizer_emit_token(Tokenizer*, PyObject*, int);
-int Tokenizer_emit_token_kwargs(Tokenizer*, PyObject*, PyObject*, int);
-int Tokenizer_emit_char(Tokenizer*, Py_UCS4);
-int Tokenizer_emit_text(Tokenizer*, const char*);
-int Tokenizer_emit_textbuffer(Tokenizer*, Textbuffer*);
-int Tokenizer_emit_all(Tokenizer*, PyObject*);
-int Tokenizer_emit_text_then_stack(Tokenizer*, const char*);
+int Tokenizer_emit_token(Tokenizer *, PyObject *, int);
+int Tokenizer_emit_token_kwargs(Tokenizer *, PyObject *, PyObject *, int);
+int Tokenizer_emit_char(Tokenizer *, Py_UCS4);
+int Tokenizer_emit_text(Tokenizer *, const char *);
+int Tokenizer_emit_textbuffer(Tokenizer *, Textbuffer *);
+int Tokenizer_emit_all(Tokenizer *, PyObject *);
+int Tokenizer_emit_text_then_stack(Tokenizer *, const char *);
 
-Py_UCS4 Tokenizer_read(Tokenizer*, Py_ssize_t);
-Py_UCS4 Tokenizer_read_backwards(Tokenizer*, Py_ssize_t);
+Py_UCS4 Tokenizer_read(Tokenizer *, Py_ssize_t);
+Py_UCS4 Tokenizer_read_backwards(Tokenizer *, Py_ssize_t);
 
 /* Macros */
 
-#define MAX_DEPTH 40
-#define Tokenizer_CAN_RECURSE(self)                                           \
-    (self->depth < MAX_DEPTH)
-#define Tokenizer_IS_CURRENT_STACK(self, id)                                  \
-    (self->topstack->ident.head    == (id).head &&                            \
+#define MAX_DEPTH                   40
+#define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH)
+#define Tokenizer_IS_CURRENT_STACK(self, id)                                           \
+    (self->topstack->ident.head == (id).head &&                                        \
      self->topstack->ident.context == (id).context)
 
-#define Tokenizer_emit(self, token)                                           \
-    Tokenizer_emit_token(self, token, 0)
-#define Tokenizer_emit_first(self, token)                                     \
-    Tokenizer_emit_token(self, token, 1)
-#define Tokenizer_emit_kwargs(self, token, kwargs)                            \
+#define Tokenizer_emit(self, token)       Tokenizer_emit_token(self, token, 0)
+#define Tokenizer_emit_first(self, token) Tokenizer_emit_token(self, token, 1)
+#define Tokenizer_emit_kwargs(self, token, kwargs)                                     \
     Tokenizer_emit_token_kwargs(self, token, kwargs, 0)
-#define Tokenizer_emit_first_kwargs(self, token, kwargs)                      \
+#define Tokenizer_emit_first_kwargs(self, token, kwargs)                               \
     Tokenizer_emit_token_kwargs(self, token, kwargs, 1)

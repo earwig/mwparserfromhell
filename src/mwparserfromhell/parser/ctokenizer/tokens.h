@@ -26,44 +26,44 @@ SOFTWARE.
 
 /* Token globals */
 
-extern PyObject* Text;
+extern PyObject *Text;
 
-extern PyObject* TemplateOpen;
-extern PyObject* TemplateParamSeparator;
-extern PyObject* TemplateParamEquals;
-extern PyObject* TemplateClose;
+extern PyObject *TemplateOpen;
+extern PyObject *TemplateParamSeparator;
+extern PyObject *TemplateParamEquals;
+extern PyObject *TemplateClose;
 
-extern PyObject* ArgumentOpen;
-extern PyObject* ArgumentSeparator;
-extern PyObject* ArgumentClose;
+extern PyObject *ArgumentOpen;
+extern PyObject *ArgumentSeparator;
+extern PyObject *ArgumentClose;
 
-extern PyObject* WikilinkOpen;
-extern PyObject* WikilinkSeparator;
-extern PyObject* WikilinkClose;
+extern PyObject *WikilinkOpen;
+extern PyObject *WikilinkSeparator;
+extern PyObject *WikilinkClose;
 
-extern PyObject* ExternalLinkOpen;
-extern PyObject* ExternalLinkSeparator;
-extern PyObject* ExternalLinkClose;
+extern PyObject *ExternalLinkOpen;
+extern PyObject *ExternalLinkSeparator;
+extern PyObject *ExternalLinkClose;
 
-extern PyObject* HTMLEntityStart;
-extern PyObject* HTMLEntityNumeric;
-extern PyObject* HTMLEntityHex;
-extern PyObject* HTMLEntityEnd;
-extern PyObject* HeadingStart;
-extern PyObject* HeadingEnd;
+extern PyObject *HTMLEntityStart;
+extern PyObject *HTMLEntityNumeric;
+extern PyObject *HTMLEntityHex;
+extern PyObject *HTMLEntityEnd;
+extern PyObject *HeadingStart;
+extern PyObject *HeadingEnd;
 
-extern PyObject* CommentStart;
-extern PyObject* CommentEnd;
+extern PyObject *CommentStart;
+extern PyObject *CommentEnd;
 
-extern PyObject* TagOpenOpen;
-extern PyObject* TagAttrStart;
-extern PyObject* TagAttrEquals;
-extern PyObject* TagAttrQuote;
-extern PyObject* TagCloseOpen;
-extern PyObject* TagCloseSelfclose;
-extern PyObject* TagOpenClose;
-extern PyObject* TagCloseClose;
+extern PyObject *TagOpenOpen;
+extern PyObject *TagAttrStart;
+extern PyObject *TagAttrEquals;
+extern PyObject *TagAttrQuote;
+extern PyObject *TagCloseOpen;
+extern PyObject *TagCloseSelfclose;
+extern PyObject *TagOpenClose;
+extern PyObject *TagCloseClose;
 
 /* Functions */
 
-void load_tokens_from_module(PyObject*);
+void load_tokens_from_module(PyObject *);

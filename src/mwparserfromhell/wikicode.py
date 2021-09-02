@@ -21,8 +21,18 @@
 import re
 from itertools import chain
 
-from .nodes import (Argument, Comment, ExternalLink, Heading, HTMLEntity,
-                    Node, Tag, Template, Text, Wikilink)
+from .nodes import (
+    Argument,
+    Comment,
+    ExternalLink,
+    Heading,
+    HTMLEntity,
+    Node,
+    Tag,
+    Template,
+    Text,
+    Wikilink,
+)
 from .smart_list.list_proxy import ListProxy
 from .string_mixin import StringMixIn
 from .utils import parse_anything
@@ -30,6 +40,7 @@ from .utils import parse_anything
 __all__ = ["Wikicode"]
 
 FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
+
 
 class Wikicode(StringMixIn):
     """A ``Wikicode`` is a container for nodes that operates like a string.
@@ -41,6 +52,7 @@ class Wikicode(StringMixIn):
     <ifilter>` series of functions is very useful for extracting and iterating
     over, for example, all of the templates in the object.
     """
+
     RECURSE_OTHERS = 2
 
     def __init__(self, nodes):
@@ -82,8 +94,9 @@ class Wikicode(StringMixIn):
             return lambda obj: re.search(matches, str(obj), flags)
         return lambda obj: True
 
-    def _indexed_ifilter(self, recursive=True, matches=None, flags=FLAGS,
-                         forcetype=None):
+    def _indexed_ifilter(
+        self, recursive=True, matches=None, flags=FLAGS, forcetype=None
+    ):
         """Iterate over nodes and their corresponding indices in the node list.
 
         The arguments are interpreted as for :meth:`ifilter`. For each tuple
@@ -94,9 +107,11 @@ class Wikicode(StringMixIn):
         match = self._build_matcher(matches, flags)
         if recursive:
             restrict = forcetype if recursive == self.RECURSE_OTHERS else None
+
             def getter(i, node):
                 for ch in self._get_children(node, restrict=restrict):
                     yield (i, ch)
+
             inodes = chain(*(getter(i, n) for i, n in enumerate(self.nodes)))
         else:
             inodes = enumerate(self.nodes)
@@ -106,6 +121,7 @@ class Wikicode(StringMixIn):
 
     def _is_child_wikicode(self, obj, recursive=True):
         """Return whether the given :class:`.Wikicode` is a descendant."""
+
         def deref(nodes):
             if isinstance(nodes, ListProxy):
                 return nodes._parent  # pylint: disable=protected-access
@@ -210,6 +226,7 @@ class Wikicode(StringMixIn):
         should be any object that can be tested for with ``is``. *indent* is
         the starting indentation.
         """
+
         def write(*args):
             """Write a new line following the proper indentation rules."""
             if lines and lines[-1] is marker:  # Continue from the last line
@@ -243,10 +260,12 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`{1}` with *forcetype* set to
         :class:`~{2.__module__}.{2.__name__}`.
         """
-        make_ifilter = lambda ftype: (lambda self, *a, **kw:
-                                      self.ifilter(forcetype=ftype, *a, **kw))
-        make_filter = lambda ftype: (lambda self, *a, **kw:
-                                     self.filter(forcetype=ftype, *a, **kw))
+        make_ifilter = lambda ftype: (
+            lambda self, *a, **kw: self.ifilter(forcetype=ftype, *a, **kw)
+        )
+        make_filter = lambda ftype: (
+            lambda self, *a, **kw: self.filter(forcetype=ftype, *a, **kw)
+        )
         for name, ftype in meths.items():
             ifilt = make_ifilter(ftype)
             filt = make_filter(ftype)
@@ -342,6 +361,7 @@ class Wikicode(StringMixIn):
         Will return an empty list if *obj* is at the top level of this Wikicode
         object. Will raise :exc:`ValueError` if it wasn't found.
         """
+
         def _get_ancestors(code, needle):
             for node in code.nodes:
                 if node is needle:
@@ -510,8 +530,7 @@ class Wikicode(StringMixIn):
                 return True
         return False
 
-    def ifilter(self, recursive=True, matches=None, flags=FLAGS,
-                forcetype=None):
+    def ifilter(self, recursive=True, matches=None, flags=FLAGS, forcetype=None):
         """Iterate over nodes in our list matching certain conditions.
 
         If *forcetype* is given, only nodes that are instances of this type (or
@@ -545,8 +564,15 @@ class Wikicode(StringMixIn):
         """
         return list(self.ifilter(*args, **kwargs))
 
-    def get_sections(self, levels=None, matches=None, flags=FLAGS, flat=False,
-                     include_lead=None, include_headings=True):
+    def get_sections(
+        self,
+        levels=None,
+        matches=None,
+        flags=FLAGS,
+        flat=False,
+        include_lead=None,
+        include_headings=True,
+    ):
         """Return a list of sections within the page.
 
         Sections are returned as :class:`.Wikicode` objects with a shared node
@@ -568,12 +594,14 @@ class Wikicode(StringMixIn):
         :class:`.Heading` object will be included; otherwise, this is skipped.
         """
         title_matcher = self._build_matcher(matches, flags)
-        matcher = lambda heading: (title_matcher(heading.title) and
-                                   (not levels or heading.level in levels))
+        matcher = lambda heading: (
+            title_matcher(heading.title) and (not levels or heading.level in levels)
+        )
         iheadings = self._indexed_ifilter(recursive=False, forcetype=Heading)
         sections = []  # Tuples of (index_of_first_node, section)
-        open_headings = [] # Tuples of (index, heading), where index and
-                           # heading.level are both monotonically increasing
+        # Tuples of (index, heading), where index and heading.level are both
+        # monotonically increasing
+        open_headings = []
 
         # Add the lead section if appropriate:
         if include_lead or not (include_lead is not None or matches or levels):
@@ -610,8 +638,7 @@ class Wikicode(StringMixIn):
         # Ensure that earlier sections are earlier in the returned list:
         return [section for i, section in sorted(sections)]
 
-    def strip_code(self, normalize=True, collapse=True,
-                   keep_template_params=False):
+    def strip_code(self, normalize=True, collapse=True, keep_template_params=False):
         """Return a rendered string without unprintable code such as templates.
 
         The way a node is stripped is handled by the
@@ -631,7 +658,7 @@ class Wikicode(StringMixIn):
         kwargs = {
             "normalize": normalize,
             "collapse": collapse,
-            "keep_template_params": keep_template_params
+            "keep_template_params": keep_template_params,
         }
 
         nodes = []
@@ -673,7 +700,15 @@ class Wikicode(StringMixIn):
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
 
+
 Wikicode._build_filter_methods(
-    arguments=Argument, comments=Comment, external_links=ExternalLink,
-    headings=Heading, html_entities=HTMLEntity, tags=Tag, templates=Template,
-    text=Text, wikilinks=Wikilink)
+    arguments=Argument,
+    comments=Comment,
+    external_links=ExternalLink,
+    headings=Heading,
+    html_entities=HTMLEntity,
+    tags=Tag,
+    templates=Template,
+    text=Text,
+    wikilinks=Wikilink,
+)

@@ -18,13 +18,23 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from mwparserfromhell.nodes import (Argument, Comment, ExternalLink, Heading,
-                                    HTMLEntity, Tag, Template, Text, Wikilink)
+from mwparserfromhell.nodes import (
+    Argument,
+    Comment,
+    ExternalLink,
+    Heading,
+    HTMLEntity,
+    Tag,
+    Template,
+    Text,
+    Wikilink,
+)
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
 wrap = lambda L: Wikicode(SmartList(L))
 wraptext = lambda *args: wrap([Text(t) for t in args])
+
 
 def _assert_node_equal(expected, actual):
     """Assert that two Nodes have the same type and have the same data."""
@@ -43,6 +53,7 @@ def _assert_node_equal(expected, actual):
     assert type(expected) == type(actual)
     registry[type(expected)](expected, actual)
 
+
 def _assert_argument_node_equal(expected, actual):
     """Assert that two Argument nodes have the same data."""
     assert_wikicode_equal(expected.name, actual.name)
@@ -51,9 +62,11 @@ def _assert_argument_node_equal(expected, actual):
     else:
         assert actual.default is None
 
+
 def _assert_comment_node_equal(expected, actual):
     """Assert that two Comment nodes have the same data."""
     assert expected.contents == actual.contents
+
 
 def _assert_external_link_node_equal(expected, actual):
     """Assert that two ExternalLink nodes have the same data."""
@@ -65,10 +78,12 @@ def _assert_external_link_node_equal(expected, actual):
     assert expected.brackets is actual.brackets
     assert expected.suppress_space is actual.suppress_space
 
+
 def _assert_heading_node_equal(expected, actual):
     """Assert that two Heading nodes have the same data."""
     assert_wikicode_equal(expected.title, actual.title)
     assert expected.level == actual.level
+
 
 def _assert_html_entity_node_equal(expected, actual):
     """Assert that two HTMLEntity nodes have the same data."""
@@ -76,6 +91,7 @@ def _assert_html_entity_node_equal(expected, actual):
     assert expected.named is actual.named
     assert expected.hexadecimal is actual.hexadecimal
     assert expected.hex_char == actual.hex_char
+
 
 def _assert_tag_node_equal(expected, actual):
     """Assert that two Tag nodes have the same data."""
@@ -105,6 +121,7 @@ def _assert_tag_node_equal(expected, actual):
     assert expected.padding == actual.padding
     assert_wikicode_equal(expected.closing_tag, actual.closing_tag)
 
+
 def _assert_template_node_equal(expected, actual):
     """Assert that two Template nodes have the same data."""
     assert_wikicode_equal(expected.name, actual.name)
@@ -117,9 +134,11 @@ def _assert_template_node_equal(expected, actual):
         assert_wikicode_equal(exp_param.value, act_param.value)
         assert exp_param.showkey is act_param.showkey
 
+
 def _assert_text_node_equal(expected, actual):
     """Assert that two Text nodes have the same data."""
     assert expected.value == actual.value
+
 
 def _assert_wikilink_node_equal(expected, actual):
     """Assert that two Wikilink nodes have the same data."""
@@ -128,6 +147,7 @@ def _assert_wikilink_node_equal(expected, actual):
         assert_wikicode_equal(expected.text, actual.text)
     else:
         assert actual.text is None
+
 
 def assert_wikicode_equal(expected, actual):
     """Assert that two Wikicode objects have the same data."""

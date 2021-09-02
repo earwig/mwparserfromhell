@@ -28,12 +28,11 @@ SOFTWARE.
 
 /* Functions */
 
-int is_parsable(PyObject*);
-int is_single(PyObject*);
-int is_single_only(PyObject*);
-int is_scheme(PyObject*, int);
+int is_parsable(PyObject *);
+int is_single(PyObject *);
+int is_single_only(PyObject *);
+int is_scheme(PyObject *, int);
 
 /* Macros */
 
-#define GET_HTML_TAG(markup)                                                  \
-    (markup == ':' ? "dd" : markup == ';' ? "dt" : "li")
+#define GET_HTML_TAG(markup) (markup == ':' ? "dd" : markup == ';' ? "dt" : "li")

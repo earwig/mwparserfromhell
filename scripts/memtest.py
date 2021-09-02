@@ -41,6 +41,7 @@ from mwparserfromhell.parser._tokenizer import CTokenizer
 
 LOOPS = 10000
 
+
 class Color:
     GRAY = "\x1b[30;1m"
     GREEN = "\x1b[92m"
@@ -63,11 +64,11 @@ class MemoryTest:
             data = {"name": None, "label": None, "input": None, "output": None}
             for line in test.strip().splitlines():
                 if line.startswith("name:"):
-                    data["name"] = line[len("name:"):].strip()
+                    data["name"] = line[len("name:") :].strip()
                 elif line.startswith("label:"):
-                    data["label"] = line[len("label:"):].strip()
+                    data["label"] = line[len("label:") :].strip()
                 elif line.startswith("input:"):
-                    raw = line[len("input:"):].strip()
+                    raw = line[len("input:") :].strip()
                     if raw[0] == '"' and raw[-1] == '"':
                         raw = raw[1:-1]
                     raw = raw.encode("raw_unicode_escape")
@@ -81,7 +82,7 @@ class MemoryTest:
         def load_file(filename):
             with open(filename, "rU") as fp:
                 text = fp.read()
-                name = path.split(filename)[1][:0-len(extension)]
+                name = path.split(filename)[1][: 0 - len(extension)]
                 self._parse_file(name, text)
 
         root = path.split(path.dirname(path.abspath(__file__)))[0]
@@ -119,8 +120,11 @@ class MemoryTest:
 
         tmpl = "{0}[{1:03}/{2}]{3} {4}: "
         for i, (name, text) in enumerate(self._tests, 1):
-            sys.stdout.write(tmpl.format(Color.GRAY, i, len(self._tests),
-                                         Color.RESET, name.ljust(width)))
+            sys.stdout.write(
+                tmpl.format(
+                    Color.GRAY, i, len(self._tests), Color.RESET, name.ljust(width)
+                )
+            )
             sys.stdout.flush()
             parent, child = Pipe()
             p = Process(target=_runner, args=(text, child))
@@ -155,6 +159,7 @@ def _runner(text, child):
         CTokenizer().tokenize(text)
     child.send("OK")
     child.recv()
+
 
 if __name__ == "__main__":
     setlocale(LC_ALL, "")

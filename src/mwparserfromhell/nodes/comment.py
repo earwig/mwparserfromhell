@@ -23,6 +23,7 @@ from ._base import Node
 
 __all__ = ["Comment"]
 
+
 class Comment(Node):
     """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
 

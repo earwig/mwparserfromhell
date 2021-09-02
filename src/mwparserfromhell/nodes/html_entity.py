@@ -24,6 +24,7 @@ from ._base import Node
 
 __all__ = ["HTMLEntity"]
 
+
 class HTMLEntity(Node):
     """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
 
@@ -101,19 +102,23 @@ class HTMLEntity(Node):
             except ValueError:
                 if newval not in htmlentities.entitydefs:
                     raise ValueError(
-                        "entity value {!r} is not a valid name".format(newval)) from None
+                        "entity value {!r} is not a valid name".format(newval)
+                    ) from None
                 self._named = True
                 self._hexadecimal = False
             else:
                 if intval < 0 or intval > 0x10FFFF:
                     raise ValueError(
-                        "entity value 0x{:x} is not in range(0x110000)".format(intval)) from None
+                        "entity value 0x{:x} is not in range(0x110000)".format(intval)
+                    ) from None
                 self._named = False
                 self._hexadecimal = True
         else:
             test = int(newval, 16 if self.hexadecimal else 10)
             if test < 0 or test > 0x10FFFF:
-                raise ValueError("entity value {} is not in range(0x110000)".format(test))
+                raise ValueError(
+                    "entity value {} is not in range(0x110000)".format(test)
+                )
             self._named = False
         self._value = newval
 
@@ -126,8 +131,10 @@ class HTMLEntity(Node):
             try:
                 int(self.value, 16)
             except ValueError as exc:
-                raise ValueError("current entity value {!r} is not a valid "
-                                 "Unicode codepoint".format(self.value)) from exc
+                raise ValueError(
+                    "current entity value {!r} is not a valid "
+                    "Unicode codepoint".format(self.value)
+                ) from exc
         self._named = newval
 
     @hexadecimal.setter

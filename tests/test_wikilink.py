@@ -27,12 +27,14 @@ import pytest
 from mwparserfromhell.nodes import Text, Wikilink
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
+
 def test_str():
     """test Wikilink.__str__()"""
     node = Wikilink(wraptext("foobar"))
     assert "[[foobar]]" == str(node)
     node2 = Wikilink(wraptext("foo"), wraptext("bar"))
     assert "[[foo|bar]]" == str(node2)
+
 
 def test_children():
     """test Wikilink.__children__()"""
@@ -48,12 +50,14 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen2)
 
+
 def test_strip():
     """test Wikilink.__strip__()"""
     node = Wikilink(wraptext("foobar"))
     node2 = Wikilink(wraptext("foo"), wraptext("bar"))
     assert "foobar" == node.__strip__()
     assert "bar" == node2.__strip__()
+
 
 def test_showtree():
     """test Wikilink.__showtree__()"""
@@ -66,9 +70,18 @@ def test_showtree():
     node1.__showtree__(output.append, get, mark)
     node2.__showtree__(output.append, get, mark)
     valid = [
-        "[[", (getter, node1.title), "]]", "[[", (getter, node2.title),
-        "    | ", marker, (getter, node2.text), "]]"]
+        "[[",
+        (getter, node1.title),
+        "]]",
+        "[[",
+        (getter, node2.title),
+        "    | ",
+        marker,
+        (getter, node2.text),
+        "]]",
+    ]
     assert valid == output
+
 
 def test_title():
     """test getter/setter for the title attribute"""
@@ -81,6 +94,7 @@ def test_title():
     node2.title = "héhehé"
     assert_wikicode_equal(wraptext("héhehé"), node1.title)
     assert_wikicode_equal(wraptext("héhehé"), node2.title)
+
 
 def test_text():
     """test getter/setter for the text attribute"""

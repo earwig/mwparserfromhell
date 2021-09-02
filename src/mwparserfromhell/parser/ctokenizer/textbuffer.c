@@ -23,20 +23,22 @@ SOFTWARE.
 #include "textbuffer.h"
 
 #define INITIAL_CAPACITY 32
-#define RESIZE_FACTOR 2
-#define CONCAT_EXTRA 32
+#define RESIZE_FACTOR    2
+#define CONCAT_EXTRA     32
 
 /*
     Internal allocation function for textbuffers.
 */
-static int internal_alloc(Textbuffer* self, Py_UCS4 maxchar)
+static int
+internal_alloc(Textbuffer *self, Py_UCS4 maxchar)
 {
     self->capacity = INITIAL_CAPACITY;
     self->length = 0;
 
     self->object = PyUnicode_New(self->capacity, maxchar);
-    if (!self->object)
+    if (!self->object) {
         return -1;
+    }
     self->kind = PyUnicode_KIND(self->object);
     self->data = PyUnicode_DATA(self->object);
 
@@ -46,7 +48,8 @@ static int internal_alloc(Textbuffer* self, Py_UCS4 maxchar)
 /*
     Internal deallocation function for textbuffers.
 */
-static void internal_dealloc(Textbuffer* self)
+static void
+internal_dealloc(Textbuffer *self)
 {
     Py_DECREF(self->object);
 }
@@ -54,14 +57,16 @@ static void internal_dealloc(Textbuffer* self)
 /*
     Internal resize function.
 */
-static int internal_resize(Textbuffer* self, Py_ssize_t new_cap)
+static int
+internal_resize(Textbuffer *self, Py_ssize_t new_cap)
 {
     PyObject *newobj;
     void *newdata;
 
     newobj = PyUnicode_New(new_cap, PyUnicode_MAX_CHAR_VALUE(self->object));
-    if (!newobj)
+    if (!newobj) {
         return -1;
+    }
     newdata = PyUnicode_DATA(newobj);
     memcpy(newdata, self->data, self->length * self->kind);
     Py_DECREF(self->object);
@@ -75,22 +80,25 @@ static int internal_resize(Textbuffer* self, Py_ssize_t new_cap)
 /*
     Create a new textbuffer object.
 */
-Textbuffer* Textbuffer_new(TokenizerInput* text)
+Textbuffer *
+Textbuffer_new(TokenizerInput *text)
 {
-    Textbuffer* self = malloc(sizeof(Textbuffer));
+    Textbuffer *self = malloc(sizeof(Textbuffer));
     Py_UCS4 maxchar = 0;
 
     maxchar = PyUnicode_MAX_CHAR_VALUE(text->object);
 
-    if (!self)
+    if (!self) {
         goto fail_nomem;
-    if (internal_alloc(self, maxchar) < 0)
+    }
+    if (internal_alloc(self, maxchar) < 0) {
         goto fail_dealloc;
+    }
     return self;
 
-    fail_dealloc:
+fail_dealloc:
     free(self);
-    fail_nomem:
+fail_nomem:
     PyErr_NoMemory();
     return NULL;
 }
@@ -98,7 +106,8 @@ Textbuffer* Textbuffer_new(TokenizerInput* text)
 /*
     Deallocate the given textbuffer.
 */
-void Textbuffer_dealloc(Textbuffer* self)
+void
+Textbuffer_dealloc(Textbuffer *self)
 {
     internal_dealloc(self);
     free(self);
@@ -107,26 +116,30 @@ void Textbuffer_dealloc(Textbuffer* self)
 /*
     Reset a textbuffer to its initial, empty state.
 */
-int Textbuffer_reset(Textbuffer* self)
+int
+Textbuffer_reset(Textbuffer *self)
 {
     Py_UCS4 maxchar = 0;
 
     maxchar = PyUnicode_MAX_CHAR_VALUE(self->object);
 
     internal_dealloc(self);
-    if (internal_alloc(self, maxchar))
+    if (internal_alloc(self, maxchar)) {
         return -1;
+    }
     return 0;
 }
 
 /*
     Write a Unicode codepoint to the given textbuffer.
 */
-int Textbuffer_write(Textbuffer* self, Py_UCS4 code)
+int
+Textbuffer_write(Textbuffer *self, Py_UCS4 code)
 {
     if (self->length >= self->capacity) {
-        if (internal_resize(self, self->capacity * RESIZE_FACTOR) < 0)
+        if (internal_resize(self, self->capacity * RESIZE_FACTOR) < 0) {
             return -1;
+        }
     }
 
     PyUnicode_WRITE(self->kind, self->data, self->length++, code);
@@ -139,7 +152,8 @@ int Textbuffer_write(Textbuffer* self, Py_UCS4 code)
 
     This function does not check for bounds.
 */
-Py_UCS4 Textbuffer_read(Textbuffer* self, Py_ssize_t index)
+Py_UCS4
+Textbuffer_read(Textbuffer *self, Py_ssize_t index)
 {
     return PyUnicode_READ(self->kind, self->data, index);
 }
@@ -147,7 +161,8 @@ Py_UCS4 Textbuffer_read(Textbuffer* self, Py_ssize_t index)
 /*
     Return the contents of the textbuffer as a Python Unicode object.
 */
-PyObject* Textbuffer_render(Textbuffer* self)
+PyObject *
+Textbuffer_render(Textbuffer *self)
 {
     return PyUnicode_FromKindAndData(self->kind, self->data, self->length);
 }
@@ -155,17 +170,20 @@ PyObject* Textbuffer_render(Textbuffer* self)
 /*
     Concatenate the 'other' textbuffer onto the end of the given textbuffer.
 */
-int Textbuffer_concat(Textbuffer* self, Textbuffer* other)
+int
+Textbuffer_concat(Textbuffer *self, Textbuffer *other)
 {
     Py_ssize_t newlen = self->length + other->length;
 
     if (newlen > self->capacity) {
-        if (internal_resize(self, newlen + CONCAT_EXTRA) < 0)
+        if (internal_resize(self, newlen + CONCAT_EXTRA) < 0) {
             return -1;
+        }
     }
 
     assert(self->kind == other->kind);
-    memcpy(((Py_UCS1*) self->data) + self->kind * self->length, other->data,
+    memcpy(((Py_UCS1 *) self->data) + self->kind * self->length,
+           other->data,
            other->length * other->kind);
 
     self->length = newlen;
@@ -175,15 +193,16 @@ int Textbuffer_concat(Textbuffer* self, Textbuffer* other)
 /*
     Reverse the contents of the given textbuffer.
 */
-void Textbuffer_reverse(Textbuffer* self)
+void
+Textbuffer_reverse(Textbuffer *self)
 {
     Py_ssize_t i, end = self->length - 1;
     Py_UCS4 tmp;
 
     for (i = 0; i < self->length / 2; i++) {
         tmp = PyUnicode_READ(self->kind, self->data, i);
-        PyUnicode_WRITE(self->kind, self->data, i,
-                        PyUnicode_READ(self->kind, self->data, end - i));
+        PyUnicode_WRITE(
+            self->kind, self->data, i, PyUnicode_READ(self->kind, self->data, end - i));
         PyUnicode_WRITE(self->kind, self->data, end - i, tmp);
     }
 }

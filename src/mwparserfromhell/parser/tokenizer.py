@@ -24,10 +24,16 @@ import re
 
 from . import contexts, tokens
 from .errors import ParserError
-from ..definitions import (get_html_tag, is_parsable, is_single,
-                           is_single_only, is_scheme)
+from ..definitions import (
+    get_html_tag,
+    is_parsable,
+    is_single,
+    is_single_only,
+    is_scheme,
+)
 
 __all__ = ["Tokenizer"]
+
 
 class BadRoute(Exception):
     """Raised internally when the current tokenization route is invalid."""
@@ -39,14 +45,15 @@ class BadRoute(Exception):
 
 class _TagOpenData:
     """Stores data about an HTML open tag, like ``<ref name="foo">``."""
-    CX_NAME =        1 << 0
-    CX_ATTR_READY =  1 << 1
-    CX_ATTR_NAME =   1 << 2
-    CX_ATTR_VALUE =  1 << 3
-    CX_QUOTED =      1 << 4
-    CX_NOTE_SPACE =  1 << 5
+
+    CX_NAME = 1 << 0
+    CX_ATTR_READY = 1 << 1
+    CX_ATTR_NAME = 1 << 2
+    CX_ATTR_VALUE = 1 << 3
+    CX_QUOTED = 1 << 4
+    CX_NOTE_SPACE = 1 << 5
     CX_NOTE_EQUALS = 1 << 6
-    CX_NOTE_QUOTE =  1 << 7
+    CX_NOTE_QUOTE = 1 << 7
 
     def __init__(self):
         self.context = self.CX_NAME
@@ -57,11 +64,33 @@ class _TagOpenData:
 
 class Tokenizer:
     """Creates a list of tokens from a string of wikicode."""
+
     USES_C = False
     START = object()
     END = object()
-    MARKERS = ["{", "}", "[", "]", "<", ">", "|", "=", "&", "'", '"', "#", "*", ";",
-               ":", "/", "-", "!", "\n", START, END]
+    MARKERS = [
+        "{",
+        "}",
+        "[",
+        "]",
+        "<",
+        ">",
+        "|",
+        "=",
+        "&",
+        "'",
+        '"',
+        "#",
+        "*",
+        ";",
+        ":",
+        "/",
+        "-",
+        "!",
+        "\n",
+        START,
+        END,
+    ]
     URISCHEME = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
     MAX_DEPTH = 40
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
@@ -437,13 +466,15 @@ class Tokenizer:
         """Return whether the current head is the end of a URI."""
         # Built from _parse()'s end sentinels:
         after, ctx = self._read(2), self._context
-        return (this in (self.END, "\n", "[", "]", "<", ">", '"') or
-                " " in this or
-                this == nxt == "'" or
-                (this == "|" and ctx & contexts.TEMPLATE) or
-                (this == "=" and ctx & (contexts.TEMPLATE_PARAM_KEY | contexts.HEADING)) or
-                (this == nxt == "}" and ctx & contexts.TEMPLATE) or
-                (this == nxt == after == "}" and ctx & contexts.ARGUMENT))
+        return (
+            this in (self.END, "\n", "[", "]", "<", ">", '"')
+            or " " in this
+            or this == nxt == "'"
+            or (this == "|" and ctx & contexts.TEMPLATE)
+            or (this == "=" and ctx & (contexts.TEMPLATE_PARAM_KEY | contexts.HEADING))
+            or (this == nxt == "}" and ctx & contexts.TEMPLATE)
+            or (this == nxt == after == "}" and ctx & contexts.ARGUMENT)
+        )
 
     def _really_parse_external_link(self, brackets):
         """Really parse an external link."""
@@ -681,9 +712,13 @@ class Tokenizer:
             self._emit_first(tokens.TagAttrQuote(char=data.quoter))
             self._emit_all(self._pop())
         buf = data.padding_buffer
-        self._emit_first(tokens.TagAttrStart(
-            pad_first=buf["first"], pad_before_eq=buf["before_eq"],
-            pad_after_eq=buf["after_eq"]))
+        self._emit_first(
+            tokens.TagAttrStart(
+                pad_first=buf["first"],
+                pad_before_eq=buf["before_eq"],
+                pad_after_eq=buf["after_eq"],
+            )
+        )
         self._emit_all(self._pop())
         for key in data.padding_buffer:
             data.padding_buffer[key] = ""
@@ -691,7 +726,9 @@ class Tokenizer:
     def _handle_tag_space(self, data, text):
         """Handle whitespace (*text*) inside of an HTML open tag."""
         ctx = data.context
-        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (data.CX_QUOTED | data.CX_NOTE_QUOTE)
+        end_of_value = ctx & data.CX_ATTR_VALUE and not ctx & (
+            data.CX_QUOTED | data.CX_NOTE_QUOTE
+        )
         if end_of_value or (ctx & data.CX_QUOTED and ctx & data.CX_NOTE_SPACE):
             self._push_tag_buffer(data)
             data.context = data.CX_ATTR_READY
@@ -792,8 +829,10 @@ class Tokenizer:
         """Handle the ending of a closing tag (``</foo>``)."""
         strip = lambda tok: tok.text.rstrip().lower()
         closing = self._pop()
-        if len(closing) != 1 or (not isinstance(closing[0], tokens.Text) or
-                                 strip(closing[0]) != strip(self._stack[1])):
+        if len(closing) != 1 or (
+            not isinstance(closing[0], tokens.Text)
+            or strip(closing[0]) != strip(self._stack[1])
+        ):
             self._fail_route()
         self._emit_all(closing)
         self._emit(tokens.TagCloseClose())
@@ -808,8 +847,9 @@ class Tokenizer:
                 self._fail_route()
             elif this == "<" and nxt == "/":
                 self._head += 3
-                if self._read() != ">" or (strip(self._read(-1)) !=
-                                           strip(self._stack[1].text)):
+                if self._read() != ">" or (
+                    strip(self._read(-1)) != strip(self._stack[1].text)
+                ):
                     self._head -= 1
                     self._emit_text("</")
                     continue
@@ -862,8 +902,10 @@ class Tokenizer:
         self._emit(tokens.TagOpenOpen())
         while True:
             this, nxt = self._read(), self._read(1)
-            can_exit = (not data.context & (data.CX_QUOTED | data.CX_NAME) or
-                        data.context & data.CX_NOTE_SPACE)
+            can_exit = (
+                not data.context & (data.CX_QUOTED | data.CX_NAME)
+                or data.context & data.CX_NOTE_SPACE
+            )
             if this is self.END:
                 if self._context & contexts.TAG_ATTR:
                     if data.context & data.CX_QUOTED:
@@ -1079,16 +1121,25 @@ class Tokenizer:
         else:
             self._emit_text("\n")
 
-    def _emit_table_tag(self, open_open_markup, tag, style, padding,
-                        close_open_markup, contents, open_close_markup):
+    def _emit_table_tag(
+        self,
+        open_open_markup,
+        tag,
+        style,
+        padding,
+        close_open_markup,
+        contents,
+        open_close_markup,
+    ):
         """Emit a table tag."""
         self._emit(tokens.TagOpenOpen(wiki_markup=open_open_markup))
         self._emit_text(tag)
         if style:
             self._emit_all(style)
         if close_open_markup:
-            self._emit(tokens.TagCloseOpen(wiki_markup=close_open_markup,
-                                           padding=padding))
+            self._emit(
+                tokens.TagCloseOpen(wiki_markup=close_open_markup, padding=padding)
+            )
         else:
             self._emit(tokens.TagCloseOpen(padding=padding))
         if contents:
@@ -1103,8 +1154,9 @@ class Tokenizer:
         data.context = _TagOpenData.CX_ATTR_READY
         while True:
             this = self._read()
-            can_exit = (not data.context & data.CX_QUOTED or
-                        data.context & data.CX_NOTE_SPACE)
+            can_exit = (
+                not data.context & data.CX_QUOTED or data.context & data.CX_NOTE_SPACE
+            )
             if this == end_token and can_exit:
                 if data.context & (data.CX_ATTR_NAME | data.CX_ATTR_VALUE):
                     self._push_tag_buffer(data)
@@ -1187,30 +1239,34 @@ class Tokenizer:
             self._head -= 1
             return
 
-        cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
-                           line_context | contexts.TABLE_CELL_STYLE)
+        cell = self._parse(
+            contexts.TABLE_OPEN
+            | contexts.TABLE_CELL_OPEN
+            | line_context
+            | contexts.TABLE_CELL_STYLE
+        )
         cell_context = self._context
         self._context = old_context
         reset_for_style = cell_context & contexts.TABLE_CELL_STYLE
         if reset_for_style:
             self._head = reset
-            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
-                       line_context)
+            self._push(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context)
             padding = self._handle_table_style("|")
             style = self._pop()
             # Don't parse the style separator:
             self._head += 1
-            cell = self._parse(contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN |
-                               line_context)
+            cell = self._parse(
+                contexts.TABLE_OPEN | contexts.TABLE_CELL_OPEN | line_context
+            )
             cell_context = self._context
             self._context = old_context
 
         close_open_markup = "|" if reset_for_style else None
-        self._emit_table_tag(markup, tag, style, padding, close_open_markup,
-                             cell, "")
+        self._emit_table_tag(markup, tag, style, padding, close_open_markup, cell, "")
         # Keep header/cell line contexts:
-        self._context |= cell_context & (contexts.TABLE_TH_LINE |
-                                         contexts.TABLE_TD_LINE)
+        self._context |= cell_context & (
+            contexts.TABLE_TH_LINE | contexts.TABLE_TD_LINE
+        )
         # Offset displacement done by parse():
         self._head -= 1
 
@@ -1333,7 +1389,11 @@ class Tokenizer:
             elif this == "|" and self._context & contexts.TEMPLATE:
                 self._handle_template_param()
             elif this == "=" and self._context & contexts.TEMPLATE_PARAM_KEY:
-                if not self._global & contexts.GL_HEADING and self._read(-1) in ("\n", self.START) and nxt == "=":
+                if (
+                    not self._global & contexts.GL_HEADING
+                    and self._read(-1) in ("\n", self.START)
+                    and nxt == "="
+                ):
                     self._parse_heading()
                 else:
                     self._handle_template_param_value()
@@ -1362,7 +1422,11 @@ class Tokenizer:
                 self._parse_external_link(False)
             elif this == "]" and self._context & contexts.EXT_LINK_TITLE:
                 return self._pop()
-            elif this == "=" and not self._global & contexts.GL_HEADING and not self._context & contexts.TEMPLATE:
+            elif (
+                this == "="
+                and not self._global & contexts.GL_HEADING
+                and not self._context & contexts.TEMPLATE
+            ):
                 if self._read(-1) in ("\n", self.START):
                     self._parse_heading()
                 else:
@@ -1397,7 +1461,8 @@ class Tokenizer:
             elif self._read(-1) in ("\n", self.START) and this in ("#", "*", ";", ":"):
                 self._handle_list()
             elif self._read(-1) in ("\n", self.START) and (
-                    this == nxt == self._read(2) == self._read(3) == "-"):
+                this == nxt == self._read(2) == self._read(3) == "-"
+            ):
                 self._handle_hr()
             elif this in ("\n", ":") and self._context & contexts.DL_TERM:
                 self._handle_dl_term()
@@ -1405,9 +1470,17 @@ class Tokenizer:
                     # Kill potential table contexts
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
             # Start of table parsing
-            elif this == "{" and nxt == "|" and (
-                    self._read(-1) in ("\n", self.START) or
-                    (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
+            elif (
+                this == "{"
+                and nxt == "|"
+                and (
+                    self._read(-1) in ("\n", self.START)
+                    or (
+                        self._read(-2) in ("\n", self.START)
+                        and self._read(-1).isspace()
+                    )
+                )
+            ):
                 if self._can_recurse():
                     self._parse_table()
                 else:
@@ -1431,8 +1504,9 @@ class Tokenizer:
                 elif this == "\n" and self._context & contexts.TABLE_CELL_LINE_CONTEXTS:
                     self._context &= ~contexts.TABLE_CELL_LINE_CONTEXTS
                     self._emit_text(this)
-                elif (self._read(-1) in ("\n", self.START) or
-                      (self._read(-2) in ("\n", self.START) and self._read(-1).isspace())):
+                elif self._read(-1) in ("\n", self.START) or (
+                    self._read(-2) in ("\n", self.START) and self._read(-1).isspace()
+                ):
                     if this == "|" and nxt == "}":
                         if self._context & contexts.TABLE_CELL_OPEN:
                             return self._handle_table_cell_end()

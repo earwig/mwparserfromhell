@@ -25,6 +25,7 @@ from ...utils import parse_anything
 
 __all__ = ["Parameter"]
 
+
 class Parameter(StringMixIn):
     """Represents a paramater of a template.
 
@@ -77,6 +78,5 @@ class Parameter(StringMixIn):
     def showkey(self, newval):
         newval = bool(newval)
         if not newval and not self.can_hide_key(self.name):
-            raise ValueError("parameter key {!r} cannot be hidden".format(
-                self.name))
+            raise ValueError("parameter key {!r} cannot be hidden".format(self.name))
         self._showkey = newval

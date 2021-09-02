@@ -29,6 +29,7 @@ from mwparserfromhell.nodes import Tag, Template, Text, Wikilink
 from mwparserfromhell.nodes.extras import Parameter
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
+
 @pytest.fixture()
 def pyparser():
     """make sure the correct tokenizer is used"""
@@ -38,37 +39,60 @@ def pyparser():
     yield
     parser.use_c = restore
 
+
 def test_use_c(pyparser):
     assert parser.Parser()._tokenizer.USES_C is False
+
 
 def test_parsing(pyparser):
     """integration test for parsing overall"""
     text = "this is text; {{this|is=a|template={{with|[[links]]|in}}it}}"
-    expected = wrap([
-        Text("this is text; "),
-        Template(wraptext("this"), [
-            Parameter(wraptext("is"), wraptext("a")),
-            Parameter(wraptext("template"), wrap([
-                Template(wraptext("with"), [
-                    Parameter(wraptext("1"),
-                              wrap([Wikilink(wraptext("links"))]),
-                              showkey=False),
-                    Parameter(wraptext("2"),
-                              wraptext("in"), showkey=False)
-                ]),
-                Text("it")
-            ]))
-        ])
-    ])
+    expected = wrap(
+        [
+            Text("this is text; "),
+            Template(
+                wraptext("this"),
+                [
+                    Parameter(wraptext("is"), wraptext("a")),
+                    Parameter(
+                        wraptext("template"),
+                        wrap(
+                            [
+                                Template(
+                                    wraptext("with"),
+                                    [
+                                        Parameter(
+                                            wraptext("1"),
+                                            wrap([Wikilink(wraptext("links"))]),
+                                            showkey=False,
+                                        ),
+                                        Parameter(
+                                            wraptext("2"), wraptext("in"), showkey=False
+                                        ),
+                                    ],
+                                ),
+                                Text("it"),
+                            ]
+                        ),
+                    ),
+                ],
+            ),
+        ]
+    )
     actual = parser.Parser().parse(text)
     assert_wikicode_equal(expected, actual)
+
 
 def test_skip_style_tags(pyparser):
     """test Parser.parse(skip_style_tags=True)"""
     text = "This is an example with ''italics''!"
-    a = wrap([Text("This is an example with "),
-              Tag(wraptext("i"), wraptext("italics"), wiki_markup="''"),
-              Text("!")])
+    a = wrap(
+        [
+            Text("This is an example with "),
+            Tag(wraptext("i"), wraptext("italics"), wiki_markup="''"),
+            Text("!"),
+        ]
+    )
     b = wraptext("This is an example with ''italics''!")
 
     with_style = parser.Parser().parse(text, skip_style_tags=False)

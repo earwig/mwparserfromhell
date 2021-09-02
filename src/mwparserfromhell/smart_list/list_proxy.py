@@ -167,7 +167,7 @@ class ListProxy(_SliceNormalizerMixIn, list):
 
     def _render(self):
         """Return the actual list from the stored start/stop/step."""
-        return list(self._parent)[self._start:self._stop:self._step]
+        return list(self._parent)[self._start : self._stop : self._step]
 
     @inheritdoc
     def append(self, item):
@@ -187,7 +187,7 @@ class ListProxy(_SliceNormalizerMixIn, list):
 
     @inheritdoc
     def extend(self, item):
-        self._parent[self._stop:self._stop] = item
+        self._parent[self._stop : self._stop] = item
 
     @inheritdoc
     def insert(self, index, item):
@@ -215,7 +215,7 @@ class ListProxy(_SliceNormalizerMixIn, list):
     def reverse(self):
         item = self._render()
         item.reverse()
-        self._parent[self._start:self._stop:self._step] = item
+        self._parent[self._start : self._stop : self._step] = item
 
     @inheritdoc
     def sort(self, key=None, reverse=None):
@@ -226,4 +226,4 @@ class ListProxy(_SliceNormalizerMixIn, list):
         if reverse is not None:
             kwargs["reverse"] = reverse
         item.sort(**kwargs)
-        self._parent[self._start:self._stop:self._step] = item
+        self._parent[self._start : self._stop : self._step] = item

@@ -26,12 +26,14 @@ import pytest
 
 from mwparserfromhell.nodes import Text
 
+
 def test_str():
     """test Text.__str__()"""
     node = Text("foobar")
     assert "foobar" == str(node)
     node2 = Text("fóóbar")
     assert "fóóbar" == str(node2)
+
 
 def test_children():
     """test Text.__children__()"""
@@ -40,10 +42,12 @@ def test_children():
     with pytest.raises(StopIteration):
         next(gen)
 
+
 def test_strip():
     """test Text.__strip__()"""
     node = Text("foobar")
     assert node is node.__strip__()
+
 
 def test_showtree():
     """test Text.__showtree__()"""
@@ -56,6 +60,7 @@ def test_showtree():
     node3.__showtree__(output.append, None, None)
     res = ["foobar", r"f\xf3\xf3bar", "\\U00010332\\U0001033f\\U00010344"]
     assert res == output
+
 
 def test_value():
     """test getter/setter for the value attribute"""

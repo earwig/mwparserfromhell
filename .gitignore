@@ -13,5 +13,6 @@ dist
 docs/_build
 scripts/*.log
 htmlcov/
+compile_commands.json
 .idea/
 .pytest_cache/
