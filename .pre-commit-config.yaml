@@ -1,0 +1,9 @@
+repos:
+-   repo: https://github.com/psf/black
+    rev: 21.8b0
+    hooks:
+    -   id: black
+-   repo: https://github.com/doublify/pre-commit-clang-format
+    rev: 62302476d0da01515660132d76902359bed0f782
+    hooks:
+    -   id: clang-format
