@@ -1,6 +1,7 @@
 v0.7 (unreleased):
 
-- ...
+- Dropped support for end-of-life Python 3.5.
+- Added support for Python 3.10. (#278)
 
 v0.6.3 (released September 2, 2021):
 

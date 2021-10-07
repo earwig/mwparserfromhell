@@ -7,7 +7,8 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.3...develop>`__):
 
-- ...
+- Added support for Python 3.10.
+  (`#278 <https://github.com/earwig/mwparserfromhell/issues/278>`_)
 
 v0.6.3
 ------
