@@ -10,27 +10,20 @@ jobs:
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
     - name: Build manylinux1 x86-64 wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux1_x86_64
+      uses: earwig/python-wheels-manylinux-build@latest-manylinux1_x86_64
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
-        pip-wheel-args: '-w ./wheelhouse --no-deps'
     - name: Build manylinux2014 x86-64 wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2014_x86_64
-      with:
-        python-versions: 'cp310-cp310'
-        pip-wheel-args: '-w ./wheelhouse --no-deps'
-    - name: Build manylinux 2014 aarch64 wheels
-      uses: RalfG/python-wheels-manylinux-build@v0.3.4-manylinux2014_aarch64
+      uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_x86_64
       with:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
-        pip-wheel-args: '-w ./wheelhouse --no-deps'
-    - name: Move to dist/
-      run: |
-        mkdir -p dist
-        cp -v wheelhouse/*-manylinux*.whl dist/
+    - name: Build manylinux 2014 aarch64 wheels
+      uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_aarch64
+      with:
+        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
     - uses: actions/upload-artifact@v2
       with:
-        path: wheelhouse/*-manylinux*.whl
+        path: dist/*.whl
     - name: Publish package to PyPI
       # Only actually publish if a new tag was pushed
       if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
