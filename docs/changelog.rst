@@ -1,14 +1,19 @@
 Changelog
 =========
 
-v0.7
-----
+v0.6.4
+------
 
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.3...develop>`__):
 
+- Dropped support for end-of-life Python 3.5.
 - Added support for Python 3.10.
   (`#278 <https://github.com/earwig/mwparserfromhell/issues/278>`_)
+- Fixed a regression in v0.6.2 that broke parsing of nested wikilinks in file
+  captions. For now, the parser will handle interpret wikilinks in normal links
+  as well, even though this differs from MediaWiki.
+  (`#270 <https://github.com/earwig/mwparserfromhell/issues/270>`_)
 
 v0.6.3
 ------

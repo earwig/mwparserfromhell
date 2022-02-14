@@ -54,6 +54,20 @@ output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="bar[b
 
 ---
 
+name:   nested
+label:  a wikilink nested within another
+input:  "[[file:foo|[[bar]]]]"
+output: [WikilinkOpen(), Text(text="file:foo"), WikilinkSeparator(), WikilinkOpen(), Text(text="bar"), WikilinkClose(), WikilinkClose()]
+
+---
+
+name:   nested_padding
+label:  a wikilink nested within another, separated by other data
+input:  "[[file:foo|a[[b]]c]]"
+output: [WikilinkOpen(), Text(text="file:foo"), WikilinkSeparator(), Text(text="a"), WikilinkOpen(), Text(text="b"), WikilinkClose(), Text(text="c"), WikilinkClose()]
+
+---
+
 name:   invalid_newline
 label:  invalid wikilink: newline as only content
 input:  "[[\n]]"
@@ -86,20 +100,6 @@ name:   invalid_left_bracket
 label:  invalid wikilink: left bracket
 input:  "[[foo[bar]]"
 output: [Text(text="[[foo[bar]]")]
-
----
-
-name:   invalid_nested_text
-label:  invalid wikilink: nested within the text of another
-input:  "[[foo|[[bar]]]]"
-output: [Text(text="[[foo|"), WikilinkOpen(), Text(text="bar"), WikilinkClose(), Text(text="]]")]
-
----
-
-name:   invalid_nested_text_2
-label:  invalid wikilink: a wikilink nested within the text of another, with additional content
-input:  "[[foo|a[[b]]c]]"
-output: [Text(text="[[foo|a"), WikilinkOpen(), Text(text="b"), WikilinkClose(), Text(text="c]]")]
 
 ---
 

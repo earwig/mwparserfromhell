@@ -51,7 +51,8 @@ static int Tokenizer_parse_tag(Tokenizer *);
 /*
     Determine whether the given code point is a marker.
 */
-static int is_marker(Py_UCS4 this)
+static int
+is_marker(Py_UCS4 this)
 {
     int i;
 
@@ -2929,9 +2930,10 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
                 return NULL;
             }
         } else if (this == next && next == '[' && Tokenizer_CAN_RECURSE(self)) {
-            if (this_context & LC_WIKILINK_TEXT) {
-                return Tokenizer_fail_route(self);
-            }
+            // TODO: Only do this if not in a file context:
+            // if (this_context & LC_WIKILINK_TEXT) {
+            //     return Tokenizer_fail_route(self);
+            // }
             if (!(this_context & AGG_NO_WIKILINKS)) {
                 if (Tokenizer_parse_wikilink(self)) {
                     return NULL;

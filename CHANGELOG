@@ -1,7 +1,10 @@
-v0.7 (unreleased):
+v0.6.4 (unreleased):
 
 - Dropped support for end-of-life Python 3.5.
 - Added support for Python 3.10. (#278)
+- Fixed a regression in v0.6.2 that broke parsing of nested wikilinks in file
+  captions. For now, the parser will interpret nested wikilinks in normal links
+  as well, even though this differs from MediaWiki. (#270)
 
 v0.6.3 (released September 2, 2021):
 
