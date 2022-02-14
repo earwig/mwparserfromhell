@@ -1,13 +1,11 @@
 # This config file is used by appveyor.com to build Windows release binaries
 
-version: 0.6.4-b{build}
+version: 0.7.dev0-b{build}
 
 branches:
   only:
-    - master
-    - develop
-
-skip_tags: true
+    - main
+    - /v\d+(\.\d+)*/
 
 image: Visual Studio 2019
 
@@ -56,6 +54,14 @@ environment:
       PYTHON_VERSION: "3.9"
       PYTHON_ARCH:    "64"
 
+    - PYTHON:         "C:\\Python310"
+      PYTHON_VERSION: "3.10"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python310-x64"
+      PYTHON_VERSION: "3.10"
+      PYTHON_ARCH:    "64"
+
 install:
   - "%PIP% install --disable-pip-version-check --user --upgrade pip"
   - "%PIP% install wheel twine pytest"
@@ -71,7 +77,7 @@ after_test:
   - "%SETUPPY% bdist_wheel"
 
 on_success:
-  - "IF %APPVEYOR_REPO_BRANCH%==master %TWINE% upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+  - "IF %APPVEYOR_REPO_TAG%==true %TWINE% upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
 
 artifacts:
   - path: dist\*

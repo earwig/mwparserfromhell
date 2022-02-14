@@ -9,10 +9,6 @@ jobs:
     - uses: actions/checkout@v2
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
-    - name: Build manylinux1 x86-64 wheels
-      uses: earwig/python-wheels-manylinux-build@latest-manylinux1_x86_64
-      with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39'
     - name: Build manylinux2014 x86-64 wheels
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_x86_64
       with:

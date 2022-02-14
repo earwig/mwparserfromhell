@@ -1,11 +1,11 @@
 mwparserfromhell
 ================
 
-.. image:: https://api.travis-ci.com/earwig/mwparserfromhell.svg?branch=develop
+.. image:: https://api.travis-ci.com/earwig/mwparserfromhell.svg
   :alt: Build Status
   :target: https://travis-ci.org/earwig/mwparserfromhell
 
-.. image:: https://img.shields.io/coveralls/earwig/mwparserfromhell/develop.svg
+.. image:: https://img.shields.io/coveralls/earwig/mwparserfromhell/main.svg
   :alt: Coverage Status
   :target: https://coveralls.io/r/earwig/mwparserfromhell
 

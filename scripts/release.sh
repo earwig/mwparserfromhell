@@ -16,8 +16,8 @@ check_git() {
         echo "Aborting: dirty working directory."
         exit 1
     fi
-    if [[ "$(git rev-parse --abbrev-ref HEAD)" != "develop" ]]; then
-        echo "Aborting: not on develop."
+    if [[ "$(git rev-parse --abbrev-ref HEAD)" != "main" ]]; then
+        echo "Aborting: not on main."
         exit 1
     fi
     echo -n "Are you absolutely ready to release? [yN] "
@@ -66,12 +66,8 @@ do_git_stuff() {
     echo -n "Git: committing, tagging, and merging release..."
     git commit -qam "release/$VERSION"
     git tag v$VERSION -s -m "version $VERSION"
-    git checkout -q master
-    git merge -q --no-ff develop -m "Merge develop into master (release/$VERSION)"
     echo -n " pushing..."
-    git push -q --tags origin master
-    git checkout -q develop
-    git push -q origin develop
+    git push -q --tags origin main
     echo " done."
 }
 
