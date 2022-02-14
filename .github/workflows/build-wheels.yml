@@ -23,6 +23,7 @@ jobs:
         python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
     - uses: actions/upload-artifact@v2
       with:
+        name: wheels
         path: dist/*.whl
     - name: Publish package to PyPI
       # Only actually publish if a new tag was pushed
@@ -54,6 +55,7 @@ jobs:
         ls dist/
     - uses: actions/upload-artifact@v2
       with:
+        name: wheels
         path: dist/*.whl
     - name: Publish package to PyPI
       # Only actually publish if a new tag was pushed
