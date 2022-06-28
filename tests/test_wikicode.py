@@ -23,6 +23,7 @@ Tests for the Wikicode class, which manages a list of nodes.
 """
 
 from functools import partial
+import pickle
 import re
 from types import GeneratorType
 
@@ -58,6 +59,8 @@ def test_nodes():
     assert ["abc", "{{def}}"] == code.nodes
     with pytest.raises(ValueError):
         code.__setattr__("nodes", object)
+    P = pickle.dumps(code)
+    pickle.loads(P)
 
 
 def test_get():
