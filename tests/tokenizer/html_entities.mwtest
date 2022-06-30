@@ -156,3 +156,10 @@ name:   invalid_partial_amp_pound_x_semicolon
 label:  invalid entities: an ampersand, pound sign, and x
 input:  "&#x"
 output: [Text(text="&#x")]
+
+---
+
+name:   invalid_zeros_before_named
+label:  invalid entities: zeros before a valid named entity
+input:  "&000nbsp;"
+output: [Text(text="&000nbsp;")]

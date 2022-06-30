@@ -1099,7 +1099,7 @@ Tokenizer_really_parse_entity(Tokenizer *self)
             }
             break;
         }
-        if (i == 0 && this == '0') {
+        if (i == 0 && numeric && this == '0') {
             zeroes++;
             self->head++;
             continue;

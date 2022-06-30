@@ -7,7 +7,8 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.4...main>`__):
 
-- ...
+- Fixed parsing of leading zeros in named HTML entities.
+  (`#288 <https://github.com/earwig/mwparserfromhell/issues/288>`_)
 
 v0.6.4
 ------
