@@ -85,7 +85,8 @@ class Wikilink(Node):
 
     @args.setter
     def args(self, value):
-        if arg := parse_anything(value):
+        arg = parse_anything(value)
+        if arg:
             self._args = [node for node in str(arg.nodes[0]).split('|')]
             if len(self._args) > 0:
                 self._text = str(arg)[len('|'.join(str(a) for a in self._args))-1:]
