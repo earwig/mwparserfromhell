@@ -36,7 +36,7 @@ class Wikilink(Node):
             if not '|' in args:
                 self.text = args
             else:
-                self.text = parse_anything(args).nodes[len(self.args)-1:]
+                self.text = parse_anything(args).nodes[len(list(a for a in self.args if len(a)))-1:]
         else:
             self.text = None
 
@@ -88,7 +88,7 @@ class Wikilink(Node):
         if arg := parse_anything(value):
             self._args = [node for node in str(arg.nodes[0]).split('|')]
             if len(self._args) > 0:
-                self._text = str(arg)[len('|'.join(str(a) for a in self._args)):]
+                self._text = str(arg)[len('|'.join(str(a) for a in self._args))-1:]
                 self._args.pop()
             if len(self._text) == 0:
                 self._text = None
