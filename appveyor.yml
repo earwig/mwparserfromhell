@@ -17,9 +17,8 @@ environment:
     SETUPPY: "%PYEXE% setup.py --with-extension"
     PIP:     "%PYEXE% -m pip"
     TWINE:   "%PYEXE% -m twine"
-    PYPI_USERNAME: "earwigbot"
-    PYPI_PASSWORD:
-      secure: gOIcvPxSC2ujuhwOzwj3v8xjq3CCYd8keFWVnguLM+gcL0e02qshDHy7gwZZwj0+
+    PYPI_TOKEN:
+      secure: w9ql7j0y9fatBSCgsUn1MDFsDvc0WXY88K8hNBHZzq6uBPxWMd7ZblMZSJv4Nywr6ViudQCn4qM/Emm7R8UgKGnHeSX+B8V41ywKgbszEh9wKtuMWI5htsfjaD3Yib/dz/ynGDKEf3nkE6rP2j9bfVLMUARHmvztL+G2rUrjj2GQTqs0ddJ16OudDo2aA/ClsW1Zexc5GPgkun5+JFneUeVV59/bwORGfSjgEtoMyIQ8mdFs/My4sImC+jXFfSHD6s08anIuNX5KO6SSg5mwcxZq+1PweceHivJ87VvCI7w=
 
   matrix:
     - PYTHON:         "C:\\Python36"
@@ -77,7 +76,7 @@ after_test:
   - "%SETUPPY% bdist_wheel"
 
 on_success:
-  - "IF %APPVEYOR_REPO_TAG%==true %TWINE% upload dist\\* -u %PYPI_USERNAME% -p %PYPI_PASSWORD%"
+  - "IF %APPVEYOR_REPO_TAG%==true %TWINE% upload dist\\* -u __token__ -p %PYPI_TOKEN%"
 
 artifacts:
   - path: dist\*
