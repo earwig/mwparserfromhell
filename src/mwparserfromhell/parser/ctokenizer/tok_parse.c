@@ -1770,6 +1770,7 @@ Tokenizer_really_parse_tag(Tokenizer *self)
         return NULL;
     }
     if (Tokenizer_check_route(self, LC_TAG_OPEN) < 0) {
+        TagData_dealloc(data);
         return NULL;
     }
     if (Tokenizer_push(self, LC_TAG_OPEN)) {
