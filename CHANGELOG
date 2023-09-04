@@ -1,5 +1,7 @@
-v0.7 (unreleased):
+v0.6.5 (unreleased):
 
+- Dropped support for end-of-life Python 3.6.
+- Added support for Python 3.11.
 - Fixed parsing of leading zeros in named HTML entities. (#288)
 - Fixed memory leak parsing tags. (#303)
 

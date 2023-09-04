@@ -1,5 +1,4 @@
 name: Build wheels
-
 on: push
 
 jobs:

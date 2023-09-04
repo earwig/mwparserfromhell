@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2012-2021 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -87,7 +87,7 @@ setup(
     else [],
     tests_require=["pytest"],
     version=__version__,
-    python_requires=">= 3.6",
+    python_requires=">= 3.7",
     author="Ben Kurtovic",
     author_email="ben.kurtovic@gmail.com",
     url="https://github.com/earwig/mwparserfromhell",
@@ -105,11 +105,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.6",
         "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
+        "Programming Language :: Python :: 3.11",
         "Topic :: Text Processing :: Markup",
     ],
 )

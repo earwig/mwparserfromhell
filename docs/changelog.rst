@@ -1,12 +1,14 @@
 Changelog
 =========
 
-v0.7
-----
+v0.6.5
+------
 
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.4...main>`__):
 
+- Dropped support for end-of-life Python 3.6.
+- Added support for Python 3.11.
 - Fixed parsing of leading zeros in named HTML entities.
   (`#288 <https://github.com/earwig/mwparserfromhell/issues/288>`_)
 - Fixed memory leak parsing tags.
