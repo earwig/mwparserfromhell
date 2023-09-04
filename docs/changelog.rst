@@ -9,6 +9,8 @@ Unreleased
 
 - Fixed parsing of leading zeros in named HTML entities.
   (`#288 <https://github.com/earwig/mwparserfromhell/issues/288>`_)
+- Fixed memory leak parsing tags.
+  (`#303 <https://github.com/earwig/mwparserfromhell/issues/303>`_)
 
 v0.6.4
 ------
