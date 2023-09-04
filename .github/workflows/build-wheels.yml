@@ -11,11 +11,11 @@ jobs:
     - name: Build manylinux2014 x86-64 wheels
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_x86_64
       with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
+        python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311'
     - name: Build manylinux 2014 aarch64 wheels
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_aarch64
       with:
-        python-versions: 'cp36-cp36m cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310'
+        python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311'
     - uses: actions/upload-artifact@v2
       with:
         name: wheels
@@ -37,6 +37,7 @@ jobs:
           - '3.8'
           - '3.9'
           - '3.10'
+          - '3.11'
     steps:
     - uses: actions/checkout@v2
     - uses: actions/setup-python@v2
