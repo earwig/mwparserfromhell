@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -49,12 +49,16 @@ class SmartList(_SliceNormalizerMixIn, list):
         [0, 1, 2, 3, 4]
     """
 
-    def __init__(self, iterable=None):
-        if iterable:
-            super().__init__(iterable)
-        else:
-            super().__init__()
-        self._children = {}
+    __slots__ = ("_children",)
+
+    def __new__(cls, *args, **kwargs):
+        obj = super().__new__(cls, *args, **kwargs)
+        obj._children = {}
+        return obj
+
+    def __reduce_ex__(self, protocol: int) -> tuple:
+        # Detach children when pickling
+        return (SmartList, (), None, iter(self))
 
     def __getitem__(self, key):
         if not isinstance(key, slice):

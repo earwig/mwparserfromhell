@@ -725,7 +725,7 @@ def test_formatting():
         ),
     ]
 
-    for (original, expected) in tests:
+    for original, expected in tests:
         code = parse(original)
         template = code.filter_templates()[0]
         template.add("pop", "12345<ref>example ref</ref>")

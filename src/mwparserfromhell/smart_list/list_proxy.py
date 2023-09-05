@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -19,6 +19,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+import weakref
+
 from .utils import _SliceNormalizerMixIn, inheritdoc
 
 
@@ -30,10 +32,20 @@ class ListProxy(_SliceNormalizerMixIn, list):
     it builds it dynamically using the :meth:`_render` method.
     """
 
+    __slots__ = ("__weakref__", "_parent", "_sliceinfo")
+
     def __init__(self, parent, sliceinfo):
         super().__init__()
         self._parent = parent
         self._sliceinfo = sliceinfo
+
+    def __reduce_ex__(self, protocol: int) -> tuple:
+        return (ListProxy, (self._parent, self._sliceinfo), ())
+
+    def __setstate__(self, state: tuple) -> None:
+        # Reregister with the parent
+        child_ref = weakref.ref(self, self._parent._delete_child)
+        self._parent._children[id(child_ref)] = (child_ref, self._sliceinfo)
 
     def __repr__(self):
         return repr(self._render())

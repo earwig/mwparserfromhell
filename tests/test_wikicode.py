@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -24,6 +24,7 @@ Tests for the Wikicode class, which manages a list of nodes.
 
 from functools import partial
 import re
+import pickle
 from types import GeneratorType
 
 import pytest
@@ -58,6 +59,14 @@ def test_nodes():
     assert ["abc", "{{def}}"] == code.nodes
     with pytest.raises(ValueError):
         code.__setattr__("nodes", object)
+
+
+@pytest.mark.parametrize("protocol", range(pickle.HIGHEST_PROTOCOL + 1))
+def test_pickling(protocol: int):
+    """test Wikicode objects can be pickled"""
+    code = parse("Have a {{template}} and a [[page|link]]")
+    enc = pickle.dumps(code, protocol=protocol)
+    assert pickle.loads(enc) == code
 
 
 def test_get():

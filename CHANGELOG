@@ -4,6 +4,7 @@ v0.6.5 (unreleased):
 - Added support for Python 3.11.
 - Fixed parsing of leading zeros in named HTML entities. (#288)
 - Fixed memory leak parsing tags. (#303)
+- Fixed pickling SmartList objects. (#289)
 
 v0.6.4 (released February 14, 2022):
 

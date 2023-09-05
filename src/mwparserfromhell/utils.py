@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -23,10 +23,20 @@ This module contains accessory functions for other parts of the library. Parser
 users generally won't need stuff from here.
 """
 
+from __future__ import annotations
+
 __all__ = ["parse_anything"]
 
+import typing
+from typing import Any
 
-def parse_anything(value, context=0, skip_style_tags=False):
+if typing.TYPE_CHECKING:
+    from .wikicode import Wikicode
+
+
+def parse_anything(
+    value: Any, context: int = 0, *, skip_style_tags: bool = False
+) -> Wikicode:
     """Return a :class:`.Wikicode` for *value*, allowing multiple types.
 
     This differs from :meth:`.Parser.parse` in that we accept more than just a
@@ -58,11 +68,13 @@ def parse_anything(value, context=0, skip_style_tags=False):
     if value is None:
         return Wikicode(SmartList())
     if hasattr(value, "read"):
-        return parse_anything(value.read(), context, skip_style_tags)
+        return parse_anything(value.read(), context, skip_style_tags=skip_style_tags)
     try:
         nodelist = SmartList()
         for item in value:
-            nodelist += parse_anything(item, context, skip_style_tags).nodes
+            nodelist += parse_anything(
+                item, context, skip_style_tags=skip_style_tags
+            ).nodes
         return Wikicode(nodelist)
     except TypeError as exc:
         error = (

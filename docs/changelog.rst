@@ -13,6 +13,8 @@ Unreleased
   (`#288 <https://github.com/earwig/mwparserfromhell/issues/288>`_)
 - Fixed memory leak parsing tags.
   (`#303 <https://github.com/earwig/mwparserfromhell/issues/303>`_)
+- Fixed pickling SmartList objects.
+  (`#289 <https://github.com/earwig/mwparserfromhell/issues/289>`_)
 
 v0.6.4
 ------

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -21,6 +21,8 @@
 """
 Test cases for the SmartList class and its child, ListProxy.
 """
+
+import pickle
 
 import pytest
 
@@ -432,3 +434,27 @@ def test_influence():
     assert [6, 5, 2, 3, 4, 1] == parent
     assert [4, 3, 2] == child2
     assert 0 == len(parent._children)
+
+
+@pytest.mark.parametrize("protocol", range(pickle.HIGHEST_PROTOCOL + 1))
+def test_pickling(protocol: int):
+    """test SmartList objects behave properly when pickling"""
+    parent = SmartList([0, 1, 2, 3, 4, 5])
+    enc = pickle.dumps(parent, protocol=protocol)
+    assert pickle.loads(enc) == parent
+
+    child = parent[1:3]
+    assert len(parent._children) == 1
+    assert list(parent._children.values())[0][0]() is child
+    enc = pickle.dumps(parent, protocol=protocol)
+    parent2 = pickle.loads(enc)
+    assert parent2 == parent
+    assert parent2._children == {}
+
+    enc = pickle.dumps(child, protocol=protocol)
+    child2 = pickle.loads(enc)
+    assert child2 == child
+    assert child2._parent == parent
+    assert child2._parent is not parent
+    assert len(child2._parent._children) == 1
+    assert list(child2._parent._children.values())[0][0]() is child2

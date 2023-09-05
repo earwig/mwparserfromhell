@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -36,6 +36,8 @@ def inheritdoc(method):
 
 class _SliceNormalizerMixIn:
     """MixIn that provides a private method to normalize slices."""
+
+    __slots__ = ()
 
     def _normalize_slice(self, key, clamp=False):
         """Return a slice equivalent to the input *key*, standardized."""
