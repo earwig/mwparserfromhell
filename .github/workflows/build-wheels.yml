@@ -5,7 +5,7 @@ jobs:
   build-linux:
     runs-on: ubuntu-latest
     steps:
-    - uses: actions/checkout@v2
+    - uses: actions/checkout@v4
     - name: Set up QEMU
       uses: docker/setup-qemu-action@v1
     - name: Build manylinux2014 x86-64 wheels
@@ -16,7 +16,7 @@ jobs:
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_aarch64
       with:
         python-versions: 'cp37-cp37m cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311'
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: wheels
         path: dist/*.whl
@@ -39,8 +39,8 @@ jobs:
           - '3.10'
           - '3.11'
     steps:
-    - uses: actions/checkout@v2
-    - uses: actions/setup-python@v2
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v4
       with:
         python-version: ${{ matrix.python-version }}
     - name: Build wheels
@@ -48,7 +48,7 @@ jobs:
         python -m pip install --upgrade pip wheel setuptools
         pip wheel . -w dist/
         ls dist/
-    - uses: actions/upload-artifact@v2
+    - uses: actions/upload-artifact@v3
       with:
         name: wheels
         path: dist/*.whl
