@@ -74,7 +74,7 @@ do_git_stuff() {
 upload_to_pypi() {
     echo -n "PyPI: uploading source tarball..."
     python setup.py -q sdist
-    twine upload -s dist/mwparserfromhell-$VERSION*
+    twine upload dist/mwparserfromhell-$VERSION*
     echo " done."
 }
 
@@ -115,21 +115,11 @@ test_release() {
         echo " done."
     fi
     pip -q uninstall -y mwparserfromhell
-    echo -n "Downloading mwparserfromhell source tarball and GPG signature..."
+    echo -n "Downloading mwparserfromhell source tarball..."
     curl -sL "https://pypi.io/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
-    curl -sL "https://pypi.io/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz.asc" -o "mwparserfromhell.tar.gz.asc"
     echo " done."
-    echo "Verifying tarball..."
-    gpg --verify mwparserfromhell.tar.gz.asc mwparserfromhell.tar.gz
-    if [[ "$?" != "0" ]]; then
-        echo "*** ERROR: GPG signature verification failed!"
-        deactivate
-        cd ..
-        rm -rf $virtdir
-        exit 1
-    fi
     tar -xf mwparserfromhell.tar.gz
-    rm mwparserfromhell.tar.gz mwparserfromhell.tar.gz.asc
+    rm mwparserfromhell.tar.gz
     cd mwparserfromhell-$VERSION
     echo "Running unit tests..."
     python setup.py -q install
