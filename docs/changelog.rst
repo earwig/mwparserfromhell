@@ -4,8 +4,8 @@ Changelog
 v0.6.5
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.4...main>`__):
+`Released September 5, 2023 <https://github.com/earwig/mwparserfromhell/tree/v0.6.5>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.4...v0.6.5>`__):
 
 - Dropped support for end-of-life Python 3.6.
 - Added support for Python 3.11.
