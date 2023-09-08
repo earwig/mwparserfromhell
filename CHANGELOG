@@ -1,6 +1,6 @@
 v0.7 (unreleased):
 
-- ...
+- Dropped support for end-of-life Python 3.7.
 
 v0.6.5 (released September 5, 2023):
 
