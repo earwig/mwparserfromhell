@@ -88,7 +88,7 @@ init_tokenizer_text(TokenizerInput *text)
     text->object = Py_None;
     Py_INCREF(Py_None);
     text->length = 0;
-    text->kind = PyUnicode_WCHAR_KIND;
+    text->kind = PyUnicode_1BYTE_KIND;
     text->data = NULL;
 }
 
