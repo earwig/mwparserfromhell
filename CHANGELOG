@@ -1,4 +1,4 @@
-v0.6.6 (unreleased):
+v0.6.6 (released January 4, 2024):
 
 - Dropped support for end-of-life Python 3.7.
 - Added support for Python 3.12.
