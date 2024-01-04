@@ -2,6 +2,7 @@ v0.6.6 (unreleased):
 
 - Dropped support for end-of-life Python 3.7.
 - Added support for Python 3.12.
+- Raised nested node depth limit from 40 to 100 to match current MediaWiki. (#313)
 
 v0.6.5 (released September 5, 2023):
 

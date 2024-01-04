@@ -9,6 +9,8 @@ Unreleased
 
 - Dropped support for end-of-life Python 3.7.
 - Added support for Python 3.12.
+- Raised nested node depth limit from 40 to 100 to match current MediaWiki.
+  (`#313 <https://github.com/earwig/mwparserfromhell/issues/313>`_)
 
 v0.6.5
 ------
