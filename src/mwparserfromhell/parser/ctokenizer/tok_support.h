@@ -49,7 +49,7 @@ Py_UCS4 Tokenizer_read_backwards(Tokenizer *, Py_ssize_t);
 
 /* Macros */
 
-#define MAX_DEPTH                   40
+#define MAX_DEPTH                   100
 #define Tokenizer_CAN_RECURSE(self) (self->depth < MAX_DEPTH)
 #define Tokenizer_IS_CURRENT_STACK(self, id)                                           \
     (self->topstack->ident.head == (id).head &&                                        \

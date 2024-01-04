@@ -92,7 +92,7 @@ class Tokenizer:
         END,
     ]
     URISCHEME = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
-    MAX_DEPTH = 40
+    MAX_DEPTH = 100
     regex = re.compile(r"([{}\[\]<>|=&'#*;:/\\\"\-!\n])", flags=re.IGNORECASE)
     tag_splitter = re.compile(r"([\s\"\'\\]+)")
 
