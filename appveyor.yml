@@ -63,7 +63,7 @@ environment:
 
 install:
   - "%PIP% install --disable-pip-version-check --user --upgrade pip"
-  - "%PIP% install wheel twine pytest"
+  - "%PIP% install setuptools wheel twine pytest"
 
 build_script:
   - "%SETUPPY% build"
