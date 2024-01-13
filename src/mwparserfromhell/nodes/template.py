@@ -237,7 +237,8 @@ class Template(Node):
     def __getitem__(self, name):
         return self.get(name)
 
-    def add(self, name, value, showkey=None, before=None, preserve_spacing=True):
+    def add(self, name, value, showkey=None, before=None, after=None,
+            preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parsable by
@@ -258,6 +259,13 @@ class Template(Node):
         exists multiple times in the template, we will place it before the last
         occurrence. If *before* is not in the template, :exc:`ValueError` is
         raised. The argument is ignored if *name* is an existing parameter.
+
+        If *after* is given (either a :class:`.Parameter` object or a name),
+        then we will place the parameter immediately after this one. If *after*
+        is a name and exists multiple times in the template, we will place it
+        after the last occurrence. If *after* is not in the template,
+        :exc:`ValueError` is raised. The argument is ignored if *name* is an
+        existing parameter or if a value is passed to *before*.
 
         If *preserve_spacing* is ``True``, we will try to preserve whitespace
         conventions around the parameter, whether it is new or we are updating
@@ -312,6 +320,10 @@ class Template(Node):
             if not isinstance(before, Parameter):
                 before = self.get(before)
             self.params.insert(self.params.index(before), param)
+        elif after:
+            if not isinstance(after, Parameter):
+                after = self.get(after)
+            self.params.insert(self.params.index(after)+1, param)
         else:
             self.params.append(param)
         return param
