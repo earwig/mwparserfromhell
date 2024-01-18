@@ -334,6 +334,10 @@ def test_add():
     node40.add("3", "d")
     node41.add("3", "d")
     node42.add("b", "hello")
+    node43 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")])
+    node44 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")])
+    node43.add("new_param", "value", after="d")
+    node44.add("new_param", "value", after="f")
 
     assert "{{a|b=c|d|e=f}}" == node1
     assert "{{a|b=c|d|g}}" == node2
@@ -382,6 +386,8 @@ def test_add():
     assert "{{a| b| c|d}}" == node40
     assert "{{a|1= b|2= c|3= d}}" == node41
     assert "{{a|b=hello  \n}}" == node42
+    assert "{{a|b=c|d=e|new_param=value|f=g}}" == node43
+    assert "{{a|b=c|d=e|f=g|new_param=value}}" == node44
 
 
 def test_remove():
