@@ -334,8 +334,12 @@ def test_add():
     node40.add("3", "d")
     node41.add("3", "d")
     node42.add("b", "hello")
-    node43 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")])
-    node44 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")])
+    node43 = Template(
+        wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")]
+    )
+    node44 = Template(
+        wraptext("a"), [pgens("b", "c"), pgens("d", "e"), pgens("f", "g")]
+    )
     node43.add("new_param", "value", after="d")
     node44.add("new_param", "value", after="f")
 

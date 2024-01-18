@@ -114,7 +114,7 @@ class MemoryTest:
     def run(self):
         """Run the memory test suite."""
         width = 1
-        for (name, _) in self._tests:
+        for name, _ in self._tests:
             if len(name) > width:
                 width = len(name)
 

@@ -237,8 +237,9 @@ class Template(Node):
     def __getitem__(self, name):
         return self.get(name)
 
-    def add(self, name, value, showkey=None, before=None, after=None,
-            preserve_spacing=True):
+    def add(
+        self, name, value, showkey=None, before=None, after=None, preserve_spacing=True
+    ):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parsable by
@@ -317,13 +318,14 @@ class Template(Node):
 
         param = Parameter(name, value, showkey)
         if before:
+            assert after is None, "Cannot set a value for both 'before' and 'after'"
             if not isinstance(before, Parameter):
                 before = self.get(before)
             self.params.insert(self.params.index(before), param)
         elif after:
             if not isinstance(after, Parameter):
                 after = self.get(after)
-            self.params.insert(self.params.index(after)+1, param)
+            self.params.insert(self.params.index(after) + 1, param)
         else:
             self.params.append(param)
         return param

@@ -7,7 +7,9 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.6...main>`__):
 
-- ...
+- Added 'after' parameter to Template.add().
+  (`#281 <https://github.com/earwig/mwparserfromhell/issues/281>`_,
+  `#315 <https://github.com/earwig/mwparserfromhell/pull/315>`_)
 
 v0.6.6
 ------

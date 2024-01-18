@@ -1,6 +1,6 @@
 v0.7 (unreleased):
 
-- ...
+- Added 'after' parameter to Template.add(). (#281, #315)
 
 v0.6.6 (released January 4, 2024):
 
