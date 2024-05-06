@@ -1,10 +1,6 @@
 mwparserfromhell
 ================
 
-.. image:: https://api.travis-ci.com/earwig/mwparserfromhell.svg
-  :alt: Build Status
-  :target: https://travis-ci.org/earwig/mwparserfromhell
-
 .. image:: https://img.shields.io/coveralls/earwig/mwparserfromhell/main.svg
   :alt: Coverage Status
   :target: https://coveralls.io/r/earwig/mwparserfromhell
@@ -23,7 +19,9 @@ The easiest way to install the parser is through the `Python Package Index`_;
 you can install the latest release with ``pip install mwparserfromhell``
 (`get pip`_). Make sure your pip is up-to-date first, especially on Windows.
 
-Alternatively, get the latest development version::
+Alternatively, get the latest development version:
+
+.. code-block:: sh
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
@@ -37,49 +35,57 @@ Usage
 
 Normal usage is rather straightforward (where ``text`` is page text):
 
->>> import mwparserfromhell
->>> wikicode = mwparserfromhell.parse(text)
+.. code-block:: python
+
+  >>> import mwparserfromhell
+  >>> wikicode = mwparserfromhell.parse(text)
 
 ``wikicode`` is a ``mwparserfromhell.Wikicode`` object, which acts like an
 ordinary ``str`` object with some extra methods. For example:
 
->>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
->>> wikicode = mwparserfromhell.parse(text)
->>> print(wikicode)
-I has a template! {{foo|bar|baz|eggs=spam}} See it?
->>> templates = wikicode.filter_templates()
->>> print(templates)
-['{{foo|bar|baz|eggs=spam}}']
->>> template = templates[0]
->>> print(template.name)
-foo
->>> print(template.params)
-['bar', 'baz', 'eggs=spam']
->>> print(template.get(1).value)
-bar
->>> print(template.get("eggs").value)
-spam
+.. code-block:: python
+
+  >>> text = "I has a template! {{foo|bar|baz|eggs=spam}} See it?"
+  >>> wikicode = mwparserfromhell.parse(text)
+  >>> print(wikicode)
+  I has a template! {{foo|bar|baz|eggs=spam}} See it?
+  >>> templates = wikicode.filter_templates()
+  >>> print(templates)
+  ['{{foo|bar|baz|eggs=spam}}']
+  >>> template = templates[0]
+  >>> print(template.name)
+  foo
+  >>> print(template.params)
+  ['bar', 'baz', 'eggs=spam']
+  >>> print(template.get(1).value)
+  bar
+  >>> print(template.get("eggs").value)
+  spam
 
 Since nodes can contain other nodes, getting nested templates is trivial:
 
->>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
->>> mwparserfromhell.parse(text).filter_templates()
-['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
+.. code-block:: python
+
+  >>> text = "{{foo|{{bar}}={{baz|{{spam}}}}}}"
+  >>> mwparserfromhell.parse(text).filter_templates()
+  ['{{foo|{{bar}}={{baz|{{spam}}}}}}', '{{bar}}', '{{baz|{{spam}}}}', '{{spam}}']
 
 You can also pass ``recursive=False`` to ``filter_templates()`` and explore
 templates manually. This is possible because nodes can contain additional
 ``Wikicode`` objects:
 
->>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
->>> print(code.filter_templates(recursive=False))
-['{{foo|this {{includes a|template}}}}']
->>> foo = code.filter_templates(recursive=False)[0]
->>> print(foo.get(1).value)
-this {{includes a|template}}
->>> print(foo.get(1).value.filter_templates()[0])
-{{includes a|template}}
->>> print(foo.get(1).value.filter_templates()[0].get(1).value)
-template
+.. code-block:: python
+
+  >>> code = mwparserfromhell.parse("{{foo|this {{includes a|template}}}}")
+  >>> print(code.filter_templates(recursive=False))
+  ['{{foo|this {{includes a|template}}}}']
+  >>> foo = code.filter_templates(recursive=False)[0]
+  >>> print(foo.get(1).value)
+  this {{includes a|template}}
+  >>> print(foo.get(1).value.filter_templates()[0])
+  {{includes a|template}}
+  >>> print(foo.get(1).value.filter_templates()[0].get(1).value)
+  template
 
 Templates can be easily modified to add, remove, or alter params. ``Wikicode``
 objects can be treated like lists, with ``append()``, ``insert()``,
@@ -87,28 +93,32 @@ objects can be treated like lists, with ``append()``, ``insert()``,
 for comparing page or template names, which takes care of capitalization and
 whitespace:
 
->>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
->>> code = mwparserfromhell.parse(text)
->>> for template in code.filter_templates():
-...     if template.name.matches("Cleanup") and not template.has("date"):
-...         template.add("date", "July 2012")
-...
->>> print(code)
-{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
->>> code.replace("{{uncategorized}}", "{{bar-stub}}")
->>> print(code)
-{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
->>> print(code.filter_templates())
-['{{cleanup|date=July 2012}}', '{{bar-stub}}']
+.. code-block:: python
+
+  >>> text = "{{cleanup}} '''Foo''' is a [[bar]]. {{uncategorized}}"
+  >>> code = mwparserfromhell.parse(text)
+  >>> for template in code.filter_templates():
+  ...     if template.name.matches("Cleanup") and not template.has("date"):
+  ...         template.add("date", "July 2012")
+  ...
+  >>> print(code)
+  {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{uncategorized}}
+  >>> code.replace("{{uncategorized}}", "{{bar-stub}}")
+  >>> print(code)
+  {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
+  >>> print(code.filter_templates())
+  ['{{cleanup|date=July 2012}}', '{{bar-stub}}']
 
 You can then convert ``code`` back into a regular ``str`` object (for
 saving the page!) by calling ``str()`` on it:
 
->>> text = str(code)
->>> print(text)
-{{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
->>> text == code
-True
+.. code-block:: python
+
+  >>> text = str(code)
+  >>> print(text)
+  {{cleanup|date=July 2012}} '''Foo''' is a [[bar]]. {{bar-stub}}
+  >>> text == code
+  True
 
 Limitations
 -----------
