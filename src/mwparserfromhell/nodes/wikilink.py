@@ -28,10 +28,17 @@ __all__ = ["Wikilink"]
 class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
 
-    def __init__(self, title, text=None):
+    def __init__(self, title, args=None):
         super().__init__()
         self.title = title
-        self.text = text
+        self.args = args
+        if args is not None:
+            if not '|' in args:
+                self.text = args
+            else:
+                self.text = parse_anything(args).nodes[len(list(a for a in self.args if len(a)))-1:]
+        else:
+            self.text = None
 
     def __str__(self):
         if self.text is not None:
@@ -51,6 +58,10 @@ class Wikilink(Node):
     def __showtree__(self, write, get, mark):
         write("[[")
         get(self.title)
+        if self.args is not None:
+            write("    | ")
+            mark()
+            get(self.args)
         if self.text is not None:
             write("    | ")
             mark()
@@ -63,17 +74,42 @@ class Wikilink(Node):
         return self._title
 
     @property
+    def args(self):
+        """The args (if any), as a :class:`.list` object."""
+        return self._args
+
+    @property
     def text(self):
         """The text to display (if any), as a :class:`.Wikicode` object."""
         return self._text
 
+    @args.setter
+    def args(self, value):
+        arg = parse_anything(value)
+        if arg:
+            self._args = [node for node in str(arg.nodes[0]).split('|')]
+            if len(self._args) > 0:
+                self._text = str(arg)[len('|'.join(str(a) for a in self._args))-1:]
+                self._args.pop()
+            if len(self._text) == 0:
+                self._text = None
+            if len(self._args) == 0:
+                self._args = None
+        elif not hasattr(arg, 'nodes'):
+            self._args = None
+        else:
+            self._args = None
+
     @title.setter
     def title(self, value):
-        self._title = parse_anything(value)
+        if value is not None:
+            self._title = parse_anything(value)
+        else:
+            self._title = None
 
     @text.setter
     def text(self, value):
-        if value is None:
-            self._text = None
-        else:
+        if value is not None:
             self._text = parse_anything(value)
+        else:
+            self._text = None
