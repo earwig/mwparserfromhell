@@ -1557,6 +1557,10 @@ Tokenizer_handle_tag_close_close(Tokenizer *self)
             }
             Py_XDECREF(so);
             Py_XDECREF(sc);
+            // One of `so` or `sc` failed to allocate so we clean up the
+            // closing tag and propagate the error by returning NULL.
+            Py_DECREF(closing);
+            return NULL;
         }
         case -1:
             Py_DECREF(closing);
