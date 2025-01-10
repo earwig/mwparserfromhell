@@ -363,6 +363,8 @@ def test_matches():
     code3 = parse("Hello world!")
     code4 = parse("World,_hello?")
     code5 = parse("")
+    code6 = parse("File:Foo")
+    code7 = parse("Talk:foo")
     assert code1.matches("Cleanup") is True
     assert code1.matches("cleanup") is True
     assert code1.matches("  cleanup\n") is True
@@ -386,6 +388,13 @@ def test_matches():
     assert code5.matches("") is True
     assert code5.matches("<!-- nothing -->") is True
     assert code5.matches(("a", "b", "")) is True
+    assert code6.matches("File:Foo") is True
+    assert code6.matches("File:foo") is True
+    assert code6.matches("FILE:FOO") is False
+    assert code6.matches("file:foo") is True
+    assert code6.matches("FiLe:foo") is True
+    assert code6.matches("FiLE:Foo") is True
+    assert code7.matches("Talk:Foo") is True
 
 
 def test_filter_family():

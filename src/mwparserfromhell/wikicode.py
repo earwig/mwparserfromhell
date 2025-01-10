@@ -516,19 +516,43 @@ class Wikicode(StringMixIn):
         adjusted. Specifically, whitespace and markup is stripped and the first
         letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
+
+        If either side has any colons, everything before the last colon is taken to be
+        a namespace and/or interwiki prefix.  The parts before and after the colon are
+        normalized and compared separately; both must match for the result to be True.
         """
-        normalize = lambda s: (s[0].upper() + s[1:]).replace("_", " ") if s else s
-        this = normalize(self.strip_code().strip())
+        this = self.strip_code().strip()
+        this_prefix, this_postfix = self._split_and_normalize(this)
 
         if isinstance(other, (str, bytes, Wikicode, Node)):
             that = parse_anything(other).strip_code().strip()
-            return this == normalize(that)
+            that_prefix, that_postfix = self._split_and_normalize(that)
+            return (this_prefix, this_postfix) == (that_prefix, that_postfix)
 
         for obj in other:
             that = parse_anything(obj).strip_code().strip()
-            if this == normalize(that):
+            that_prefix, that_postfix = self._split_and_normalize(that)
+            if (this_prefix, this_postfix) == (that_prefix, that_postfix):
                 return True
         return False
+    
+    def _split_and_normalize(self, s):
+        """Split a page title into a prefix (everything before the last colon)
+        and a postfix (everything after the last colon).  Both parts are normalized
+        according to the rules specific to that part (the prefix is case-insensitive,
+        while the postfix is only case insensitive in the first character) before being
+        returned.
+
+        If there is no prefix, the returned prefix is an empty string.
+        """
+        normalize = lambda s: (s[0].upper() + s[1:]).replace("_", " ") if s else s
+        m = re.match(r'(.*):(.*)', s)
+        if m:
+            return normalize(m[1]).lower(), normalize(m[2])
+        else:
+            return "", normalize(s)
+
+
 
     def ifilter(self, recursive=True, matches=None, flags=FLAGS, forcetype=None):
         """Iterate over nodes in our list matching certain conditions.
