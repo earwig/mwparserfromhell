@@ -61,6 +61,14 @@ environment:
       PYTHON_VERSION: "3.12"
       PYTHON_ARCH:    "64"
 
+    - PYTHON:         "C:\\Python313"
+      PYTHON_VERSION: "3.13"
+      PYTHON_ARCH:    "32"
+
+    - PYTHON:         "C:\\Python313-x64"
+      PYTHON_VERSION: "3.13"
+      PYTHON_ARCH:    "64"
+
 install:
   - "%PIP% install --disable-pip-version-check --user --upgrade pip"
   - "%PIP% install setuptools wheel twine pytest"
