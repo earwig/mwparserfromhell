@@ -334,7 +334,7 @@ class Template(Node):
         in order using the same logic as :meth:`add`.
         """
         for param in params:
-            self.add(
+            self.add(**param)
                 name=param["name"],
                 value=param["value"],
                 showkey=param.get("showkey"),
