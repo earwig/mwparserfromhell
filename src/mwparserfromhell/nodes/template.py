@@ -17,11 +17,7 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).parent.parent))
 from collections import defaultdict
-from typing import TypedDict
 import re
 
 from ._base import Node
@@ -35,14 +31,6 @@ __all__ = ["Template"]
 FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
-class TemplateParam(TypedDict):
-    """TypedDict for template.update() method."""
-    name: any 
-    value: any 
-    showkey: bool | None = None
-    before: str | None = None
-    after: str | None = None
-    preserve_spacing: bool = True
 
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
@@ -247,15 +235,7 @@ class Template(Node):
     def __getitem__(self, name):
         return self.get(name)
 
-    def add(
-        self, 
-        name: any, 
-        value: any, 
-        showkey: bool | None = None, 
-        before: str | None = None, 
-        after: str | None = None, 
-        preserve_spacing: bool = True
-    ) -> Parameter:
+    def add(self, name, value, showkey=None, before=None, after=None, preserve_spacing=True):
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parsable by
@@ -346,7 +326,7 @@ class Template(Node):
             self.params.append(param)
         return param
 
-    def update(self, params: list[TemplateParam]):
+    def update(self, params):
         """Update the template with multiple parameters at once.
         
         This method accepts a list of parameter dictionaries, each containing
