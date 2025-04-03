@@ -328,15 +328,16 @@ class Template(Node):
             self.params.append(param)
         return param
 
-    def update(self, params):
+    def update(self, params, **kwargs):
         """Update the template with multiple parameters at once.
-        
-        This method accepts a list of parameter dictionaries, each containing
-        the same arguments as :meth:`add`. It will process each parameter
-        in order using the same logic as :meth:`add`.
+        Args:
+            params: A dictionary mapping parameter names to values. 
+            **kwargs: Optional arguments that will be applied to all parameters,
+                matching the same arguments in :meth:`add` (showkey, before, 
+                after, preserve_spacing)
         """
-        for param in params:
-            self.add(**param)
+        for name, value in params.items():
+            self.add(name, value, **kwargs)
 
     def __setitem__(self, name, value):
         return self.add(name, value)

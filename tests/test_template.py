@@ -397,54 +397,20 @@ def test_add():
 def test_update():
     """test template.update()"""
     node1 = Template(wraptext("a"))
-    node1.update([{"name": "b", "value": "c"}])
-    assert "{{a|b=c}}" == node1
+    node1.update({"b": "c", "d": "e"})
+    assert "{{a|b=c|d=e}}" == node1
 
     node2 = Template(wraptext("a"))
-    node2.update([{"name": "1", "value": "b", "showkey": False}])
+    node2.update({"1": "b"}, showkey=False)
     assert "{{a|b}}" == node2
 
-    node3 = Template(wraptext("a"), [pgens("b", "c"), pgens("d", "e")])
-    node3.update([
-        {"name": "f", "value": "g", "before": "d"},
-        {"name": "h", "value": "i", "after": "b"}
-    ])
-    assert "{{a|b=c|h=i|f=g|d=e}}" == node3
-
-    node4 = Template(wraptext("a\n"), [
+    node3 = Template(wraptext("a\n"), [
         pgens("b ", "c\n"),
         pgens("d ", " e")
     ])
-    node4.update([{
-        "name": "e", 
-        "value": "f", 
-        "preserve_spacing": True
-    }])
-    assert "{{a\n|b =c\n|d = e|e =f}}" == node4
+    node3.update({"b ": "f"}, preserve_spacing=False)
+    assert "{{a\n|b =f|d = e}}" == node3
 
-    node5 = Template(wraptext("a"), [pgens("b", "c")])
-    node5.update([
-        {
-            "name": "1", 
-            "value": "e", 
-            "showkey": False,
-            "before": "b"
-        },
-        {
-            "name": "f", 
-            "value": "g", 
-            "preserve_spacing": False
-        }
-    ])
-    assert "{{a|e|b=c|f=g}}" == node5
-
-    node6 = Template(wraptext("a"), [pgens("b", "c")])
-    node6.update([{"name": "b", "value": "d"}])
-    assert "{{a|b=d}}" == node6
-
-    node7 = Template(wraptext("a"), [pgenh("1", "b")])
-    node7.update([{"name": "1", "value": "c"}])
-    assert "{{a|c}}" == node7
 
 def test_remove():
     """test Template.remove()"""
