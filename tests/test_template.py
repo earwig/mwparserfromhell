@@ -394,6 +394,24 @@ def test_add():
     assert "{{a|b=c|d=e|f=g|new_param=value}}" == node44
 
 
+def test_update():
+    """test template.update()"""
+    node1 = Template(wraptext("a"))
+    node1.update({"b": "c", "d": "e"})
+    assert "{{a|b=c|d=e}}" == node1
+
+    node2 = Template(wraptext("a"))
+    node2.update({"1": "b"}, showkey=False)
+    assert "{{a|b}}" == node2
+
+    node3 = Template(wraptext("a\n"), [
+        pgens("b ", "c\n"),
+        pgens("d ", " e")
+    ])
+    node3.update({"b ": "f"}, preserve_spacing=False)
+    assert "{{a\n|b =f|d = e}}" == node3
+
+
 def test_remove():
     """test Template.remove()"""
     node1 = Template(wraptext("foobar"))

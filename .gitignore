@@ -16,3 +16,4 @@ htmlcov/
 compile_commands.json
 .idea/
 .pytest_cache/
+.venv

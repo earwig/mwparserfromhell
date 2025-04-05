@@ -17,7 +17,6 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-
 from collections import defaultdict
 import re
 
@@ -32,7 +31,6 @@ __all__ = ["Template"]
 FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
-
 
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
@@ -329,6 +327,17 @@ class Template(Node):
         else:
             self.params.append(param)
         return param
+
+    def update(self, params, **kwargs):
+        """Update the template with multiple parameters at once.
+        Args:
+            params: A dictionary mapping parameter names to values. 
+            **kwargs: Optional arguments that will be applied to all parameters,
+                matching the same arguments in :meth:`add` (showkey, before, 
+                after, preserve_spacing)
+        """
+        for name, value in params.items():
+            self.add(name, value, **kwargs)
 
     def __setitem__(self, name, value):
         return self.add(name, value)
