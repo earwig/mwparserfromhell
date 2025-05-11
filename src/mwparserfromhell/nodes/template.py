@@ -19,12 +19,27 @@
 # SOFTWARE.
 from collections import defaultdict
 import re
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Optional,
+    Union,
+    List,
+    Dict,
+    Callable,
+    Generator,
+    Mapping,
+    cast,
+)
 
 from ._base import Node
 from .html_entity import HTMLEntity
 from .text import Text
 from .extras import Parameter
 from ..utils import parse_anything
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Template"]
 
@@ -36,34 +51,36 @@ _UNSET = object()
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
-    def __init__(self, name, params=None):
+    def __init__(self, name: Any, params: Optional[List[Parameter]] = None):
         super().__init__()
         self.name = name
-        if params:
-            self._params = params
-        else:
-            self._params = []
+        self._params: List[Parameter] = params or []
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.params:
             params = "|".join([str(param) for param in self.params])
             return "{{" + str(self.name) + "|" + params + "}}"
         return "{{" + str(self.name) + "}}"
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode"]:
         yield self.name
         for param in self.params:
             if param.showkey:
                 yield param.name
             yield param.value
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         if kwargs.get("keep_template_params"):
             parts = [param.value.strip_code(**kwargs) for param in self.params]
             return " ".join(part for part in parts if part)
         return None
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         write("{{")
         get(self.name)
         for param in self.params:
@@ -76,7 +93,7 @@ class Template(Node):
         write("}}")
 
     @staticmethod
-    def _surface_escape(code, char):
+    def _surface_escape(code: "Wikicode", char: str) -> None:
         """Return *code* with *char* escaped as an HTML entity.
 
         The main use of this is to escape pipes (``|``) or equal signs (``=``)
@@ -89,7 +106,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement), False)
 
     @staticmethod
-    def _select_theory(theories):
+    def _select_theory(theories: Dict[str, int]) -> Optional[str]:
         """Return the most likely spacing convention given different options.
 
         Given a dictionary of convention options as keys and their occurrence
@@ -105,7 +122,7 @@ class Template(Node):
         return None
 
     @staticmethod
-    def _blank_param_value(value):
+    def _blank_param_value(value: "Wikicode") -> None:
         """Remove the content from *value* while keeping its whitespace.
 
         Replace *value*\\ 's nodes with two text nodes, the first containing
@@ -120,15 +137,17 @@ class Template(Node):
             before, after = match.group(1), match.group(2)
         value.nodes = [Text(before), Text(after)]
 
-    def _get_spacing_conventions(self, use_names):
+    def _get_spacing_conventions(
+        self, use_names: bool
+    ) -> tuple[Optional[str], Optional[str]]:
         """Try to determine the whitespace conventions for parameters.
 
         This will examine the existing parameters and use
         :meth:`_select_theory` to determine if there are any preferred styles
         for how much whitespace to put before or after the value.
         """
-        before_theories = defaultdict(lambda: 0)
-        after_theories = defaultdict(lambda: 0)
+        before_theories: defaultdict[str, int] = defaultdict(lambda: 0)
+        after_theories: defaultdict[str, int] = defaultdict(lambda: 0)
         for param in self.params:
             if not param.showkey:
                 continue
@@ -150,14 +169,14 @@ class Template(Node):
         after = self._select_theory(after_theories)
         return before, after
 
-    def _fix_dependendent_params(self, i):
+    def _fix_dependendent_params(self, i: int) -> None:
         """Unhide keys if necessary after removing the param at index *i*."""
         if not self.params[i].showkey:
             for param in self.params[i + 1 :]:
                 if not param.showkey:
                     param.showkey = True
 
-    def _remove_exact(self, needle, keep_field):
+    def _remove_exact(self, needle: Parameter, keep_field: bool) -> None:
         """Remove a specific parameter, *needle*, from the template."""
         for i, param in enumerate(self.params):
             if param is needle:
@@ -169,7 +188,7 @@ class Template(Node):
                 return
         raise ValueError(needle)
 
-    def _should_remove(self, i, name):
+    def _should_remove(self, i: int, name: str) -> bool:
         """Look ahead for a parameter with the same name, but hidden.
 
         If one exists, we should remove the given one rather than blanking it.
@@ -183,20 +202,20 @@ class Template(Node):
         return False
 
     @property
-    def name(self):
+    def name(self) -> "Wikicode":
         """The name of the template, as a :class:`.Wikicode` object."""
         return self._name
 
+    @name.setter
+    def name(self, value: Any) -> None:
+        self._name = parse_anything(value)
+
     @property
-    def params(self):
+    def params(self) -> List[Parameter]:
         """The list of parameters contained within the template."""
         return self._params
 
-    @name.setter
-    def name(self, value):
-        self._name = parse_anything(value)
-
-    def has(self, name, ignore_empty=False):
+    def has(self, name: Union[str, Any], ignore_empty: bool = False) -> bool:
         """Return ``True`` if any parameter in the template is named *name*.
 
         With *ignore_empty*, ``False`` will be returned even if the template
@@ -212,11 +231,11 @@ class Template(Node):
                 return True
         return False
 
-    def has_param(self, name, ignore_empty=False):
+    def has_param(self, name: Union[str, Any], ignore_empty: bool = False) -> bool:
         """Alias for :meth:`has`."""
         return self.has(name, ignore_empty)
 
-    def get(self, name, default=_UNSET):
+    def get(self, name: Union[str, Any], default: Any = _UNSET) -> Union[Parameter, Any]:
         """Get the parameter whose name is *name*.
 
         The returned object is a :class:`.Parameter` instance. Raises
@@ -233,12 +252,18 @@ class Template(Node):
             raise ValueError(name)
         return default
 
-    def __getitem__(self, name):
+    def __getitem__(self, name: Union[str, Any]) -> Parameter:
         return self.get(name)
 
     def add(
-        self, name, value, showkey=None, before=None, after=None, preserve_spacing=True
-    ):
+        self,
+        name: Any,
+        value: Any,
+        showkey: Optional[bool] = None,
+        before: Optional[Union[Parameter, str]] = None,
+        after: Optional[Union[Parameter, str]] = None,
+        preserve_spacing: bool = True,
+    ) -> Parameter:
         """Add a parameter to the template with a given *name* and *value*.
 
         *name* and *value* can be anything parsable by
@@ -329,7 +354,7 @@ class Template(Node):
             self.params.append(param)
         return param
 
-    def update(self, params, **kwargs):
+    def update(self, params: Mapping[Any, Any], **kwargs: Any) -> None:
         """Update the template with multiple parameters at once.
         Args:
             params: A dictionary mapping parameter names to values.
@@ -340,10 +365,10 @@ class Template(Node):
         for name, value in params.items():
             self.add(name, value, **kwargs)
 
-    def __setitem__(self, name, value):
+    def __setitem__(self, name: Any, value: Any) -> Parameter:
         return self.add(name, value)
 
-    def remove(self, param, keep_field=False):
+    def remove(self, param: Union[Parameter, str], keep_field: bool = False) -> None:
         """Remove a parameter from the template, identified by *param*.
 
         If *param* is a :class:`.Parameter` object, it will be matched exactly,
@@ -390,5 +415,5 @@ class Template(Node):
         for i in reversed(to_remove):
             self.params.pop(i)
 
-    def __delitem__(self, param):
+    def __delitem__(self, param: Union[Parameter, str]) -> None:
         return self.remove(param)
