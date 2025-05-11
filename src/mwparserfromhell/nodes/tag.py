@@ -19,10 +19,15 @@
 # SOFTWARE.
 
 
+from typing import TYPE_CHECKING, Any, Callable, Optional, List, Generator
+
 from ._base import Node
 from .extras import Attribute
 from ..definitions import is_visible
 from ..utils import parse_anything
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Tag"]
 
@@ -32,19 +37,22 @@ class Tag(Node):
 
     def __init__(
         self,
-        tag,
-        contents=None,
-        attrs=None,
-        wiki_markup=None,
-        self_closing=False,
-        invalid=False,
-        implicit=False,
-        padding="",
-        closing_tag=None,
-        wiki_style_separator=None,
-        closing_wiki_markup=None,
+        tag: Any,
+        contents: Any = None,
+        attrs: Optional[List[Attribute]] = None,
+        wiki_markup: Optional[str] = None,
+        self_closing: bool = False,
+        invalid: bool = False,
+        implicit: bool = False,
+        padding: str = "",
+        closing_tag: Optional["Wikicode"] = None,
+        wiki_style_separator: Optional[str] = None,
+        closing_wiki_markup: Optional[str] = None,
     ):
         super().__init__()
+        self._attrs: List[Attribute]
+        self._closing_wiki_markup: Optional[str]
+
         self.tag = tag
         self.contents = contents
         self._attrs = attrs if attrs else []
@@ -60,7 +68,7 @@ class Tag(Node):
         if closing_wiki_markup is not None:
             self.closing_wiki_markup = closing_wiki_markup
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.wiki_markup:
             if self.attributes:
                 attrs = "".join([str(attr) for attr in self.attributes])
@@ -90,7 +98,7 @@ class Tag(Node):
             result += "</" + str(self.closing_tag) + ">"
         return result
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode"]:
         if not self.wiki_markup:
             yield self.tag
         for attr in self.attributes:
@@ -102,12 +110,17 @@ class Tag(Node):
             if not self.wiki_markup and self.closing_tag:
                 yield self.closing_tag
 
-    def __strip__(self, **kwargs):
-        if self.contents and is_visible(self.tag):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
+        if self.contents and is_visible(str(self.tag)):
             return self.contents.strip_code(**kwargs)
         return None
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         write("</" if self.invalid else "<")
         get(self.tag)
         for attr in self.attributes:
@@ -127,17 +140,25 @@ class Tag(Node):
             write(">")
 
     @property
-    def tag(self):
+    def tag(self) -> "Wikicode":
         """The tag itself, as a :class:`.Wikicode` object."""
         return self._tag
 
+    @tag.setter
+    def tag(self, value: Any) -> None:
+        self._tag = self._closing_tag = parse_anything(value)
+
     @property
-    def contents(self):
+    def contents(self) -> "Wikicode":
         """The contents of the tag, as a :class:`.Wikicode` object."""
         return self._contents
 
+    @contents.setter
+    def contents(self, value: Any) -> None:
+        self._contents = parse_anything(value)
+
     @property
-    def attributes(self):
+    def attributes(self) -> List[Attribute]:
         """The list of attributes affecting the tag.
 
         Each attribute is an instance of :class:`.Attribute`.
@@ -145,7 +166,7 @@ class Tag(Node):
         return self._attrs
 
     @property
-    def wiki_markup(self):
+    def wiki_markup(self) -> Optional[str]:
         """The wikified version of a tag to show instead of HTML.
 
         If set to a value, this will be displayed instead of the brackets.
@@ -154,13 +175,23 @@ class Tag(Node):
         """
         return self._wiki_markup
 
+    @wiki_markup.setter
+    def wiki_markup(self, value: Optional[str]) -> None:
+        self._wiki_markup = str(value) if value else None
+        if not value or not self.closing_wiki_markup:
+            self._closing_wiki_markup = self._wiki_markup
+
     @property
-    def self_closing(self):
+    def self_closing(self) -> bool:
         """Whether the tag is self-closing with no content (like ``<br/>``)."""
         return self._self_closing
 
+    @self_closing.setter
+    def self_closing(self, value: bool) -> None:
+        self._self_closing = bool(value)
+
     @property
-    def invalid(self):
+    def invalid(self) -> bool:
         """Whether the tag starts with a backslash after the opening bracket.
 
         This makes the tag look like a lone close tag. It is technically
@@ -170,8 +201,12 @@ class Tag(Node):
         """
         return self._invalid
 
+    @invalid.setter
+    def invalid(self, value: bool) -> None:
+        self._invalid = bool(value)
+
     @property
-    def implicit(self):
+    def implicit(self) -> bool:
         """Whether the tag is implicitly self-closing, with no ending slash.
 
         This is only possible for specific "single" tags like ``<br>`` and
@@ -180,69 +215,17 @@ class Tag(Node):
         """
         return self._implicit
 
+    @implicit.setter
+    def implicit(self, value: bool) -> None:
+        self._implicit = bool(value)
+
     @property
-    def padding(self):
+    def padding(self) -> str:
         """Spacing to insert before the first closing ``>``."""
         return self._padding
 
-    @property
-    def closing_tag(self):
-        """The closing tag, as a :class:`.Wikicode` object.
-
-        This will usually equal :attr:`tag`, unless there is additional
-        spacing, comments, or the like.
-        """
-        return self._closing_tag
-
-    @property
-    def wiki_style_separator(self):
-        """The separator between the padding and content in a wiki markup tag.
-
-        Essentially the wiki equivalent of the TagCloseOpen.
-        """
-        return self._wiki_style_separator
-
-    @property
-    def closing_wiki_markup(self):
-        """The wikified version of the closing tag to show instead of HTML.
-
-        If set to a value, this will be displayed instead of the close tag
-        brackets. If tag is :attr:`self_closing` is ``True`` then this is not
-        displayed. If :attr:`wiki_markup` is set and this has not been set, this
-        is set to the value of :attr:`wiki_markup`. If this has been set and
-        :attr:`wiki_markup` is set to a ``False`` value, this is set to
-        ``None``.
-        """
-        return self._closing_wiki_markup
-
-    @tag.setter
-    def tag(self, value):
-        self._tag = self._closing_tag = parse_anything(value)
-
-    @contents.setter
-    def contents(self, value):
-        self._contents = parse_anything(value)
-
-    @wiki_markup.setter
-    def wiki_markup(self, value):
-        self._wiki_markup = str(value) if value else None
-        if not value or not self.closing_wiki_markup:
-            self._closing_wiki_markup = self._wiki_markup
-
-    @self_closing.setter
-    def self_closing(self, value):
-        self._self_closing = bool(value)
-
-    @invalid.setter
-    def invalid(self, value):
-        self._invalid = bool(value)
-
-    @implicit.setter
-    def implicit(self, value):
-        self._implicit = bool(value)
-
     @padding.setter
-    def padding(self, value):
+    def padding(self, value: str) -> None:
         if not value:
             self._padding = ""
         else:
@@ -251,19 +234,49 @@ class Tag(Node):
                 raise ValueError("padding must be entirely whitespace")
             self._padding = value
 
+    @property
+    def closing_tag(self) -> "Wikicode":
+        """The closing tag, as a :class:`.Wikicode` object.
+
+        This will usually equal :attr:`tag`, unless there is additional
+        spacing, comments, or the like.
+        """
+        return self._closing_tag
+
     @closing_tag.setter
-    def closing_tag(self, value):
+    def closing_tag(self, value: Any) -> None:
         self._closing_tag = parse_anything(value)
 
+    @property
+    def wiki_style_separator(self) -> Optional[str]:
+        """The separator between the padding and content in a wiki markup tag.
+
+        Essentially the wiki equivalent of the TagCloseOpen.
+        """
+        return self._wiki_style_separator
+
     @wiki_style_separator.setter
-    def wiki_style_separator(self, value):
+    def wiki_style_separator(self, value: Optional[str]) -> None:
         self._wiki_style_separator = str(value) if value else None
 
+    @property
+    def closing_wiki_markup(self) -> Optional[str]:
+        """The wikified version of the closing tag to show instead of HTML.
+
+        If set to a value, this will be displayed instead of the close tag
+        brackets. If the tag is :attr:`self_closing`, this is not displayed.
+        If :attr:`wiki_markup` is set and this has not been set, this is set
+        to the value of :attr:`wiki_markup`. If this has been set and
+        :attr:`wiki_markup` is set to a ``False`` value, this is set to
+        ``None``.
+        """
+        return self._closing_wiki_markup
+
     @closing_wiki_markup.setter
-    def closing_wiki_markup(self, value):
+    def closing_wiki_markup(self, value: Optional[str]) -> None:
         self._closing_wiki_markup = str(value) if value else None
 
-    def has(self, name):
+    def has(self, name: str) -> bool:
         """Return whether any attribute in the tag has the given *name*.
 
         Note that a tag may have multiple attributes with the same name, but
@@ -274,7 +287,7 @@ class Tag(Node):
                 return True
         return False
 
-    def get(self, name):
+    def get(self, name: str) -> Attribute:
         """Get the attribute with the given *name*.
 
         The returned object is a :class:`.Attribute` instance. Raises
@@ -289,13 +302,13 @@ class Tag(Node):
 
     def add(
         self,
-        name,
-        value=None,
-        quotes='"',
-        pad_first=" ",
-        pad_before_eq="",
-        pad_after_eq="",
-    ):
+        name: Any,
+        value: Any = None,
+        quotes: Optional[str] = '"',
+        pad_first: str = " ",
+        pad_before_eq: str = "",
+        pad_after_eq: str = "",
+    ) -> Attribute:
         """Add an attribute with the given *name* and *value*.
 
         *name* and *value* can be anything parsable by
@@ -318,7 +331,7 @@ class Tag(Node):
         self.attributes.append(attr)
         return attr
 
-    def remove(self, name):
+    def remove(self, name: str) -> None:
         """Remove all attributes with the given *name*.
 
         Raises :exc:`ValueError` if none were found.
