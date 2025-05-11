@@ -32,7 +32,7 @@ __all__ = ["Parameter"]
 
 
 class Parameter(StringMixIn):
-    """Represents a paramater of a template.
+    """Represents a parameter of a template.
 
     For example, the template ``{{foo|bar|spam=eggs}}`` contains two
     Parameters: one whose name is ``"1"``, value is ``"bar"``, and ``showkey``
