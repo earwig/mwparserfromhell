@@ -19,8 +19,13 @@
 # SOFTWARE.
 
 
+from typing import TYPE_CHECKING, Any, Optional
+
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
+
+if TYPE_CHECKING:
+    from ...wikicode import Wikicode
 
 __all__ = ["Attribute"]
 
@@ -35,23 +40,28 @@ class Attribute(StringMixIn):
 
     def __init__(
         self,
-        name,
-        value=None,
-        quotes='"',
-        pad_first=" ",
-        pad_before_eq="",
-        pad_after_eq="",
+        name: Any,
+        value: Any = None,
+        quotes: Optional[str] = '"',
+        pad_first: str = " ",
+        pad_before_eq: str = "",
+        pad_after_eq: str = "",
     ):
         super().__init__()
+
+        self._pad_first: str
+        self._pad_before_eq: str
+        self._pad_after_eq: str
+
         self.name = name
-        self._quotes = None
+        self._quotes: Optional[str] = None
         self.value = value
         self.quotes = quotes
         self.pad_first = pad_first
         self.pad_before_eq = pad_before_eq
         self.pad_after_eq = pad_after_eq
 
-    def __str__(self):
+    def __str__(self) -> str:
         result = self.pad_first + str(self.name) + self.pad_before_eq
         if self.value is not None:
             result += "=" + self.pad_after_eq
@@ -61,11 +71,11 @@ class Attribute(StringMixIn):
         return result
 
     @staticmethod
-    def _value_needs_quotes(val):
+    def _value_needs_quotes(value: "Wikicode") -> Optional[str]:
         """Return valid quotes for the given value, or None if unneeded."""
-        if not val:
+        if not value:
             return None
-        val = "".join(str(node) for node in val.filter_text(recursive=False))
+        val = "".join(str(node) for node in value.filter_text(recursive=False))
         if not any(char.isspace() for char in val):
             return None
         if "'" in val and '"' not in val:
@@ -74,7 +84,7 @@ class Attribute(StringMixIn):
             return "'"
         return "\"'"  # Either acceptable, " preferred over '
 
-    def _set_padding(self, attr, value):
+    def _set_padding(self, attr: str, value: str) -> None:
         """Setter for the value of a padding attribute."""
         if not value:
             setattr(self, attr, "")
@@ -85,49 +95,29 @@ class Attribute(StringMixIn):
             setattr(self, attr, value)
 
     @staticmethod
-    def coerce_quotes(quotes):
+    def coerce_quotes(quotes: Any) -> Optional[str]:
         """Coerce a quote type into an acceptable value, or raise an error."""
-        orig, quotes = quotes, str(quotes) if quotes else None
-        if quotes not in [None, '"', "'"]:
-            raise ValueError("{!r} is not a valid quote type".format(orig))
-        return quotes
+        coerced_quotes = str(quotes) if quotes else None
+        if coerced_quotes not in [None, '"', "'"]:
+            raise ValueError("{!r} is not a valid quote type".format(quotes))
+        return coerced_quotes
 
     @property
-    def name(self):
+    def name(self) -> "Wikicode":
         """The name of the attribute as a :class:`.Wikicode` object."""
         return self._name
 
+    @name.setter
+    def name(self, value: Any) -> None:
+        self._name = parse_anything(value)
+
     @property
-    def value(self):
+    def value(self) -> Optional["Wikicode"]:
         """The value of the attribute as a :class:`.Wikicode` object."""
         return self._value
 
-    @property
-    def quotes(self):
-        """How to enclose the attribute value. ``"``, ``'``, or ``None``."""
-        return self._quotes
-
-    @property
-    def pad_first(self):
-        """Spacing to insert right before the attribute."""
-        return self._pad_first
-
-    @property
-    def pad_before_eq(self):
-        """Spacing to insert right before the equal sign."""
-        return self._pad_before_eq
-
-    @property
-    def pad_after_eq(self):
-        """Spacing to insert right after the equal sign."""
-        return self._pad_after_eq
-
-    @name.setter
-    def name(self, value):
-        self._name = parse_anything(value)
-
     @value.setter
-    def value(self, newval):
+    def value(self, newval: Any) -> None:
         if newval is None:
             self._value = None
         else:
@@ -137,21 +127,41 @@ class Attribute(StringMixIn):
                 self._quotes = quotes[0]
             self._value = code
 
+    @property
+    def quotes(self) -> Optional[str]:
+        """How to enclose the attribute value. ``"``, ``'``, or ``None``."""
+        return self._quotes
+
     @quotes.setter
-    def quotes(self, value):
+    def quotes(self, value: Any) -> None:
         value = self.coerce_quotes(value)
         if not value and self._value_needs_quotes(self.value):
             raise ValueError("attribute value requires quotes")
         self._quotes = value
 
+    @property
+    def pad_first(self) -> str:
+        """Spacing to insert right before the attribute."""
+        return self._pad_first
+
     @pad_first.setter
-    def pad_first(self, value):
+    def pad_first(self, value: str) -> None:
         self._set_padding("_pad_first", value)
 
+    @property
+    def pad_before_eq(self) -> str:
+        """Spacing to insert right before the equal sign."""
+        return self._pad_before_eq
+
     @pad_before_eq.setter
-    def pad_before_eq(self, value):
+    def pad_before_eq(self, value: str) -> None:
         self._set_padding("_pad_before_eq", value)
 
+    @property
+    def pad_after_eq(self) -> str:
+        """Spacing to insert right after the equal sign."""
+        return self._pad_after_eq
+
     @pad_after_eq.setter
-    def pad_after_eq(self, value):
+    def pad_after_eq(self, value: str) -> None:
         self._set_padding("_pad_after_eq", value)
