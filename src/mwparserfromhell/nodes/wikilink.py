@@ -19,8 +19,13 @@
 # SOFTWARE.
 
 
+from typing import TYPE_CHECKING, Any, Optional, Generator, Callable
+
 from ._base import Node
 from ..utils import parse_anything
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Wikilink"]
 
@@ -28,27 +33,32 @@ __all__ = ["Wikilink"]
 class Wikilink(Node):
     """Represents an internal wikilink, like ``[[Foo|Bar]]``."""
 
-    def __init__(self, title, text=None):
+    def __init__(self, title: Any, text: Any = None):
         super().__init__()
         self.title = title
         self.text = text
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.text is not None:
             return "[[" + str(self.title) + "|" + str(self.text) + "]]"
         return "[[" + str(self.title) + "]]"
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode", None, None]:
         yield self.title
         if self.text is not None:
             yield self.text
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         if self.text is not None:
             return self.text.strip_code(**kwargs)
         return self.title.strip_code(**kwargs)
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         write("[[")
         get(self.title)
         if self.text is not None:
@@ -58,21 +68,21 @@ class Wikilink(Node):
         write("]]")
 
     @property
-    def title(self):
+    def title(self) -> "Wikicode":
         """The title of the linked page, as a :class:`.Wikicode` object."""
         return self._title
 
+    @title.setter
+    def title(self, value: Any) -> None:
+        self._title = parse_anything(value)
+
     @property
-    def text(self):
+    def text(self) -> Optional["Wikicode"]:
         """The text to display (if any), as a :class:`.Wikicode` object."""
         return self._text
 
-    @title.setter
-    def title(self, value):
-        self._title = parse_anything(value)
-
     @text.setter
-    def text(self, value):
+    def text(self, value: Any) -> None:
         if value is None:
             self._text = None
         else:
