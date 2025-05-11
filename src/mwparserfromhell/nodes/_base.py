@@ -18,7 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import TYPE_CHECKING, Any, Generator, Optional, Callable
+
 from ..string_mixin import StringMixIn
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Node"]
 
@@ -37,16 +42,21 @@ class Node(StringMixIn):
     of the node, if desired, for :meth:`~.Wikicode.get_tree`.
     """
 
-    def __str__(self):
+    def __str__(self) -> str:
         raise NotImplementedError()
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode"]:
         return
         # pylint: disable=unreachable
         yield  # pragma: no cover (this is a generator that yields nothing)
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         return None
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         write(str(self))
