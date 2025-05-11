@@ -132,8 +132,9 @@ class HTMLEntity(Node):
                 int(self.value, 16)
             except ValueError as exc:
                 raise ValueError(
-                    "current entity value {!r} is not a valid "
-                    "Unicode codepoint".format(self.value)
+                    "current entity value {!r} is not a valid Unicode codepoint".format(
+                        self.value
+                    )
                 ) from exc
         self._named = newval
 

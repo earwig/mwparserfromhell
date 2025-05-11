@@ -32,6 +32,7 @@ FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
 
+
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
@@ -331,9 +332,9 @@ class Template(Node):
     def update(self, params, **kwargs):
         """Update the template with multiple parameters at once.
         Args:
-            params: A dictionary mapping parameter names to values. 
+            params: A dictionary mapping parameter names to values.
             **kwargs: Optional arguments that will be applied to all parameters,
-                matching the same arguments in :meth:`add` (showkey, before, 
+                matching the same arguments in :meth:`add` (showkey, before,
                 after, preserve_spacing)
         """
         for name, value in params.items():
