@@ -19,8 +19,13 @@
 # SOFTWARE.
 
 
+from typing import TYPE_CHECKING, Any, Optional, Generator, Callable
+
 from ._base import Node
 from ..utils import parse_anything
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["ExternalLink"]
 
@@ -28,14 +33,20 @@ __all__ = ["ExternalLink"]
 class ExternalLink(Node):
     """Represents an external link, like ``[http://example.com/ Example]``."""
 
-    def __init__(self, url, title=None, brackets=True, suppress_space=False):
+    def __init__(
+        self,
+        url: Any,
+        title: Any = None,
+        brackets: bool = True,
+        suppress_space: bool = False,
+    ):
         super().__init__()
         self.url = url
         self.title = title
         self.brackets = brackets
         self.suppress_space = suppress_space
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.brackets:
             if self.title is not None:
                 if self.suppress_space is True:
@@ -44,19 +55,24 @@ class ExternalLink(Node):
             return "[" + str(self.url) + "]"
         return str(self.url)
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode"]:
         yield self.url
         if self.title is not None:
             yield self.title
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         if self.brackets:
             if self.title:
                 return self.title.strip_code(**kwargs)
             return None
         return self.url.strip_code(**kwargs)
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         if self.brackets:
             write("[")
         get(self.url)
@@ -66,31 +82,31 @@ class ExternalLink(Node):
             write("]")
 
     @property
-    def url(self):
+    def url(self) -> "Wikicode":
         """The URL of the link target, as a :class:`.Wikicode` object."""
         return self._url
 
-    @property
-    def title(self):
-        """The link title (if given), as a :class:`.Wikicode` object."""
-        return self._title
-
-    @property
-    def brackets(self):
-        """Whether to enclose the URL in brackets or display it straight."""
-        return self._brackets
-
     @url.setter
-    def url(self, value):
+    def url(self, value: Any) -> None:
         # pylint: disable=import-outside-toplevel
         from ..parser import contexts
 
         self._url = parse_anything(value, contexts.EXT_LINK_URI)
 
+    @property
+    def title(self) -> Optional["Wikicode"]:
+        """The link title (if given), as a :class:`.Wikicode` object."""
+        return self._title
+
     @title.setter
-    def title(self, value):
+    def title(self, value: Any) -> None:
         self._title = None if value is None else parse_anything(value)
 
+    @property
+    def brackets(self) -> bool:
+        """Whether to enclose the URL in brackets or display it straight."""
+        return self._brackets
+
     @brackets.setter
-    def brackets(self, value):
+    def brackets(self, value: bool) -> None:
         self._brackets = bool(value)
