@@ -69,7 +69,7 @@ class Wikicode(StringMixIn):
         contexts: bool = False,
         restrict: Optional[type] = None,
         parent: Optional["Wikicode"] = None,
-    ) -> Generator[Union[tuple[Optional["Wikicode"], Node], Node]]:
+    ) -> Generator[Union[tuple[Optional["Wikicode"], Node], Node], None, None]:
         """Iterate over all child :class:`.Node`\\ s of a given *node*."""
         yield (parent, node) if contexts else node
         if restrict and isinstance(node, restrict):
