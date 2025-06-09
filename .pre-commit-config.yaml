@@ -1,9 +1,11 @@
 repos:
--   repo: https://github.com/psf/black
-    rev: 23.7.0
-    hooks:
-    -   id: black
--   repo: https://github.com/doublify/pre-commit-clang-format
-    rev: 62302476d0da01515660132d76902359bed0f782
-    hooks:
-    -   id: clang-format
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.13
+  hooks:
+  - id: ruff-check
+    args: [--fix]
+  - id: ruff-format
+- repo: https://github.com/doublify/pre-commit-clang-format
+  rev: 62302476d0da01515660132d76902359bed0f782
+  hooks:
+  - id: clang-format
