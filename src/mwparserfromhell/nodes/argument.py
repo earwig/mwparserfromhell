@@ -19,8 +19,13 @@
 # SOFTWARE.
 
 
+from typing import TYPE_CHECKING, Any, Generator, Optional, Callable
+
 from ._base import Node
 from ..utils import parse_anything
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Argument"]
 
@@ -28,28 +33,33 @@ __all__ = ["Argument"]
 class Argument(Node):
     """Represents a template argument substitution, like ``{{{foo}}}``."""
 
-    def __init__(self, name, default=None):
+    def __init__(self, name: Any, default: Any = None):
         super().__init__()
         self.name = name
         self.default = default
 
-    def __str__(self):
+    def __str__(self) -> str:
         start = "{{{" + str(self.name)
         if self.default is not None:
             return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
-    def __children__(self):
+    def __children__(self) -> Generator["Wikicode"]:
         yield self.name
         if self.default is not None:
             yield self.default
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         if self.default is not None:
             return self.default.strip_code(**kwargs)
         return None
 
-    def __showtree__(self, write, get, mark):
+    def __showtree__(
+        self,
+        write: Callable[[str], None],
+        get: Callable[["Wikicode"], None],
+        mark: Callable[[], None],
+    ) -> None:
         write("{{{")
         get(self.name)
         if self.default is not None:
@@ -59,12 +69,16 @@ class Argument(Node):
         write("}}}")
 
     @property
-    def name(self):
+    def name(self) -> "Wikicode":
         """The name of the argument to substitute."""
         return self._name
 
+    @name.setter
+    def name(self, value: Any) -> None:
+        self._name = parse_anything(value)
+
     @property
-    def default(self):
+    def default(self) -> Optional["Wikicode"]:
         """The default value to substitute if none is passed.
 
         This will be ``None`` if the argument wasn't defined with one. The
@@ -74,12 +88,8 @@ class Argument(Node):
         """
         return self._default
 
-    @name.setter
-    def name(self, value):
-        self._name = parse_anything(value)
-
     @default.setter
-    def default(self, default):
+    def default(self, default: Any) -> None:
         if default is None:
             self._default = None
         else:

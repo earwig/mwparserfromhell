@@ -18,6 +18,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from typing import Any, Optional
 import html.entities as htmlentities
 
 from ._base import Node
@@ -28,9 +29,15 @@ __all__ = ["HTMLEntity"]
 class HTMLEntity(Node):
     """Represents an HTML entity, like ``&nbsp;``, either named or unnamed."""
 
-    def __init__(self, value, named=None, hexadecimal=False, hex_char="x"):
+    def __init__(
+        self,
+        value: Any,
+        named: Optional[bool] = None,
+        hexadecimal: bool = False,
+        hex_char: str = "x",
+    ):
         super().__init__()
-        self._value = value
+        self._value = str(value)
         if named is None:  # Try to guess whether or not the entity is named
             try:
                 int(value)
@@ -49,50 +56,25 @@ class HTMLEntity(Node):
             self._hexadecimal = hexadecimal
         self._hex_char = hex_char
 
-    def __str__(self):
+    def __str__(self) -> str:
         if self.named:
             return "&{};".format(self.value)
         if self.hexadecimal:
             return "&#{}{};".format(self.hex_char, self.value)
         return "&#{};".format(self.value)
 
-    def __strip__(self, **kwargs):
+    def __strip__(self, **kwargs: Any) -> Optional[str]:
         if kwargs.get("normalize"):
             return self.normalize()
-        return self
+        return str(self)
 
     @property
-    def value(self):
+    def value(self) -> str:
         """The string value of the HTML entity."""
         return self._value
 
-    @property
-    def named(self):
-        """Whether the entity is a string name for a codepoint or an integer.
-
-        For example, ``&Sigma;``, ``&#931;``, and ``&#x3a3;`` refer to the same
-        character, but only the first is "named", while the others are integer
-        representations of the codepoint.
-        """
-        return self._named
-
-    @property
-    def hexadecimal(self):
-        """If unnamed, this is whether the value is hexadecimal or decimal."""
-        return self._hexadecimal
-
-    @property
-    def hex_char(self):
-        """If the value is hexadecimal, this is the letter denoting that.
-
-        For example, the hex_char of ``"&#x1234;"`` is ``"x"``, whereas the
-        hex_char of ``"&#X1234;"`` is ``"X"``. Lowercase and uppercase ``x``
-        are the only values supported.
-        """
-        return self._hex_char
-
     @value.setter
-    def value(self, newval):
+    def value(self, newval: Any) -> None:
         newval = str(newval)
         try:
             int(newval)
@@ -122,36 +104,63 @@ class HTMLEntity(Node):
             self._named = False
         self._value = newval
 
+    @property
+    def named(self) -> bool:
+        """Whether the entity is a string name for a codepoint or an integer.
+
+        For example, ``&Sigma;``, ``&#931;``, and ``&#x3a3;`` refer to the same
+        character, but only the first is "named", while the others are integer
+        representations of the codepoint.
+        """
+        return self._named
+
     @named.setter
-    def named(self, newval):
+    def named(self, newval: bool) -> None:
         newval = bool(newval)
         if newval and self.value not in htmlentities.entitydefs:
             raise ValueError("entity value {!r} is not a valid name".format(self.value))
+
         if not newval:
             try:
                 int(self.value, 16)
             except ValueError as exc:
                 raise ValueError(
-                    "current entity value {!r} is not a valid "
-                    "Unicode codepoint".format(self.value)
+                    "current entity value {!r} is not a valid Unicode codepoint".format(
+                        self.value
+                    )
                 ) from exc
         self._named = newval
 
+    @property
+    def hexadecimal(self) -> bool:
+        """If unnamed, this is whether the value is hexadecimal or decimal."""
+        return self._hexadecimal
+
     @hexadecimal.setter
-    def hexadecimal(self, newval):
+    def hexadecimal(self, newval: bool) -> None:
         newval = bool(newval)
         if newval and self.named:
             raise ValueError("a named entity cannot be hexadecimal")
         self._hexadecimal = newval
 
+    @property
+    def hex_char(self) -> str:
+        """If the value is hexadecimal, this is the letter denoting that.
+
+        For example, the hex_char of ``"&#x1234;"`` is ``"x"``, whereas the
+        hex_char of ``"&#X1234;"`` is ``"X"``. Lowercase and uppercase ``x``
+        are the only values supported.
+        """
+        return self._hex_char
+
     @hex_char.setter
-    def hex_char(self, newval):
+    def hex_char(self, newval: str) -> None:
         newval = str(newval)
         if newval not in ("x", "X"):
             raise ValueError(newval)
         self._hex_char = newval
 
-    def normalize(self):
+    def normalize(self) -> str:
         """Return the unicode character represented by the HTML entity."""
         if self.named:
             return chr(htmlentities.name2codepoint[self.value])

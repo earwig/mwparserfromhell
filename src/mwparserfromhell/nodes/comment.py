@@ -19,6 +19,8 @@
 # SOFTWARE.
 
 
+from typing import Any
+
 from ._base import Node
 
 __all__ = ["Comment"]
@@ -27,18 +29,18 @@ __all__ = ["Comment"]
 class Comment(Node):
     """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
 
-    def __init__(self, contents):
+    def __init__(self, contents: str):
         super().__init__()
         self.contents = contents
 
-    def __str__(self):
+    def __str__(self) -> str:
         return "<!--" + self.contents + "-->"
 
     @property
-    def contents(self):
+    def contents(self) -> str:
         """The hidden text contained between ``<!--`` and ``-->``."""
         return self._contents
 
     @contents.setter
-    def contents(self, value):
+    def contents(self, value: Any) -> None:
         self._contents = str(value)
