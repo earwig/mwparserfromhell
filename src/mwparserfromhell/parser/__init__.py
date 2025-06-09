@@ -32,8 +32,6 @@ try:
 
     use_c = True
 except ImportError:
-    from .tokenizer import Tokenizer
-
     CTokenizer = None
     use_c = False
 

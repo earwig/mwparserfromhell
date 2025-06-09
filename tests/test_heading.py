@@ -55,7 +55,10 @@ def test_showtree():
     """test Heading.__showtree__()"""
     output = []
     getter = object()
-    get = lambda code: output.append((getter, code))
+
+    def get(code):
+        return output.append((getter, code))
+
     node1 = Heading(wraptext("foobar"), 3)
     node2 = Heading(wraptext(" baz "), 4)
     node1.__showtree__(output.append, get, None)

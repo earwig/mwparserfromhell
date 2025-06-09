@@ -50,4 +50,5 @@ __all__ = [
     "Template",
     "Text",
     "Wikilink",
+    "extras",
 ]

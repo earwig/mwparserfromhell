@@ -63,8 +63,13 @@ def test_showtree():
     """test Argument.__showtree__()"""
     output = []
     getter, marker = object(), object()
-    get = lambda code: output.append((getter, code))
-    mark = lambda: output.append(marker)
+
+    def get(code):
+        return output.append((getter, code))
+
+    def mark():
+        return output.append(marker)
+
     node1 = Argument(wraptext("foobar"))
     node2 = Argument(wraptext("foo"), wraptext("bar"))
     node1.__showtree__(output.append, get, mark)

@@ -63,7 +63,7 @@ struct avl_tree_node {
 
 /* Cast an AVL tree node to the containing data structure.  */
 #define avl_tree_entry(entry, type, member)                                            \
-    ((type *) ((char *) (entry) -offsetof(type, member)))
+    ((type *) ((char *) (entry) - offsetof(type, member)))
 
 /* Returns a pointer to the parent of the specified AVL tree node, or NULL if it
  * is already the root of the tree.  */

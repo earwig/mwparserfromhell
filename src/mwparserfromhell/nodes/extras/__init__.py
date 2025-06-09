@@ -23,5 +23,10 @@ This package contains objects used by :class:`.Node`\\ s, but that are not
 nodes themselves. This includes template parameters and HTML tag attributes.
 """
 
+__all__ = [
+    "Attribute",
+    "Parameter",
+]
+
 from .attribute import Attribute
 from .parameter import Parameter

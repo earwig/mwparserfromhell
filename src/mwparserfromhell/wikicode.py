@@ -176,7 +176,10 @@ class Wikicode(StringMixIn):
             return obj, slice(0, len(obj.nodes))
 
         if isinstance(obj, Node):
-            mkslice = lambda i: slice(i, i + 1)
+
+            def mkslice(i):
+                return slice(i, i + 1)
+
             if not recursive:
                 return self, mkslice(self.index(obj))
             for node in self.nodes:
@@ -258,8 +261,12 @@ class Wikicode(StringMixIn):
             else:
                 lines.append(" " * 6 * indent + " ".join(args))
 
-        get = lambda code: self._get_tree(code, lines, marker, indent + 1)
-        mark = lambda: lines.append(marker)
+        def get(code):
+            return self._get_tree(code, lines, marker, indent + 1)
+
+        def mark():
+            return lines.append(marker)
+
         for node in code.nodes:
             node.__showtree__(write, get, mark)
         return lines
@@ -282,12 +289,13 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`{1}` with *forcetype* set to
         :class:`~{2.__module__}.{2.__name__}`.
         """
-        make_ifilter = lambda ftype: (
-            lambda self, *a, **kw: self.ifilter(forcetype=ftype, *a, **kw)
-        )
-        make_filter = lambda ftype: (
-            lambda self, *a, **kw: self.filter(forcetype=ftype, *a, **kw)
-        )
+
+        def make_ifilter(ftype):
+            return lambda self, *a, **kw: self.ifilter(forcetype=ftype, *a, **kw)
+
+        def make_filter(ftype):
+            return lambda self, *a, **kw: self.filter(forcetype=ftype, *a, **kw)
+
         for name, ftype in meths.items():
             ifilt = make_ifilter(ftype)
             filt = make_filter(ftype)
@@ -312,12 +320,10 @@ class Wikicode(StringMixIn):
         self._nodes = value
 
     @overload
-    def get(self, index: int) -> Node:
-        ...
+    def get(self, index: int) -> Node: ...
 
     @overload
-    def get(self, index: slice) -> list[Node]:
-        ...
+    def get(self, index: slice) -> list[Node]: ...
 
     def get(self, index):
         """Return the *index*\\ th node within the list of nodes."""
@@ -644,9 +650,12 @@ class Wikicode(StringMixIn):
         :class:`.Heading` object will be included; otherwise, this is skipped.
         """
         title_matcher = self._build_matcher(matches, flags)
-        matcher = lambda heading: (
-            title_matcher(heading.title) and (not levels or heading.level in levels)
-        )
+
+        def matcher(heading):
+            return title_matcher(heading.title) and (
+                not levels or heading.level in levels
+            )
+
         iheadings = self._indexed_ifilter(recursive=False, forcetype=Heading)
         sections = []  # Tuples of (index_of_first_node, section)
         # Tuples of (index, heading), where index and heading.level are both

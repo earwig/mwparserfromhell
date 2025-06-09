@@ -28,11 +28,25 @@ from mwparserfromhell.nodes import Tag, Template, Text
 from mwparserfromhell.nodes.extras import Attribute
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
-agen = lambda name, value: Attribute(wraptext(name), wraptext(value))
-agennv = lambda name: Attribute(wraptext(name))
-agennq = lambda name, value: Attribute(wraptext(name), wraptext(value), None)
-agenp = lambda name, v, a, b, c: Attribute(wraptext(name), v, '"', a, b, c)
-agenpnv = lambda name, a, b, c: Attribute(wraptext(name), None, '"', a, b, c)
+
+def agen(name, value):
+    return Attribute(wraptext(name), wraptext(value))
+
+
+def agennv(name):
+    return Attribute(wraptext(name))
+
+
+def agennq(name, value):
+    return Attribute(wraptext(name), wraptext(value), None)
+
+
+def agenp(name, v, a, b, c):
+    return Attribute(wraptext(name), v, '"', a, b, c)
+
+
+def agenpnv(name, a, b, c):
+    return Attribute(wraptext(name), None, '"', a, b, c)
 
 
 def test_str():
@@ -112,8 +126,13 @@ def test_showtree():
     """test Tag.__showtree__()"""
     output = []
     getter, marker = object(), object()
-    get = lambda code: output.append((getter, code))
-    mark = lambda: output.append(marker)
+
+    def get(code):
+        return output.append((getter, code))
+
+    def mark():
+        return output.append(marker)
+
     node1 = Tag(
         wraptext("ref"), wraptext("text"), [agen("name", "foo"), agennv("selected")]
     )

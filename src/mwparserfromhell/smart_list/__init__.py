@@ -25,5 +25,6 @@ This module contains the :class:`.SmartList` type, as well as its
 reflect changes made to the main list, and vice-versa.
 """
 
-from .list_proxy import ListProxy as _ListProxy
+__all__ = ["SmartList"]
+
 from .smart_list import SmartList

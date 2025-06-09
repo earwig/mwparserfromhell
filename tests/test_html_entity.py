@@ -184,7 +184,7 @@ def test_normalize():
     assert "\xa0" == node1.normalize()
     assert "k" == node2.normalize()
     assert "é" == node3.normalize()
-    assert "\U0001F648" == node4.normalize()
+    assert "\U0001f648" == node4.normalize()
     with pytest.raises(ValueError):
         node5.normalize()
     with pytest.raises(ValueError):

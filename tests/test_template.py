@@ -31,8 +31,13 @@ from mwparserfromhell.nodes.extras import Parameter
 from mwparserfromhell import parse
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
-pgens = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=True)
-pgenh = lambda k, v: Parameter(wraptext(k), wraptext(v), showkey=False)
+
+def pgens(k, v):
+    return Parameter(wraptext(k), wraptext(v), showkey=True)
+
+
+def pgenh(k, v):
+    return Parameter(wraptext(k), wraptext(v), showkey=False)
 
 
 def test_str():
@@ -91,8 +96,13 @@ def test_showtree():
     """test Template.__showtree__()"""
     output = []
     getter, marker = object(), object()
-    get = lambda code: output.append((getter, code))
-    mark = lambda: output.append(marker)
+
+    def get(code):
+        return output.append((getter, code))
+
+    def mark():
+        return output.append(marker)
+
     node1 = Template(wraptext("foobar"))
     node2 = Template(wraptext("foo"), [pgenh("1", "bar"), pgens("abc", "def")])
     node1.__showtree__(output.append, get, mark)
@@ -404,10 +414,7 @@ def test_update():
     node2.update({"1": "b"}, showkey=False)
     assert "{{a|b}}" == node2
 
-    node3 = Template(wraptext("a\n"), [
-        pgens("b ", "c\n"),
-        pgens("d ", " e")
-    ])
+    node3 = Template(wraptext("a\n"), [pgens("b ", "c\n"), pgens("d ", " e")])
     node3.update({"b ": "f"}, preserve_spacing=False)
     assert "{{a\n|b =f|d = e}}" == node3
 

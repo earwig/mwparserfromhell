@@ -32,8 +32,13 @@ from mwparserfromhell.nodes import (
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
 
-wrap = lambda L: Wikicode(SmartList(L))
-wraptext = lambda *args: wrap([Text(t) for t in args])
+
+def wrap(L):
+    return Wikicode(SmartList(L))
+
+
+def wraptext(*args):
+    return wrap([Text(t) for t in args])
 
 
 def _assert_node_equal(expected, actual):
@@ -49,8 +54,7 @@ def _assert_node_equal(expected, actual):
         Text: _assert_text_node_equal,
         Wikilink: _assert_wikilink_node_equal,
     }
-    # pylint: disable=unidiomatic-typecheck
-    assert type(expected) == type(actual)
+    assert type(expected) is type(actual)
     registry[type(expected)](expected, actual)
 
 

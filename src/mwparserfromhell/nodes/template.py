@@ -239,12 +239,10 @@ class Template(Node):
         return self.has(name, ignore_empty)
 
     @overload
-    def get(self, name: Union[str, Any]) -> Parameter:
-        ...
+    def get(self, name: Union[str, Any]) -> Parameter: ...
 
     @overload
-    def get(self, name: Union[str, Any], default: T) -> Union[Parameter, T]:
-        ...
+    def get(self, name: Union[str, Any], default: T) -> Union[Parameter, T]: ...
 
     def get(self, name: Union[str, Any], default: T = _UNSET) -> Union[Parameter, T]:
         """Get the parameter whose name is *name*.

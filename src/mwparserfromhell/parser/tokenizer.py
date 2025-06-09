@@ -396,7 +396,10 @@ class Tokenizer:
             self._emit_text("//")
             self._head += 2
         else:
-            all_valid = lambda: all(char in self.URISCHEME for char in self._read())
+
+            def all_valid():
+                return all(char in self.URISCHEME for char in self._read())
+
             scheme = ""
             while self._read() is not self.END and all_valid():
                 scheme += self._read()
@@ -827,7 +830,10 @@ class Tokenizer:
 
     def _handle_tag_close_close(self):
         """Handle the ending of a closing tag (``</foo>``)."""
-        strip = lambda tok: tok.text.rstrip().lower()
+
+        def strip(tok):
+            return tok.text.rstrip().lower()
+
         closing = self._pop()
         if len(closing) != 1 or (
             not isinstance(closing[0], tokens.Text)
@@ -840,7 +846,10 @@ class Tokenizer:
 
     def _handle_blacklisted_tag(self):
         """Handle the body of an HTML tag that is parser-blacklisted."""
-        strip = lambda text: text.rstrip().lower()
+
+        def strip(text):
+            return text.rstrip().lower()
+
         while True:
             this, nxt = self._read(), self._read(1)
             if this is self.END:

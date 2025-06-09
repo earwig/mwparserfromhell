@@ -74,8 +74,13 @@ def test_showtree():
     """test ExternalLink.__showtree__()"""
     output = []
     getter, marker = object(), object()
-    get = lambda code: output.append((getter, code))
-    mark = lambda: output.append(marker)
+
+    def get(code):
+        return output.append((getter, code))
+
+    def mark():
+        return output.append(marker)
+
     node1 = ExternalLink(wraptext("http://example.com"), brackets=False)
     node2 = ExternalLink(wraptext("http://example.com"), wraptext("Link"))
     node1.__showtree__(output.append, get, mark)
