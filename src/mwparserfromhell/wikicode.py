@@ -111,7 +111,7 @@ class Wikicode(StringMixIn):
         matches: Union[Callable[[Node], bool], re.Pattern, str, None] = None,
         flags: int = FLAGS,
         forcetype: Optional[type] = None,
-    ) -> Generator[tuple[int, Node]]:
+    ) -> Generator[tuple[int, Node], None, None]:
         """Iterate over nodes and their corresponding indices in the node list.
 
         The arguments are interpreted as for :meth:`ifilter`. For each tuple
