@@ -124,7 +124,7 @@ class Wikicode(StringMixIn):
         if recursive:
             restrict = forcetype if recursive == self.RECURSE_OTHERS else None
 
-            def getter(i: int, node: Node) -> Generator[tuple[int, Node]]:
+            def getter(i: int, node: Node) -> Generator[tuple[int, Node], None, None]:
                 for ch in self._get_children(node, restrict=restrict):
                     yield (i, cast(Node, ch))
 
