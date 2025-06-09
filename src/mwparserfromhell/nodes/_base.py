@@ -45,7 +45,7 @@ class Node(StringMixIn):
     def __str__(self) -> str:
         raise NotImplementedError()
 
-    def __children__(self) -> Generator["Wikicode"]:
+    def __children__(self) -> Generator["Wikicode", None, None]:
         return
         # pylint: disable=unreachable
         yield  # pragma: no cover (this is a generator that yields nothing)

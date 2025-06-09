@@ -55,7 +55,7 @@ class ExternalLink(Node):
             return "[" + str(self.url) + "]"
         return str(self.url)
 
-    def __children__(self) -> Generator["Wikicode"]:
+    def __children__(self) -> Generator["Wikicode", None, None]:
         yield self.url
         if self.title is not None:
             yield self.title

@@ -98,7 +98,7 @@ class Tag(Node):
             result += "</" + str(self.closing_tag) + ">"
         return result
 
-    def __children__(self) -> Generator["Wikicode"]:
+    def __children__(self) -> Generator["Wikicode", None, None]:
         if not self.wiki_markup:
             yield self.tag
         for attr in self.attributes:

@@ -44,7 +44,7 @@ class Argument(Node):
             return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
-    def __children__(self) -> Generator["Wikicode"]:
+    def __children__(self) -> Generator["Wikicode", None, None]:
         yield self.name
         if self.default is not None:
             yield self.default

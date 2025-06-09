@@ -17,19 +17,20 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
-from collections import defaultdict
 import re
+from collections import defaultdict
 from typing import (
     TYPE_CHECKING,
     Any,
-    Optional,
-    Union,
-    List,
-    Dict,
     Callable,
+    Dict,
     Generator,
+    List,
     Mapping,
-    cast,
+    Optional,
+    TypeVar,
+    Union,
+    overload,
 )
 
 from ._base import Node
@@ -47,6 +48,8 @@ FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
 
+T = TypeVar("T")
+
 
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
@@ -62,7 +65,7 @@ class Template(Node):
             return "{{" + str(self.name) + "|" + params + "}}"
         return "{{" + str(self.name) + "}}"
 
-    def __children__(self) -> Generator["Wikicode"]:
+    def __children__(self) -> Generator["Wikicode", None, None]:
         yield self.name
         for param in self.params:
             if param.showkey:
@@ -235,7 +238,15 @@ class Template(Node):
         """Alias for :meth:`has`."""
         return self.has(name, ignore_empty)
 
-    def get(self, name: Union[str, Any], default: Any = _UNSET) -> Union[Parameter, Any]:
+    @overload
+    def get(self, name: Union[str, Any]) -> Parameter:
+        ...
+
+    @overload
+    def get(self, name: Union[str, Any], default: T) -> Union[Parameter, T]:
+        ...
+
+    def get(self, name: Union[str, Any], default: T = _UNSET) -> Union[Parameter, T]:
         """Get the parameter whose name is *name*.
 
         The returned object is a :class:`.Parameter` instance. Raises

@@ -312,10 +312,12 @@ class Wikicode(StringMixIn):
         self._nodes = value
 
     @overload
-    def get(self, index: int) -> Node: ...
+    def get(self, index: int) -> Node:
+        ...
 
     @overload
-    def get(self, index: slice) -> list[Node]: ...
+    def get(self, index: slice) -> list[Node]:
+        ...
 
     def get(self, index):
         """Return the *index*\\ th node within the list of nodes."""
@@ -556,6 +558,7 @@ class Wikicode(StringMixIn):
         letter's case is normalized. Typical usage is
         ``if template.name.matches("stub"): ...``.
         """
+
         def normalize(s: str) -> str:
             return (s[0].upper() + s[1:]).replace("_", " ") if s else s
 
@@ -577,7 +580,7 @@ class Wikicode(StringMixIn):
         matches: Union[Callable[[Node], bool], re.Pattern, str, None] = None,
         flags: int = FLAGS,
         forcetype: Optional[type] = None,
-    ) -> Generator[Node]:
+    ) -> Generator[Node, None, None]:
         """Iterate over nodes in our list matching certain conditions.
 
         If *forcetype* is given, only nodes that are instances of this type (or
