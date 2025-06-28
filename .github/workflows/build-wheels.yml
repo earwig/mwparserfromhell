@@ -11,14 +11,14 @@ jobs:
     - name: Build manylinux2014 x86-64 wheels
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_x86_64
       with:
-        python-versions: 'cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313'
+        python-versions: 'cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313'
     - name: Build manylinux 2014 aarch64 wheels
       uses: earwig/python-wheels-manylinux-build@latest-manylinux2014_aarch64
       with:
-        python-versions: 'cp38-cp38 cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313'
+        python-versions: 'cp39-cp39 cp310-cp310 cp311-cp311 cp312-cp312 cp313-cp313'
     - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-linux
         path: dist/*.whl
     - name: Publish package to PyPI
       # Only actually publish if a new tag was pushed
@@ -50,7 +50,7 @@ jobs:
         ls dist/
     - uses: actions/upload-artifact@v4
       with:
-        name: wheels
+        name: wheels-macos-${{ matrix.python-version }}
         path: dist/*.whl
     - name: Publish package to PyPI
       # Only actually publish if a new tag was pushed
