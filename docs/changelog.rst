@@ -1,11 +1,11 @@
 Changelog
 =========
 
-v0.7
-----
+v0.7.0
+------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.6...main>`__):
+`Released June 28, 2025 <https://github.com/earwig/mwparserfromhell/tree/v0.7.0>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.6...v0.7.0>`__):
 
 - Dropped support for end-of-life Python 3.8.
 - Added support for Python 3.13.

@@ -29,7 +29,7 @@ from __future__ import annotations
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012-2025 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.7.dev0"
+__version__ = "0.7.0"
 __email__ = "ben.kurtovic@gmail.com"
 
 __all__ = [
