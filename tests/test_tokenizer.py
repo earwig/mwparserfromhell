@@ -110,7 +110,7 @@ def build():
         if not filename.endswith(extension):
             continue
         fullname = os.path.join(directory, filename)
-        with open(fullname) as fp:
+        with open(fullname, encoding="utf8") as fp:
             text = fp.read()
             name = os.path.split(fullname)[1][: -len(extension)]
             yield from _load_tests(fullname, name, text)
