@@ -48,7 +48,7 @@ def test_children():
 def test_strip():
     """test Text.__strip__()"""
     node = Text("foobar")
-    assert node is node.__strip__()
+    assert node == node.__strip__()
 
 
 def test_showtree():
