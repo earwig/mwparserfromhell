@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -17,27 +17,25 @@
 # LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
+
+from __future__ import annotations
+
 import re
 from collections import defaultdict
+from collections.abc import Generator, Mapping
 from typing import (
     TYPE_CHECKING,
     Any,
     Callable,
-    Dict,
-    Generator,
-    List,
-    Mapping,
-    Optional,
     TypeVar,
-    Union,
     overload,
 )
 
+from ..utils import parse_anything
 from ._base import Node
+from .extras import Parameter
 from .html_entity import HTMLEntity
 from .text import Text
-from .extras import Parameter
-from ..utils import parse_anything
 
 if TYPE_CHECKING:
     from ..wikicode import Wikicode
@@ -54,10 +52,10 @@ T = TypeVar("T")
 class Template(Node):
     """Represents a template in wikicode, like ``{{foo}}``."""
 
-    def __init__(self, name: Any, params: Optional[List[Parameter]] = None):
+    def __init__(self, name: Any, params: list[Parameter] | None = None):
         super().__init__()
         self.name = name
-        self._params: List[Parameter] = params or []
+        self._params: list[Parameter] = params or []
 
     def __str__(self) -> str:
         if self.params:
@@ -65,14 +63,14 @@ class Template(Node):
             return "{{" + str(self.name) + "|" + params + "}}"
         return "{{" + str(self.name) + "}}"
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode]:
         yield self.name
         for param in self.params:
             if param.showkey:
                 yield param.name
             yield param.value
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         if kwargs.get("keep_template_params"):
             parts = [param.value.strip_code(**kwargs) for param in self.params]
             return " ".join(part for part in parts if part)
@@ -81,7 +79,7 @@ class Template(Node):
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         write("{{")
@@ -96,7 +94,7 @@ class Template(Node):
         write("}}")
 
     @staticmethod
-    def _surface_escape(code: "Wikicode", char: str) -> None:
+    def _surface_escape(code: Wikicode, char: str) -> None:
         """Return *code* with *char* escaped as an HTML entity.
 
         The main use of this is to escape pipes (``|``) or equal signs (``=``)
@@ -109,7 +107,7 @@ class Template(Node):
                 code.replace(node, node.replace(char, replacement), False)
 
     @staticmethod
-    def _select_theory(theories: Dict[str, int]) -> Optional[str]:
+    def _select_theory(theories: dict[str, int]) -> str | None:
         """Return the most likely spacing convention given different options.
 
         Given a dictionary of convention options as keys and their occurrence
@@ -125,7 +123,7 @@ class Template(Node):
         return None
 
     @staticmethod
-    def _blank_param_value(value: "Wikicode") -> None:
+    def _blank_param_value(value: Wikicode) -> None:
         """Remove the content from *value* while keeping its whitespace.
 
         Replace *value*\\ 's nodes with two text nodes, the first containing
@@ -142,15 +140,15 @@ class Template(Node):
 
     def _get_spacing_conventions(
         self, use_names: bool
-    ) -> tuple[Optional[str], Optional[str]]:
+    ) -> tuple[str | None, str | None]:
         """Try to determine the whitespace conventions for parameters.
 
         This will examine the existing parameters and use
         :meth:`_select_theory` to determine if there are any preferred styles
         for how much whitespace to put before or after the value.
         """
-        before_theories: defaultdict[str, int] = defaultdict(lambda: 0)
-        after_theories: defaultdict[str, int] = defaultdict(lambda: 0)
+        before_theories: defaultdict[str, int] = defaultdict(int)
+        after_theories: defaultdict[str, int] = defaultdict(int)
         for param in self.params:
             if not param.showkey:
                 continue
@@ -205,7 +203,7 @@ class Template(Node):
         return False
 
     @property
-    def name(self) -> "Wikicode":
+    def name(self) -> Wikicode:
         """The name of the template, as a :class:`.Wikicode` object."""
         return self._name
 
@@ -214,11 +212,11 @@ class Template(Node):
         self._name = parse_anything(value)
 
     @property
-    def params(self) -> List[Parameter]:
+    def params(self) -> list[Parameter]:
         """The list of parameters contained within the template."""
         return self._params
 
-    def has(self, name: Union[str, Any], ignore_empty: bool = False) -> bool:
+    def has(self, name: str | Any, ignore_empty: bool = False) -> bool:
         """Return ``True`` if any parameter in the template is named *name*.
 
         With *ignore_empty*, ``False`` will be returned even if the template
@@ -234,17 +232,17 @@ class Template(Node):
                 return True
         return False
 
-    def has_param(self, name: Union[str, Any], ignore_empty: bool = False) -> bool:
+    def has_param(self, name: str | Any, ignore_empty: bool = False) -> bool:
         """Alias for :meth:`has`."""
         return self.has(name, ignore_empty)
 
     @overload
-    def get(self, name: Union[str, Any]) -> Parameter: ...
+    def get(self, name: str | Any) -> Parameter: ...
 
     @overload
-    def get(self, name: Union[str, Any], default: T) -> Union[Parameter, T]: ...
+    def get(self, name: str | Any, default: T) -> Parameter | T: ...
 
-    def get(self, name: Union[str, Any], default: T = _UNSET) -> Union[Parameter, T]:
+    def get(self, name: str | Any, default: T = _UNSET) -> Parameter | T:
         """Get the parameter whose name is *name*.
 
         The returned object is a :class:`.Parameter` instance. Raises
@@ -261,16 +259,16 @@ class Template(Node):
             raise ValueError(name)
         return default
 
-    def __getitem__(self, name: Union[str, Any]) -> Parameter:
+    def __getitem__(self, name: str | Any) -> Parameter:
         return self.get(name)
 
     def add(
         self,
         name: Any,
         value: Any,
-        showkey: Optional[bool] = None,
-        before: Optional[Union[Parameter, str]] = None,
-        after: Optional[Union[Parameter, str]] = None,
+        showkey: bool | None = None,
+        before: Parameter | str | None = None,
+        after: Parameter | str | None = None,
         preserve_spacing: bool = True,
     ) -> Parameter:
         """Add a parameter to the template with a given *name* and *value*.
@@ -377,7 +375,7 @@ class Template(Node):
     def __setitem__(self, name: Any, value: Any) -> Parameter:
         return self.add(name, value)
 
-    def remove(self, param: Union[Parameter, str], keep_field: bool = False) -> None:
+    def remove(self, param: Parameter | str, keep_field: bool = False) -> None:
         """Remove a parameter from the template, identified by *param*.
 
         If *param* is a :class:`.Parameter` object, it will be matched exactly,
@@ -424,5 +422,5 @@ class Template(Node):
         for i in reversed(to_remove):
             self.params.pop(i)
 
-    def __delitem__(self, param: Union[Parameter, str]) -> None:
+    def __delitem__(self, param: Parameter | str) -> None:
         return self.remove(param)

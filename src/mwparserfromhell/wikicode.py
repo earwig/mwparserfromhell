@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,9 +18,12 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
+
 import re
+from collections.abc import Generator, Iterable
 from itertools import chain
-from typing import Any, Callable, Generator, Iterable, Optional, Union, cast, overload
+from typing import Any, Callable, cast, overload
 
 from .nodes import (
     Argument,
@@ -67,9 +70,9 @@ class Wikicode(StringMixIn):
     def _get_children(
         node: Node,
         contexts: bool = False,
-        restrict: Optional[type] = None,
-        parent: Optional["Wikicode"] = None,
-    ) -> Generator[Union[tuple[Optional["Wikicode"], Node], Node], None, None]:
+        restrict: type | None = None,
+        parent: Wikicode | None = None,
+    ) -> Generator[tuple[Wikicode | None, Node] | Node]:
         """Iterate over all child :class:`.Node`\\ s of a given *node*."""
         yield (parent, node) if contexts else node
         if restrict and isinstance(node, restrict):
@@ -80,7 +83,7 @@ class Wikicode(StringMixIn):
                 yield from sub
 
     @staticmethod
-    def _slice_replace(code: "Wikicode", index: slice, old: str, new: str) -> None:
+    def _slice_replace(code: Wikicode, index: slice, old: str, new: str) -> None:
         """Replace the string *old* with *new* across *index* in *code*."""
         nodes = [str(node) for node in code.get(index)]
         substring = "".join(nodes).replace(old, new)
@@ -88,11 +91,11 @@ class Wikicode(StringMixIn):
 
     @staticmethod
     def _build_matcher(
-        matches: Union[
-            Callable[[Node], Union[bool, re.Match[str], None]], re.Pattern, str, None
-        ],
+        matches: (
+            Callable[[Node], bool | re.Match[str] | None] | re.Pattern | str | None
+        ),
         flags: int,
-    ) -> Callable[[Node], Union[bool, re.Match[str], None]]:
+    ) -> Callable[[Node], bool | re.Match[str] | None]:
         """Helper for :meth:`_indexed_ifilter` and others.
 
         If *matches* is a function, return it. If it's a regex, return a
@@ -108,10 +111,10 @@ class Wikicode(StringMixIn):
     def _indexed_ifilter(
         self,
         recursive: bool = True,
-        matches: Union[Callable[[Node], bool], re.Pattern, str, None] = None,
+        matches: Callable[[Node], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
-        forcetype: Optional[type] = None,
-    ) -> Generator[tuple[int, Node], None, None]:
+        forcetype: type | None = None,
+    ) -> Generator[tuple[int, Node]]:
         """Iterate over nodes and their corresponding indices in the node list.
 
         The arguments are interpreted as for :meth:`ifilter`. For each tuple
@@ -124,7 +127,7 @@ class Wikicode(StringMixIn):
         if recursive:
             restrict = forcetype if recursive == self.RECURSE_OTHERS else None
 
-            def getter(i: int, node: Node) -> Generator[tuple[int, Node], None, None]:
+            def getter(i: int, node: Node) -> Generator[tuple[int, Node]]:
                 for ch in self._get_children(node, restrict=restrict):
                     yield (i, cast(Node, ch))
 
@@ -135,7 +138,7 @@ class Wikicode(StringMixIn):
             if (not forcetype or isinstance(node, forcetype)) and match(node):
                 yield (i, node)
 
-    def _is_child_wikicode(self, obj: "Wikicode", recursive: bool = True) -> bool:
+    def _is_child_wikicode(self, obj: Wikicode, recursive: bool = True) -> bool:
         """Return whether the given :class:`.Wikicode` is a descendant."""
 
         def deref(nodes):
@@ -157,8 +160,8 @@ class Wikicode(StringMixIn):
         return False
 
     def _do_strong_search(
-        self, obj: Union[Node, "Wikicode"], recursive: bool = True
-    ) -> tuple["Wikicode", slice]:
+        self, obj: Node | Wikicode, recursive: bool = True
+    ) -> tuple[Wikicode, slice]:
         """Search for the specific element *obj* within the node list.
 
         *obj* can be either a :class:`.Node` or a :class:`.Wikicode` object. If
@@ -194,7 +197,7 @@ class Wikicode(StringMixIn):
 
     def _do_weak_search(
         self, obj: Any, recursive: bool
-    ) -> list[tuple[bool, "Wikicode", slice]]:
+    ) -> list[tuple[bool, Wikicode, slice]]:
         """Search for an element that looks like *obj* within the node list.
 
         This follows the same rules as :meth:`_do_strong_search` with some
@@ -215,7 +218,7 @@ class Wikicode(StringMixIn):
         if not obj or obj not in self:
             raise ValueError(obj)
         results = []
-        contexts: list["Wikicode"] = [self]
+        contexts: list[Wikicode] = [self]
         while contexts:
             context = contexts.pop()
             i = len(context.nodes) - 1
@@ -239,7 +242,7 @@ class Wikicode(StringMixIn):
         return results
 
     def _get_tree(
-        self, code: "Wikicode", lines: list[str], marker: Any, indent: int
+        self, code: Wikicode, lines: list[str], marker: Any, indent: int
     ) -> list[str]:
         """Build a tree to illustrate the way the Wikicode object was parsed.
 
@@ -314,7 +317,7 @@ class Wikicode(StringMixIn):
         return self._nodes
 
     @nodes.setter
-    def nodes(self, value: Union[list[Node], Any]) -> None:
+    def nodes(self, value: list[Node] | Any) -> None:
         if not isinstance(value, list):
             value = parse_anything(value).nodes
         self._nodes = value
@@ -347,7 +350,7 @@ class Wikicode(StringMixIn):
         else:
             self.nodes.pop(index)
 
-    def contains(self, obj: Union[Node, "Wikicode", str]) -> bool:
+    def contains(self, obj: Node | Wikicode | str) -> bool:
         """Return whether this Wikicode object contains *obj*.
 
         If *obj* is a :class:`.Node` or :class:`.Wikicode` object, then we
@@ -362,7 +365,7 @@ class Wikicode(StringMixIn):
             return False
         return True
 
-    def index(self, obj: Union[Node, "Wikicode", str], recursive: bool = False) -> int:
+    def index(self, obj: Node | Wikicode | str, recursive: bool = False) -> int:
         """Return the index of *obj* in the list of nodes.
 
         Raises :exc:`ValueError` if *obj* is not found. If *recursive* is
@@ -381,7 +384,7 @@ class Wikicode(StringMixIn):
                 return i
         raise ValueError(obj)
 
-    def get_ancestors(self, obj: Union[Node, "Wikicode"]) -> list[Node]:
+    def get_ancestors(self, obj: Node | Wikicode) -> list[Node]:
         """Return a list of all ancestor nodes of the :class:`.Node` *obj*.
 
         The list is ordered from the most shallow ancestor (greatest great-
@@ -398,7 +401,7 @@ class Wikicode(StringMixIn):
         object. Will raise :exc:`ValueError` if it wasn't found.
         """
 
-        def _get_ancestors(code: "Wikicode", needle: Node) -> Union[list[Node], None]:
+        def _get_ancestors(code: Wikicode, needle: Node) -> list[Node] | None:
             for node in code.nodes:
                 if node is needle:
                     return []
@@ -418,7 +421,7 @@ class Wikicode(StringMixIn):
             raise ValueError(obj)
         return ancestors
 
-    def get_parent(self, obj: Union[Node, "Wikicode"]) -> Union[Node, None]:
+    def get_parent(self, obj: Node | Wikicode) -> Node | None:
         """Return the direct parent node of the :class:`.Node` *obj*.
 
         This function is equivalent to calling :meth:`.get_ancestors` and
@@ -440,7 +443,7 @@ class Wikicode(StringMixIn):
             self.nodes.insert(index, node)
 
     def insert_before(
-        self, obj: Union[Node, "Wikicode", str], value: Any, recursive: bool = True
+        self, obj: Node | Wikicode | str, value: Any, recursive: bool = True
     ) -> None:
         """Insert *value* immediately before *obj*.
 
@@ -465,7 +468,7 @@ class Wikicode(StringMixIn):
                     self._slice_replace(context, index, obj, str(value) + obj)
 
     def insert_after(
-        self, obj: Union[Node, "Wikicode", str], value: Any, recursive: bool = True
+        self, obj: Node | Wikicode | str, value: Any, recursive: bool = True
     ) -> None:
         """Insert *value* immediately after *obj*.
 
@@ -490,7 +493,7 @@ class Wikicode(StringMixIn):
                     self._slice_replace(context, index, obj, obj + str(value))
 
     def replace(
-        self, obj: Union[Node, "Wikicode", str], value: Any, recursive: bool = True
+        self, obj: Node | Wikicode | str, value: Any, recursive: bool = True
     ) -> None:
         """Replace *obj* with *value*.
 
@@ -526,7 +529,7 @@ class Wikicode(StringMixIn):
         for node in nodes:
             self.nodes.append(node)
 
-    def remove(self, obj: Union[Node, "Wikicode", str], recursive: bool = True) -> None:
+    def remove(self, obj: Node | Wikicode | str, recursive: bool = True) -> None:
         """Remove *obj* from the list of nodes.
 
         *obj* can be either a string, a :class:`.Node`, or another
@@ -552,9 +555,7 @@ class Wikicode(StringMixIn):
 
     def matches(
         self,
-        other: Union[
-            Node, "Wikicode", str, bytes, Iterable[Union[Node, "Wikicode", str, bytes]]
-        ],
+        other: Node | Wikicode | str | bytes | Iterable[Node | Wikicode | str | bytes],
     ) -> bool:
         """Do a loose equivalency test suitable for comparing page names.
 
@@ -583,10 +584,10 @@ class Wikicode(StringMixIn):
     def ifilter(
         self,
         recursive: bool = True,
-        matches: Union[Callable[[Node], bool], re.Pattern, str, None] = None,
+        matches: Callable[[Node], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
-        forcetype: Optional[type] = None,
-    ) -> Generator[Node, None, None]:
+        forcetype: type | None = None,
+    ) -> Generator[Node]:
         """Iterate over nodes in our list matching certain conditions.
 
         If *forcetype* is given, only nodes that are instances of this type (or
@@ -622,13 +623,13 @@ class Wikicode(StringMixIn):
 
     def get_sections(
         self,
-        levels: Optional[Iterable[int]] = None,
-        matches: Union[Callable[[Node], bool], re.Pattern, str, None] = None,
+        levels: Iterable[int] | None = None,
+        matches: Callable[[Node], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
         flat: bool = False,
-        include_lead: Optional[bool] = None,
+        include_lead: bool | None = None,
         include_headings: bool = True,
-    ) -> list["Wikicode"]:
+    ) -> list[Wikicode]:
         """Return a list of sections within the page.
 
         Sections are returned as :class:`.Wikicode` objects with a shared node

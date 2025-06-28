@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -113,6 +113,8 @@ Aggregate contexts:
 * :const:`NO_EXT_LINKS`
 
 """
+
+from __future__ import annotations
 
 # Local contexts:
 

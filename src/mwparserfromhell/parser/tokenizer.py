@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2021 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,19 +18,21 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-import html.entities as htmlentities
-from math import log
-import re
+from __future__ import annotations
 
-from . import contexts, tokens
-from .errors import ParserError
+import html.entities as htmlentities
+import re
+from math import log
+
 from ..definitions import (
     get_html_tag,
     is_parsable,
+    is_scheme,
     is_single,
     is_single_only,
-    is_scheme,
 )
+from . import contexts, tokens
+from .errors import ParserError
 
 __all__ = ["Tokenizer"]
 

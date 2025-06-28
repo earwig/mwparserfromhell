@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,17 +22,20 @@
 Tests for the Wikicode class, which manages a list of nodes.
 """
 
-from functools import partial
-import re
+from __future__ import annotations
+
 import pickle
+import re
+from functools import partial
 from types import GeneratorType
 
 import pytest
 
+from mwparserfromhell import parse
 from mwparserfromhell.nodes import Argument, Heading, Template, Text
 from mwparserfromhell.smart_list import SmartList
 from mwparserfromhell.wikicode import Wikicode
-from mwparserfromhell import parse
+
 from .conftest import wrap, wraptext
 
 

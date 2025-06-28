@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2019 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 Tests for the builder, which turns tokens into Wikicode objects.
 """
 
+from __future__ import annotations
+
 import pytest
 
 from mwparserfromhell.nodes import (
@@ -36,8 +38,9 @@ from mwparserfromhell.nodes import (
     Wikilink,
 )
 from mwparserfromhell.nodes.extras import Attribute, Parameter
-from mwparserfromhell.parser import tokens, ParserError
+from mwparserfromhell.parser import ParserError, tokens
 from mwparserfromhell.parser.builder import Builder
+
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
 

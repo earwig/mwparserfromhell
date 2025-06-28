@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,9 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import TYPE_CHECKING, Any, Union
+from __future__ import annotations
 
 import re
+from typing import TYPE_CHECKING, Any
 
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
@@ -52,12 +53,12 @@ class Parameter(StringMixIn):
         return str(self.value)
 
     @staticmethod
-    def can_hide_key(key: Any) -> Union[re.Match, None]:
+    def can_hide_key(key: Any) -> re.Match | None:
         """Return whether or not the given key can be hidden."""
         return re.match(r"[1-9][0-9]*$", str(key).strip())
 
     @property
-    def name(self) -> "Wikicode":
+    def name(self) -> Wikicode:
         """The name of the parameter as a :class:`.Wikicode` object."""
         return self._name
 
@@ -66,7 +67,7 @@ class Parameter(StringMixIn):
         self._name = parse_anything(newval)
 
     @property
-    def value(self) -> "Wikicode":
+    def value(self) -> Wikicode:
         """The value of the parameter as a :class:`.Wikicode` object."""
         return self._value
 
@@ -83,5 +84,5 @@ class Parameter(StringMixIn):
     def showkey(self, newval: Any) -> None:
         newval = bool(newval)
         if not newval and not self.can_hide_key(self.name):
-            raise ValueError("parameter key {!r} cannot be hidden".format(self.name))
+            raise ValueError(f"parameter key {self.name!r} cannot be hidden")
         self._showkey = newval

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,7 +18,10 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from typing import TYPE_CHECKING, Any, Generator, Optional, Callable
+from __future__ import annotations
+
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable
 
 from ..string_mixin import StringMixIn
 
@@ -45,18 +48,18 @@ class Node(StringMixIn):
     def __str__(self) -> str:
         raise NotImplementedError()
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode, None, None]:
         return
         # pylint: disable=unreachable
         yield  # pragma: no cover (this is a generator that yields nothing)
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         return None
 
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         write(str(self))

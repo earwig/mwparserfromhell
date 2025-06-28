@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -27,9 +27,10 @@ the name of a :class:`.Template` is a :class:`.Wikicode` object that can
 contain text or more templates.
 """
 
+from __future__ import annotations
+
 from . import extras
 from ._base import Node
-from .text import Text
 from .argument import Argument
 from .comment import Comment
 from .external_link import ExternalLink
@@ -37,6 +38,7 @@ from .heading import Heading
 from .html_entity import HTMLEntity
 from .tag import Tag
 from .template import Template
+from .text import Text
 from .wikilink import Wikilink
 
 __all__ = [

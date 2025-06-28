@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional, Generator, Callable
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable
 
-from ._base import Node
 from ..utils import parse_anything
+from ._base import Node
 
 if TYPE_CHECKING:
     from ..wikicode import Wikicode
@@ -55,12 +57,12 @@ class ExternalLink(Node):
             return "[" + str(self.url) + "]"
         return str(self.url)
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode, None, None]:
         yield self.url
         if self.title is not None:
             yield self.title
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         if self.brackets:
             if self.title:
                 return self.title.strip_code(**kwargs)
@@ -70,7 +72,7 @@ class ExternalLink(Node):
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         if self.brackets:
@@ -82,7 +84,7 @@ class ExternalLink(Node):
             write("]")
 
     @property
-    def url(self) -> "Wikicode":
+    def url(self) -> Wikicode:
         """The URL of the link target, as a :class:`.Wikicode` object."""
         return self._url
 
@@ -94,7 +96,7 @@ class ExternalLink(Node):
         self._url = parse_anything(value, contexts.EXT_LINK_URI)
 
     @property
-    def title(self) -> Optional["Wikicode"]:
+    def title(self) -> Wikicode | None:
         """The link title (if given), as a :class:`.Wikicode` object."""
         return self._title
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2016 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 This package contains objects used by :class:`.Node`\\ s, but that are not
 nodes themselves. This includes template parameters and HTML tag attributes.
 """
+
+from __future__ import annotations
 
 __all__ = [
     "Attribute",

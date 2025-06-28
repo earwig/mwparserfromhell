@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 # Copyright (C) 2019-2020 Yuri Astrakhan <YuriAstrakhan@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -24,6 +24,8 @@ This module contains the :class:`.SmartList` type, as well as its
 :class:`.ListProxy` child, which together implement a list whose sublists
 reflect changes made to the main list, and vice-versa.
 """
+
+from __future__ import annotations
 
 __all__ = ["SmartList"]
 

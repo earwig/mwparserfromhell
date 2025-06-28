@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generator, Optional, Callable
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable
 
-from ._base import Node
 from ..utils import parse_anything
+from ._base import Node
 
 if TYPE_CHECKING:
     from ..wikicode import Wikicode
@@ -44,12 +46,12 @@ class Argument(Node):
             return start + "|" + str(self.default) + "}}}"
         return start + "}}}"
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode, None, None]:
         yield self.name
         if self.default is not None:
             yield self.default
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         if self.default is not None:
             return self.default.strip_code(**kwargs)
         return None
@@ -57,7 +59,7 @@ class Argument(Node):
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         write("{{{")
@@ -69,7 +71,7 @@ class Argument(Node):
         write("}}}")
 
     @property
-    def name(self) -> "Wikicode":
+    def name(self) -> Wikicode:
         """The name of the argument to substitute."""
         return self._name
 
@@ -78,7 +80,7 @@ class Argument(Node):
         self._name = parse_anything(value)
 
     @property
-    def default(self) -> Optional["Wikicode"]:
+    def default(self) -> Wikicode | None:
         """The default value to substitute if none is passed.
 
         This will be ``None`` if the argument wasn't defined with one. The

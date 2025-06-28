@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,8 +18,9 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Optional
+from typing import TYPE_CHECKING, Any
 
 from ...string_mixin import StringMixIn
 from ...utils import parse_anything
@@ -42,7 +43,7 @@ class Attribute(StringMixIn):
         self,
         name: Any,
         value: Any = None,
-        quotes: Optional[str] = '"',
+        quotes: str | None = '"',
         pad_first: str = " ",
         pad_before_eq: str = "",
         pad_after_eq: str = "",
@@ -54,7 +55,7 @@ class Attribute(StringMixIn):
         self._pad_after_eq: str
 
         self.name = name
-        self._quotes: Optional[str] = None
+        self._quotes: str | None = None
         self.value = value
         self.quotes = quotes
         self.pad_first = pad_first
@@ -71,7 +72,7 @@ class Attribute(StringMixIn):
         return result
 
     @staticmethod
-    def _value_needs_quotes(value: "Wikicode") -> Optional[str]:
+    def _value_needs_quotes(value: Wikicode) -> str | None:
         """Return valid quotes for the given value, or None if unneeded."""
         if not value:
             return None
@@ -95,15 +96,15 @@ class Attribute(StringMixIn):
             setattr(self, attr, value)
 
     @staticmethod
-    def coerce_quotes(quotes: Any) -> Optional[str]:
+    def coerce_quotes(quotes: Any) -> str | None:
         """Coerce a quote type into an acceptable value, or raise an error."""
         coerced_quotes = str(quotes) if quotes else None
         if coerced_quotes not in [None, '"', "'"]:
-            raise ValueError("{!r} is not a valid quote type".format(quotes))
+            raise ValueError(f"{quotes!r} is not a valid quote type")
         return coerced_quotes
 
     @property
-    def name(self) -> "Wikicode":
+    def name(self) -> Wikicode:
         """The name of the attribute as a :class:`.Wikicode` object."""
         return self._name
 
@@ -112,7 +113,7 @@ class Attribute(StringMixIn):
         self._name = parse_anything(value)
 
     @property
-    def value(self) -> Optional["Wikicode"]:
+    def value(self) -> Wikicode | None:
         """The value of the attribute as a :class:`.Wikicode` object."""
         return self._value
 
@@ -128,7 +129,7 @@ class Attribute(StringMixIn):
             self._value = code
 
     @property
-    def quotes(self) -> Optional[str]:
+    def quotes(self) -> str | None:
         """How to enclose the attribute value. ``"``, ``'``, or ``None``."""
         return self._quotes
 

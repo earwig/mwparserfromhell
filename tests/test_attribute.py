@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,10 +22,13 @@
 Test cases for the Attribute node extra.
 """
 
+from __future__ import annotations
+
 import pytest
 
 from mwparserfromhell.nodes import Template
 from mwparserfromhell.nodes.extras import Attribute
+
 from .conftest import assert_wikicode_equal, wrap, wraptext
 
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,11 +18,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Generator, Callable, Optional
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable
 
-from ._base import Node
 from ..utils import parse_anything
+from ._base import Node
 
 if TYPE_CHECKING:
     from ..wikicode import Wikicode
@@ -39,16 +41,16 @@ class Heading(Node):
     def __str__(self) -> str:
         return ("=" * self.level) + str(self.title) + ("=" * self.level)
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode, None, None]:
         yield self.title
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         return self.title.strip_code(**kwargs)
 
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         write("=" * self.level)
@@ -56,7 +58,7 @@ class Heading(Node):
         write("=" * self.level)
 
     @property
-    def title(self) -> "Wikicode":
+    def title(self) -> Wikicode:
         """The title of the heading, as a :class:`.Wikicode` object."""
         return self._title
 

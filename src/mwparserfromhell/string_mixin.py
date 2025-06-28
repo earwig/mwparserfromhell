@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -22,6 +22,8 @@
 This module contains the :class:`.StringMixIn` type, which implements the
 interface for the ``str`` type in a dynamic manner.
 """
+
+from __future__ import annotations
 
 from sys import getdefaultencoding
 
@@ -95,7 +97,7 @@ class StringMixIn:
     def __getattr__(self, attr):
         if not hasattr(str, attr):
             raise AttributeError(
-                "{!r} object has no attribute {!r}".format(type(self).__name__, attr)
+                f"{type(self).__name__!r} object has no attribute {attr!r}"
             )
         return getattr(self.__str__(), attr)
 

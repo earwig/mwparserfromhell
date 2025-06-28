@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,10 +30,12 @@ Actual memory leaks typically leak very large amounts of memory (megabytes)
 and scale with the number of loops.
 """
 
-from locale import LC_ALL, setlocale
-from multiprocessing import Process, Pipe
-from os import listdir, path
+from __future__ import annotations
+
 import sys
+from locale import LC_ALL, setlocale
+from multiprocessing import Pipe, Process
+from os import listdir, path
 
 import psutil
 
@@ -80,7 +82,7 @@ class MemoryTest:
 
     def _load(self):
         def load_file(filename):
-            with open(filename, "rU") as fp:
+            with open(filename) as fp:
                 text = fp.read()
                 name = path.split(filename)[1][: 0 - len(extension)]
                 self._parse_file(name, text)
@@ -109,7 +111,7 @@ class MemoryTest:
             tmpl = "{0}LEAKING{1}: {2:n} bytes, {3:.2%} inc ({4:n} bytes/loop)"
             sys.stdout.write(tmpl.format(Color.YELLOW, Color.RESET, d, p, bpt))
         else:
-            sys.stdout.write("{}OK{}".format(Color.GREEN, Color.RESET))
+            sys.stdout.write(f"{Color.GREEN}OK{Color.RESET}")
 
     def run(self):
         """Run the memory test suite."""

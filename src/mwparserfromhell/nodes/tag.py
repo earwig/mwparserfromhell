@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2020 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -18,13 +18,15 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any, Callable, Optional, List, Generator
+from collections.abc import Generator
+from typing import TYPE_CHECKING, Any, Callable
 
-from ._base import Node
-from .extras import Attribute
 from ..definitions import is_visible
 from ..utils import parse_anything
+from ._base import Node
+from .extras import Attribute
 
 if TYPE_CHECKING:
     from ..wikicode import Wikicode
@@ -39,19 +41,19 @@ class Tag(Node):
         self,
         tag: Any,
         contents: Any = None,
-        attrs: Optional[List[Attribute]] = None,
-        wiki_markup: Optional[str] = None,
+        attrs: list[Attribute] | None = None,
+        wiki_markup: str | None = None,
         self_closing: bool = False,
         invalid: bool = False,
         implicit: bool = False,
         padding: str = "",
-        closing_tag: Optional["Wikicode"] = None,
-        wiki_style_separator: Optional[str] = None,
-        closing_wiki_markup: Optional[str] = None,
+        closing_tag: Wikicode | None = None,
+        wiki_style_separator: str | None = None,
+        closing_wiki_markup: str | None = None,
     ):
         super().__init__()
-        self._attrs: List[Attribute]
-        self._closing_wiki_markup: Optional[str]
+        self._attrs: list[Attribute]
+        self._closing_wiki_markup: str | None
 
         self.tag = tag
         self.contents = contents
@@ -98,7 +100,7 @@ class Tag(Node):
             result += "</" + str(self.closing_tag) + ">"
         return result
 
-    def __children__(self) -> Generator["Wikicode", None, None]:
+    def __children__(self) -> Generator[Wikicode, None, None]:
         if not self.wiki_markup:
             yield self.tag
         for attr in self.attributes:
@@ -110,7 +112,7 @@ class Tag(Node):
             if not self.wiki_markup and self.closing_tag:
                 yield self.closing_tag
 
-    def __strip__(self, **kwargs: Any) -> Optional[str]:
+    def __strip__(self, **kwargs: Any) -> str | None:
         if self.contents and is_visible(str(self.tag)):
             return self.contents.strip_code(**kwargs)
         return None
@@ -118,7 +120,7 @@ class Tag(Node):
     def __showtree__(
         self,
         write: Callable[[str], None],
-        get: Callable[["Wikicode"], None],
+        get: Callable[[Wikicode], None],
         mark: Callable[[], None],
     ) -> None:
         write("</" if self.invalid else "<")
@@ -140,7 +142,7 @@ class Tag(Node):
             write(">")
 
     @property
-    def tag(self) -> "Wikicode":
+    def tag(self) -> Wikicode:
         """The tag itself, as a :class:`.Wikicode` object."""
         return self._tag
 
@@ -149,7 +151,7 @@ class Tag(Node):
         self._tag = self._closing_tag = parse_anything(value)
 
     @property
-    def contents(self) -> "Wikicode":
+    def contents(self) -> Wikicode:
         """The contents of the tag, as a :class:`.Wikicode` object."""
         return self._contents
 
@@ -158,7 +160,7 @@ class Tag(Node):
         self._contents = parse_anything(value)
 
     @property
-    def attributes(self) -> List[Attribute]:
+    def attributes(self) -> list[Attribute]:
         """The list of attributes affecting the tag.
 
         Each attribute is an instance of :class:`.Attribute`.
@@ -166,7 +168,7 @@ class Tag(Node):
         return self._attrs
 
     @property
-    def wiki_markup(self) -> Optional[str]:
+    def wiki_markup(self) -> str | None:
         """The wikified version of a tag to show instead of HTML.
 
         If set to a value, this will be displayed instead of the brackets.
@@ -176,7 +178,7 @@ class Tag(Node):
         return self._wiki_markup
 
     @wiki_markup.setter
-    def wiki_markup(self, value: Optional[str]) -> None:
+    def wiki_markup(self, value: str | None) -> None:
         self._wiki_markup = str(value) if value else None
         if not value or not self.closing_wiki_markup:
             self._closing_wiki_markup = self._wiki_markup
@@ -235,7 +237,7 @@ class Tag(Node):
             self._padding = value
 
     @property
-    def closing_tag(self) -> "Wikicode":
+    def closing_tag(self) -> Wikicode:
         """The closing tag, as a :class:`.Wikicode` object.
 
         This will usually equal :attr:`tag`, unless there is additional
@@ -248,7 +250,7 @@ class Tag(Node):
         self._closing_tag = parse_anything(value)
 
     @property
-    def wiki_style_separator(self) -> Optional[str]:
+    def wiki_style_separator(self) -> str | None:
         """The separator between the padding and content in a wiki markup tag.
 
         Essentially the wiki equivalent of the TagCloseOpen.
@@ -256,11 +258,11 @@ class Tag(Node):
         return self._wiki_style_separator
 
     @wiki_style_separator.setter
-    def wiki_style_separator(self, value: Optional[str]) -> None:
+    def wiki_style_separator(self, value: str | None) -> None:
         self._wiki_style_separator = str(value) if value else None
 
     @property
-    def closing_wiki_markup(self) -> Optional[str]:
+    def closing_wiki_markup(self) -> str | None:
         """The wikified version of the closing tag to show instead of HTML.
 
         If set to a value, this will be displayed instead of the close tag
@@ -273,7 +275,7 @@ class Tag(Node):
         return self._closing_wiki_markup
 
     @closing_wiki_markup.setter
-    def closing_wiki_markup(self, value: Optional[str]) -> None:
+    def closing_wiki_markup(self, value: str | None) -> None:
         self._closing_wiki_markup = str(value) if value else None
 
     def has(self, name: str) -> bool:
@@ -304,7 +306,7 @@ class Tag(Node):
         self,
         name: Any,
         value: Any = None,
-        quotes: Optional[str] = '"',
+        quotes: str | None = '"',
         pad_first: str = " ",
         pad_before_eq: str = "",
         pad_after_eq: str = "",
