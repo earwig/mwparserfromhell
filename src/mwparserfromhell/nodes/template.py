@@ -135,6 +135,7 @@ class Template(Node):
             before, after = "", sval
         else:
             match = re.search(r"^(\s*).*?(\s*)$", sval, FLAGS)
+            assert match, sval
             before, after = match.group(1), match.group(2)
         value.nodes = [Text(before), Text(after)]
 
@@ -157,6 +158,7 @@ class Template(Node):
             else:
                 component = str(param.value)
             match = re.search(r"^(\s*).*?(\s*)$", component, FLAGS)
+            assert match, component
             before, after = match.group(1), match.group(2)
             if not use_names and component.isspace() and "\n" in before:
                 # If the value is empty, we expect newlines in the whitespace
@@ -314,7 +316,7 @@ class Template(Node):
                 existing.showkey = showkey
             if not existing.showkey:
                 self._surface_escape(value, "=")
-            nodes = existing.value.nodes
+            nodes: list[Node | None] = list(existing.value.nodes)
             if preserve_spacing and existing.showkey:
                 for i in range(2):  # Ignore empty text nodes
                     if not nodes[i]:

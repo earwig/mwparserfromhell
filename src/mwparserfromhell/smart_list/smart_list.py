@@ -21,13 +21,14 @@
 
 from __future__ import annotations
 
+from typing import Any
 from weakref import ref
 
 from .list_proxy import ListProxy
 from .utils import _SliceNormalizerMixIn, inheritdoc
 
 
-class SmartList(_SliceNormalizerMixIn, list):
+class SmartList(list, _SliceNormalizerMixIn):
     """Implements the ``list`` interface with special handling of sublists.
 
     When a sublist is created (by ``list[i:j]``), any changes made to this
@@ -58,7 +59,7 @@ class SmartList(_SliceNormalizerMixIn, list):
         obj._children = {}
         return obj
 
-    def __reduce_ex__(self, protocol: int) -> tuple:
+    def __reduce_ex__(self, protocol: Any) -> tuple:
         # Detach children when pickling
         return (SmartList, (), None, iter(self))
 
@@ -154,7 +155,7 @@ class SmartList(_SliceNormalizerMixIn, list):
         super().reverse()
 
     @inheritdoc
-    def sort(self, key=None, reverse=None):
+    def sort(self, *, key=None, reverse=None):
         self._detach_children()
         kwargs = {}
         if key is not None:

@@ -72,7 +72,7 @@ class Attribute(StringMixIn):
         return result
 
     @staticmethod
-    def _value_needs_quotes(value: Wikicode) -> str | None:
+    def _value_needs_quotes(value: Wikicode | None) -> str | None:
         """Return valid quotes for the given value, or None if unneeded."""
         if not value:
             return None

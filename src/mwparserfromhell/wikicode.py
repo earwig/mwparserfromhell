@@ -23,7 +23,7 @@ from __future__ import annotations
 import re
 from collections.abc import Generator, Iterable
 from itertools import chain
-from typing import Any, Callable, cast, overload
+from typing import Any, Callable, TypeVar, cast, overload
 
 from .nodes import (
     Argument,
@@ -44,6 +44,8 @@ from .utils import parse_anything
 __all__ = ["Wikicode"]
 
 FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
+
+N = TypeVar("N", bound=Node)
 
 
 class Wikicode(StringMixIn):
@@ -91,11 +93,9 @@ class Wikicode(StringMixIn):
 
     @staticmethod
     def _build_matcher(
-        matches: (
-            Callable[[Node], bool | re.Match[str] | None] | re.Pattern | str | None
-        ),
+        matches: Callable[[N], bool | re.Match[str] | None] | re.Pattern | str | None,
         flags: int,
-    ) -> Callable[[Node], bool | re.Match[str] | None]:
+    ) -> Callable[[N], bool | re.Match[str] | None]:
         """Helper for :meth:`_indexed_ifilter` and others.
 
         If *matches* is a function, return it. If it's a regex, return a
@@ -105,16 +105,18 @@ class Wikicode(StringMixIn):
         if matches:
             if callable(matches):
                 return matches
-            return lambda obj: re.search(matches, str(obj), flags)
-        return lambda obj: True
+            else:
+                return lambda obj: re.search(matches, str(obj), flags)
+        else:
+            return lambda obj: True
 
     def _indexed_ifilter(
         self,
         recursive: bool = True,
-        matches: Callable[[Node], bool] | re.Pattern | str | None = None,
+        matches: Callable[[N], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
-        forcetype: type | None = None,
-    ) -> Generator[tuple[int, Node]]:
+        forcetype: type[N] | None = None,
+    ) -> Generator[tuple[int, N]]:
         """Iterate over nodes and their corresponding indices in the node list.
 
         The arguments are interpreted as for :meth:`ifilter`. For each tuple
@@ -135,8 +137,10 @@ class Wikicode(StringMixIn):
         else:
             inodes = enumerate(self.nodes)
         for i, node in inodes:
-            if (not forcetype or isinstance(node, forcetype)) and match(node):
-                yield (i, node)
+            if (forcetype is None or isinstance(node, forcetype)) and match(
+                cast(N, node)
+            ):
+                yield (i, cast(N, node))
 
     def _is_child_wikicode(self, obj: Wikicode, recursive: bool = True) -> bool:
         """Return whether the given :class:`.Wikicode` is a descendant."""
@@ -264,8 +268,8 @@ class Wikicode(StringMixIn):
             else:
                 lines.append(" " * 6 * indent + " ".join(args))
 
-        def get(code):
-            return self._get_tree(code, lines, marker, indent + 1)
+        def get(code: Wikicode):
+            self._get_tree(code, lines, marker, indent + 1)
 
         def mark():
             return lines.append(marker)

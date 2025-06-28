@@ -20,9 +20,12 @@
 
 from __future__ import annotations
 
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 from ._base import Node
+
+if TYPE_CHECKING:
+    from ..wikicode import Wikicode
 
 __all__ = ["Comment"]
 
@@ -30,7 +33,7 @@ __all__ = ["Comment"]
 class Comment(Node):
     """Represents a hidden HTML comment, like ``<!-- foobar -->``."""
 
-    def __init__(self, contents: str):
+    def __init__(self, contents: Wikicode | str):
         super().__init__()
         self.contents = contents
 

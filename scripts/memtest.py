@@ -131,16 +131,16 @@ class MemoryTest:
             parent, child = Pipe()
             p = Process(target=_runner, args=(text, child))
             p.start()
+            proc = psutil.Process(p.pid)
             try:
-                proc = psutil.Process(p.pid)
                 parent.recv()
                 parent.send("OK")
                 parent.recv()
-                info1 = proc.get_memory_info()
+                info1 = proc.memory_info
                 sys.stdout.flush()
                 parent.send("OK")
                 parent.recv()
-                info2 = proc.get_memory_info()
+                info2 = proc.memory_info
                 self._print_results(info1, info2)
                 sys.stdout.flush()
                 parent.send("OK")

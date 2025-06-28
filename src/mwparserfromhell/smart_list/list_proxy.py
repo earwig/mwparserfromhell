@@ -22,6 +22,7 @@
 from __future__ import annotations
 
 import weakref
+from typing import Any
 
 from .utils import _SliceNormalizerMixIn, inheritdoc
 
@@ -41,7 +42,7 @@ class ListProxy(_SliceNormalizerMixIn, list):
         self._parent = parent
         self._sliceinfo = sliceinfo
 
-    def __reduce_ex__(self, protocol: int) -> tuple:
+    def __reduce_ex__(self, protocol: Any) -> tuple:
         return (ListProxy, (self._parent, self._sliceinfo), ())
 
     def __setstate__(self, state: tuple) -> None:
@@ -232,7 +233,7 @@ class ListProxy(_SliceNormalizerMixIn, list):
         self._parent[self._start : self._stop : self._step] = item
 
     @inheritdoc
-    def sort(self, key=None, reverse=None):
+    def sort(self, *, key=None, reverse=None):
         item = self._render()
         kwargs = {}
         if key is not None:
