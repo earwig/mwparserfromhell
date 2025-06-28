@@ -7,9 +7,15 @@ v0.7
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.6.6...main>`__):
 
-- Added 'after' parameter to Template.add().
+- Dropped support for end-of-life Python 3.8.
+- Added support for Python 3.13.
+- Added type hints and fixed various type-checker complaints.
+  (`#338 <https://github.com/earwig/mwparserfromhell/pull/338>`_)
+- Added ``after`` parameter to :meth:`.Template.add`.
   (`#281 <https://github.com/earwig/mwparserfromhell/issues/281>`_,
   `#315 <https://github.com/earwig/mwparserfromhell/pull/315>`_)
+- Added :meth:`.Template.update` method to set multiple parameters at once.
+  (`#337 <https://github.com/earwig/mwparserfromhell/pull/337>`_)
 
 v0.6.6
 ------

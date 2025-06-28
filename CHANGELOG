@@ -1,6 +1,10 @@
 v0.7 (unreleased):
 
+- Dropped support for end-of-life Python 3.8.
+- Added support for Python 3.13.
+- Added type hints and fixed various type-checker complaints. (#338)
 - Added 'after' parameter to Template.add(). (#281, #315)
+- Added Template.update() method to set multiple parameters at once. (#337)
 
 v0.6.6 (released January 4, 2024):
 
