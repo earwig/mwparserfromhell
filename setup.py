@@ -1,6 +1,6 @@
 #! /usr/bin/env python
 #
-# Copyright (C) 2012-2023 Ben Kurtovic <ben.kurtovic@gmail.com>
+# Copyright (C) 2012-2025 Ben Kurtovic <ben.kurtovic@gmail.com>
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -20,11 +20,13 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-from glob import glob
+from __future__ import annotations
+
 import os
 import sys
+from glob import glob
 
-from setuptools import find_packages, setup, Extension
+from setuptools import Extension, find_packages, setup
 from setuptools.command.build_ext import build_ext
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "src"))
@@ -82,20 +84,18 @@ setup(
     packages=find_packages("src"),
     package_dir={"": "src"},
     ext_modules=[tokenizer] if use_extension else [],
-    setup_requires=["pytest-runner"]
-    if "test" in sys.argv or "pytest" in sys.argv
-    else [],
+    setup_requires=(
+        ["pytest-runner"] if "test" in sys.argv or "pytest" in sys.argv else []
+    ),
     tests_require=["pytest"],
     version=__version__,
-    python_requires=">= 3.8",
+    python_requires=">= 3.9",
     author="Ben Kurtovic",
     author_email="ben.kurtovic@gmail.com",
     url="https://github.com/earwig/mwparserfromhell",
     description="MWParserFromHell is a parser for MediaWiki wikicode.",
     long_description=long_docs,
-    download_url="https://github.com/earwig/mwparserfromhell/tarball/v{}".format(
-        __version__
-    ),
+    download_url=f"https://github.com/earwig/mwparserfromhell/tarball/v{__version__}",
     keywords="earwig mwparserfromhell wikipedia wiki mediawiki wikicode template parsing",
     license="MIT License",
     classifiers=[
@@ -105,11 +105,11 @@ setup(
         "License :: OSI Approved :: MIT License",
         "Operating System :: OS Independent",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Text Processing :: Markup",
     ],
 )
