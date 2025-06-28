@@ -208,7 +208,7 @@ def test_wiki_markup():
     node.wiki_markup = "''"
     assert "''" == node.wiki_markup
     assert "''italic text''" == node
-    node.wiki_markup = False
+    node.wiki_markup = None
     assert node.wiki_markup is None
     assert "<i>italic text</i>" == node
 
@@ -220,7 +220,7 @@ def test_self_closing():
     node.self_closing = True
     assert node.self_closing is True
     assert "<ref/>" == node
-    node.self_closing = 0
+    node.self_closing = False
     assert node.self_closing is False
     assert "<ref>foobar</ref>" == node
 
@@ -232,7 +232,7 @@ def test_invalid():
     node.invalid = True
     assert node.invalid is True
     assert "</br>" == node
-    node.invalid = 0
+    node.invalid = False
     assert node.invalid is False
     assert "<br>" == node
 
@@ -244,7 +244,7 @@ def test_implicit():
     node.implicit = True
     assert node.implicit is True
     assert "<br>" == node
-    node.implicit = 0
+    node.implicit = False
     assert node.implicit is False
     assert "<br/>" == node
 
@@ -298,7 +298,7 @@ def test_closing_wiki_markup():
     node.wiki_markup = "!!"
     assert "|}" == node.closing_wiki_markup
     assert "!!\n|}" == node
-    node.wiki_markup = False
+    node.wiki_markup = None
     assert node.closing_wiki_markup is None
     assert "<table>\n</table>" == node
     node2 = Tag(

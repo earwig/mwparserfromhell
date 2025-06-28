@@ -96,4 +96,4 @@ def test_equality():
 )
 def test_repr_equality(token):
     """check that eval(repr(token)) == token"""
-    assert token == eval(repr(token), vars(tokens))
+    assert token == eval(repr(token), dict(vars(tokens)))

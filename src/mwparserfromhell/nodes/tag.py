@@ -227,7 +227,7 @@ class Tag(Node):
         return self._padding
 
     @padding.setter
-    def padding(self, value: str) -> None:
+    def padding(self, value: str | None) -> None:
         if not value:
             self._padding = ""
         else:
@@ -278,7 +278,7 @@ class Tag(Node):
     def closing_wiki_markup(self, value: str | None) -> None:
         self._closing_wiki_markup = str(value) if value else None
 
-    def has(self, name: str) -> bool:
+    def has(self, name: str | Attribute | Wikicode) -> bool:
         """Return whether any attribute in the tag has the given *name*.
 
         Note that a tag may have multiple attributes with the same name, but
@@ -289,7 +289,7 @@ class Tag(Node):
                 return True
         return False
 
-    def get(self, name: str) -> Attribute:
+    def get(self, name: str | Attribute | Wikicode) -> Attribute:
         """Get the attribute with the given *name*.
 
         The returned object is a :class:`.Attribute` instance. Raises

@@ -57,9 +57,9 @@ def test_showtree():
     node1 = Text("foobar")
     node2 = Text("fóóbar")
     node3 = Text("𐌲𐌿𐍄")
-    node1.__showtree__(output.append, None, None)
-    node2.__showtree__(output.append, None, None)
-    node3.__showtree__(output.append, None, None)
+    node1.__showtree__(output.append, lambda _code: None, lambda: None)
+    node2.__showtree__(output.append, lambda _code: None, lambda: None)
+    node3.__showtree__(output.append, lambda _code: None, lambda: None)
     res = ["foobar", r"f\xf3\xf3bar", "\\U00010332\\U0001033f\\U00010344"]
     assert res == output
 

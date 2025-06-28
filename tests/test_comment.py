@@ -53,7 +53,7 @@ def test_showtree():
     """test Comment.__showtree__()"""
     output = []
     node = Comment("foobar")
-    node.__showtree__(output.append, None, None)
+    node.__showtree__(output.append, lambda _code: None, lambda: None)
     assert ["<!--foobar-->"] == output
 
 

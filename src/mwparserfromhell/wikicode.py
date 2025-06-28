@@ -43,7 +43,7 @@ from .utils import parse_anything
 
 __all__ = ["Wikicode"]
 
-FLAGS = re.IGNORECASE | re.DOTALL | re.UNICODE
+FLAGS = re.IGNORECASE | re.DOTALL
 
 N = TypeVar("N", bound=Node)
 

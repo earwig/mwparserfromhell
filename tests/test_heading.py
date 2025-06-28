@@ -64,8 +64,8 @@ def test_showtree():
 
     node1 = Heading(wraptext("foobar"), 3)
     node2 = Heading(wraptext(" baz "), 4)
-    node1.__showtree__(output.append, get, None)
-    node2.__showtree__(output.append, get, None)
+    node1.__showtree__(output.append, get, lambda: None)
+    node2.__showtree__(output.append, get, lambda: None)
     valid = ["===", (getter, node1.title), "===", "====", (getter, node2.title), "===="]
     assert valid == output
 

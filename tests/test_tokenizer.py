@@ -20,9 +20,9 @@
 
 from __future__ import annotations
 
-import codecs
-import warnings
-from os import listdir, path
+import os
+from collections.abc import Generator
+from dataclasses import dataclass
 
 import pytest
 
@@ -40,71 +40,79 @@ class _TestParseError(Exception):
     """Raised internally when a test could not be parsed."""
 
 
-def _parse_test(test, data):
-    """Parse an individual *test*, storing its info in *data*."""
-    for line in test.strip().splitlines():
-        if line.startswith("name:"):
-            data["name"] = line[len("name:") :].strip()
-        elif line.startswith("label:"):
-            data["label"] = line[len("label:") :].strip()
-        elif line.startswith("input:"):
-            raw = line[len("input:") :].strip()
-            if raw[0] == '"' and raw[-1] == '"':
-                raw = raw[1:-1]
-            raw = raw.encode("raw_unicode_escape")
-            data["input"] = raw.decode("unicode_escape")
-        elif line.startswith("output:"):
-            raw = line[len("output:") :].strip()
-            try:
-                data["output"] = eval(raw, vars(tokens))
-            except Exception as err:
-                raise _TestParseError(err) from err
+@dataclass
+class _TestCase:
+    name: str
+    label: str | None
+    input: str
+    output: list[tokens.Token]
 
 
-def _load_tests(filename, name, text):
-    """Load all tests in *text* from the file *filename*."""
+def _load_tests(file_path, filename, text) -> Generator[_TestCase]:
     tests = text.split("\n---\n")
     for test in tests:
-        data = {"name": None, "label": None, "input": None, "output": None}
-        try:
-            _parse_test(test, data)
-        except _TestParseError as err:
-            if data["name"]:
-                error = "Could not parse test '{0}' in '{1}':\n\t{2}"
-                warnings.warn(error.format(data["name"], filename, err))
-            else:
-                error = "Could not parse a test in '{0}':\n\t{1}"
-                warnings.warn(error.format(filename, err))
-            continue
+        name = None
+        label = None
+        input = None
+        output = None
 
-        if not data["name"]:
-            error = "A test in '{0}' was ignored because it lacked a name"
-            warnings.warn(error.format(filename))
-            continue
-        if data["input"] is None or data["output"] is None:
-            error = (
-                "Test '{}' in '{}' was ignored because it lacked an input or an output"
+        for line in test.strip().splitlines():
+            if line.startswith("name:"):
+                name = line[len("name:") :].strip()
+            elif line.startswith("label:"):
+                label = line[len("label:") :].strip()
+            elif line.startswith("input:"):
+                raw = line[len("input:") :].strip()
+                if raw[0] == '"' and raw[-1] == '"':
+                    raw = raw[1:-1]
+                raw = raw.encode("raw_unicode_escape")
+                input = raw.decode("unicode_escape")
+            elif line.startswith("output:"):
+                raw = line[len("output:") :].strip()
+                try:
+                    output = eval(raw, dict(vars(tokens)))
+                except Exception as err:
+                    raise _TestParseError(
+                        f"Could not parse a test in {file_path!r}:\n\t{err}\n\n"
+                        f"Raw test:\n{test}"
+                    )
+
+        if not name:
+            raise _TestParseError(
+                f"Test in {filename!r} lacks a name\nRaw test:\n{test}"
             )
-            warnings.warn(error.format(data["name"], filename))
             continue
+        if input is None or output is None:
+            raise _TestParseError(
+                f"Test {name!r} in {file_path!r} lacks an input or an output"
+            )
+            continue
+        if not isinstance(output, list) or not all(
+            isinstance(tok, tokens.Token) for tok in output
+        ):
+            raise _TestParseError(
+                f"Test {name!r} in {file_path!r} should have a list of tokens as its output"
+            )
 
-        # Include test filename in name
-        data["name"] = "{}:{}".format(name, data["name"])
-
-        yield data
+        yield _TestCase(
+            name=f"{filename}:{name}",
+            label=label,
+            input=input,
+            output=output,
+        )
 
 
 def build():
     """Load and install all tests from the 'tokenizer' directory."""
-    directory = path.join(path.dirname(__file__), "tokenizer")
+    directory = os.path.join(os.path.dirname(__file__), "tokenizer")
     extension = ".mwtest"
-    for filename in listdir(directory):
+    for filename in os.listdir(directory):
         if not filename.endswith(extension):
             continue
-        fullname = path.join(directory, filename)
-        with codecs.open(fullname, "r", encoding="utf8") as fp:
+        fullname = os.path.join(directory, filename)
+        with open(fullname) as fp:
             text = fp.read()
-            name = path.split(fullname)[1][: -len(extension)]
+            name = os.path.split(fullname)[1][: -len(extension)]
             yield from _load_tests(fullname, name, text)
 
 
@@ -113,23 +121,22 @@ def build():
     filter(None, (CTokenizer, PyTokenizer)),
     ids=lambda t: "CTokenizer" if t.USES_C else "PyTokenizer",
 )
-@pytest.mark.parametrize("data", build(), ids=lambda data: data["name"])
-def test_tokenizer(tokenizer, data):
-    expected = data["output"]
-    actual = tokenizer().tokenize(data["input"])
-    assert expected == actual
+@pytest.mark.parametrize("test_case", build(), ids=lambda test_case: test_case.name)
+def test_tokenizer(tokenizer, test_case: _TestCase):
+    actual = tokenizer().tokenize(test_case.input)
+    assert test_case.output == actual
 
 
-@pytest.mark.parametrize("data", build(), ids=lambda data: data["name"])
-def test_roundtrip(data):
-    expected = data["input"]
-    actual = str(Builder().build(data["output"][:]))
-    assert expected == actual
+@pytest.mark.parametrize("test_case", build(), ids=lambda test_case: test_case.name)
+def test_roundtrip(test_case: _TestCase):
+    actual = str(Builder().build(test_case.output[:]))
+    assert test_case.input == actual
 
 
 @pytest.mark.skipif(CTokenizer is None, reason="CTokenizer not available")
 def test_c_tokenizer_uses_c():
     """make sure the C tokenizer identifies as using a C extension"""
+    assert CTokenizer is not None
     assert CTokenizer.USES_C is True
     assert CTokenizer().USES_C is True
 

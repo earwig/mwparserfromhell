@@ -42,7 +42,6 @@ if TYPE_CHECKING:
 
 __all__ = ["Template"]
 
-FLAGS = re.DOTALL | re.UNICODE
 # Used to allow None as a valid fallback value
 _UNSET = object()
 
@@ -134,7 +133,7 @@ class Template(Node):
         if sval.isspace():
             before, after = "", sval
         else:
-            match = re.search(r"^(\s*).*?(\s*)$", sval, FLAGS)
+            match = re.search(r"^(\s*).*?(\s*)$", sval, re.DOTALL)
             assert match, sval
             before, after = match.group(1), match.group(2)
         value.nodes = [Text(before), Text(after)]
@@ -157,7 +156,7 @@ class Template(Node):
                 component = str(param.name)
             else:
                 component = str(param.value)
-            match = re.search(r"^(\s*).*?(\s*)$", component, FLAGS)
+            match = re.search(r"^(\s*).*?(\s*)$", component, re.DOTALL)
             assert match, component
             before, after = match.group(1), match.group(2)
             if not use_names and component.isspace() and "\n" in before:
@@ -377,7 +376,7 @@ class Template(Node):
     def __setitem__(self, name: Any, value: Any) -> Parameter:
         return self.add(name, value)
 
-    def remove(self, param: Parameter | str, keep_field: bool = False) -> None:
+    def remove(self, param: Parameter | str | int, keep_field: bool = False) -> None:
         """Remove a parameter from the template, identified by *param*.
 
         If *param* is a :class:`.Parameter` object, it will be matched exactly,
