@@ -1,0 +1,36 @@
+name: Build
+on: [push, pull_request]
+
+jobs:
+  build-wheels:
+    name: Build wheels on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os:
+          - ubuntu-latest
+          - ubuntu-24.04-arm
+          - windows-latest
+          - macos-13  # intel
+          - macos-latest  # arm64
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build wheels
+        uses: pypa/cibuildwheel@v3.0.0
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
+          path: ./wheelhouse/*.whl
+
+      # - name: Publish package to PyPI
+      #   # Only actually publish if a new tag was pushed
+      #   if: github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags')
+      #   # We can't use the pypa action because of https://github.com/pypa/gh-action-pypi-publish/issues/15
+      #   run: |
+      #     pip install twine
+      #     TWINE_USERNAME="__token__" \
+      #     TWINE_PASSWORD="${{ secrets.pypi_password }}" \
+      #     twine upload dist/*
