@@ -43,7 +43,7 @@ jobs:
         if: matrix.os == 'linux-intel'
         uses: coverallsapp/github-action@v2
         with:
-          files: ${{ steps.get-files.outputs.files }}
+          files: ${{ steps.get-coverage-files.outputs.files }}
 
   build-sdist:
     name: Build source distribution
