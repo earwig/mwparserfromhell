@@ -7,7 +7,7 @@ v0.7.1
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.0...main>`__):
 
-- ...
+- Modernized packaging.
 
 v0.7.0
 ------

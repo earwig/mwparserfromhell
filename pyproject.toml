@@ -1,3 +1,76 @@
+[project]
+name = "mwparserfromhell"
+version = "0.7.1.dev0"
+description = "MWParserFromHell is a parser for MediaWiki wikicode"
+authors = [
+    {name = "Ben Kurtovic", email = "ben@benkurtovic.com"},
+]
+license = "MIT"
+license-files = ["LICENSE"]
+keywords = [
+    "mwparserfromhell", "wikipedia", "wiki", "mediawiki", "wikicode", "wikitext"
+]
+readme = "README.rst"
+requires-python = ">= 3.9"
+dependencies = []
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Topic :: Text Processing :: Markup",
+]
+
+[project.urls]
+Repository = "https://github.com/earwig/mwparserfromhell"
+Documentation = "https://mwparserfromhell.readthedocs.io/"
+Issues = "https://github.com/earwig/mwparserfromhell/issues"
+Changelog = "https://github.com/earwig/mwparserfromhell/blob/main/CHANGELOG"
+
+[dependency-groups]
+dev = [
+    "psutil",
+    "pytest",
+    "twine[keyring]",
+]
+
+[build-system]
+requires = ["setuptools >= 77.0.3"]
+build-backend = "setuptools.build_meta"
+
+[[tool.setuptools.ext-modules]]
+name = "mwparserfromhell.parser._tokenizer"
+sources = [
+    "src/mwparserfromhell/parser/ctokenizer/avl_tree.c",
+    "src/mwparserfromhell/parser/ctokenizer/definitions.c",
+    "src/mwparserfromhell/parser/ctokenizer/tag_data.c",
+    "src/mwparserfromhell/parser/ctokenizer/textbuffer.c",
+    "src/mwparserfromhell/parser/ctokenizer/tok_parse.c",
+    "src/mwparserfromhell/parser/ctokenizer/tok_support.c",
+    "src/mwparserfromhell/parser/ctokenizer/tokenizer.c",
+    "src/mwparserfromhell/parser/ctokenizer/tokens.c",
+]
+depends = [
+    "src/mwparserfromhell/parser/ctokenizer/avl_tree.h",
+    "src/mwparserfromhell/parser/ctokenizer/common.h",
+    "src/mwparserfromhell/parser/ctokenizer/contexts.h",
+    "src/mwparserfromhell/parser/ctokenizer/definitions.h",
+    "src/mwparserfromhell/parser/ctokenizer/tag_data.h",
+    "src/mwparserfromhell/parser/ctokenizer/textbuffer.h",
+    "src/mwparserfromhell/parser/ctokenizer/tok_parse.h",
+    "src/mwparserfromhell/parser/ctokenizer/tok_support.h",
+    "src/mwparserfromhell/parser/ctokenizer/tokenizer.h",
+    "src/mwparserfromhell/parser/ctokenizer/tokens.h",
+]
+include-dirs = ["lib"]
+optional = true
+
 [tool.pyright]
 pythonVersion = "3.9"
 venvPath = "."
