@@ -64,5 +64,5 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - uses: pypa/gh-action-pypi-publish@release/v1
-        with:
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
