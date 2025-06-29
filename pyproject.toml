@@ -76,7 +76,7 @@ optional = true
 [tool.cibuildwheel]
 test-groups = ["dev"]
 test-command = [
-    "python -c 'import mwparserfromhell.parser._tokenizer'",
+    'python -c "import mwparserfromhell.parser._tokenizer"',
     "pytest {project}/tests -rxs --cov=mwparserfromhell",
     "python {project}/scripts/save_coverage.py",
 ]
