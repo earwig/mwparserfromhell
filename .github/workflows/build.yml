@@ -37,6 +37,7 @@ jobs:
         id: get-coverage-files
         run: |
           FILES=$(find ./wheelhouse -type f -name 'coverage*' -printf '%p ')
+          echo "Found coverage files: $FILES"
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
       - name: Coveralls
