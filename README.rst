@@ -7,7 +7,7 @@ mwparserfromhell
 
 **mwparserfromhell** (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
-wikicode. It supports Python 3.8+.
+wikicode. It supports Python 3.9+.
 
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.
@@ -15,9 +15,8 @@ Full documentation is available on ReadTheDocs_. Development occurs on GitHub_.
 Installation
 ------------
 
-The easiest way to install the parser is through the `Python Package Index`_;
-you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). Make sure your pip is up-to-date first, especially on Windows.
+The easiest way to install the parser is from `PyPI`_; you can install the
+latest release with ``pip install mwparserfromhell``.
 
 Alternatively, get the latest development version:
 
@@ -25,10 +24,15 @@ Alternatively, get the latest development version:
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
-    python setup.py install
+    uv sync
+    uv run python -c 'import mwparserfromhell; print(mwparserfromhell.__version__)'
 
-The comprehensive unit testing suite requires `pytest`_ (``pip install pytest``)
-and can be run with ``python -m pytest``.
+The comprehensive test suite can be run with ``pytest``. If using ``uv``, pass
+``--reinstall-package`` so updates to the extension module are properly tested:
+
+.. code-block:: sh
+
+    uv run --reinstall-package mwparserfromhell pytest
 
 Usage
 -----
@@ -218,11 +222,10 @@ Python 3 code (using the API_ and the requests_ library):
 .. _Σ:                      https://en.wikipedia.org/wiki/User:%CE%A3
 .. _Legoktm:                https://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
-.. _Python Package Index:   https://pypi.org/
-.. _get pip:                https://pypi.org/project/pip/
+.. _PyPI:                   https://pypi.org/project/mwparserfromhell/
 .. _pytest:                 https://docs.pytest.org/
 .. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
 .. _EarwigBot:              https://github.com/earwig/earwigbot
 .. _Pywikibot:              https://www.mediawiki.org/wiki/Manual:Pywikibot
 .. _API:                    https://www.mediawiki.org/wiki/API:Main_page
-.. _requests:               https://2.python-requests.org
+.. _requests:               https://pypi.org/project/requests/

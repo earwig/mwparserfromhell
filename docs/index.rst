@@ -3,7 +3,7 @@ MWParserFromHell v\ |version| Documentation
 
 :mod:`mwparserfromhell` (the *MediaWiki Parser from Hell*) is a Python package
 that provides an easy-to-use and outrageously powerful parser for MediaWiki_
-wikicode. It supports Python 3.8+.
+wikicode. It supports Python 3.9+.
 
 Developed by Earwig_ with contributions from `Σ`_, Legoktm_, and others.
 Development occurs on GitHub_.
@@ -17,21 +17,22 @@ Development occurs on GitHub_.
 Installation
 ------------
 
-The easiest way to install the parser is through the `Python Package Index`_;
-you can install the latest release with ``pip install mwparserfromhell``
-(`get pip`_). Make sure your pip is up-to-date first, especially on Windows.
+The easiest way to install the parser is from `PyPI`_; you can install the
+latest release with ``pip install mwparserfromhell``.
 
 Alternatively, get the latest development version::
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
-    python setup.py install
+    uv sync
+    uv run python -c 'import mwparserfromhell; print(mwparserfromhell.__version__)'
 
-The comprehensive unit testing suite requires `pytest`_ (``pip install pytest``)
-and can be run with ``python -m pytest``.
+The comprehensive test suite can be run with ``pytest``. If using ``uv``, pass
+``--reinstall-package`` so updates to the extension module are properly tested::
 
-.. _Python Package Index:   https://pypi.org/
-.. _get pip:                https://pypi.org/project/pip/
+    uv run --reinstall-package mwparserfromhell pytest
+
+.. _PyPI:                   https://pypi.org/project/mwparserfromhell/
 .. _pytest:                 https://docs.pytest.org/
 
 Contents
