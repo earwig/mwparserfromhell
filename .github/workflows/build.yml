@@ -7,16 +7,17 @@ jobs:
     runs-on: ${{ matrix.runs-on }}
     strategy:
       matrix:
-        - os: linux-intel
-          runs-on: ubuntu-latest
-        - os: linux-arm
-          runs-on: ubuntu-24.04-arm
-        - os: windows-intel
-          runs-on: windows-latest
-        - os: macos-intel
-          runs-on: macos-13
-        - os: macos-arm
-          runs-on: macos-latest
+        include:
+          - os: linux-intel
+            runs-on: ubuntu-latest
+          - os: linux-arm
+            runs-on: ubuntu-24.04-arm
+          - os: windows-intel
+            runs-on: windows-latest
+          - os: macos-intel
+            runs-on: macos-13
+          - os: macos-arm
+            runs-on: macos-latest
 
     steps:
       - uses: actions/checkout@v4
