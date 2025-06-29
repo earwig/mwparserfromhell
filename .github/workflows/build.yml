@@ -32,11 +32,18 @@ jobs:
           name: cibw-wheels-${{ matrix.os }}-${{ strategy.job-index }}
           path: ./wheelhouse/*.whl
 
+      - name: Get coverage files
+        if: matrix.os == 'linux-intel'
+        id: get-coverage-files
+        run: |
+          FILES=$(find ./wheelhouse -type f -name 'coverage*' -printf '%p ')
+          echo "files=$FILES" >> $GITHUB_OUTPUT
+
       - name: Coveralls
         if: matrix.os == 'linux-intel'
         uses: coverallsapp/github-action@v2
         with:
-          files: ./wheelhouse/.coverage*
+          files: ${{ steps.get-files.outputs.files }}
 
   build-sdist:
     name: Build source distribution
