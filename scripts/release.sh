@@ -27,13 +27,6 @@ check_git() {
     fi
 }
 
-update_appveyor() {
-    filename="appveyor.yml"
-    echo -n "Updating $filename..."
-    sed -e "s/version: .*/version: $VERSION-b{build}/" -i "" $filename
-    echo " done."
-}
-
 update_changelog() {
     filename="CHANGELOG"
     echo -n "Updating $filename..."
@@ -67,13 +60,6 @@ do_git_stuff() {
     git tag v$VERSION -s -m "version $VERSION"
     echo -n " pushing..."
     git push -q --tags origin main
-    echo " done."
-}
-
-upload_to_pypi() {
-    echo -n "PyPI: uploading source tarball..."
-    python setup.py -q sdist
-    twine upload dist/mwparserfromhell-$VERSION*
     echo " done."
 }
 
@@ -115,14 +101,13 @@ test_release() {
     fi
     pip -q uninstall -y mwparserfromhell
     echo -n "Downloading mwparserfromhell source tarball..."
-    curl -sL "https://pypi.io/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
+    curl -sL "https://files.pythonhosted.org/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
     echo " done."
     tar -xf mwparserfromhell.tar.gz
     rm mwparserfromhell.tar.gz
     cd mwparserfromhell-$VERSION
     echo "Running unit tests..."
-    python setup.py -q install
-    python -m pytest
+    uv run pytest
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: Unit tests failed!"
         deactivate
@@ -141,7 +126,6 @@ echo "Preparing mwparserfromhell v$VERSION..."
 cd "$SCRIPT_DIR/.."
 
 check_git
-update_appveyor
 update_changelog
 update_docs_changelog
 do_git_stuff
