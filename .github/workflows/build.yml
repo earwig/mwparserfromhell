@@ -52,6 +52,7 @@ jobs:
           path: dist/*.tar.gz
 
   upload-pypi:
+    name: Publish to PyPI
     needs: [build-wheels, build-sdist]
     runs-on: ubuntu-latest
     environment: pypi
@@ -65,5 +66,4 @@ jobs:
           path: dist
           merge-multiple: true
 
-      - name: Publish to PyPI
-        uses: pypa/gh-action-pypi-publish@release/v1
+      - uses: pypa/gh-action-pypi-publish@release/v1
