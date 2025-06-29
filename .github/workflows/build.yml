@@ -33,7 +33,10 @@ jobs:
           path: ./wheelhouse/*.whl
 
       - name: Coveralls
+        if: matrix.os == 'linux-intel'
         uses: coverallsapp/github-action@v2
+        with:
+          files: ./wheelhouse/.coverage*
 
   build-sdist:
     name: Build source distribution
