@@ -45,6 +45,7 @@ jobs:
         uses: coverallsapp/github-action@v2
         with:
           files: ${{ steps.get-coverage-files.outputs.files }}
+          format: lcov
 
   build-sdist:
     name: Build source distribution

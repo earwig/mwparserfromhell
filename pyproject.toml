@@ -78,7 +78,7 @@ environment-pass = ["RUNNER_OS"]
 test-groups = ["dev"]
 test-command = [
     'python -c "import mwparserfromhell.parser._tokenizer"',
-    "pytest {project}/tests -rxs --cov=mwparserfromhell",
+    "pytest {project}/tests -rxs --cov=mwparserfromhell --cov-report=lcov:coverage.lcov",
     "python {project}/scripts/save_coverage.py",
 ]
 
