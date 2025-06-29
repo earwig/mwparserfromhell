@@ -26,11 +26,16 @@ outrageously powerful parser for `MediaWiki <https://www.mediawiki.org>`_ wikico
 
 from __future__ import annotations
 
+from importlib.metadata import PackageNotFoundError, version
+
 __author__ = "Ben Kurtovic"
 __copyright__ = "Copyright (C) 2012-2025 Ben Kurtovic"
 __license__ = "MIT License"
-__version__ = "0.7.1.dev0"
 __email__ = "ben.kurtovic@gmail.com"
+try:
+    __version__ = version("mwparserfromhell")
+except PackageNotFoundError:
+    __version__ = "0.0.0"
 
 __all__ = [
     "definitions",
@@ -46,3 +51,6 @@ __all__ = [
 from . import definitions, nodes, parser, smart_list, string_mixin, utils, wikicode
 
 parse = utils.parse_anything
+
+del PackageNotFoundError
+del version

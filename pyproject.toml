@@ -1,6 +1,6 @@
 [project]
 name = "mwparserfromhell"
-version = "0.7.1.dev0"
+dynamic = ["version"]
 description = "MWParserFromHell is a parser for MediaWiki wikicode"
 authors = [
     {name = "Ben Kurtovic", email = "ben@benkurtovic.com"},
@@ -37,11 +37,10 @@ Changelog = "https://github.com/earwig/mwparserfromhell/blob/main/CHANGELOG"
 dev = [
     "psutil",
     "pytest",
-    "twine[keyring]",
 ]
 
 [build-system]
-requires = ["setuptools >= 77.0.3"]
+requires = ["setuptools >= 77.0.3", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [[tool.setuptools.ext-modules]]
@@ -70,6 +69,8 @@ depends = [
 ]
 include-dirs = ["lib"]
 optional = true
+
+[tool.setuptools_scm]
 
 [tool.pyright]
 pythonVersion = "3.9"

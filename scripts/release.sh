@@ -27,12 +27,6 @@ check_git() {
     fi
 }
 
-update_version() {
-    echo -n "Updating mwparserfromhell.__version__..."
-    sed -e 's/__version__ = .*/__version__ = "'$VERSION'"/' -i "" src/mwparserfromhell/__init__.py
-    echo " done."
-}
-
 update_appveyor() {
     filename="appveyor.yml"
     echo -n "Updating $filename..."
@@ -147,7 +141,6 @@ echo "Preparing mwparserfromhell v$VERSION..."
 cd "$SCRIPT_DIR/.."
 
 check_git
-update_version
 update_appveyor
 update_changelog
 update_docs_changelog

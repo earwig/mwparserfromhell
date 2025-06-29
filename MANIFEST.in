@@ -1,3 +1,0 @@
-include LICENSE CHANGELOG
-recursive-include src *.h
-recursive-include tests *.py *.mwtest
