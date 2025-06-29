@@ -63,6 +63,11 @@ update_docs_changelog() {
 }
 
 do_git_stuff() {
+    echo -n "Ready to commit and push? [yN] "
+    read confirm
+    if [[ ${confirm,,} != "y" ]]; then
+        exit 1
+    fi
     echo -n "Git: committing, tagging, and merging release..."
     git commit -qam "release/$VERSION"
     git tag v$VERSION -s -m "version $VERSION"
