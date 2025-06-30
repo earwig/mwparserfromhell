@@ -68,7 +68,7 @@ post_release() {
     echo "*** Release completed."
     echo "*** Update: https://github.com/earwig/mwparserfromhell/releases/tag/v$VERSION"
     echo "*** Verify: https://pypi.org/project/mwparserfromhell"
-    echo "*** Verify: https://ci.appveyor.com/project/earwig/mwparserfromhell"
+    echo "*** Verify: https://github.com/earwig/mwparserfromhell/actions"
     echo "*** Verify: https://mwparserfromhell.readthedocs.io"
     echo "*** Press enter to sanity-check the release."
     read
@@ -100,6 +100,7 @@ test_release() {
         echo " done."
     fi
     pip -q uninstall -y mwparserfromhell
+    deactivate
     echo -n "Downloading mwparserfromhell source tarball..."
     curl -sL "https://files.pythonhosted.org/packages/source/m/mwparserfromhell/mwparserfromhell-$VERSION.tar.gz" -o "mwparserfromhell.tar.gz"
     echo " done."
@@ -110,13 +111,11 @@ test_release() {
     uv run pytest
     if [[ "$?" != "0" ]]; then
         echo "*** ERROR: Unit tests failed!"
-        deactivate
         cd ../..
         rm -rf $virtdir
         exit 1
     fi
     echo -n "Everything looks good. Cleaning up..."
-    deactivate
     cd ../..
     rm -rf $virtdir
     echo " done."
@@ -129,7 +128,6 @@ check_git
 update_changelog
 update_docs_changelog
 do_git_stuff
-upload_to_pypi
 post_release
 test_release
 
