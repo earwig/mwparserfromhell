@@ -364,11 +364,11 @@ class Template(Node):
 
     def update(self, params: Mapping[Any, Any], **kwargs: Any) -> None:
         """Update the template with multiple parameters at once.
-        Args:
-            params: A dictionary mapping parameter names to values.
-            **kwargs: Optional arguments that will be applied to all parameters,
-                matching the same arguments in :meth:`add` (showkey, before,
-                after, preserve_spacing)
+
+        - *params*: A dictionary mapping parameter names to values.
+        - *kwargs*: Optional arguments that will be applied to all parameters, matching
+          the same arguments in :meth:`add` (*showkey*, *before*, *after*,
+          *preserve_spacing*).
         """
         for name, value in params.items():
             self.add(name, value, **kwargs)

@@ -41,7 +41,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "mwparserfromhell"
-copyright = "2012–2021 Ben Kurtovic"
+copyright = "2012–2025 Ben Kurtovic"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
@@ -91,12 +91,21 @@ pygments_style = "sphinx"
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
-html_theme = "nature"
+html_theme = "alabaster"
 
 # Theme options are theme-specific and customize the look and feel of a theme
 # further.  For a list of options available for each theme, see the
 # documentation.
-# html_theme_options = {}
+html_theme_options = {
+    "github_user": "earwig",
+    "github_repo": "mwparserfromhell",
+    "github_type": "star",
+    "description": "A parser for MediaWiki wikicode",
+    "show_relbars": True,
+    "page_width": "1200px",
+    "sidebar_width": "320px",
+    "fixed_sidebar": True,
+}
 
 # Add any paths that contain custom themes here, relative to this directory.
 # html_theme_path = []

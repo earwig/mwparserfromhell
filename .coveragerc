@@ -7,3 +7,4 @@ exclude_lines =
 	raise NotImplementedError()
 partial_branches =
     pragma: no branch
+    if TYPE_CHECKING:

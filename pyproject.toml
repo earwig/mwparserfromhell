@@ -38,6 +38,7 @@ dev = [
     "psutil",
     "pytest",
     "pytest-cov",
+    "sphinx",
 ]
 
 [build-system]
