@@ -1,4 +1,4 @@
-v0.7.1 (unreleased):
+v0.7.1 (released June 30, 2025):
 
 - Modernize packaging.
 - Explicitly support $WITH_EXTENSION/$WITHOUT_EXTENSION to control whether the

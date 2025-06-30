@@ -4,8 +4,8 @@ Changelog
 v0.7.1
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.0...main>`__):
+`Released June 30, 2025 <https://github.com/earwig/mwparserfromhell/tree/v0.7.1>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.0...v0.7.1>`__):
 
 - Modernize packaging.
 - Explicitly support ``$WITH_EXTENSION`` / ``$WITHOUT_EXTENSION`` to control
