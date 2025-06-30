@@ -2,6 +2,22 @@ name: Build
 on: [push, pull_request]
 
 jobs:
+  pre-commit:
+    name: Run pre-commit hooks
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: astral-sh/setup-uv@v5
+      - uses: actions/setup-python@v5
+        with:
+          python-version-file: pyproject.toml
+
+      - name: Install the project
+        run: uv sync --locked --dev
+
+      - name: Run pre-commit hooks
+        uses: pre-commit/action@2c7b3805fd2a0fd8c1884dcaebf91fc102a13ecd
+
   build-wheels:
     name: Build wheels for ${{ matrix.os }}
     runs-on: ${{ matrix.runs-on }}
@@ -36,16 +52,15 @@ jobs:
         if: matrix.os == 'linux-intel'
         id: get-coverage-files
         run: |
-          FILES=$(find ./wheelhouse -type f -name 'coverage*' -printf '%p ')
+          FILES=$(find ./wheelhouse -type f -name '.coverage*' -printf '%p ')
           echo "Found coverage files: $FILES"
           echo "files=$FILES" >> $GITHUB_OUTPUT
 
-      - name: Coveralls
+      - name: Upload to Coveralls
         if: matrix.os == 'linux-intel'
         uses: coverallsapp/github-action@v2
         with:
           files: ${{ steps.get-coverage-files.outputs.files }}
-          format: lcov
 
   build-sdist:
     name: Build source distribution
@@ -65,7 +80,7 @@ jobs:
 
   upload-pypi:
     name: Publish to PyPI
-    needs: [build-wheels, build-sdist]
+    needs: [pre-commit, build-wheels, build-sdist]
     runs-on: ubuntu-latest
     environment: pypi
     permissions:
