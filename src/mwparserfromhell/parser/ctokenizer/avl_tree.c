@@ -21,7 +21,9 @@
 #define false 0
 #define true  1
 
+#if __STDC_VERSION__ < 202000
 typedef int bool;
+#endif
 
 #include "avl_tree.h"
 

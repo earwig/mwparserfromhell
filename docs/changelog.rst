@@ -10,6 +10,8 @@ Unreleased
 - Modernize packaging.
 - Explicitly support ``$WITH_EXTENSION`` / ``$WITHOUT_EXTENSION`` to control
   whether the C tokenizer should be built.
+- Fix building in C23 (e.g. in GCC 15).
+  (`#340 <https://github.com/earwig/mwparserfromhell/issues/340>`_)
 
 v0.7.0
 ------
