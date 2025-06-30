@@ -1,6 +1,8 @@
 v0.7.1 (unreleased):
 
-- Modernized packaging.
+- Modernize packaging.
+- Explicitly support $WITH_EXTENSION/$WITHOUT_EXTENSION to control whether the
+  C tokenizer should be built.
 
 v0.7.0 (released June 28, 2025):
 

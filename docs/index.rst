@@ -20,7 +20,13 @@ Installation
 The easiest way to install the parser is from `PyPI`_; you can install the
 latest release with ``pip install mwparserfromhell``.
 
-Alternatively, get the latest development version::
+Prebuilt wheels are available on PyPI with a fast, compiled C tokenizer
+extension for most environments (Linux x86_64 and arm64, macOS x86_64 and
+arm64, Windows x86 and x86_64). If building from source and the C tokenizer
+cannot be built, you can fall back to the slower pure-Python implementation by
+setting the environment variable ``WITH_EXTENSION=0`` when installing.
+
+To get the latest development version (with `uv`_)::
 
     git clone https://github.com/earwig/mwparserfromhell.git
     cd mwparserfromhell
@@ -32,7 +38,14 @@ The comprehensive test suite can be run with ``pytest``. If using ``uv``, pass
 
     uv run --reinstall-package mwparserfromhell pytest
 
+.. note::
+
+    To see if the fast C tokenizer is being used, check the value of
+    ``mwparserfromhell.parser.use_c``. If ``True``, it's being used; if
+    ``False``, the Python fallback is being used.
+
 .. _PyPI:                   https://pypi.org/project/mwparserfromhell/
+.. _uv:                     https://docs.astral.sh/uv/
 .. _pytest:                 https://docs.pytest.org/
 
 Contents

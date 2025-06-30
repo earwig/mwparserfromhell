@@ -18,7 +18,13 @@ Installation
 The easiest way to install the parser is from `PyPI`_; you can install the
 latest release with ``pip install mwparserfromhell``.
 
-Alternatively, get the latest development version:
+Prebuilt wheels are available on PyPI with a fast, compiled C tokenizer
+extension for most environments (Linux x86_64 and arm64, macOS x86_64 and
+arm64, Windows x86 and x86_64). If building from source and the C tokenizer
+cannot be built, you can fall back to the slower pure-Python implementation by
+setting the environment variable ``WITH_EXTENSION=0`` when installing.
+
+To get the latest development version (with `uv`_):
 
 .. code-block:: sh
 
@@ -223,6 +229,7 @@ Python 3 code (using the API_ and the requests_ library):
 .. _Legoktm:                https://en.wikipedia.org/wiki/User:Legoktm
 .. _GitHub:                 https://github.com/earwig/mwparserfromhell
 .. _PyPI:                   https://pypi.org/project/mwparserfromhell/
+.. _uv:                     https://docs.astral.sh/uv/
 .. _pytest:                 https://docs.pytest.org/
 .. _Word-ending links:      https://www.mediawiki.org/wiki/Help:Links#linktrail
 .. _EarwigBot:              https://github.com/earwig/earwigbot

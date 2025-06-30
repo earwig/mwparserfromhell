@@ -38,6 +38,7 @@ dev = [
     "psutil",
     "pytest",
     "pytest-cov",
+    "setuptools",
     "sphinx",
 ]
 
@@ -45,36 +46,10 @@ dev = [
 requires = ["setuptools >= 77.0.3", "setuptools-scm>=8"]
 build-backend = "setuptools.build_meta"
 
-[[tool.setuptools.ext-modules]]
-name = "mwparserfromhell.parser._tokenizer"
-sources = [
-    "src/mwparserfromhell/parser/ctokenizer/avl_tree.c",
-    "src/mwparserfromhell/parser/ctokenizer/definitions.c",
-    "src/mwparserfromhell/parser/ctokenizer/tag_data.c",
-    "src/mwparserfromhell/parser/ctokenizer/textbuffer.c",
-    "src/mwparserfromhell/parser/ctokenizer/tok_parse.c",
-    "src/mwparserfromhell/parser/ctokenizer/tok_support.c",
-    "src/mwparserfromhell/parser/ctokenizer/tokenizer.c",
-    "src/mwparserfromhell/parser/ctokenizer/tokens.c",
-]
-depends = [
-    "src/mwparserfromhell/parser/ctokenizer/avl_tree.h",
-    "src/mwparserfromhell/parser/ctokenizer/common.h",
-    "src/mwparserfromhell/parser/ctokenizer/contexts.h",
-    "src/mwparserfromhell/parser/ctokenizer/definitions.h",
-    "src/mwparserfromhell/parser/ctokenizer/tag_data.h",
-    "src/mwparserfromhell/parser/ctokenizer/textbuffer.h",
-    "src/mwparserfromhell/parser/ctokenizer/tok_parse.h",
-    "src/mwparserfromhell/parser/ctokenizer/tok_support.h",
-    "src/mwparserfromhell/parser/ctokenizer/tokenizer.h",
-    "src/mwparserfromhell/parser/ctokenizer/tokens.h",
-]
-include-dirs = ["lib"]
-optional = true
-
 [tool.setuptools_scm]
 
 [tool.cibuildwheel]
+environment = { WITH_EXTENSION = "1" }
 environment-pass = ["RUNNER_OS"]
 test-groups = ["dev"]
 test-command = [
