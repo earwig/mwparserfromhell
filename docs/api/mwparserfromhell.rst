@@ -13,6 +13,7 @@ mwparserfromhell Package
 
 .. automodule:: mwparserfromhell.definitions
     :members:
+    :no-index:
 
 :mod:`string_mixin` Module
 --------------------------
@@ -20,13 +21,7 @@ mwparserfromhell Package
 .. automodule:: mwparserfromhell.string_mixin
     :members:
     :undoc-members:
-
-:mod:`utils` Module
--------------------
-
-.. automodule:: mwparserfromhell.utils
-    :members:
-    :undoc-members:
+    :no-index:
 
 :mod:`wikicode` Module
 ----------------------

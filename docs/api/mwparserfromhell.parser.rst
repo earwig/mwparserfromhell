@@ -14,19 +14,11 @@ parser Package
 .. automodule:: mwparserfromhell.parser.builder
     :members:
     :undoc-members:
-    :private-members:
 
 :mod:`contexts` Module
 ----------------------
 
 .. automodule:: mwparserfromhell.parser.contexts
-    :members:
-    :undoc-members:
-
-:mod:`errors` Module
---------------------
-
-.. automodule:: mwparserfromhell.parser.errors
     :members:
     :undoc-members:
 
@@ -36,7 +28,6 @@ parser Package
 .. automodule:: mwparserfromhell.parser.tokenizer
     :members:
     :undoc-members:
-    :private-members:
 
 .. autoexception:: mwparserfromhell.parser.tokenizer.BadRoute
 
