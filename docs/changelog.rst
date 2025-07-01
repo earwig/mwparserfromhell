@@ -7,7 +7,8 @@ v0.7.2
 Unreleased
 (`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.1...main>`__):
 
-- ...
+- Fix building on non-CPython implementations like PyPy.
+  (`#341 <https://github.com/earwig/mwparserfromhell/issues/341>`_)
 
 v0.7.1
 ------

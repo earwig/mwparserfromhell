@@ -1,6 +1,6 @@
 v0.7.2 (unreleased):
 
-- ...
+- Fix building on non-CPython implementations like PyPy. (#341)
 
 v0.7.1 (released June 30, 2025):
 

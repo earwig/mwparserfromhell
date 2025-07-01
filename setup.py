@@ -24,6 +24,7 @@ from __future__ import annotations
 
 import glob
 import os
+import platform
 import sys
 from enum import Enum
 
@@ -63,8 +64,10 @@ elif "WITHOUT_EXTENSION" in os.environ:
             f"Unknown value for $WITHOUT_EXTENSION; should be '1', or '0', "
             f"but found {value!r}"
         )
-else:
+elif platform.python_implementation() == "CPython":
     use_extension = UseExtension.REQUIRED
+else:
+    use_extension = UseExtension.IGNORED
 
 if use_extension == UseExtension.IGNORED:
     ext_modules = []
