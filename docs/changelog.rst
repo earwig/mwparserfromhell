@@ -4,8 +4,8 @@ Changelog
 v0.7.2
 ------
 
-Unreleased
-(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.1...main>`__):
+`Released July 1, 2025 <https://github.com/earwig/mwparserfromhell/tree/v0.7.2>`_
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.1...v0.7.2>`__):
 
 - Fix building on non-CPython implementations like PyPy.
   (`#341 <https://github.com/earwig/mwparserfromhell/issues/341>`_)
