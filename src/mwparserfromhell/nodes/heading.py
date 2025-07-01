@@ -35,7 +35,7 @@ class Heading(Node):
 
     def __init__(self, title: Any, level: int):
         super().__init__()
-        self.title = title
+        self.title = title  # pyright: ignore[reportIncompatibleMethodOverride]
         self.level = level
 
     def __str__(self) -> str:

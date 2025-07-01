@@ -22,8 +22,9 @@ from __future__ import annotations
 
 import re
 from collections.abc import Generator, Iterable
+from enum import Enum
 from itertools import chain
-from typing import Any, Callable, TypeVar, cast, overload
+from typing import Any, Callable, Literal, TypeVar, cast, overload
 
 from .nodes import (
     Argument,
@@ -48,6 +49,10 @@ FLAGS = re.IGNORECASE | re.DOTALL
 N = TypeVar("N", bound=Node)
 
 
+class Recurse(Enum):
+    RECURSE_OTHERS = 2
+
+
 class Wikicode(StringMixIn):
     """A ``Wikicode`` is a container for nodes that operates like a string.
 
@@ -59,7 +64,7 @@ class Wikicode(StringMixIn):
     over, for example, all of the templates in the object.
     """
 
-    RECURSE_OTHERS = 2
+    RECURSE_OTHERS = Recurse.RECURSE_OTHERS
 
     def __init__(self, nodes: list[Node]):
         super().__init__()
@@ -67,6 +72,24 @@ class Wikicode(StringMixIn):
 
     def __str__(self) -> str:
         return "".join([str(node) for node in self.nodes])
+
+    @overload
+    @staticmethod
+    def _get_children(
+        node: Node,
+        contexts: Literal[False] = False,
+        restrict: type | None = None,
+        parent: Wikicode | None = None,
+    ) -> Generator[Node]: ...
+
+    @overload
+    @staticmethod
+    def _get_children(
+        node: Node,
+        contexts: Literal[True],
+        restrict: type | None = None,
+        parent: Wikicode | None = None,
+    ) -> Generator[tuple[Wikicode | None, Node]]: ...
 
     @staticmethod
     def _get_children(
@@ -112,7 +135,7 @@ class Wikicode(StringMixIn):
 
     def _indexed_ifilter(
         self,
-        recursive: bool = True,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
         matches: Callable[[N], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
         forcetype: type[N] | None = None,
@@ -182,7 +205,7 @@ class Wikicode(StringMixIn):
                 raise ValueError(obj)
             return obj, slice(0, len(obj.nodes))
 
-        if isinstance(obj, Node):
+        elif isinstance(obj, Node):
 
             def mkslice(i):
                 return slice(i, i + 1)
@@ -197,7 +220,8 @@ class Wikicode(StringMixIn):
                         return context, mkslice(context.index(child))
             raise ValueError(obj)
 
-        raise TypeError(obj)
+        else:
+            raise TypeError(obj)
 
     def _do_weak_search(
         self, obj: Any, recursive: bool
@@ -278,39 +302,6 @@ class Wikicode(StringMixIn):
             node.__showtree__(write, get, mark)
         return lines
 
-    @classmethod
-    def _build_filter_methods(cls, **meths):
-        """Given Node types, build the corresponding i?filter shortcuts.
-
-        The should be given as keys storing the method's base name paired with
-        values storing the corresponding :class:`.Node` type. For example, the
-        dict may contain the pair ``("templates", Template)``, which will
-        produce the methods :meth:`ifilter_templates` and
-        :meth:`filter_templates`, which are shortcuts for
-        :meth:`ifilter(forcetype=Template) <ifilter>` and
-        :meth:`filter(forcetype=Template) <filter>`, respectively. These
-        shortcuts are added to the class itself, with an appropriate docstring.
-        """
-        doc = """Iterate over {0}.
-
-        This is equivalent to :meth:`{1}` with *forcetype* set to
-        :class:`~{2.__module__}.{2.__name__}`.
-        """
-
-        def make_ifilter(ftype):
-            return lambda self, *a, **kw: self.ifilter(forcetype=ftype, *a, **kw)
-
-        def make_filter(ftype):
-            return lambda self, *a, **kw: self.filter(forcetype=ftype, *a, **kw)
-
-        for name, ftype in meths.items():
-            ifilt = make_ifilter(ftype)
-            filt = make_filter(ftype)
-            ifilt.__doc__ = doc.format(name, "ifilter", ftype)
-            filt.__doc__ = doc.format(name, "filter", ftype)
-            setattr(cls, "ifilter_" + name, ifilt)
-            setattr(cls, "filter_" + name, filt)
-
     @property
     def nodes(self) -> list[Node]:
         """A list of :class:`.Node` objects.
@@ -369,7 +360,9 @@ class Wikicode(StringMixIn):
             return False
         return True
 
-    def index(self, obj: Node | Wikicode | str, recursive: bool = False) -> int:
+    def index(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, obj: Node | Wikicode | str, recursive: bool = False
+    ) -> int:
         """Return the index of *obj* in the list of nodes.
 
         Raises :exc:`ValueError` if *obj* is not found. If *recursive* is
@@ -496,7 +489,7 @@ class Wikicode(StringMixIn):
                     obj = str(obj)
                     self._slice_replace(context, index, obj, obj + str(value))
 
-    def replace(
+    def replace(  # pyright: ignore[reportIncompatibleMethodOverride]
         self, obj: Node | Wikicode | str, value: Any, recursive: bool = True
     ) -> None:
         """Replace *obj* with *value*.
@@ -585,13 +578,32 @@ class Wikicode(StringMixIn):
                 return True
         return False
 
+    @overload
     def ifilter(
         self,
-        recursive: bool = True,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
         matches: Callable[[Node], bool] | re.Pattern | str | None = None,
         flags: int = FLAGS,
-        forcetype: type | None = None,
-    ) -> Generator[Node]:
+        forcetype: None = None,
+    ) -> Generator[Node]: ...
+
+    @overload
+    def ifilter(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[N], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+        *,
+        forcetype: type[N],
+    ) -> Generator[N]: ...
+
+    def ifilter(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[N], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+        forcetype: type[N] | None = None,
+    ) -> Generator[N]:
         """Iterate over nodes in our list matching certain conditions.
 
         If *forcetype* is given, only nodes that are instances of this type (or
@@ -618,12 +630,313 @@ class Wikicode(StringMixIn):
         gen = self._indexed_ifilter(recursive, matches, flags, forcetype)
         return (node for i, node in gen)
 
-    def filter(self, *args: Any, **kwargs: Any) -> list[Node]:
+    def ifilter_arguments(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Argument], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Argument]:
+        """Iterate over arguments.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~argument.Argument`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Argument
+        )
+
+    def ifilter_comments(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Comment], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Comment]:
+        """Iterate over comments.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~comment.Comment`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Comment
+        )
+
+    def ifilter_external_links(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[ExternalLink], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[ExternalLink]:
+        """Iterate over external links.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~external_link.ExternalLink`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=ExternalLink
+        )
+
+    def ifilter_headings(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Heading], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Heading]:
+        """Iterate over headings.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~heading.Heading`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Heading
+        )
+
+    def ifilter_html_entities(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[HTMLEntity], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[HTMLEntity]:
+        """Iterate over HTML entities.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~html_entity.HTMLEntity`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=HTMLEntity
+        )
+
+    def ifilter_tags(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Tag], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Tag]:
+        """Iterate over tags.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~tag.Tag`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Tag
+        )
+
+    def ifilter_templates(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Template], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Template]:
+        """Iterate over templates.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~template.Template`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Template
+        )
+
+    def ifilter_text(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Text], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Text]:
+        """Iterate over text.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~text.Text`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Text
+        )
+
+    def ifilter_wikilinks(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Wikilink], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> Generator[Wikilink]:
+        """Iterate over wikilinks.
+
+        This is equivalent to :meth:`ifilter` with *forcetype* set to
+        :class:`~wikilink.Wikilink`.
+        """
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
+        )
+
+    @overload
+    def filter(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Node], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+        forcetype: None = None,
+    ) -> list[Node]: ...
+
+    @overload
+    def filter(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[N], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+        *,
+        forcetype: type[N],
+    ) -> list[N]: ...
+
+    def filter(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[N], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+        forcetype: type[N] | None = None,
+    ) -> list[N]:
         """Return a list of nodes within our list matching certain conditions.
 
         This is equivalent to calling :func:`list` on :meth:`ifilter`.
         """
-        return list(self.ifilter(*args, **kwargs))
+        gen = self.ifilter(  # pyright: ignore[reportCallIssue]
+            recursive=recursive,
+            matches=matches,
+            flags=flags,
+            forcetype=forcetype,  # pyright: ignore[reportArgumentType]
+        )
+        return list(gen)
+
+    def filter_arguments(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Argument], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Argument]:
+        """Iterate over arguments.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~argument.Argument`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Argument
+        )
+
+    def filter_comments(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Comment], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Comment]:
+        """Iterate over comments.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~comment.Comment`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Comment
+        )
+
+    def filter_external_links(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[ExternalLink], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[ExternalLink]:
+        """Iterate over external links.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~external_link.ExternalLink`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=ExternalLink
+        )
+
+    def filter_headings(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Heading], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Heading]:
+        """Iterate over headings.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~heading.Heading`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Heading
+        )
+
+    def filter_html_entities(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[HTMLEntity], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[HTMLEntity]:
+        """Iterate over HTML entities.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~html_entity.HTMLEntity`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=HTMLEntity
+        )
+
+    def filter_tags(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Tag], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Tag]:
+        """Iterate over tags.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~tag.Tag`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Tag
+        )
+
+    def filter_templates(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Template], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Template]:
+        """Iterate over templates.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~template.Template`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Template
+        )
+
+    def filter_text(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Text], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Text]:
+        """Iterate over text.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~text.Text`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Text
+        )
+
+    def filter_wikilinks(
+        self,
+        recursive: bool | Literal[Recurse.RECURSE_OTHERS] = True,
+        matches: Callable[[Wikilink], bool] | re.Pattern | str | None = None,
+        flags: int = FLAGS,
+    ) -> list[Wikilink]:
+        """Iterate over wikilinks.
+
+        This is equivalent to :meth:`filter` with *forcetype* set to
+        :class:`~wikilink.Wikilink`.
+        """
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
+        )
 
     def get_sections(
         self,
@@ -768,16 +1081,3 @@ class Wikicode(StringMixIn):
         """
         marker = object()  # Random object we can find with certainty in a list
         return "\n".join(self._get_tree(self, [], marker, 0))
-
-
-Wikicode._build_filter_methods(
-    arguments=Argument,
-    comments=Comment,
-    external_links=ExternalLink,
-    headings=Heading,
-    html_entities=HTMLEntity,
-    tags=Tag,
-    templates=Template,
-    text=Text,
-    wikilinks=Wikilink,
-)

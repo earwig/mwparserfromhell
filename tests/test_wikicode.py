@@ -28,6 +28,7 @@ import pickle
 import re
 from functools import partial
 from types import GeneratorType
+from typing import cast
 
 import pytest
 
@@ -123,11 +124,11 @@ def test_index():
     code = parse("{{foo}}{{bar|{{baz}}}}")
     assert 1 == code.index("{{bar|{{baz}}}}")
     assert 1 == code.index("{{baz}}", recursive=True)
-    assert 1 == code.index(code.get(1).get(1).value, recursive=True)
+    assert 1 == code.index(cast(Template, code.get(1)).get(1).value, recursive=True)
     with pytest.raises(ValueError):
         code.index("{{baz}}", recursive=False)
     with pytest.raises(ValueError):
-        code.index(code.get(1).get(1).value, recursive=False)
+        code.index(cast(Template, code.get(1)).get(1).value, recursive=False)
 
 
 def test_get_ancestors_parent():
@@ -207,7 +208,7 @@ def _test_search(meth, expected):
 
     code3 = parse("{{a|{{b}}|{{c|d={{f}}}}}}")
     func = partial(meth, code3)
-    obj = code3.get(0).params[0].value.get(0)
+    obj = cast(Template, code3.get(0)).params[0].value.get(0)
     with pytest.raises(ValueError):
         func(obj, "x", recursive=False)
     func(obj, "x", recursive=True)
@@ -238,7 +239,11 @@ def _test_search(meth, expected):
     with pytest.raises(ValueError):
         func("{{b}}{{c}}", "x", recursive=False)
     func("{{b}}{{c}}", "x", recursive=True)
-    obj = code5.get(0).params[1].value.get(0).params[0].value
+    obj = (
+        cast(Template, cast(Template, code5.get(0)).params[1].value.get(0))
+        .params[0]
+        .value
+    )
     with pytest.raises(ValueError):
         func(obj, "y", recursive=False)
     func(obj, "y", recursive=True)
@@ -434,7 +439,7 @@ def test_filter_family():
         assert list("abcdefg") == func(forcetype=Text)
         assert [] == func(forcetype=Heading)
         with pytest.raises(TypeError):
-            func(forcetype=True)
+            func(forcetype=True)  # type: ignore
 
     funcs = [
         lambda name, **kw: getattr(code, "filter_" + name)(**kw),
@@ -497,11 +502,11 @@ def test_filter_family():
     assert [] == code3.filter_tags(matches=r"^{{b.*?z")
     assert [] == code3.filter_tags(matches=r"^{{b.*?z", flags=0)
     with pytest.raises(TypeError):
-        code.filter_templates(a=42)
+        code.filter_templates(a=42)  # type: ignore
     with pytest.raises(TypeError):
-        code.filter_templates(forcetype=Template)
+        code.filter_templates(forcetype=Template)  # type: ignore
     with pytest.raises(TypeError):
-        code.filter_templates(1, 0, 0, Template)
+        code.filter_templates(1, 0, 0, Template)  # type: ignore
 
     code4 = parse("{{foo}}<b>{{foo|{{bar}}}}</b>")
     actual1 = code4.filter_templates(recursive=code4.RECURSE_OTHERS)

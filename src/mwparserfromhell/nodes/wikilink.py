@@ -37,7 +37,7 @@ class Wikilink(Node):
 
     def __init__(self, title: Any, text: Any = None):
         super().__init__()
-        self.title = title
+        self.title = title  # pyright: ignore[reportIncompatibleMethodOverride]
         self.text = text
 
     def __str__(self) -> str:

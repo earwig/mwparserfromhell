@@ -25,7 +25,9 @@ interface for the ``str`` type in a dynamic manner.
 
 from __future__ import annotations
 
-from sys import getdefaultencoding
+import sys
+from collections.abc import Iterable, Iterator, Mapping
+from typing import Any, SupportsIndex
 
 __all__ = ["StringMixIn"]
 
@@ -49,59 +51,294 @@ class StringMixIn:
     immutable ``self`` like the regular ``str`` type.
     """
 
-    def __str__(self):
+    # This is based on collections.UserString, but:
+    # - Requires overriding __str__ instead of setting .data
+    # - Returns new strings as strs instead of StringMixIns
+
+    __slots__ = ()
+
+    def __str__(self) -> str:
         raise NotImplementedError()
 
-    def __bytes__(self):
-        return bytes(self.__str__(), getdefaultencoding())
+    def __bytes__(self) -> bytes:
+        return bytes(str(self), sys.getdefaultencoding())
 
-    def __repr__(self):
-        return repr(self.__str__())
+    def __repr__(self) -> str:
+        return repr(str(self))
 
-    def __lt__(self, other):
-        return self.__str__() < other
+    def __lt__(self, other: str | StringMixIn) -> bool:
+        return str(self) < other
 
-    def __le__(self, other):
-        return self.__str__() <= other
+    def __le__(self, other: str | StringMixIn) -> bool:
+        return str(self) <= other
 
-    def __eq__(self, other):
-        return self.__str__() == other
+    def __eq__(self, other: Any) -> bool:
+        return str(self) == other
 
-    def __ne__(self, other):
-        return self.__str__() != other
+    def __ne__(self, other: Any) -> bool:
+        return str(self) != other
 
-    def __gt__(self, other):
-        return self.__str__() > other
+    def __gt__(self, other: str | StringMixIn) -> bool:
+        return str(self) > other
 
-    def __ge__(self, other):
-        return self.__str__() >= other
+    def __ge__(self, other: str | StringMixIn) -> bool:
+        return str(self) >= other
 
-    def __bool__(self):
-        return bool(self.__str__())
+    def __bool__(self) -> bool:
+        return bool(str(self))
 
-    def __len__(self):
-        return len(self.__str__())
+    def __len__(self) -> int:
+        return len(str(self))
 
-    def __iter__(self):
-        yield from self.__str__()
+    def __iter__(self) -> Iterator[str]:
+        yield from str(self)
 
-    def __getitem__(self, key):
-        return self.__str__()[key]
+    def __getitem__(self, key: SupportsIndex | slice) -> str:
+        return str(self)[key]
 
-    def __reversed__(self):
-        return reversed(self.__str__())
+    def __reversed__(self) -> Iterator[str]:
+        return reversed(str(self))
 
-    def __contains__(self, item):
-        return str(item) in self.__str__()
+    def __contains__(self, item: Any) -> bool:
+        return str(item) in str(self)
 
-    def __getattr__(self, attr):
-        if not hasattr(str, attr):
-            raise AttributeError(
-                f"{type(self).__name__!r} object has no attribute {attr!r}"
-            )
-        return getattr(self.__str__(), attr)
+    @inheritdoc
+    def capitalize(self) -> str:
+        return str(self).capitalize()
 
-    maketrans = str.maketrans  # Static method can't rely on __getattr__
+    @inheritdoc
+    def casefold(self) -> str:
+        return str(self).casefold()
 
+    @inheritdoc
+    def center(self, width: int, fillchar: str = " ") -> str:
+        return str(self).center(width, fillchar)
 
-del inheritdoc
+    @inheritdoc
+    def count(
+        self,
+        sub: str | StringMixIn,
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> int:
+        if isinstance(sub, StringMixIn):
+            sub = str(sub)
+        return str(self).count(sub, start, end)
+
+    @inheritdoc
+    def encode(self, encoding: str = "utf-8", errors: str = "strict") -> bytes:
+        return str(self).encode(encoding, errors)
+
+    @inheritdoc
+    def endswith(
+        self,
+        suffix: str | tuple[str, ...],
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> bool:
+        return str(self).endswith(suffix, start, end)
+
+    @inheritdoc
+    def expandtabs(self, tabsize: int = 8) -> str:
+        return str(self).expandtabs(tabsize)
+
+    @inheritdoc
+    def find(
+        self,
+        sub: str | StringMixIn,
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> int:
+        if isinstance(sub, StringMixIn):
+            sub = str(sub)
+        return str(self).find(sub, start, end)
+
+    @inheritdoc
+    def format(self, /, *args: Any, **kwds: Any) -> str:
+        return str(self).format(*args, **kwds)
+
+    @inheritdoc
+    def format_map(self, mapping: Mapping[str, Any]) -> str:
+        return str(self).format_map(mapping)
+
+    @inheritdoc
+    def index(
+        self,
+        sub: str,
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> int:
+        return str(self).index(sub, start, end)
+
+    @inheritdoc
+    def isalpha(self) -> bool:
+        return str(self).isalpha()
+
+    @inheritdoc
+    def isalnum(self) -> bool:
+        return str(self).isalnum()
+
+    @inheritdoc
+    def isascii(self) -> bool:
+        return str(self).isascii()
+
+    @inheritdoc
+    def isdecimal(self) -> bool:
+        return str(self).isdecimal()
+
+    @inheritdoc
+    def isdigit(self) -> bool:
+        return str(self).isdigit()
+
+    @inheritdoc
+    def isidentifier(self) -> bool:
+        return str(self).isidentifier()
+
+    @inheritdoc
+    def islower(self) -> bool:
+        return str(self).islower()
+
+    @inheritdoc
+    def isnumeric(self) -> bool:
+        return str(self).isnumeric()
+
+    @inheritdoc
+    def isprintable(self) -> bool:
+        return str(self).isprintable()
+
+    @inheritdoc
+    def isspace(self) -> bool:
+        return str(self).isspace()
+
+    @inheritdoc
+    def istitle(self) -> bool:
+        return str(self).istitle()
+
+    @inheritdoc
+    def isupper(self) -> bool:
+        return str(self).isupper()
+
+    @inheritdoc
+    def join(self, seq: Iterable[str]) -> str:
+        return str(self).join(seq)
+
+    @inheritdoc
+    def ljust(self, width: int, fillchar: str = " ") -> str:
+        return str(self).ljust(width, fillchar)
+
+    @inheritdoc
+    def lower(self) -> str:
+        return str(self).lower()
+
+    @inheritdoc
+    def lstrip(self, chars: str | None = None) -> str:
+        return str(self).lstrip(chars)
+
+    maketrans = str.maketrans
+
+    @inheritdoc
+    def partition(self, sep: str) -> tuple[str, str, str]:
+        return str(self).partition(sep)
+
+    @inheritdoc
+    def removeprefix(self, prefix: str | StringMixIn, /) -> str:
+        if isinstance(prefix, StringMixIn):
+            prefix = str(prefix)
+        return str(self).removeprefix(prefix)
+
+    @inheritdoc
+    def removesuffix(self, suffix: str | StringMixIn, /) -> str:
+        if isinstance(suffix, StringMixIn):
+            suffix = str(suffix)
+        return str(self).removesuffix(suffix)
+
+    @inheritdoc
+    def replace(
+        self,
+        old: str | StringMixIn,
+        new: str | StringMixIn,
+        /,
+        count: SupportsIndex = -1,
+    ):
+        if isinstance(old, StringMixIn):
+            old = str(old)
+        if isinstance(new, StringMixIn):
+            new = str(new)
+        return str(self).replace(old, new, count)
+
+    @inheritdoc
+    def rfind(
+        self,
+        sub: str | StringMixIn,
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> int:
+        if isinstance(sub, StringMixIn):
+            sub = str(sub)
+        return str(self).rfind(sub, start, end)
+
+    @inheritdoc
+    def rindex(
+        self,
+        sub: str,
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> int:
+        return str(self).rindex(sub, start, end)
+
+    @inheritdoc
+    def rjust(self, width: int, fillchar: str = " ") -> str:
+        return str(self).rjust(width, fillchar)
+
+    @inheritdoc
+    def rpartition(self, sep: str) -> tuple[str, str, str]:
+        return str(self).rpartition(sep)
+
+    @inheritdoc
+    def rstrip(self, chars: str | None = None) -> str:
+        return str(self).rstrip(chars)
+
+    @inheritdoc
+    def split(self, sep: str | None = None, maxsplit: SupportsIndex = -1) -> list[str]:
+        return str(self).split(sep, maxsplit)
+
+    @inheritdoc
+    def rsplit(self, sep: str | None = None, maxsplit: SupportsIndex = -1) -> list[str]:
+        return str(self).rsplit(sep, maxsplit)
+
+    @inheritdoc
+    def splitlines(self, keepends: bool = False) -> list[str]:
+        return str(self).splitlines(keepends)
+
+    @inheritdoc
+    def startswith(
+        self,
+        prefix: str | tuple[str, ...],
+        start: SupportsIndex | None = None,
+        end: SupportsIndex | None = None,
+    ) -> bool:
+        return str(self).startswith(prefix, start, end)
+
+    @inheritdoc
+    def strip(self, chars: str | None = None) -> str:
+        return str(self).strip(chars)
+
+    @inheritdoc
+    def swapcase(self) -> str:
+        return str(self).swapcase()
+
+    @inheritdoc
+    def title(self) -> str:
+        return str(self).title()
+
+    @inheritdoc
+    def translate(self, *args: Any) -> str:
+        return str(self).translate(*args)
+
+    @inheritdoc
+    def upper(self) -> str:
+        return str(self).upper()
+
+    @inheritdoc
+    def zfill(self, width: int) -> str:
+        return str(self).zfill(width)

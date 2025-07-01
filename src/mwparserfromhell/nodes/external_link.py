@@ -44,7 +44,7 @@ class ExternalLink(Node):
     ):
         super().__init__()
         self.url = url
-        self.title = title
+        self.title = title  # pyright: ignore[reportIncompatibleMethodOverride]
         self.brackets = brackets
         self.suppress_space = suppress_space
 

@@ -9,6 +9,7 @@ Unreleased
 
 - Fix building on non-CPython implementations like PyPy.
   (`#341 <https://github.com/earwig/mwparserfromhell/issues/341>`_)
+- Improve typing.
 
 v0.7.1
 ------

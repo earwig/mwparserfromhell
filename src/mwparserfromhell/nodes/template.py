@@ -260,7 +260,9 @@ class Template(Node):
             raise ValueError(name)
         return default
 
-    def __getitem__(self, name: str | Any) -> Parameter:
+    def __getitem__(  # pyright: ignore[reportIncompatibleMethodOverride]
+        self, name: str | Any
+    ) -> Parameter:
         return self.get(name)
 
     def add(

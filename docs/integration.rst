@@ -7,7 +7,7 @@ Integration
 :func:`mwparserfromhell.parse() <mwparserfromhell.__init__.parse>` on
 :meth:`~earwigbot.wiki.page.Page.get`.
 
-If you're using Pywikibot_, your code might look like this:
+If you're using Pywikibot_, your code might look like this::
 
     import mwparserfromhell
     import pywikibot
@@ -19,7 +19,7 @@ If you're using Pywikibot_, your code might look like this:
         return mwparserfromhell.parse(text)
 
 If you're not using a library, you can parse any page with the following
-Python 3 code (using the API_ and the requests_ library):
+Python 3 code (using the API_ and the requests_ library)::
 
     import mwparserfromhell
     import requests

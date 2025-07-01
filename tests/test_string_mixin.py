@@ -271,7 +271,7 @@ def test_other_methods():
     assert "fake string" == str1.format_map({})
     assert "foobarbaz" == str6.format_map({"abc": "bar"})
     with pytest.raises(ValueError):
-        str5.format_map({0: "abc"})
+        str5.format_map({0: "abc"})  # type: ignore
 
     assert 3 == str1.index("e")
     with pytest.raises(ValueError):
