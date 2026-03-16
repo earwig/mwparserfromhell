@@ -27,12 +27,12 @@ SOFTWARE.
 #include "tok_support.h"
 #include "tokens.h"
 
-#define DIGITS     "0123456789"
-#define HEXDIGITS  "0123456789abcdefABCDEF"
-#define ALPHANUM   "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-#define URISCHEME  "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
+#define DIGITS          "0123456789"
+#define HEXDIGITS       "0123456789abcdefABCDEF"
+#define ALPHANUM        "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+#define URISCHEME       "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+.-"
 
-#define MAX_BRACES 255
+#define MAX_BRACES      255
 #define MAX_ENTITY_SIZE 8
 
 typedef struct {
