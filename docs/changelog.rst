@@ -1,6 +1,14 @@
 Changelog
 =========
 
+v0.7.3
+------
+
+Unreleased
+(`changes <https://github.com/earwig/mwparserfromhell/compare/v0.7.2...main>`__):
+
+- Add support for Python 3.14 and drop end-of-life 3.9.
+
 v0.7.2
 ------
 

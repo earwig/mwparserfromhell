@@ -20,8 +20,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Generator
-from typing import TYPE_CHECKING, Any, Callable
+from collections.abc import Callable, Generator
+from typing import TYPE_CHECKING, Any
 
 from ..string_mixin import StringMixIn
 

@@ -1,6 +1,6 @@
 repos:
 - repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.12.1
+  rev: v0.15.6
   hooks:
   - id: ruff-check
     args: [--fix]
@@ -12,6 +12,6 @@ repos:
   - id: clang-format
 
 - repo: https://github.com/RobertCraigie/pyright-python
-  rev: v1.1.402
+  rev: v1.1.408
   hooks:
   - id: pyright

@@ -38,7 +38,6 @@ from multiprocessing import Pipe, Process
 from os import listdir, path
 
 import psutil
-
 from mwparserfromhell.parser._tokenizer import CTokenizer
 
 LOOPS = 10000

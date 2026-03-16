@@ -21,10 +21,10 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Generator, Iterable
+from collections.abc import Callable, Generator, Iterable
 from enum import Enum
 from itertools import chain
-from typing import Any, Callable, Literal, TypeVar, cast, overload
+from typing import Any, Literal, TypeVar, cast, overload
 
 from .nodes import (
     Argument,
