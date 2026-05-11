@@ -21,6 +21,9 @@
 from __future__ import annotations
 
 import os
+import subprocess
+import sys
+import textwrap
 from collections.abc import Generator
 from dataclasses import dataclass
 
@@ -145,3 +148,31 @@ def test_describe_context():
     assert "" == contexts.describe(0)
     ctx = contexts.describe(contexts.TEMPLATE_PARAM_KEY | contexts.HAS_TEXT)
     assert "TEMPLATE_PARAM_KEY|HAS_TEXT" == ctx
+
+
+@pytest.mark.skipif(CTokenizer is None, reason="CTokenizer not available")
+def test_entity_does_not_corrupt_heap():
+    """Regression test: the C tokenizer must not mix raw libc calloc with
+    PyObject_Free when handling an ampersand that is not a valid entity.
+
+    Run in a subprocess with PYTHONMALLOC=debug so any allocator mismatch on
+    the entity-parsing path is reported as a fatal error rather than silent
+    heap corruption.
+    """
+    program = textwrap.dedent(
+        """
+        import mwparserfromhell
+        from mwparserfromhell.parser._tokenizer import CTokenizer
+        assert isinstance(mwparserfromhell.parser.Parser()._tokenizer, CTokenizer)
+        for text in ("a & b", "{{T|p=a & b}}", "&amp;", "&#42;", "&#x2A;"):
+            assert str(mwparserfromhell.parse(text)) == text
+        """
+    )
+    env = {**os.environ, "PYTHONMALLOC": "debug"}
+    result = subprocess.run(
+        [sys.executable, "-c", program], env=env, capture_output=True, text=True
+    )
+    assert result.returncode == 0, (
+        "C tokenizer triggered allocator mismatch under PYTHONMALLOC=debug:\n"
+        f"stdout:\n{result.stdout}\nstderr:\n{result.stderr}"
+    )
