@@ -145,3 +145,31 @@ def test_describe_context():
     assert "" == contexts.describe(0)
     ctx = contexts.describe(contexts.TEMPLATE_PARAM_KEY | contexts.HAS_TEXT)
     assert "TEMPLATE_PARAM_KEY|HAS_TEXT" == ctx
+
+
+@pytest.mark.parametrize(
+    "tokenizer",
+    filter(None, (CTokenizer, PyTokenizer)),
+    ids=lambda t: "CTokenizer" if t.USES_C else "PyTokenizer",
+)
+def test_nul_byte_preservation(tokenizer):
+    """Test that NUL bytes (\\x00) are preserved in the input instead of being treated as EOF.
+
+    Regression test for issue #355: C tokenizer was returning '\\0' both for real NUL bytes
+    in the input and for EOF, causing silent truncation at the first NUL.
+    """
+    # Basic NUL preservation
+    result = str(Builder().build(tokenizer().tokenize("a\x00b")))
+    assert result == "a\x00b", f"Expected 'a\\x00b', got {result!r}"
+
+    # NUL in the middle of text
+    result = str(Builder().build(tokenizer().tokenize("hello\x00world")))
+    assert result == "hello\x00world", f"Expected 'hello\\x00world', got {result!r}"
+
+    # NUL inside template
+    result = str(Builder().build(tokenizer().tokenize("{{a\x00b}}")))
+    assert result == "{{a\x00b}}", f"Expected '{{{{a\\x00b}}}}', got {result!r}"
+
+    # Multiple NULs
+    result = str(Builder().build(tokenizer().tokenize("a\x00b\x00c")))
+    assert result == "a\x00b\x00c", f"Expected 'a\\x00b\\x00c', got {result!r}"

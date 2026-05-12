@@ -509,7 +509,7 @@ Tokenizer_parse_bracketed_uri_scheme(Tokenizer *self)
         if (!buffer) {
             return -1;
         }
-        while ((this = Tokenizer_read(self, 0))) {
+        while ((this = Tokenizer_read(self, 0)) != TOKENIZER_EOF) {
             i = 0;
             while (1) {
                 if (!valid[i]) {
@@ -678,7 +678,7 @@ Tokenizer_is_uri_end(Tokenizer *self, Py_UCS4 this, Py_UCS4 next)
     Py_UCS4 after = Tokenizer_read(self, 2);
     uint64_t ctx = self->topstack->context;
 
-    return (!this || this == '\n' || this == '[' || this == ']' || this == '<' ||
+    return (this == TOKENIZER_EOF || this == '\n' || this == '[' || this == ']' || this == '<' ||
             this == '>' || this == '"' || this == ' ' ||
             (this == '\'' && next == '\'') || (this == '|' && ctx & LC_TEMPLATE) ||
             (this == '=' && ctx & (LC_TEMPLATE_PARAM_KEY | LC_HEADING)) ||
@@ -703,7 +703,7 @@ Tokenizer_really_parse_external_link(Tokenizer *self, int brackets, Textbuffer *
         return NULL;
     }
     this = Tokenizer_read(self, 0);
-    if (!this || this == '\n' || this == ' ' || this == ']') {
+    if (this == TOKENIZER_EOF || this == '\n' || this == ' ' || this == ']') {
         return Tokenizer_fail_route(self);
     }
     if (!brackets && this == '[') {
@@ -729,7 +729,7 @@ Tokenizer_really_parse_external_link(Tokenizer *self, int brackets, Textbuffer *
                 return NULL;
             }
         } else if (brackets) {
-            if (!this || this == '\n') {
+            if (this == TOKENIZER_EOF || this == '\n') {
                 return Tokenizer_fail_route(self);
             }
             if (this == ']') {
@@ -1040,7 +1040,7 @@ Tokenizer_really_parse_entity(Tokenizer *self)
     }
     self->head++;
     this = Tokenizer_read(self, 0);
-    if (!this) {
+    if (this == TOKENIZER_EOF) {
         Tokenizer_fail_route(self);
         return 0;
     }
@@ -1051,7 +1051,7 @@ Tokenizer_really_parse_entity(Tokenizer *self)
         }
         self->head++;
         this = Tokenizer_read(self, 0);
-        if (!this) {
+        if (this == TOKENIZER_EOF) {
             Tokenizer_fail_route(self);
             return 0;
         }
@@ -1233,7 +1233,7 @@ Tokenizer_parse_comment(Tokenizer *self)
     }
     while (1) {
         this = Tokenizer_read(self, 0);
-        if (!this) {
+        if (this == TOKENIZER_EOF) {
             comment = Tokenizer_pop(self);
             Py_XDECREF(comment);
             self->head = reset;
@@ -1597,7 +1597,7 @@ Tokenizer_handle_blacklisted_tag(Tokenizer *self)
     while (1) {
         this = Tokenizer_read(self, 0);
         next = Tokenizer_read(self, 1);
-        if (!this) {
+        if (this == TOKENIZER_EOF) {
             return Tokenizer_fail_route(self);
         } else if (this == '<' && next == '/') {
             self->head += 2;
@@ -1639,7 +1639,7 @@ Tokenizer_handle_blacklisted_tag(Tokenizer *self)
                     }
                     return Tokenizer_pop(self);
                 }
-                if (!this || this == '\n') {
+                if (this == TOKENIZER_EOF || this == '\n') {
                 no_matching_end:
                     Textbuffer_dealloc(buffer);
                     self->head = reset;
@@ -1790,7 +1790,7 @@ Tokenizer_really_parse_tag(Tokenizer *self)
         next = Tokenizer_read(self, 1);
         can_exit = (!(data->context & (TAG_QUOTED | TAG_NAME)) ||
                     data->context & TAG_NOTE_SPACE);
-        if (!this) {
+        if (this == TOKENIZER_EOF) {
             if (self->topstack->context & LC_TAG_ATTR) {
                 if (data->context & TAG_QUOTED) {
                     // Unclosed attribute quote: reset, don't die
@@ -2442,7 +2442,7 @@ Tokenizer_handle_table_style(Tokenizer *self, Py_UCS4 end_token)
                 return NULL;
             }
             return padding;
-        } else if (!this || this == end_token) {
+        } else if (this == TOKENIZER_EOF || this == end_token) {
             if (self->topstack->context & LC_TAG_ATTR) {
                 if (data->context & TAG_QUOTED) {
                     // Unclosed attribute quote: reset, don't die
@@ -2845,7 +2845,7 @@ Tokenizer_has_leading_whitespace(Tokenizer *self)
     Py_UCS4 current_character;
     while (1) {
         current_character = Tokenizer_read_backwards(self, offset);
-        if (!current_character || current_character == '\n') {
+        if (current_character == TOKENIZER_EOF || current_character == '\n') {
             return 1;
         } else if (!Py_UNICODE_ISSPACE(current_character)) {
             return 0;
@@ -2876,6 +2876,9 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
     while (1) {
         this = Tokenizer_read(self, 0);
         this_context = self->topstack->context;
+        if (this == TOKENIZER_EOF) {
+            return Tokenizer_handle_end(self, this_context);
+        }
         if (this_context & AGG_UNSAFE) {
             if (Tokenizer_verify_safe(self, this_context, this) < 0) {
                 if (this_context & AGG_DOUBLE) {
@@ -2891,9 +2894,6 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
             }
             self->head++;
             continue;
-        }
-        if (!this) {
-            return Tokenizer_handle_end(self, this_context);
         }
         if (PyErr_CheckSignals()) {
             return NULL;

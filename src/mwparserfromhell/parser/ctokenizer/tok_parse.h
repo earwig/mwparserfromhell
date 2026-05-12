@@ -25,11 +25,11 @@ SOFTWARE.
 #include "common.h"
 
 static const Py_UCS4 MARKERS[] = {
-    '{', '}', '[', ']', '<', '>', '|', '=',  '&',  '\'',
-    '#', '*', ';', ':', '/', '-', '!', '\n', '\0',
+    '{', '}', '[', ']', '<', '>', '|', '=', '&', '\'',
+    '#', '*', ';', ':', '/', '-', '!', '\n',
 };
 
-#define NUM_MARKERS 19
+#define NUM_MARKERS 18
 
 /* Functions */
 

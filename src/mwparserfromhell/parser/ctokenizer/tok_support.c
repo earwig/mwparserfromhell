@@ -442,7 +442,7 @@ Tokenizer_read(Tokenizer *self, Py_ssize_t delta)
     Py_ssize_t index = self->head + delta;
 
     if (index >= self->text.length) {
-        return '\0';
+        return TOKENIZER_EOF;
     }
     return read_codepoint(&self->text, index);
 }
@@ -456,7 +456,7 @@ Tokenizer_read_backwards(Tokenizer *self, Py_ssize_t delta)
     Py_ssize_t index;
 
     if (delta > self->head) {
-        return '\0';
+        return TOKENIZER_EOF;
     }
     index = self->head - delta;
     return read_codepoint(&self->text, index);
