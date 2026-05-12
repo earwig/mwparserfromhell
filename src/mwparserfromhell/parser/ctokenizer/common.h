@@ -47,6 +47,9 @@ SOFTWARE.
 #define PyUnicode_FROM_SINGLE(chr)                                                     \
     PyUnicode_FromKindAndData(PyUnicode_4BYTE_KIND, &(chr), 1)
 
+/* EOF sentinel: use a value beyond valid Unicode range (0x110000 is first invalid) */
+#define TOKENIZER_EOF ((Py_UCS4) 0x110000)
+
 /* Error handling macros */
 
 #define BAD_ROUTE         self->route_state
