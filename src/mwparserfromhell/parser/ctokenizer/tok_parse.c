@@ -1863,7 +1863,7 @@ Tokenizer_handle_invalid_tag_start(Tokenizer *self)
     }
     while (1) {
         this = Tokenizer_read(self, pos);
-        if (Py_UNICODE_ISSPACE(this) || is_marker(this)) {
+        if (this == TOKENIZER_EOF || Py_UNICODE_ISSPACE(this) || is_marker(this)) {
             name = Textbuffer_render(buf);
             if (!name) {
                 Textbuffer_dealloc(buf);
@@ -2956,7 +2956,7 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
             if (Tokenizer_parse_external_link(self, 1)) {
                 return NULL;
             }
-        } else if (this == ':' && !is_marker(last)) {
+        } else if (this == ':' && last != TOKENIZER_EOF && !is_marker(last)) {
             if (Tokenizer_parse_external_link(self, 0)) {
                 return NULL;
             }
