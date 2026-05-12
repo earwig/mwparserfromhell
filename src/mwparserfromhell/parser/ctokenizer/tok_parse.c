@@ -2988,7 +2988,7 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
             } else if (Tokenizer_emit_char(self, this)) {
                 return NULL;
             }
-        } else if (this == '<' && next == '/' && Tokenizer_read(self, 2)) {
+        } else if (this == '<' && next == '/' && Tokenizer_read(self, 2) != TOKENIZER_EOF) {
             if (this_context & LC_TAG_BODY ? Tokenizer_handle_tag_open_close(self)
                                            : Tokenizer_handle_invalid_tag_start(self)) {
                 return NULL;
