@@ -2913,7 +2913,7 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
                 return NULL;
             }
         } else if (this == '=' && this_context & LC_TEMPLATE_PARAM_KEY) {
-            if (!(self->global & GL_HEADING) && (!last || last == '\n') &&
+            if (!(self->global & GL_HEADING) && (last == TOKENIZER_EOF || last == '\n') &&
                 next == '=') {
                 if (Tokenizer_parse_heading(self)) {
                     return NULL;
@@ -2964,7 +2964,7 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
             return Tokenizer_pop(self);
         } else if (this == '=' && !(self->global & GL_HEADING) &&
                    !(this_context & LC_TEMPLATE)) {
-            if (!last || last == '\n') {
+            if (last == TOKENIZER_EOF || last == '\n') {
                 if (Tokenizer_parse_heading(self)) {
                     return NULL;
                 }
@@ -3008,12 +3008,12 @@ Tokenizer_parse(Tokenizer *self, uint64_t context, int push)
             if (temp != Py_None) {
                 return temp;
             }
-        } else if ((!last || last == '\n') &&
+        } else if ((last == TOKENIZER_EOF || last == '\n') &&
                    (this == '#' || this == '*' || this == ';' || this == ':')) {
             if (Tokenizer_handle_list(self)) {
                 return NULL;
             }
-        } else if ((!last || last == '\n') &&
+        } else if ((last == TOKENIZER_EOF || last == '\n') &&
                    (this == '-' && this == next && this == Tokenizer_read(self, 2) &&
                     this == Tokenizer_read(self, 3))) {
             if (Tokenizer_handle_hr(self)) {
