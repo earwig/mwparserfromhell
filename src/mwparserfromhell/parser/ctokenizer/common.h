@@ -39,6 +39,7 @@ SOFTWARE.
 #endif
 
 #define malloc  PyObject_Malloc // XXX: yuck
+#define calloc  PyObject_Calloc
 #define realloc PyObject_Realloc
 #define free    PyObject_Free
 
