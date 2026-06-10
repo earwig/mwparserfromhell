@@ -1753,7 +1753,6 @@ Tokenizer_handle_single_tag_end(Tokenizer *self)
         return NULL;
     }
     if (PyList_SetItem(self->topstack->stack, index, token)) {
-        Py_DECREF(token);
         return NULL;
     }
     return Tokenizer_pop(self);
