@@ -761,8 +761,12 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`ifilter` with *forcetype* set to
         :class:`~wikilink.Wikilink`.
         """
-        return self.ifilter(
-            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
+        return (
+            node
+            for node in self.ifilter(
+                recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
+            )
+            if str(node.title)
         )
 
     @overload
@@ -934,8 +938,8 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`filter` with *forcetype* set to
         :class:`~wikilink.Wikilink`.
         """
-        return self.filter(
-            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
+        return list(
+            self.ifilter_wikilinks(recursive=recursive, matches=matches, flags=flags)
         )
 
     def get_sections(

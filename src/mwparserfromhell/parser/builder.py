@@ -162,14 +162,8 @@ class Builder:
                 self._push()
             elif isinstance(token, tokens.WikilinkClose):
                 if title is not None:
-                    wikilink = Wikilink(title, self._pop())
-                else:
-                    wikilink = Wikilink(self._pop())
-                # MediaWiki treats [[]] and [[|...]] (empty title) as plain
-                # text rather than actual wikilinks.
-                if not str(wikilink.title):
-                    return Text(str(wikilink))
-                return wikilink
+                    return Wikilink(title, self._pop())
+                return Wikilink(self._pop())
             else:
                 self._write(self._handle_token(token))
         raise ParserError("_handle_wikilink() missed a close token")
