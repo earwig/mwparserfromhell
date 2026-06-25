@@ -102,3 +102,24 @@ def test_skip_style_tags(pyparser):
     without_style = parser.Parser().parse(text, skip_style_tags=True)
     assert_wikicode_equal(a, with_style)
     assert_wikicode_equal(b, without_style)
+
+
+@pytest.mark.parametrize(
+    "text",
+    [
+        "[[]]",
+        "[[|]]",
+        "[[|foo]]",
+        "[[|||]]",
+    ],
+)
+def test_empty_title_wikilink_is_text(text):
+    """[[]] and [[|...]] have an empty title and should not be wikilinks.
+
+    MediaWiki does not render these as hyperlinks; the parser must treat them
+    as plain text so that filter_wikilinks() does not return false positives.
+    Regression test for https://github.com/earwig/mwparserfromhell/issues/292.
+    """
+    parsed = parser.Parser().parse(text)
+    assert parsed.filter_wikilinks() == []
+    assert str(parsed) == text
