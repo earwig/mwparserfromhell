@@ -123,5 +123,8 @@ def test_empty_title_wikilink_filter_wikilinks(text):
     """
     parsed = parser.Parser().parse(text)
     assert parsed.filter_wikilinks() == []
+    assert parsed.filter(forcetype=Wikilink) == []
+    assert list(parsed.ifilter(forcetype=Wikilink)) == []
     assert isinstance(parsed.get(0), Wikilink)
+    assert parsed.get(0) in parsed.filter()
     assert str(parsed) == text

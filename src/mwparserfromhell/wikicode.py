@@ -160,6 +160,12 @@ class Wikicode(StringMixIn):
         else:
             inodes = enumerate(self.nodes)
         for i, node in inodes:
+            if (
+                forcetype is Wikilink
+                and isinstance(node, Wikilink)
+                and not str(node.title)
+            ):
+                continue
             if (forcetype is None or isinstance(node, forcetype)) and match(
                 cast(N, node)
             ):
@@ -761,12 +767,8 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`ifilter` with *forcetype* set to
         :class:`~wikilink.Wikilink`.
         """
-        return (
-            node
-            for node in self.ifilter(
-                recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
-            )
-            if str(node.title)
+        return self.ifilter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
         )
 
     @overload
@@ -938,8 +940,8 @@ class Wikicode(StringMixIn):
         This is equivalent to :meth:`filter` with *forcetype* set to
         :class:`~wikilink.Wikilink`.
         """
-        return list(
-            self.ifilter_wikilinks(recursive=recursive, matches=matches, flags=flags)
+        return self.filter(
+            recursive=recursive, matches=matches, flags=flags, forcetype=Wikilink
         )
 
     def get_sections(
