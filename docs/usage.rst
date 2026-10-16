@@ -78,5 +78,24 @@ saving the page!) by calling :func:`str` on it::
     True
 
 
+To get section headings, use ``filter_headings()``. Each ``Heading`` has a
+``level`` and a ``title`` (a ``Wikicode`` object). Use ``recursive=False`` to
+exclude headings nested inside other nodes, such as templates. This still
+includes subheadings at the top level of the parsed text:
+
+.. code-block:: python
+
+  >>> text = "== History ==\nText.\n=== [[Early history|Early years]] ===\nMore text."
+  >>> code = mwparserfromhell.parse(text)
+  >>> headings = code.filter_headings(recursive=False)
+  >>> [(heading.level, str(heading.title).strip()) for heading in headings]
+  [(2, 'History'), (3, '[[Early history|Early years]]')]
+  >>> [heading.title.strip_code().strip() for heading in headings]
+  ['History', 'Early years']
+
+Calling ``str()`` on the title preserves its wikitext; ``strip_code()`` removes
+markup, and ``strip()`` removes surrounding whitespace. To get section content
+as well as headings, use ``get_sections()``.
+
 For more tips, check out :class:`Wikicode's full method list <.Wikicode>` and
 the :mod:`list of Nodes <.nodes>`.
