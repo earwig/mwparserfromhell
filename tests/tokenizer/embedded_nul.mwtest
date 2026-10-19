@@ -1,0 +1,11 @@
+name: embedded NUL in plain text
+input: "a\x00b"
+output: [Text(text="a\x00b")]
+---
+name: embedded NUL in a longer string
+input: "hello\x00world"
+output: [Text(text="hello\x00world")]
+---
+name: embedded NUL inside a template
+input: "{{a\x00b}}"
+output: [TemplateOpen(), Text(text="a\x00b"), TemplateClose()]

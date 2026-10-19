@@ -24,6 +24,9 @@ SOFTWARE.
 #include "textbuffer.h"
 #include "tokens.h"
 
+/* Outside the Unicode range, so it cannot collide with input text. */
+#define TOKENIZER_BOUNDARY 0x110000
+
 /*
     Add a new token stack, context, and textbuffer to the list.
 */
@@ -442,7 +445,7 @@ Tokenizer_read(Tokenizer *self, Py_ssize_t delta)
     Py_ssize_t index = self->head + delta;
 
     if (index >= self->text.length) {
-        return '\0';
+        return TOKENIZER_BOUNDARY;
     }
     return read_codepoint(&self->text, index);
 }
@@ -456,7 +459,7 @@ Tokenizer_read_backwards(Tokenizer *self, Py_ssize_t delta)
     Py_ssize_t index;
 
     if (delta > self->head) {
-        return '\0';
+        return TOKENIZER_BOUNDARY;
     }
     index = self->head - delta;
     return read_codepoint(&self->text, index);
