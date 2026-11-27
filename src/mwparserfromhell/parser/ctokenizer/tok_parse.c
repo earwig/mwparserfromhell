@@ -462,6 +462,11 @@ Tokenizer_parse_wikilink(Tokenizer *self)
 static int
 Tokenizer_handle_wikilink_separator(Tokenizer *self)
 {
+    if (!PyList_GET_SIZE(self->topstack->stack) &&
+        !self->topstack->textbuffer->length) {
+        Tokenizer_fail_route(self);
+        return -1;
+    }
     self->topstack->context ^= LC_WIKILINK_TITLE;
     self->topstack->context |= LC_WIKILINK_TEXT;
     if (Tokenizer_emit(self, WikilinkSeparator)) {
@@ -476,7 +481,13 @@ Tokenizer_handle_wikilink_separator(Tokenizer *self)
 static PyObject *
 Tokenizer_handle_wikilink_end(Tokenizer *self)
 {
-    PyObject *stack = Tokenizer_pop(self);
+    PyObject *stack;
+    if ((self->topstack->context & LC_WIKILINK_TITLE) &&
+        !PyList_GET_SIZE(self->topstack->stack) &&
+        !self->topstack->textbuffer->length) {
+        return Tokenizer_fail_route(self);
+    }
+    stack = Tokenizer_pop(self);
     self->head += 1;
     return stack;
 }
