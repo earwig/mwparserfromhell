@@ -1,14 +1,14 @@
 name:   blank
 label:  wikilink with no content
 input:  "[[]]"
-output: [WikilinkOpen(), WikilinkClose()]
+output: [Text(text="[[]]")]
 
 ---
 
 name:   blank_with_text
 label:  wikilink with no content but a pipe
 input:  "[[|]]"
-output: [WikilinkOpen(), WikilinkSeparator(), WikilinkClose()]
+output: [Text(text="[[|]]")]
 
 ---
 
@@ -29,7 +29,7 @@ output: [WikilinkOpen(), Text(text="foo"), WikilinkSeparator(), Text(text="bar")
 name:   blank_with_multiple_texts
 label:  no content, multiple pipes
 input:  "[[|||]]"
-output: [WikilinkOpen(), WikilinkSeparator(), Text(text="||"), WikilinkClose()]
+output: [Text(text="[[|||]]")]
 
 ---
 
@@ -205,3 +205,17 @@ name:   incomplete_preserve_previous
 label:  incomplete wikilinks: a valid wikilink followed by an invalid one
 input:  "[[foo]] [[bar"
 output: [WikilinkOpen(), Text(text="foo"), WikilinkClose(), Text(text=" [[bar")]
+
+---
+
+name:   empty_title_followed_by_link
+label:  rejecting an empty title does not prevent a subsequent valid link
+input:  "[[]][[valid]]"
+output: [Text(text="[[]]"), WikilinkOpen(), Text(text="valid"), WikilinkClose()]
+
+---
+
+name:   template_title_may_expand_empty
+label:  templates in titles must be preserved without attempting expansion
+input:  "[[{{echo|}}]]"
+output: [WikilinkOpen(), TemplateOpen(), Text(text="echo"), TemplateParamSeparator(), TemplateClose(), WikilinkClose()]

@@ -641,3 +641,18 @@ def test_get_tree():
         + "{{\n\t\t\tbaz\n\t  }}\n\t| spam\n\t= eggs\n}}"
     )
     assert expected.expandtabs(4) == code.get_tree()
+
+
+@pytest.mark.parametrize("text", ("[[]]", "[[|]]", "[[|||]]", "before [[]] after"))
+def test_empty_wikilink_titles_are_text(text):
+    code = parse(text)
+    assert str(code) == text
+    assert code.filter_wikilinks() == []
+    assert code.strip_code() == text
+
+
+@pytest.mark.parametrize("text", ("[[{{echo|}}]]", "[[{{!}}]]", "[[{{{title|}}}]]"))
+def test_dynamic_wikilink_titles_are_preserved(text):
+    code = parse(text)
+    assert str(code) == text
+    assert len(code.filter_wikilinks()) == 1

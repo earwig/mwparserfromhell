@@ -408,12 +408,20 @@ class Tokenizer:
 
     def _handle_wikilink_separator(self):
         """Handle the separator between a wikilink's title and its text."""
+        if not self._stack and not self._textbuffer:
+            self._fail_route()
         self._context ^= contexts.WIKILINK_TITLE
         self._context |= contexts.WIKILINK_TEXT
         self._emit(tokens.WikilinkSeparator())
 
     def _handle_wikilink_end(self):
         """Handle the end of a wikilink at the head of the string."""
+        if (
+            self._context & contexts.WIKILINK_TITLE
+            and not self._stack
+            and not self._textbuffer
+        ):
+            self._fail_route()
         self._head += 1
         return self._pop()
 
